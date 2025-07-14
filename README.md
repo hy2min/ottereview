@@ -1,6 +1,6 @@
 ## 🧾 Git Commit Convention
 
-### ✅ Commit Message 구조
+### ✅ Commit Message 구조 
 
 ```
 <타입>: <간단한 설명>
