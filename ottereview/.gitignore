@@ -240,4 +240,8 @@ gradle-app.setting
 application-local.yml
 application-local.properties
 
+# MySQL Docker 데이터 폴더 무시
+/db/
+ottereview/db/
+
 # End of https://www.toptal.com/developers/gitignore/api/git,java,intellij+iml,macos,windows,visualstudiocode,gradle
