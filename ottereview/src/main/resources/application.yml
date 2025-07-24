@@ -31,10 +31,18 @@ spring:
     init:
       mode: never  # 필요 시 always로
 
+github:
+  app:
+    app-id: ${GITHUB_APP_ID:}
+    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:github-api-privatekey.der}
+  oauth:
+    client-id: ${GITHUB_APP_CLIENT_ID:}
+    client-secret: ${GITHUB_APP_CLIENT_SECRET:}
+
 logging:
   level:
     root: INFO
-    com.example.demo: DEBUG
+    com.ssafy.ottereview: DEBUG
 
 ---
 # -----------------------------------------------------------
