@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.config.Redis;
+package com.ssafy.ottereview.common.config.Redis;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

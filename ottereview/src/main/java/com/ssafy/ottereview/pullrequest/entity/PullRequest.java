@@ -12,12 +12,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,85 +25,86 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "pull_request")
 public class PullRequest extends BaseEntity {
-
+    
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User author;
-
+    
     @Column(unique = true)
     private Long githubPrId;
-
+    
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "repo_id")
     private Repo repo;
-
+    
     @Column(nullable = false)
     private String title;
-
+    
     @Column(columnDefinition = "TEXT")
     private String description;
-
+    
     @Column(columnDefinition = "TEXT")
     private String summary;
-
+    
     @Column(nullable = false)
     private String headBranch;
-
+    
     @Column(nullable = false)
     private String baseBranch;
-
+    
     @Column(nullable = false)
     private String status;
-
+    
     @Column(nullable = false)
     private Integer approveCount;
-
+    
     @Column(nullable = false)
     private boolean mergeable;
-
+    
     @Column
     private String authorLogin;
-
+    
     @Column
     private String htmlUrl;
-
+    
     @Column
     private Integer commitCnt;
-
+    
     @Column
     private Integer additionCnt; // 추가된 라인 수
-
+    
     @Column
     private Integer deletionCnt; // 삭제된 라인 수
-
+    
     @Column
     private Integer changedFilesCnt; // 변경된 파일 수
-
+    
     @Column
     private Integer commentCnt; // 일반 코멘트 수
-
+    
     @Column
     private Integer reviewCommentCnt; // 리뷰 코멘트 수
-
+    
     @Column
     private LocalDateTime githubCreatedAt; // GitHub에서의 생성일시
-
+    
     @Column
     private LocalDateTime githubUpdatedAt; // GitHub에서의 수정일시
-
+    
     @Column
     private String patchUrl; // Patch 파일 URL
-
+    
     @Column
     private String diffUrl; // Diff 파일 URL
-
+    
     @Column
     private LocalDateTime mergedAt; // 머지 일시
-
+    
     @Column
     private String mergeCommitSha; // 머지 커밋 SHA
-
+    
 }
