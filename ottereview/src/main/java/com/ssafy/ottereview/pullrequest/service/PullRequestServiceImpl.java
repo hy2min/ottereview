@@ -1,7 +1,7 @@
 package com.ssafy.ottereview.pullrequest.service;
 
-import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.githubapp.service.GithubApiService;
+import com.ssafy.ottereview.github.client.GithubApiClient;
+import com.ssafy.ottereview.github.dto.GithubPrResponse;
 import com.ssafy.ottereview.pullrequest.dto.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -21,51 +21,51 @@ import org.springframework.stereotype.Service;
 @Service
 @Transactional
 public class PullRequestServiceImpl implements PullRequestService {
-
-    private final GithubApiService githubApiService;
+    
+    private final GithubApiClient githubApiClient;
     private final PullRequestRepository pullRequestRepository;
     private final UserRepository userRepository;
     private final RepoRepository repoRepository;
-
+    
     @Override
     public List<PullRequestResponse> getPullRequestsByRepositoryId(Long repositoryId) {
-
+        
         // 예시로 사용되는 값들
         Long installationId = 77362016L;
         String repositoryName = "kangboom/Algorithm";
-
+        
         // 1. github api를 호출하여 Pull Request 목록을 가져온다.
-        List<GithubPrResponse> githubPrResponses = githubApiService.getPullRequests(installationId, repositoryName);
-
+        List<GithubPrResponse> githubPrResponses = githubApiClient.getPullRequests(installationId, repositoryName);
+        
         // 2. 가져온 Pull Request 목록을 PullRequest 엔티티로 변환한다.
         List<PullRequest> pullRequests = githubPrResponses.stream()
                 .map(this::gitHubResponseToEntity)
                 .toList();
-
+        
         // 3. 변환된 Pull Request 엔티티를 데이터베이스에 저장한다.
         pullRequestRepository.saveAll(pullRequests);
-
+        
         // 4. 저장된 Pull Request 엔티티를 PullRequestResponse DTO로 변환하여 반환한다.
         return pullRequests.stream()
                 .map(this::convertToResponse)
                 .toList();
     }
-
+    
     @Override
     public PullRequestResponse getPullRequestById(Long pullRequestId) {
         return null;
     }
-
+    
     @Override
     public void createPullRequest(PullRequestCreateRequest pullRequestCreateRequest) {
-
+    
     }
-
+    
     public PullRequest gitHubResponseToEntity(GithubPrResponse githubPrResponse) {
-
-        User author = userRepository.save(new User());
+        
+        User author = userRepository.save(new User("test", "test@email.com", "www.test.com", 1L, 100, "role"));
         Repo repo = repoRepository.save(new Repo("kangboom/Algorithm", "Kang Boom", 1L, false, false));
-
+        
         return PullRequest.builder()
                 .githubPrId(githubPrResponse.getGithubPrId())
                 .author(author)
@@ -90,7 +90,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .githubUpdatedAt(githubPrResponse.getUpdatedAt())
                 .build();
     }
-
+    
     private PullRequestResponse convertToResponse(PullRequest pr) {
         return PullRequestResponse.builder()
                 .id(pr.getId())

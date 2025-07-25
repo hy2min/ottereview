@@ -1,7 +1,8 @@
-package com.ssafy.ottereview.githubapp.service;
+package com.ssafy.ottereview.github.client;
 
-import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.githubapp.dto.GithubRepoResponse;
+import com.ssafy.ottereview.github.dto.GithubPrResponse;
+import com.ssafy.ottereview.github.dto.GithubRepoResponse;
+import com.ssafy.ottereview.github.util.GithubAppUtil;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
@@ -21,22 +22,21 @@ import org.springframework.stereotype.Service;
 @Transactional
 @Service
 @Slf4j
-public class GithubApiServiceImpl implements GithubApiService {
-
-    private final GithubAppService githubAppService;
-
-    @Override
+public class GithubApiClient {
+    
+    private final GithubAppUtil githubAppService;
+    
     public List<GithubRepoResponse> getRepositories(Long installationId) {
         try {
             // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
-            GitHub github = githubAppService.getGitHubClient(installationId);
-
+            GitHub github = githubAppService.getGitHub(installationId);
+            
             // 해당 설치가 접근할 수 있는 저장소 목록을 가져옵니다.
             // .listInstallationRepositories()는 모든 접근 가능한 저장소를 반환합니다.
             List<GHRepository> repositories = github.getInstallation()
                     .listRepositories()
                     .toList();
-
+            
             // 저장소 이름을 문자열 리스트로 변환하여 반환
             return repositories.stream()
                     .map(repo -> {
@@ -49,7 +49,7 @@ public class GithubApiServiceImpl implements GithubApiService {
                         }
                     }) // GHRepository의 fullName을 문자열로 변환
                     .collect(Collectors.toList());
-
+            
         } catch (IOException e) {
             e.printStackTrace();
             // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
@@ -59,13 +59,12 @@ public class GithubApiServiceImpl implements GithubApiService {
             throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
         }
     }
-
-    @Override
+    
     public List<GithubPrResponse> getPullRequests(Long installationId, String repositoryName) {
         try {
             // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
-            GitHub github = githubAppService.getGitHubClient(installationId);
-
+            GitHub github = githubAppService.getGitHub(installationId);
+            
             // 해당 설치가 접근할 수 있는 저장소 목록을 가져옵니다.
             // .listInstallationRepositories()는 모든 접근 가능한 저장소를 반환합니다.
             GHRepository repo = github.getRepository(repositoryName);
@@ -73,7 +72,7 @@ public class GithubApiServiceImpl implements GithubApiService {
             PagedIterable<GHPullRequest> pullRequests = repo.queryPullRequests()
                     .state(GHIssueState.OPEN) // GHIssueState.CLOSED, .ALL 등도 사용 가능
                     .list();
-
+            
             // 저장소 이름을 문자열 리스트로 변환하여 반환
             return StreamSupport
                     .stream(pullRequests.spliterator(), false)
@@ -88,7 +87,7 @@ public class GithubApiServiceImpl implements GithubApiService {
                     })
                     .filter(Objects::nonNull) // null 제거
                     .collect(Collectors.toList());
-
+            
         } catch (IOException e) {
             e.printStackTrace();
             // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
