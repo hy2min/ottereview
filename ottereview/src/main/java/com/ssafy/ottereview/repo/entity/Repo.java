@@ -2,9 +2,11 @@ package com.ssafy.ottereview.repo.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Repository")
@@ -12,26 +14,26 @@ public class Repo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "repo_id", nullable = false, columnDefinition = "BigInt")
-    private long repoId;
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-    @Column(name = "github_repo_name", nullable = false, columnDefinition = "varchar(50)")
+    @Column(name = "github_repo_name", nullable = false)
     private String githubRepoName;
 
-    @Column(name = "github_owner_username", nullable = false, columnDefinition = "varchar(50)")
+    @Column(name = "github_owner_username", nullable = false)
     private String githubOwnerUsername;
 
-    @Column(name = "installation_id", columnDefinition = "int")
-    private String installationId;
+    @Column(name = "installation_id")
+    private Long installationId;
 
-    @Column(name = "is_cushion", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    @Column(name = "is_cushion", nullable = false)
     private boolean isCushion;
 
-    @Column(name = "is_private", nullable = false, columnDefinition = "Boolean default false")
+    @Column(name = "is_private", nullable = false)
     private boolean isPrivate;
 
-    public long getRepoId() {
-        return repoId;
+    public Long getId() {
+        return id;
     }
 
     public String getGithubRepoName() {
@@ -42,7 +44,7 @@ public class Repo {
         return githubOwnerUsername;
     }
 
-    public String getInstallationId() {
+    public Long getInstallationId() {
         return installationId;
     }
 
@@ -53,5 +55,16 @@ public class Repo {
     public boolean isPrivate() {
         return isPrivate;
     }
+
+    public void enrollInstallationId(Long installationId) {
+        this.installationId = installationId;
+    }
+    public void cushionToggle(boolean isCushion){
+        this.isCushion = isCushion;
+    }
+    public void changeOpenType(boolean isPrivate){
+        this.isPrivate = isPrivate;
+    }
+
 
 }
