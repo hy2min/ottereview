@@ -25,7 +25,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop   # local 개발 시 update 등으로 바꿀 수 있음
+      ddl-auto: update   # local 개발 시 update 등으로 바꿀 수 있음
     properties:
       hibernate:
         format_sql: true
@@ -75,7 +75,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+      ddl-auto: update   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
     show-sql: true
 
   sql:

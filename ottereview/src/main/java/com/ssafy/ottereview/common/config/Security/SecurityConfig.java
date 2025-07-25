@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.config.Security;
+package com.ssafy.ottereview.common.config.Security;
 
 import com.ssafy.ottereview.auth.jwt.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +38,7 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // 접근 제어
             .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/**").permitAll() // 모든 요청 허용 (CORS 설정을 위해)
                     // 인증 필요 없는 경로
                     .requestMatchers("/api/auth/**").permitAll()
                     // 나머지 API는 전부 JWT 인증 필요

@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.githubapp.dto;
+package com.ssafy.ottereview.github.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
