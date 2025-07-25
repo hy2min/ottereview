@@ -1,6 +1,6 @@
-package com.ssafy.ottereview.Githubapp;
+package com.ssafy.ottereview.githubapp;
 
-import com.ssafy.ottereview.Githubapp.utils.InstallationTokenService;
+import com.ssafy.ottereview.githubapp.utils.InstallationTokenService;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;

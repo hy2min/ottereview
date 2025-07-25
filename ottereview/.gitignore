@@ -244,4 +244,9 @@ application-local.properties
 /db/
 ottereview/db/
 
+*.der
 # End of https://www.toptal.com/developers/gitignore/api/git,java,intellij+iml,macos,windows,visualstudiocode,gradle
+/.idea/dataSources.xml
+/.idea/jarRepositories.xml
+/.idea/remote-targets.xml
+/.idea/codeStyles/codeStyleConfig.xml

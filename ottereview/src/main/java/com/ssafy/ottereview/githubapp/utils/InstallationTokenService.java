@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.Githubapp.utils;
+package com.ssafy.ottereview.githubapp.utils;
 
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
@@ -14,7 +14,7 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ssafy.ottereview.Githubapp.config.GithubAppConfig;
+import com.ssafy.ottereview.githubapp.config.GithubAppConfig;
 
 @Service
 public class InstallationTokenService {

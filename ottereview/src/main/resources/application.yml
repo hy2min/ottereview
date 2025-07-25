@@ -17,9 +17,15 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+
   jpa:
     hibernate:
-      ddl-auto: create   # local 개발 시 update 등으로 바꿀 수 있음
+      ddl-auto: create-drop   # local 개발 시 update 등으로 바꿀 수 있음
     properties:
       hibernate:
         format_sql: true
@@ -36,13 +42,26 @@ github:
     app-id: ${GITHUB_APP_ID:}
     private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:github-app-private-key.der}
   oauth:
-    client-id: ${GITHUB_APP_CLIENT_ID:}
-    client-secret: ${GITHUB_APP_CLIENT_SECRET:}
+    client-id: ${GITHUB_OAUTH_CLIENT_ID}
+    client-secret: ${GITHUB_OAUTH_CLIENT_SECRET}
+    redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI}
 
 logging:
   level:
     root: INFO
     com.ssafy.ottereview: DEBUG
+
+app:
+  front:
+    url: http://localhost:3000
+  ai:
+    url: http://localhost:8000
+
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    access-expmin: ${APP_JWT_ACCESS_EXPMIN}
+    refresh-expmin: ${APP_JWT_REFRESH_EXPMIN}
+
 
 ---
 # -----------------------------------------------------------
@@ -56,9 +75,14 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+      ddl-auto: create-drop   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
     show-sql: true
 
   sql:
     init:
       mode: never
+
+  data:
+    redis:
+      host: redis
+      port: 6379

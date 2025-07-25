@@ -1,17 +1,27 @@
 package com.ssafy.ottereview.pullrequest.dto;
 
-public record PullRequestCreateRequest(
+import com.ssafy.ottereview.user.entity.User;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-        Long githubPrId,
-        Long repoId,
-        String title,
-        String description,
-        String summary,
-        String headBranch,
-        String baseBranch,
-        String status,
-        int approveCount,
-        boolean mergeable
-) {
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class PullRequestCreateRequest {
+
+    private Long githubPrId;
+    private Long repoId;
+    private User author;
+    private String title;
+    private String description;
+    private String summary;
+    private String headBranch;
+    private String baseBranch;
+    private String status;
+    private int approveCount;
+    private boolean mergeable;
 
 }
