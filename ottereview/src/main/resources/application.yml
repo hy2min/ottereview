@@ -19,7 +19,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: none   # local 개발 시 update 등으로 바꿀 수 있음
+      ddl-auto: create   # local 개발 시 update 등으로 바꿀 수 있음
     properties:
       hibernate:
         format_sql: true
@@ -34,7 +34,7 @@ spring:
 github:
   app:
     app-id: ${GITHUB_APP_ID:}
-    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:github-api-privatekey.der}
+    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:github-app-private-key.der}
   oauth:
     client-id: ${GITHUB_APP_CLIENT_ID:}
     client-secret: ${GITHUB_APP_CLIENT_SECRET:}

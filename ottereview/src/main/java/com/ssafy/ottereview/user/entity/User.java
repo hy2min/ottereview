@@ -10,28 +10,29 @@ import jakarta.persistence.Id;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long userId;
+    @Column(name="id", nullable=false)
+    private Long id;
 
-    @Column(name = "github_username", nullable = false , columnDefinition = "varchar(50)")
+    @Column(name = "github_username", nullable = false)
     private String githubUsername;
 
-    @Column(name = "github_email", nullable = false , columnDefinition = "varcher(50)")
+    @Column(name = "github_email", nullable = false)
     private String githubEmail;
 
-    @Column(name = "profile_image_url", columnDefinition = "varchar(100)")
+    @Column(name = "profile_image_url")
     private String profileImageUrl;
 
     @Column(name = "access_token")
     private String accessToken;
 
-    @Column(name = "reward_points", columnDefinition = "int")
+    @Column(name = "reward_points")
     private int rewardPoints;
 
-    @Column(name = "user_grade", columnDefinition = "varchar(50)")
+    @Column(name = "user_grade")
     private String userGrade;
 
-    public long getUserId() {
-        return userId;
+    public Long getId() {
+        return id;
     }
 
     public String getGithubUsername() {
