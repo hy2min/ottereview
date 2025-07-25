@@ -1,5 +1,7 @@
 package com.ssafy.ottereview.pullrequest.entity;
 
+import com.ssafy.ottereview.common.entity.BaseEntity;
+import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,13 +13,19 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Builder
 @Entity
 @Table(name = "pull_request")
-public class PullRequest {
+public class PullRequest extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -30,16 +38,16 @@ public class PullRequest {
     @Column(unique = true)
     private Long githubPrId;
 
-    @Column
-    private Long repoId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Repo repo;
 
     @Column(nullable = false)
     private String title;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String summary;
 
     @Column(nullable = false)
@@ -56,5 +64,47 @@ public class PullRequest {
 
     @Column(nullable = false)
     private boolean mergeable;
+
+    @Column
+    private String authorLogin;
+
+    @Column
+    private String htmlUrl;
+
+    @Column
+    private Integer commitCnt;
+
+    @Column
+    private Integer additionCnt; // 추가된 라인 수
+
+    @Column
+    private Integer deletionCnt; // 삭제된 라인 수
+
+    @Column
+    private Integer changedFilesCnt; // 변경된 파일 수
+
+    @Column
+    private Integer commentCnt; // 일반 코멘트 수
+
+    @Column
+    private Integer reviewCommentCnt; // 리뷰 코멘트 수
+
+    @Column
+    private LocalDateTime githubCreatedAt; // GitHub에서의 생성일시
+
+    @Column
+    private LocalDateTime githubUpdatedAt; // GitHub에서의 수정일시
+
+    @Column
+    private String patchUrl; // Patch 파일 URL
+
+    @Column
+    private String diffUrl; // Diff 파일 URL
+
+    @Column
+    private LocalDateTime mergedAt; // 머지 일시
+
+    @Column
+    private String mergeCommitSha; // 머지 커밋 SHA
 
 }

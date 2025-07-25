@@ -1,6 +1,6 @@
-package com.ssafy.ottereview.Githubapp;
+package com.ssafy.ottereview.githubapp;
 
-import com.ssafy.ottereview.Githubapp.config.GithubAppConfig;
+import com.ssafy.ottereview.githubapp.config.GithubAppConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.Githubapp.config;
+package com.ssafy.ottereview.githubapp.config;
 
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import java.io.IOException;
 
+@Getter
 @Configuration
 public class GithubAppConfig {
 
@@ -24,18 +25,6 @@ public class GithubAppConfig {
 
   public GithubAppConfig(ResourceLoader resourceLoader) {
     this.resourceLoader = resourceLoader;
-  }
-
-  public String getAppId() {
-    return appId;
-  }
-
-  public String getOauthClientId() {
-    return oauthClientId;
-  }
-
-  public String getOauthClientSecret() {
-    return oauthClientSecret;
   }
 
   @Bean
