@@ -3,10 +3,12 @@ package com.ssafy.ottereview.repo.entity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Builder
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Repository")
@@ -31,30 +33,6 @@ public class Repo {
 
     @Column(name = "is_private", nullable = false)
     private boolean isPrivate;
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getGithubRepoName() {
-        return githubRepoName;
-    }
-
-    public String getGithubOwnerUsername() {
-        return githubOwnerUsername;
-    }
-
-    public Long getInstallationId() {
-        return installationId;
-    }
-
-    public boolean isCushion() {
-        return isCushion;
-    }
-
-    public boolean isPrivate() {
-        return isPrivate;
-    }
 
     public void enrollInstallationId(Long installationId) {
         this.installationId = installationId;
