@@ -22,6 +22,15 @@ services:
     networks:
       - springboot-mysql-net
 
+  redis:
+    image: redis:7
+    container_name: refresh-redis
+    ports:
+      - "6379:6379"
+    restart: always
+    networks:
+      - springboot-mysql-net
+
   springboot-app:
     build: .
     container_name: springboot-app
@@ -38,6 +47,12 @@ services:
       GITHUB_APP_CLIENT_ID: ${GITHUB_APP_CLIENT_ID}
       GITHUB_APP_CLIENT_SECRET: ${GITHUB_APP_CLIENT_SECRET}
       GITHUB_APP_PRIVATE_KEY_PATH: ${GITHUB_APP_PRIVATE_KEY_PATH}
+      GITHUB_OAUTH_CLIENT_ID: ${GITHUB_OAUTH_CLIENT_ID}
+      GITHUB_OAUTH_CLIENT_SECRET: ${GITHUB_OAUTH_CLIENT_SECRET}
+      GITHUB_OAUTH_REDIRECT_URI: ${GITHUB_OAUTH_REDIRECT_URI}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_JWT_ACCESS_EXPMIN: ${APP_JWT_ACCESS_EXPMIN}
+      APP_JWT_REFRESH_EXPMIN: ${APP_JWT_REFRESH_EXPMIN}
     restart: unless-stopped
     networks:
       - springboot-mysql-net

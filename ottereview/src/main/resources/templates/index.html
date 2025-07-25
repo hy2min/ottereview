@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ottereview GitHub 연동</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+    }
+    button {
+      margin: 15px;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+    }
+    .github-login {
+      background-color: #24292e;
+      color: white;
+    }
+    .app-install {
+      background-color: #2da44e;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+<h1>Ottereview 연동 페이지</h1>
+
+<p>GitHub 계정으로 로그인하거나 앱을 설치하세요</p>
+
+<!-- GitHub OAuth 로그인 -->
+<button class="github-login"
+        onclick="window.location.href='https://github.com/login/oauth/authorize?client_id=Iv23liBE57EBn4vOxhwn&redirect_uri=YOUR_REDIRECT_URI&scope=read:user,user:email'">
+  🔐 GitHub 로그인
+</button>
+
+<!-- GitHub App 설치 -->
+<button class="app-install"
+        onclick="window.location.href='https://github.com/apps/appapitest/installations/new'">
+  ⚙️ GitHub App 설치
+</button>
+</body>
+</html>
