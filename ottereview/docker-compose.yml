@@ -1,3 +1,4 @@
+version: '3.8'
 services:
   db-mysql:
     image: mysql:8.0
@@ -32,7 +33,9 @@ services:
       - springboot-mysql-net
 
   springboot-app:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     container_name: springboot-app
     ports:
       - "8080:8080"
@@ -53,6 +56,15 @@ services:
       APP_JWT_SECRET: ${APP_JWT_SECRET}
       APP_JWT_ACCESS_EXPMIN: ${APP_JWT_ACCESS_EXPMIN}
       APP_JWT_REFRESH_EXPMIN: ${APP_JWT_REFRESH_EXPMIN}
+    volumes:
+      # 소스코드를 volume mount로 실시간 반영
+      - ./src:/app/src:rw
+      - ./build.gradle:/app/build.gradle:ro
+      - ./settings.gradle:/app/settings.gradle:ro
+      # Gradle 캐시 볼륨 (선택사항)
+      - gradle-cache:/root/.gradle
+      # 빌드 결과물 보존 (선택사항)
+      - ./build:/app/build
     restart: unless-stopped
     networks:
       - springboot-mysql-net
@@ -60,3 +72,6 @@ services:
 networks:
   springboot-mysql-net:
     driver: bridge
+
+volumes:
+  gradle-cache:
