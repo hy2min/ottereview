@@ -63,7 +63,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     
     public PullRequest gitHubResponseToEntity(GithubPrResponse githubPrResponse) {
         
-        User author = userRepository.save(new User("test", "test@email.com", "www.test.com", 1L, 100, "role"));
+        User author = userRepository.save(new User(1L,"test@email.com", "www.test.com", "image", 100, "role"));
         Repo repo = repoRepository.save(new Repo("kangboom/Algorithm", "Kang Boom", 1L, false, false));
         
         return PullRequest.builder()

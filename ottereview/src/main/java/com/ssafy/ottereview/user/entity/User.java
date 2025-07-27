@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
-@NoArgsConstructor(access = AccessLevel.PROTECTED)  // JPA 기본 생성자 필수
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name = "users")
@@ -33,21 +33,17 @@ public class User {
     
     @Column(name = "profile_image_url")
     private String profileImageUrl;
-    
-    @Column(name = "installation_id")
-    private Long installationId;
-    
+
     @Column(name = "reward_points")
     private int rewardPoints;
     
     @Column(name = "user_grade")
     private String userGrade;
     
-    public User(String githubUsername, String githubEmail, String profileImageUrl, Long installationId, int rewardPoints, String userGrade) {
+    public User(String githubUsername, String githubEmail, String profileImageUrl, int rewardPoints, String userGrade) {
         this.githubUsername = githubUsername;
         this.githubEmail = githubEmail;
         this.profileImageUrl = profileImageUrl;
-        this.installationId = installationId;
         this.rewardPoints = rewardPoints;
         this.userGrade = userGrade;
     }

@@ -1,12 +1,16 @@
 package com.ssafy.ottereview.user.service;
 
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
+import java.util.List;
 
 public interface UserService {
 
-    // DTO를 반환하도록 수정해주세요~
-
     User getUserById(Long userId);
 
+    UserResponseDto getUserResponseById(Long userId);
+
     void createUser(User user);
+
+    List<UserResponseDto> getAllUsers();
 }
