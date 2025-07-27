@@ -74,8 +74,4 @@ public class JwtUtil {
                 .parseSignedClaims(token)
                 .getPayload();
     }
-
-    public String getEmail(String token) {
-        return getClaims(token).get("email", String.class);
-    }
 }
