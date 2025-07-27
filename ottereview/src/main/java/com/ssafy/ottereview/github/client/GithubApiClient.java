@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.github.client;
 
+import com.ssafy.ottereview.github.dto.GithubAccountResponse;
 import com.ssafy.ottereview.github.dto.GithubPrResponse;
 import com.ssafy.ottereview.github.dto.GithubRepoResponse;
 import com.ssafy.ottereview.github.util.GithubAppUtil;
@@ -11,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
@@ -24,12 +26,33 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class GithubApiClient {
     
-    private final GithubAppUtil githubAppService;
+    private final GithubAppUtil githubAppUtil;
+    
+    public GithubAccountResponse getAccount(Long installationId) {
+        try {
+            
+            GitHub appGitHub = githubAppUtil.getGitHubAsApp();
+            GHAppInstallation installation = appGitHub.getApp()
+                    .getInstallationById(installationId);
+            
+            return new GithubAccountResponse(installation.getId(), installation.getAccount()
+                    .getLogin(), installation.getAccount()
+                    .getType());
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
+            throw new RuntimeException("계정 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
     
     public List<GithubRepoResponse> getRepositories(Long installationId) {
         try {
             // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
-            GitHub github = githubAppService.getGitHub(installationId);
+            GitHub github = githubAppUtil.getGitHub(installationId);
             
             // 해당 설치가 접근할 수 있는 저장소 목록을 가져옵니다.
             // .listInstallationRepositories()는 모든 접근 가능한 저장소를 반환합니다.
@@ -63,7 +86,7 @@ public class GithubApiClient {
     public List<GithubPrResponse> getPullRequests(Long installationId, String repositoryName) {
         try {
             // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
-            GitHub github = githubAppService.getGitHub(installationId);
+            GitHub github = githubAppUtil.getGitHub(installationId);
             
             // 해당 설치가 접근할 수 있는 저장소 목록을 가져옵니다.
             // .listInstallationRepositories()는 모든 접근 가능한 저장소를 반환합니다.
