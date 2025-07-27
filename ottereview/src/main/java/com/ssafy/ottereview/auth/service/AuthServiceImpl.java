@@ -6,13 +6,14 @@ import com.ssafy.ottereview.auth.jwt.service.TokenService;
 import com.ssafy.ottereview.auth.jwt.util.JwtUtil;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import com.ssafy.ottereview.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
@@ -34,9 +35,11 @@ public class AuthServiceImpl implements AuthService {
     private final JwtUtil jwtUtil;
     private final TokenService tokenService;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Override
+    @Transactional
     public AccessTokenResponseDto githubLogin(String code) {
         // GitHub Access Token 요청
         String githubAccessToken = requestGithubAccessToken(code);
@@ -61,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
                 .userGrade("BASIC")
                 .build();
 
+        userService.createUser(user);
         return userRepository.save(user);
     }
 
@@ -120,6 +124,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String requestGithubAccessToken(String code) {
+        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret, redirectUri);
         String url = "https://github.com/login/oauth/access_token";
 
         HttpHeaders headers = new HttpHeaders();
@@ -146,14 +151,14 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public AccessTokenResponseDto refreshAccessToken(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
         }
         Long userId = Long.valueOf(jwtUtil.getClaims(refreshToken).getSubject());
-        String storedToken = tokenService.getRefreshToken(userId);
 
+        String storedToken = tokenService.getRefreshToken(userId);
         if (storedToken == null || !storedToken.equals(refreshToken)) {
             throw new RuntimeException("Refresh token not found or mismatched");
         }
