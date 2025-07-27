@@ -2,6 +2,12 @@
 # 공통 설정 (모든 프로필에 적용)
 # -----------------------------------------------------------
 spring:
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
   application:
     name: ottereview
 

@@ -76,4 +76,16 @@ public class GithubAppUtil {
             throw new RuntimeException("GitHub 클라이언트 생성 중 오류 발생: " + e.getMessage(), e);
         }
     }
+    
+    public GitHub getGitHubAsApp() {
+        try {
+            String jwt = generateJwt(600_000); // JWT 유효 기간 10분
+            return new GitHubBuilder()
+                    .withJwtToken(jwt)
+                    .build();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("GitHub 클라이언트 생성 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
 }

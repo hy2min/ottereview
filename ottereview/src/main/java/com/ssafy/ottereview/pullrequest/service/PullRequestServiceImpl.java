@@ -39,7 +39,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         // 2. 가져온 Pull Request 목록을 PullRequest 엔티티로 변환한다.
         List<PullRequest> pullRequests = githubPrResponses.stream()
-                .map(this::gitHubResponseToEntity)
+                .map(this::convertToEntity)
                 .toList();
         
         // 3. 변환된 Pull Request 엔티티를 데이터베이스에 저장한다.
@@ -61,7 +61,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     
     }
     
-    public PullRequest gitHubResponseToEntity(GithubPrResponse githubPrResponse) {
+    public PullRequest convertToEntity(GithubPrResponse githubPrResponse) {
         
         User author = userRepository.save(new User(1L,"test@email.com", "www.test.com", "image", 100, "role"));
         Repo repo = repoRepository.save(new Repo("kangboom/Algorithm", "Kang Boom", 1L, false, false));
