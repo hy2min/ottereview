@@ -27,11 +27,11 @@ public class Repo {
     @Column(name = "id", nullable = false)
     private Long id;
     
-    @Column(name = "github_repo_name", nullable = false)
-    private String githubRepoName;
+    @Column(name = "repo_id", nullable = false)
+    private Long repoId;
     
-    @Column(name = "github_owner_username", nullable = false)
-    private String githubOwnerUsername;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
     
     @Column(name = "is_cushion", nullable = false)
     private boolean isCushion;
@@ -43,9 +43,9 @@ public class Repo {
     @JoinColumn(name="account_id")
     private Account account;
     
-    public Repo(String githubRepoName, String githubOwnerUsername, Account account, boolean isCushion, boolean isPrivate) {
-        this.githubRepoName = githubRepoName;
-        this.githubOwnerUsername = githubOwnerUsername;
+    public Repo(Long repoId, String fullName, Account account, boolean isCushion, boolean isPrivate) {
+        this.repoId = repoId;
+        this.fullName = fullName;
         this.account = account;
         this.isCushion = isCushion;
         this.isPrivate = isPrivate;

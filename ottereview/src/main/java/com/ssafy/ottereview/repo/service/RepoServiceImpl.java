@@ -30,9 +30,10 @@ public class RepoServiceImpl implements RepoService{
     public void createRepo(RepoCreateRequest repoCreateRequest) {
         // repoCreateRequest 객체에 담긴 내용을 토대로 repo를 만들어서 db에 저장한다.
         Repo repo = Repo.builder()
-                .githubRepoName(repoCreateRequest.getGithubRepoName())
-                .githubOwnerUsername(repoCreateRequest.getGithubOwnerUsername())
+                .repoId(repoCreateRequest.getRepoId())
+                .fullName(repoCreateRequest.getFullName())
                 .isPrivate(repoCreateRequest.isPrivate())
+                .account(repoCreateRequest.getAccount())
                 .build();
 
         // db에 저장
