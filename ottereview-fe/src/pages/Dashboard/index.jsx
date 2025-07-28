@@ -1,4 +1,4 @@
-import RepositoryList from '../components/RepositoryList'
+import RepositoryList from '../../features/repository/RepositoryList'
 
 const Dashboard = () => {
   return (
