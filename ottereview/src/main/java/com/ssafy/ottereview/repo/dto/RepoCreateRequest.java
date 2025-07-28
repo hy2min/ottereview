@@ -9,9 +9,9 @@ import lombok.Getter;
 @Getter
 public class RepoCreateRequest {
 
-    private String githubRepoName;
+    private Long repoId;
 
-    private String githubOwnerUsername;
+    private String fullName;
 
     private boolean isPrivate;
     
@@ -22,11 +22,10 @@ public class RepoCreateRequest {
         if (this == o) return true;                        // 1) 동일 참조 체크
         if (o == null || getClass() != o.getClass()) return false;  // 2) 타입 체크\
         RepoCreateRequest repoCR = (RepoCreateRequest) o;
-        return this.githubOwnerUsername.equals(repoCR.getGithubOwnerUsername())
-                && this.githubRepoName.equals(repoCR.getGithubRepoName());
+        return (this.repoId.equals(repoCR.repoId));
     }
     @Override
     public int hashCode() {
-        return Objects.hash(this.githubOwnerUsername, this.githubRepoName);
+        return Objects.hash(this.repoId);
     }
 }

@@ -14,11 +14,11 @@ import lombok.ToString;
 @Builder
 @ToString
 public class RepoResponse {
+    private Long id;
+
     private Long repoId;
 
-    private String githubRepoName;
-
-    private String githubOwnerUsername;
+    private String fullName;
 
     private Account account;
 
@@ -28,9 +28,9 @@ public class RepoResponse {
 
     public static RepoResponse of(Repo repo){
         return RepoResponse.builder()
+                .id(repo.getId())
                 .repoId(repo.getId())
-                .githubRepoName(repo.getGithubRepoName())
-                .githubOwnerUsername(repo.getGithubOwnerUsername())
+                .fullName(repo.getFullName())
                 .account(repo.getAccount())
                 .isCushion(repo.isCushion())
                 .isPrivate(repo.isPrivate())
