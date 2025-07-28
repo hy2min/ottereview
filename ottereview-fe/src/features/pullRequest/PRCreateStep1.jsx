@@ -1,7 +1,9 @@
+import { useNavigate } from 'react-router-dom'
+
 const PRCreateStep1 = ({ goToStep }) => {
+  const navigate = useNavigate()
   return (
     <div className="space-y-4">
-      {/* 회색 테두리 박스 */}
       <div className="p-4 border">
         <h2 className="text-xl font-bold mb-4">PR 생성 1</h2>
 
@@ -44,7 +46,10 @@ const PRCreateStep1 = ({ goToStep }) => {
       </div>
 
       {/* 이동 버튼 */}
-      <div className="flex justify-end">
+      <div className="flex justify-between">
+        <button className="border px-4 py-1" onClick={() => navigate('/dashboard')}>
+          이전
+        </button>
         <button className="border px-4 py-1" onClick={() => goToStep(2)}>
           다음
         </button>
