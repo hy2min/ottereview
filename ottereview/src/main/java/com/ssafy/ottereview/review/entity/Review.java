@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public class Review {
 
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.AUTO)
+    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
 
 

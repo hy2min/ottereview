@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.repo.dto;
 
+import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.repo.entity.Repo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,7 +20,7 @@ public class RepoResponse {
 
     private String githubOwnerUsername;
 
-    private Long installationId;
+    private Account account;
 
     private boolean isCushion;
 
@@ -30,7 +31,7 @@ public class RepoResponse {
                 .repoId(repo.getId())
                 .githubRepoName(repo.getGithubRepoName())
                 .githubOwnerUsername(repo.getGithubOwnerUsername())
-                .installationId(repo.getInstallationId())
+                .account(repo.getAccount())
                 .isCushion(repo.isCushion())
                 .isPrivate(repo.isPrivate())
                 .build();

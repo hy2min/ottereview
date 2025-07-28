@@ -5,8 +5,8 @@ import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
-import com.ssafy.ottereview.github.client.GithubApiClient;
-import com.ssafy.ottereview.github.dto.GithubAccountResponse;
+import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,14 +46,25 @@ public class AccountServiceImpl implements AccountService {
     }
     
     @Override
-    public void createAccount(GithubAccountResponse githubAccountResponse, User user) {
+    public Account createAccount(GithubAccountResponse githubAccountResponse) {
         Account account = Account.builder()
                 .installationId(githubAccountResponse.getInstallationId())
                 .type(githubAccountResponse.getType())
                 .name(githubAccountResponse.getName())
                 .build();
         
-        accountRepository.save(account);
+        return accountRepository.save(account);
+    }
+    
+    @Override
+    public void createUserAccount(User user, Account account) {
+        
+        UserAccount userAccount = UserAccount.builder()
+                .account(account)
+                .user(user)
+                .build();
+        
+        userAccountRepository.save(userAccount);
     }
     
     private AccountResponse convertToAccountResponse(Account account) {
