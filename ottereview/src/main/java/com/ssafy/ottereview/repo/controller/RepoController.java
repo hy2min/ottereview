@@ -8,6 +8,7 @@ import com.ssafy.ottereview.repo.service.RepoServiceImpl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.catalina.connector.Response;
 import org.springframework.http.ResponseEntity;
@@ -15,16 +16,23 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/repositories")
+@RequestMapping("/api/accounts/{account-id}/repositories")
 public class RepoController {
 
     private final RepoServiceImpl repoService;
+
+    @GetMapping()
+    public ResponseEntity<List<RepoResponse>> getRepoListByAccountId(@PathVariable (name = "account-id")Long accountId){
+            return ResponseEntity.ok(repoService.syncReposForAccount(accountId));
+    }
+
 
     /**
      * repoId를 가지고 Repo를 전달해주는 메소드 , methods: GET
      * @param repoId
      * @return RepoResponse
      */
+
     @GetMapping("/{repo-id}")
     public ResponseEntity<RepoResponse> getRepoById(@PathVariable (name= "repo-id")Long repoId){
         Optional<Repo> repo = repoService.getById(repoId);
