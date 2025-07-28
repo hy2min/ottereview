@@ -1,7 +1,8 @@
 package com.ssafy.ottereview.pullrequest.service;
 
-import com.ssafy.ottereview.github.client.GithubApiClient;
-import com.ssafy.ottereview.github.dto.GithubPrResponse;
+import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.pullrequest.dto.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -64,7 +65,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     public PullRequest convertToEntity(GithubPrResponse githubPrResponse) {
         
         User author = userRepository.save(new User(1L,"test@email.com", "www.test.com", "image", 100, "role"));
-        Repo repo = repoRepository.save(new Repo("kangboom/Algorithm", "Kang Boom", 1L, false, false));
+        Repo repo = repoRepository.save(new Repo("kangboom/Algorithm", "Kang Boom", new Account(), false, false));
         
         return PullRequest.builder()
                 .githubPrId(githubPrResponse.getGithubPrId())

@@ -47,6 +47,12 @@ github:
   app:
     app-id: ${GITHUB_APP_ID:}
     private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:github-app-private-key.der}
+    authentication-jwt-expm: ${GITHUB_APP_AUTHENTICATION_JWT_ACCESS_EXPMIN:60}  # 분 단위
+    oauth:
+      client-id: ${GITHUB_APP_CLIENT_ID}      # Client ID (General 탭)
+      client-secret: ${GITHUB_APP_CLIENT_SECRET}        # Client secret (General 탭)
+      redirect-uri: ${GITHUB_APP_OAUTH_REDIRECT_URI:http://localhost:8080/github-app/installation/callback}  # OAuth2 리다이렉트 URI
+
   oauth:
     client-id: ${GITHUB_OAUTH_CLIENT_ID}
     client-secret: ${GITHUB_OAUTH_CLIENT_SECRET}

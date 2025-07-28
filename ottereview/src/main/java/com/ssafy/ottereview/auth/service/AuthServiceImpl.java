@@ -68,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
         return userRepository.save(user);
     }
 
-    private GithubUserDto requestGithubUser(String githubAccessToken) {
+    public GithubUserDto requestGithubUser(String githubAccessToken) {
         String url = "https://api.github.com/user";
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(githubAccessToken);
