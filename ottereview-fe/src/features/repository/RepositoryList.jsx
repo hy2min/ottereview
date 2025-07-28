@@ -17,7 +17,7 @@ const RepositoryList = () => {
   }, [])
 
   const handleRepoClick = (repoId) => {
-    navigate(`/repo/${repoId}`)
+    navigate(`/${repoId}`)
   }
 
   return (

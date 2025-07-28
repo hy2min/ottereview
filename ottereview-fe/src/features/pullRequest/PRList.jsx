@@ -45,7 +45,7 @@ const PRList = () => {
 
       <div className="space-y-2">
         {filteredPRs.map((pr) => (
-          <PRCard key={pr.id} pr={pr} />
+          <PRCard key={pr.id} pr={pr} context="dashboard" />
         ))}
       </div>
     </section>

@@ -29,7 +29,7 @@ const RepositoryDetail = () => {
 
       {/* PR 목록 */}
       <div className="space-y-4 py-4">
-        {prs.length === 0 ? <p>PR이 없습니다.</p> : prs.map((pr) => <PRCard key={pr.id} pr={pr} />)}
+        {prs.length === 0 ? <p>PR이 없습니다.</p> : prs.map((pr) => <PRCard key={pr.id} pr={pr} context="repositoryDetail"/>)}
       </div>
     </div>
   )
