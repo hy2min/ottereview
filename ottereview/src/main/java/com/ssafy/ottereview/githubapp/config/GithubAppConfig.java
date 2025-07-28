@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.github.config;
+package com.ssafy.ottereview.githubapp.config;
 
 import java.io.IOException;
 import lombok.Getter;

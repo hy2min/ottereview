@@ -48,7 +48,7 @@ public class RepoServiceImpl implements RepoService{
                 .orElseThrow(() -> new IllegalArgumentException("Not Found"));
 
         // 변경내용 repo에 바꿔서 넣기
-        repo.enrollInstallationId(repoUpdateRequest.getInstallationId());
+        repo.enrollAccount(repoUpdateRequest.getAccount());
         repo.changeOpenType(repoUpdateRequest.isPrivate());
         repo.cushionToggle(repoUpdateRequest.isCushion());
 
