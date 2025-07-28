@@ -14,3 +14,9 @@ export const fetchPR = async () => {
     },
   ]
 }
+
+export const submitPR = async (prData) => {
+  console.log('[MOCK POST]', prData)
+
+  return { success: true }
+}

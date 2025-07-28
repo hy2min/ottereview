@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import PRCreate from '../features/pullRequest/PRCreate'
 import Dashboard from '../pages/Dashboard'
 import Landing from '../pages/Landing'
+import PRCreate from '../pages/PRCreate'
 // import { useUserStore } from './store/userStore' // 로그인 상태 저장소
 // 기타 필요한 페이지 import
 
