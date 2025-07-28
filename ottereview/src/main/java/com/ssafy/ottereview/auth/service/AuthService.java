@@ -1,14 +1,13 @@
 package com.ssafy.ottereview.auth.service;
 
+import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
-import com.ssafy.ottereview.auth.jwt.dto.AccessTokenResponseDto;
 
 public interface AuthService {
+    LoginResponseDto githubLogin(String code);
 
-    AccessTokenResponseDto githubLogin(String code);
-
-    AccessTokenResponseDto refreshAccessToken(String refreshToken);
+    LoginResponseDto refreshAccessToken(String refreshToken);
 
     void logout(Long userId);
 

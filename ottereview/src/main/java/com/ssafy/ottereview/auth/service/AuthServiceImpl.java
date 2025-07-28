@@ -2,6 +2,7 @@ package com.ssafy.ottereview.auth.service;
 
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
 import com.ssafy.ottereview.auth.jwt.dto.AccessTokenResponseDto;
+import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 import com.ssafy.ottereview.auth.jwt.service.TokenService;
 import com.ssafy.ottereview.auth.jwt.util.JwtUtil;
 import com.ssafy.ottereview.user.entity.User;
@@ -40,7 +41,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional
-    public AccessTokenResponseDto githubLogin(String code) {
+    public LoginResponseDto githubLogin(String code) {
         // GitHub Access Token 요청
         String githubAccessToken = requestGithubAccessToken(code);
         // GitHub 사용자 정보 요청
@@ -52,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtUtil.createAccessToken(user);
         String refreshToken = jwtUtil.createRefreshToken(user);
         tokenService.saveRefreshToken(user.getId(), refreshToken);
-        return new AccessTokenResponseDto(accessToken, refreshToken);
+        return new LoginResponseDto(accessToken, refreshToken);
     }
 
     private User registerUser(GithubUserDto githubUser) {
@@ -78,7 +79,8 @@ public class AuthServiceImpl implements AuthService {
                         url,
                         HttpMethod.GET,
                         entity,
-                        new ParameterizedTypeReference<>() {}
+                        new ParameterizedTypeReference<>() {
+                        }
                 );
         Map<String, Object> response = responseEntity.getBody();
         String login = (String) response.get("login");
@@ -143,7 +145,8 @@ public class AuthServiceImpl implements AuthService {
                         url,
                         HttpMethod.POST,
                         request,
-                        new ParameterizedTypeReference<>() {}
+                        new ParameterizedTypeReference<>() {
+                        }
                 );
 
         Map<String, Object> response = responseEntity.getBody();
@@ -152,7 +155,7 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     @Transactional(readOnly = true)
-    public AccessTokenResponseDto refreshAccessToken(String refreshToken) {
+    public LoginResponseDto refreshAccessToken(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
             throw new RuntimeException("Invalid refresh token");
         }
@@ -165,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         String newAccessToken = jwtUtil.createAccessToken(user);
-        return new AccessTokenResponseDto(newAccessToken, refreshToken);
+        return new LoginResponseDto(newAccessToken, refreshToken);
     }
 
     public void logout(Long userId) {
