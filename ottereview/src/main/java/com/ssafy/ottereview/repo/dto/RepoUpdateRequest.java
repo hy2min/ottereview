@@ -7,6 +7,7 @@ import lombok.Getter;
 @Builder
 @Getter
 public class RepoUpdateRequest {
+    private Long id;
 
     private Long repoId;
 
