@@ -20,7 +20,7 @@ public class RepoResponse {
 
     private String fullName;
 
-    private Account account;
+    private Long accountId;
 
     private boolean isCushion;
 
@@ -31,7 +31,7 @@ public class RepoResponse {
                 .id(repo.getId())
                 .repoId(repo.getId())
                 .fullName(repo.getFullName())
-                .account(repo.getAccount())
+                .accountId(repo.getAccount().getId())
                 .isCushion(repo.isCushion())
                 .isPrivate(repo.isPrivate())
                 .build();

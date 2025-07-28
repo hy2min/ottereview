@@ -9,9 +9,9 @@ import org.kohsuke.github.GHRepository;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GithubRepoResponse {
-    private String repoName;
+    private Long repoId;
 
     public static GithubRepoResponse from(GHRepository gHRepository) {
-        return new GithubRepoResponse(gHRepository.getFullName());
+        return new GithubRepoResponse(gHRepository.getId());
     }
 }
