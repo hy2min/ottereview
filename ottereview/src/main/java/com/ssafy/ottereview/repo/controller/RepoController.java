@@ -22,7 +22,7 @@ public class RepoController {
 
     /**
      * repoId를 가지고 Repo를 전달해주는 메소드 , methods: GET
-     * @param repo-id
+     * @param repoId
      * @return RepoResponse
      */
     @GetMapping("/{repo-id}")
@@ -83,7 +83,7 @@ public class RepoController {
         // isCushion 값 false -> true || true -> false로 변환
         repo.cushionToggle(!repo.isCushion());
         // 바뀐값을 db에 반영하기 위해서 repoUpdateRequest 객체를 생성후 updateRepo 메소드 호출
-        RepoUpdateRequest repoUpdateRequest = RepoUpdateRequest.builder().repoId(repo.getId()).installationId(repo.getInstallationId()).isCushion(repo.isCushion()).isPrivate(repo.isPrivate()).build();
+        RepoUpdateRequest repoUpdateRequest = RepoUpdateRequest.builder().repoId(repo.getId()).isCushion(repo.isCushion()).isPrivate(repo.isPrivate()).build();
         repoService.updateRepo(repoUpdateRequest);
         return ResponseEntity.ok(repoUpdateRequest);
     }
