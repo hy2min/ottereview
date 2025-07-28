@@ -1,9 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
-import PRCreateStep1 from './PRCreateStep1'
-import PRCreateStep2 from './PRCreateStep2'
-import PRCreateStep3 from './PRCreateStep3'
-import PRCreateStep4 from './PRCreateStep4'
+import PRCreateStep1 from '../../features/pullRequest/PRCreateStep1'
+import PRCreateStep2 from '../../features/pullRequest/PRCreateStep2'
+import PRCreateStep3 from '../../features/pullRequest/PRCreateStep3'
+import PRCreateStep4 from '../../features/pullRequest/PRCreateStep4'
 
 const PRCreate = () => {
   return (
