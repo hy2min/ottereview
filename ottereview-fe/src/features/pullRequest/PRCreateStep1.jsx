@@ -47,7 +47,7 @@ const PRCreateStep1 = ({ goToStep }) => {
 
       {/* 이동 버튼 */}
       <div className="flex justify-between">
-        <button className="border px-4 py-1" onClick={() => navigate('/dashboard')}>
+        <button className="border px-4 py-1" onClick={() => navigate(-1)}>
           이전
         </button>
         <button className="border px-4 py-1" onClick={() => goToStep(2)}>
