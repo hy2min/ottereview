@@ -1,9 +1,9 @@
-package com.ssafy.ottereview.github.client;
+package com.ssafy.ottereview.githubapp.client;
 
-import com.ssafy.ottereview.github.dto.GithubAccountResponse;
-import com.ssafy.ottereview.github.dto.GithubPrResponse;
-import com.ssafy.ottereview.github.dto.GithubRepoResponse;
-import com.ssafy.ottereview.github.util.GithubAppUtil;
+import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
+import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.githubapp.dto.GithubRepoResponse;
+import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;

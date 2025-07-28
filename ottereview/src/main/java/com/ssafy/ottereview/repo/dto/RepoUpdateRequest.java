@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.repo.dto;
 
 import lombok.Builder;
+import com.ssafy.ottereview.account.entity.Account;
 import lombok.Getter;
 
 @Builder
@@ -9,7 +10,7 @@ public class RepoUpdateRequest {
 
     private Long repoId;
 
-    private Long installationId;
+    private Account account;
 
     private boolean isCushion;
 

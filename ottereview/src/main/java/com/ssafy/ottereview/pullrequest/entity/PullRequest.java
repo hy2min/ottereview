@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 public class PullRequest extends BaseEntity {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
     @ManyToOne(fetch = FetchType.LAZY)

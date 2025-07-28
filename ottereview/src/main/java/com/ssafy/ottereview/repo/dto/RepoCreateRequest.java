@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.repo.dto;
 
+import com.ssafy.ottereview.account.entity.Account;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
@@ -13,8 +14,8 @@ public class RepoCreateRequest {
     private String githubOwnerUsername;
 
     private boolean isPrivate;
-
-    private long installationId;
+    
+    private Account account;
 
     @Override
     public boolean equals(Object o){
