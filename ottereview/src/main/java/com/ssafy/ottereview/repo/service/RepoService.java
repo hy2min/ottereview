@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RepoService {
+
+    List<RepoResponse> syncReposForAccount(Long accountId);
+
     /***
      * repoId를 가지고 Repo 객체를 가져오는 메서드
      * 매개변수 : id , type : Long
