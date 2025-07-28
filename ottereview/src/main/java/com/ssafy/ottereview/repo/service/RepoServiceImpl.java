@@ -1,16 +1,31 @@
 package com.ssafy.ottereview.repo.service;
 
+import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.account.repository.AccountRepository;
+import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.githubapp.dto.GithubRepoResponse;
+import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.userreporelation.entity.UserRepoRelation;
 import com.ssafy.ottereview.userreporelation.repository.UserRepoRelationRepository;
+import jakarta.persistence.EntityNotFoundException;
+import java.io.IOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.PagedIterable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +34,63 @@ import org.springframework.transaction.annotation.Transactional;
 public class RepoServiceImpl implements RepoService{
     private final UserRepoRelationRepository userRepoRelationRepository;
     private final RepoRepository repoRepository;
+    private final AccountRepository accountRepository;
+    private final GithubAppUtil githubAppUtil;
 
+    @Transactional
+    @Override
+    public List<RepoResponse> syncReposForAccount(Long accountId) {
+        try {
+            // account 객체도 생성 (추후에 저장하기 위한 repo 객체를 만들기 위해서)
+            Account account = accountRepository.getReferenceById(accountId);
+            // accountId를 통해서 InstallationId를 뽑아서 그걸로 githubRepoResponse를 반환한다.
+            Long installationId = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new EntityNotFoundException("Account not found"))
+                    .getInstallationId();
+
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            List<GHRepository> repositories = github.getInstallation()
+                    .listRepositories()
+                    .toList();
+
+            Map<Long, GHRepository> repoMap = repositories.stream()
+                    .collect(Collectors.toMap(
+                            GHRepository::getId,      // 키: GitHub이 부여한 고유 ID
+                            Function.identity()       // 값: GHRepository 객체 자체
+                    ));
+            Set<Long> remoteSet = repoMap.keySet();
+
+            // accountId를 가지고 repoId List 가져오기
+            List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(accountId);
+            Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
+
+            List<Repo> toCreate = remoteSet.stream()
+                    .filter(id -> !dbRepoSet.contains(id))
+                    .map(id -> {
+                        GHRepository gh = repoMap.get(id);
+                        return Repo.builder()
+                                .repoId(id)
+                                .fullName(gh.getFullName())
+                                .isPrivate(gh.isPrivate())
+                                .account(account)
+                                .build();
+                    }).toList();
+            List<Long> toDelete = dbRepoSet.stream().filter(id -> !remoteSet.contains(id)).toList();
+            if(!toCreate.isEmpty()){
+               repoRepository.saveAll(toCreate);
+            }
+            if (!toDelete.isEmpty()) {
+                repoRepository.deleteByAccount_IdAndRepoIdIn(accountId, toDelete);
+            }
+
+        }catch(IOException i){
+            i.printStackTrace();
+        }
+
+        return repoRepository.findAllByAccount_Id(accountId).stream()
+                .map(RepoResponse::of)
+                .toList();
+    }
 
     @Override
     public Optional<Repo> getById(Long id) {
