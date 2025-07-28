@@ -12,10 +12,14 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "axios": "^1.11.0",
+    "fabric": "^6.7.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
+    "sockjs": "^0.3.24",
+    "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.11",
+    "uuid": "^11.1.0",
     "zustand": "^5.0.6"
   },
   "devDependencies": {

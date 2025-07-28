@@ -1,33 +1,34 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+// import { Navigate, Route, Routes } from 'react-router-dom'
 
-import DashboardPage from './pages/DashboardPage'
-import LandingPage from './pages/LandingPage'
-import { useUserStore } from './store/userStore' // 로그인 상태 저장소
+import Whiteboard from '../features/chat/Whiteboard'
+
+// import DashboardPage from '../pages/Dashbord'
+// import LandingPage from '../pages/LandingPage'
+// import { useUserStore } from '../store/userStore' // 로그인 상태 저장소
 // 기타 필요한 페이지 import
 
 const App = () => {
-  const isLoggedIn = useUserStore((state) => state.isLoggedIn)
-
-  return (
-    <Routes>
-      {!isLoggedIn ? (
-        // 로그인 전: 랜딩페이지만 허용
-        <>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </>
-      ) : (
-        // 로그인 후: 대시보드 중심으로 라우팅
-        <>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          {/* 다른 라우트들 추가 */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </>
-      )}
-    </Routes>
-  )
+  //   const isLoggedIn = useUserStore((state) => state.isLoggedIn)
+  //   return (
+  //     <Routes>
+  //       {!isLoggedIn ? (
+  //         // 로그인 전: 랜딩페이지만 허용
+  //         <>
+  //           <Route path="/" element={<LandingPage />} />
+  //           <Route path="*" element={<Navigate to="/" replace />} />
+  //         </>
+  //       ) : (
+  //         // 로그인 후: 대시보드 중심으로 라우팅
+  //         <>
+  //           <Route path="/dashboard" element={<DashboardPage />} />
+  //           {/* 다른 라우트들 추가 */}
+  //           <Route path="*" element={<Navigate to="/dashboard" replace />} />
+  //         </>
+  //       )}
+  //     </Routes>
+  //   )
+  return <Whiteboard />
 }
-
 export default App
 
 // import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
