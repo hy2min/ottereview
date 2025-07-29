@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 
+import FormSectionBox from '../../components/FormSectionBox'
+import NavigationButton from '../../components/NavigationButton'
+
 const PRCreateStep1 = ({ goToStep }) => {
   const navigate = useNavigate()
   return (
     <div className="space-y-4">
-      <div className="p-4 border">
-        <h2 className="text-xl font-bold mb-4">PR 생성 1</h2>
-
+      <FormSectionBox title={`PR 생성 1`}>
         <div className="space-y-2">
           {/* 컨벤션 선택 드롭다운 1 */}
           <div>
@@ -43,17 +44,10 @@ const PRCreateStep1 = ({ goToStep }) => {
             <button className="border px-4 py-1">컨벤션 체크</button>
           </div>
         </div>
-      </div>
+      </FormSectionBox>
 
       {/* 이동 버튼 */}
-      <div className="flex justify-between">
-        <button className="border px-4 py-1" onClick={() => navigate(-1)}>
-          이전
-        </button>
-        <button className="border px-4 py-1" onClick={() => goToStep(2)}>
-          다음
-        </button>
-      </div>
+      <NavigationButton onPrev={() => navigate('/dashboard')} onNext={() => goToStep(2)} />
     </div>
   )
 }

@@ -1,3 +1,6 @@
+import FormField from '../../components/FormField'
+import FormSectionBox from '../../components/FormSectionBox'
+import NavigationButton from '../../components/NavigationButton'
 import { usePRCreateStore } from './prCreateStore'
 
 const PRCreateStep2 = ({ goToStep }) => {
@@ -5,34 +8,26 @@ const PRCreateStep2 = ({ goToStep }) => {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 border">
-        <h2 className="text-xl font-bold mb-4">PR 생성 2</h2>
-
+      <FormSectionBox title={`PR 생성 2`}>
         <div className="space-y-2">
-          {/* PR 제목 */}
-          <div>
-            <label>PR 제목</label>
+          <FormField label="PR 제목">
             <input
               className="w-full border px-2 py-1"
               type="text"
               value={formData.title || ''}
               onChange={(e) => setFormData({ title: e.target.value })}
             />
-          </div>
+          </FormField>
 
-          {/* PR 설명 */}
-          <div>
-            <label>PR 설명</label>
+          <FormField label="PR 설명">
             <textarea
               className="w-full border px-2 py-1 resize-none"
               value={formData.description || ''}
               onChange={(e) => setFormData({ description: e.target.value })}
             />
-          </div>
+          </FormField>
 
-          {/* 타겟 브랜치 선택 */}
-          <div>
-            <label>타겟 브랜치</label>
+          <FormField label="타겟 브랜치">
             <select
               className="w-full border px-2 py-1"
               value={formData.targetBranch || ''}
@@ -42,21 +37,13 @@ const PRCreateStep2 = ({ goToStep }) => {
               <option value="main">main</option>
               <option value="develop">develop</option>
             </select>
-          </div>
+          </FormField>
         </div>
-      </div>
-      {/* 파일별 코드 미리보기 박스 */}
+      </FormSectionBox>
+
       <div className="bg-white border p-4 mt-4">파일별 코드 미리보기 박스 (mock)</div>
 
-      {/* 이동 버튼 */}
-      <div className="flex justify-between mt-4">
-        <button className="border px-4 py-1" onClick={() => goToStep(1)}>
-          이전
-        </button>
-        <button className="border px-4 py-1" onClick={() => goToStep(3)}>
-          다음
-        </button>
-      </div>
+      <NavigationButton onPrev={() => goToStep(1)} onNext={() => goToStep(3)} />
     </div>
   )
 }
