@@ -30,7 +30,7 @@ const App = () => {
           <Route path="/:repoId/pr/:prId/review" element={<PRreview />} />
           <Route path="/:repoId/pr/:prId/conflict" element={<Conflict />} />
           <Route path="/chatroom/:roomId" element={<ChatRoom />} />
-          <Route path="/pr/create/*" element={<PRCreate />} />
+          <Route path="/:repoId/pr/create/*" element={<PRCreate />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>
       )}
