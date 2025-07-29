@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.juli.logging.Log;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
@@ -31,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RepoServiceImpl implements RepoService{
     private final UserRepoRelationRepository userRepoRelationRepository;
     private final RepoRepository repoRepository;
@@ -40,52 +43,14 @@ public class RepoServiceImpl implements RepoService{
     @Transactional
     @Override
     public List<RepoResponse> syncReposForAccount(Long accountId) {
-        try {
             // account 객체도 생성 (추후에 저장하기 위한 repo 객체를 만들기 위해서)
             Account account = accountRepository.getReferenceById(accountId);
             // accountId를 통해서 InstallationId를 뽑아서 그걸로 githubRepoResponse를 반환한다.
             Long installationId = accountRepository.findById(accountId)
                     .orElseThrow(() -> new EntityNotFoundException("Account not found"))
                     .getInstallationId();
-
-            GitHub github = githubAppUtil.getGitHub(installationId);
-            List<GHRepository> repositories = github.getInstallation()
-                    .listRepositories()
-                    .toList();
-
-            Map<Long, GHRepository> repoMap = repositories.stream()
-                    .collect(Collectors.toMap(
-                            GHRepository::getId,      // 키: GitHub이 부여한 고유 ID
-                            Function.identity()       // 값: GHRepository 객체 자체
-                    ));
-            Set<Long> remoteSet = repoMap.keySet();
-
-            // accountId를 가지고 repoId List 가져오기
-            List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(accountId);
-            Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
-
-            List<Repo> toCreate = remoteSet.stream()
-                    .filter(id -> !dbRepoSet.contains(id))
-                    .map(id -> {
-                        GHRepository gh = repoMap.get(id);
-                        return Repo.builder()
-                                .repoId(id)
-                                .fullName(gh.getFullName())
-                                .isPrivate(gh.isPrivate())
-                                .account(account)
-                                .build();
-                    }).toList();
-            List<Long> toDelete = dbRepoSet.stream().filter(id -> !remoteSet.contains(id)).toList();
-            if(!toCreate.isEmpty()){
-               repoRepository.saveAll(toCreate);
-            }
-            if (!toDelete.isEmpty()) {
-                repoRepository.deleteByAccount_IdAndRepoIdIn(accountId, toDelete);
-            }
-
-        }catch(IOException i){
-            i.printStackTrace();
-        }
+            // 동기화 작업 해주는 로직
+            processSyncRepo(account, installationId);
 
         return repoRepository.findAllByAccount_Id(accountId).stream()
                 .map(RepoResponse::of)
@@ -141,6 +106,61 @@ public class RepoServiceImpl implements RepoService{
                 .map(UserRepoRelation::getRepo)          // 이 시점엔 세션 열려 있음
                 .map(RepoResponse::of)                  // DTO 변환도 여기서!
                 .collect(Collectors.toList());
+
+    }
+    @Transactional
+    @Override
+    public void processSyncRepo(Account account, Long installationId) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            List<GHRepository> repositories = github.getInstallation()
+                    .listRepositories()
+                    .toList();
+
+            // log 확인용
+            for (GHRepository repo : repositories) {
+                log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                        repo.getId(), repo.getFullName(), repo.isPrivate());
+            }
+
+            Map<Long, GHRepository> repoMap = repositories.stream()
+                    .collect(Collectors.toMap(
+                            GHRepository::getId,      // 키: GitHub이 부여한 고유 ID
+                            Function.identity()       // 값: GHRepository 객체 자체
+                    ));
+            Set<Long> remoteSet = repoMap.keySet();
+
+            // accountId를 가지고 repoId List 가져오기
+            List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
+            Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
+
+            List<Repo> toCreate = remoteSet.stream()
+                    .filter(id -> !dbRepoSet.contains(id))
+                    .map(id -> {
+                        GHRepository gh = repoMap.get(id);
+                        return Repo.builder()
+                                .repoId(id)
+                                .fullName(gh.getFullName())
+                                .isPrivate(gh.isPrivate())
+                                .account(account)
+                                .build();
+                    }).toList();
+            // log 확인용
+            for (Repo repo : toCreate) {
+                log.info("repo에 넣을 create값 출력");
+                log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                        repo.getRepoId(), repo.getFullName(), repo.isPrivate());
+            }
+            List<Long> toDelete = dbRepoSet.stream().filter(id -> !remoteSet.contains(id)).toList();
+            if (!toCreate.isEmpty()) {
+                repoRepository.saveAll(toCreate);
+            }
+            if (!toDelete.isEmpty()) {
+                repoRepository.deleteByAccount_IdAndRepoIdIn(account.getId(), toDelete);
+            }
+        }catch(IOException e){
+            e.printStackTrace();
+        }
 
     }
 }

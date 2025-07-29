@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.repo.service;
 
+import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
@@ -45,4 +46,6 @@ public interface RepoService {
      * UserId를 가지고 User가 가지고 있는 모든 레포지토리를 가져온다.
      */
     public List<RepoResponse> getReposByUserId(Long userId);
+
+    public void processSyncRepo(Account account, Long installationId);
 }

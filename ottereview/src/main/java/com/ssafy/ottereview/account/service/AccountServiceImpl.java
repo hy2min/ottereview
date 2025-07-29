@@ -66,7 +66,12 @@ public class AccountServiceImpl implements AccountService {
         
         userAccountRepository.save(userAccount);
     }
-    
+
+    @Override
+    public Account getAccountByInstallationId(Long installationId) {
+       return accountRepository.findByInstallationId(installationId);
+    }
+
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),
