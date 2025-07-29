@@ -4,6 +4,8 @@ import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubRepoResponse;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
+import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
+import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.List;
@@ -15,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHPullRequestCommitDetail;
+import org.kohsuke.github.GHPullRequestFileDetail;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
@@ -110,6 +114,80 @@ public class GithubApiClient {
             e.printStackTrace();
             // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
             throw new RuntimeException("PR 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
+
+    public List<PullRequestFileDetail> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+
+            GHRepository repo = github.getRepository(repositoryName);
+
+            GHPullRequest pullRequest = repo.getPullRequest(githubPrNumber);
+
+            PagedIterable<GHPullRequestFileDetail> files = pullRequest.listFiles();
+
+            return StreamSupport
+                    .stream(files.spliterator(), false)
+                    .map(file -> {
+                        try {
+                            return PullRequestFileDetail.from(file);
+                        } catch (Exception e) {
+                            log.error("Error converting file detail to DTO: {}", e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
+            throw new RuntimeException("PR 파일 변화 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Pull Request의 모든 커밋을 가져오는 메서드
+     *
+     * @param installationId GitHub App 설치 ID
+     * @param repositoryName 저장소 전체 이름 (예: "owner/repo")
+     * @param prNumber       Pull Request 번호
+     * @return Pull Request 커밋 정보 리스트
+     */
+    public List<PullRequestCommitDetail> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+
+            GHRepository repo = github.getRepository(repositoryName);
+
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+
+            PagedIterable<GHPullRequestCommitDetail> commits = pullRequest.listCommits();
+
+            return StreamSupport
+                    .stream(commits.spliterator(), false)
+                    .map(commit -> {
+                        try {
+                            return PullRequestCommitDetail.from(commit);
+                        } catch (Exception e) {
+                            log.error("Error converting commit to DTO: {}", e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull) // null 제거
+                    .collect(Collectors.toList());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
+            throw new RuntimeException("PR 커밋 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
