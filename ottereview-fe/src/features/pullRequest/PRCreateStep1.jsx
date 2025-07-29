@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import FormSectionBox from '../../components/FormSectionBox'
-import NavigationButton from '../../components/NavigationButton'
+import NavigationButton from '../../components/Buttons/NavigationButton'
 
 const PRCreateStep1 = ({ goToStep }) => {
   const navigate = useNavigate()

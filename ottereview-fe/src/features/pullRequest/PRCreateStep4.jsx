@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import FormSectionBox from '../../components/FormSectionBox'
-import NavigationButton from '../../components/NavigationButton'
+import NavigationButton from '../../components/Buttons/NavigationButton'
 import { submitPR } from './prApi'
 import { usePRCreateStore } from './prCreateStore'
 

@@ -1,5 +1,5 @@
+import NavigationButton from '../../components/Buttons/NavigationButton'
 import FormSectionBox from '../../components/FormSectionBox'
-import NavigationButton from '../../components/NavigationButton'
 import { usePRCreateStore } from './prCreateStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']

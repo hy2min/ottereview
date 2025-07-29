@@ -7,12 +7,10 @@ import Landing from '../pages/Landing'
 import PRCreate from '../pages/PRCreate'
 import PRreview from '../pages/PRReview'
 import RepositoryDetail from '../pages/RepositoryDetail'
-// import { useUserStore } from './store/userStore' // 로그인 상태 저장소
-// 기타 필요한 페이지 import
+import { useUserStore } from '../store/userStore'
 
 const App = () => {
-  // const isLoggedIn = useUserStore((state) => state.isLoggedIn)
-  const isLoggedIn = true
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn)
 
   return (
     <Routes>
