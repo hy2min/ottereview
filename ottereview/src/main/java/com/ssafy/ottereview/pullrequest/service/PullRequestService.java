@@ -2,6 +2,7 @@ package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.pullrequest.dto.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.PullRequestResponse;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.util.List;
 
 public interface PullRequestService {
@@ -11,7 +12,7 @@ public interface PullRequestService {
      * @param repositoryId 레포지토리 ID
      * @return 레포지토리 ID에 해당하는 모든 Pull Request의 리스트
      */
-    List<PullRequestResponse> getPullRequestsByRepositoryId(Long repositoryId);
+    List<PullRequestResponse> getPullRequestsByRepositoryId(CustomUserDetail customUserDetail, Long repositoryId);
 
     /**
      * 레포지토리 ID에 해당하는 Pull Request의 상세 정보를 조회합니다.

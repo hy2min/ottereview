@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PullRequestRepository extends JpaRepository<PullRequest, Long> {
 
-    List<PullRequest> findByRepo(Repo repo);
+    List<PullRequest> findAllByRepo(Repo repo);
 
 }
