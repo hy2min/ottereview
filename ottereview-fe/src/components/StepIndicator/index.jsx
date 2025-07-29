@@ -4,7 +4,7 @@ const StepIndicator = ({ currentStep = 1 }) => {
   const progressPercent = (currentStep / steps.length) * 100
 
   return (
-    <div className="mb-6 space-y-2">
+    <div className="mb-6 space-y-4">
       {/* 텍스트 인디케이터 */}
       <div className="flex justify-between text-sm">
         {steps.map((label, index) => {

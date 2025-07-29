@@ -25,7 +25,7 @@ const PRCreateStep3 = ({ goToStep }) => {
         <div className="space-y-2">
           <div className="flex gap-8">
             <div className="w-1/2 border p-4">
-              <h3 className="font-bold mb-2">리뷰어 목록</h3>
+              <h3 className="mb-2">리뷰어 목록</h3>
               {mockReviewers
                 .filter((name) => !formData.reviewers.includes(name))
                 .map((name) => (
@@ -43,7 +43,7 @@ const PRCreateStep3 = ({ goToStep }) => {
             </div>
 
             <div className="w-1/2 border p-4">
-              <h3 className="font-bold mb-2">선택된 리뷰어</h3>
+              <h3 className="mb-2">선택된 리뷰어</h3>
               {formData.reviewers.map((name) => (
                 <div key={name} className="flex justify-between mb-1">
                   <span>{name}</span>

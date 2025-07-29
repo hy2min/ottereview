@@ -8,7 +8,7 @@ const ChatRoomDetail = ({ roomId }) => {
   return (
     <div className="space-y-4">
       <div className="border p-4 rounded">
-        <h2 className="font-semibold mb-2">참여자</h2>
+        <h2 className=" mb-2">참여자</h2>
         <ul className="list-disc list-inside text-sm">
           {room.members.map((name) => (
             <li key={name}>{name}</li>
@@ -17,7 +17,7 @@ const ChatRoomDetail = ({ roomId }) => {
       </div>
 
       <div className="border p-4 rounded">
-        <h2 className="font-semibold mb-2">충돌 파일</h2>
+        <h2 className=" mb-2">충돌 파일</h2>
         <ul className="list-disc list-inside text-sm">
           {room.conflictFiles.map((file) => (
             <li key={file}>{file}</li>
