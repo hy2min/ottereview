@@ -16,5 +16,6 @@ public interface AccountService {
     Account createAccount(GithubAccountResponse githubAccountResponse);
     
     void createUserAccount(User user, Account account);
-    
+
+    Account getAccountByInstallationId(Long installationId);
 }

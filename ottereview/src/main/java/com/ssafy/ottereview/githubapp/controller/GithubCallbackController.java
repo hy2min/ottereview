@@ -42,7 +42,10 @@ public class GithubCallbackController {
                 log.debug("install 로직 실행");
                 githubInstallationFacade.processInstallationWithOAuth(installationId, code);
             }
-            
+            else{
+                log.debug(setupAction);
+                githubInstallationFacade.processUpdatewithOAuth(installationId);
+            }
             // 🎯 리디렉션할 프론트엔드 URI
             log.debug("리다이렉트 URL 생성");
             URI redirectUri = URI.create("http://localhost:8080/"); // 또는 환경 변수로 관리
