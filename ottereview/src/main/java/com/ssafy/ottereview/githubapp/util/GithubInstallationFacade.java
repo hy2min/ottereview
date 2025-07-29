@@ -14,12 +14,7 @@ import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
@@ -42,8 +37,7 @@ public class GithubInstallationFacade {
     private final RepoRepository repoRepository;
     private final RepoService repoService;
 
-    public void
-    processInstallationWithOAuth(Long installationId, String code) {
+    public void processInstallationWithOAuth(Long installationId, String code) {
 
         // code -> github app oauth AccessToken 가져오기
         String accessToken = githubAppUtil.requestGithubAccessToken(code);
@@ -88,18 +82,20 @@ public class GithubInstallationFacade {
                                 .isPrivate(r.isPrivate())
                                 .account(newAccount)
                                 .build();
-                    } ).toList();
-            if(!toCreate.isEmpty()){
+                    })
+                    .toList();
+            if (!toCreate.isEmpty()) {
                 repoRepository.saveAll(toCreate);
             }
             log.info("save 성공");
-        }catch(IOException e){
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     // process update 로직 추가
-    public void processUpdatewithOAuth(Long installationId){
-            Account account = accountService.getAccountByInstallationId(installationId);
-            repoService.processSyncRepo(account,installationId);
+    public void processUpdatewithOAuth(Long installationId) {
+        Account account = accountService.getAccountByInstallationId(installationId);
+        repoService.processSyncRepo(account, installationId);
     }
 }
