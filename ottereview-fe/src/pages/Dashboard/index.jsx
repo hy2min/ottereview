@@ -6,8 +6,6 @@ const Dashboard = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">대시보드</h1>
-
         <div className="flex justify-end items-center">
           <ChatRoomList />
         </div>

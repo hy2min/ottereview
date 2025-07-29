@@ -1,17 +1,6 @@
-import { useMemo } from 'react'
-import { useLocation } from 'react-router-dom'
-
 const steps = ['컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
-const StepIndicator = () => {
-  const location = useLocation()
-
-  const currentStep = useMemo(() => {
-    const raw = location.pathname.split('/').pop()
-    const parsed = parseInt(raw)
-    return Number.isInteger(parsed) ? parsed : 1
-  }, [location.pathname])
-
+const StepIndicator = ({ currentStep = 1 }) => {
   const progressPercent = (currentStep / steps.length) * 100
 
   return (

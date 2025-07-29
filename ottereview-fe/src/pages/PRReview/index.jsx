@@ -1,20 +1,8 @@
-import { useNavigate } from 'react-router-dom'
-
 const PRReview = () => {
-  const navigate = useNavigate()
-
   return (
     <div className="p-6 space-y-6">
       {/* 헤더 영역 */}
       <div className="flex items-start justify-between">
-        {/* 왼쪽: 뒤로가기 + 제목 */}
-        <div className="flex items-center gap-4">
-          <button className="border px-4 py-1" onClick={() => navigate(-1)}>
-            ← 뒤로가기
-          </button>
-          <h1 className="text-2xl font-bold">사용자 인증 시스템 구현</h1>
-        </div>
-
         {/* 오른쪽: 승인 진행률 + 머지 버튼 */}
         <div className="flex items-center gap-4">
           <div className="w-40 border p-2">
