@@ -85,19 +85,14 @@ public class GithubApiClient {
 
     public List<GithubPrResponse> getPullRequests(Long installationId, String repositoryName) {
         try {
-            // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
             GitHub github = githubAppUtil.getGitHub(installationId);
 
-            // 해당 설치가 접근할 수 있는 저장소 목록을 가져옵니다.
-            // .listInstallationRepositories()는 모든 접근 가능한 저장소를 반환합니다.
             GHRepository repo = github.getRepository(repositoryName);
-            log.info("Repository: {}", repo.getFullName());
 
             PagedIterable<GHPullRequest> pullRequests = repo.queryPullRequests()
                     .state(GHIssueState.OPEN) // GHIssueState.CLOSED, .ALL 등도 사용 가능
                     .list();
 
-            // 저장소 이름을 문자열 리스트로 변환하여 반환
             return StreamSupport
                     .stream(pullRequests.spliterator(), false)
                     .map(pr -> {
@@ -105,7 +100,6 @@ public class GithubApiClient {
                             return GithubPrResponse.from(pr);
                         } catch (Exception e) {
                             log.error("Error converting PR to DTO: {}", e.getMessage());
-                            // 실패한 경우 기본값으로 처리하거나 null 반환
                             return null;
                         }
                     })
