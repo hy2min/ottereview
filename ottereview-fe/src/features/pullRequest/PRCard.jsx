@@ -8,11 +8,7 @@ const PRCard = ({ pr }) => {
     <div className="border p-4 space-y-1">
       <div>
         <p>ID: {pr.id}</p>
-      </div>
-      <div>
         <p>PR 제목: {pr.title}</p>
-      </div>
-      <div>
         <p>작성자: {pr.author}</p>
       </div>
 
