@@ -10,7 +10,6 @@ const Dashboard = () => {
 
         <div className="flex justify-end items-center">
           <ChatRoomList />
-          {/* PR 생성 버튼은 추후 repo에서 PR생성가능 여부에 따라 abled/disabled 되게 할 예정 */}
         </div>
       </div>
 
