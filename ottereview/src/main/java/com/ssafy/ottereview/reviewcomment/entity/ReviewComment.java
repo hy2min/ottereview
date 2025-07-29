@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.comment.entity;
+package com.ssafy.ottereview.reviewcomment.entity;
 
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.user.entity.User;
@@ -11,12 +11,14 @@ import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
+@Setter
 @Entity
-public class Comment {
+public class ReviewComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,7 +42,6 @@ public class Comment {
     @Column
     String content;
 
-    @Column
+    @Column(nullable = true)
     String record_key;
-
 }
