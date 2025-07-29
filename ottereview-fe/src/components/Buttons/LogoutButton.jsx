@@ -4,7 +4,7 @@ const LogoutButton = () => {
   const logout = useUserStore((state) => state.logout)
 
   return (
-    <button onClick={logout} className="text-sm border px-4 py-1 hover:bg-gray-100">
+    <button onClick={logout} className="text-sm border px-4 py-1 hover:bg-gray-100 cursor-pointer">
       로그아웃
     </button>
   )

@@ -1,1 +1,18 @@
 @import 'tailwindcss';
+
+@font-face {
+  font-family: 'BMJUA';
+  src:
+    url('../fonts/BMJUA_ttf.ttf') format('truetype'),
+    url('../fonts/BMJUA_otf.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+* {
+  font-family: 'BMJUA', 'Inter', system-ui, sans-serif;
+}
+
+html {
+  scrollbar-gutter: stable;
+}

@@ -29,7 +29,7 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="space-y-4 py-4">
       <StepIndicator currentStep={step} />
       {renderStepComponent()}
     </div>

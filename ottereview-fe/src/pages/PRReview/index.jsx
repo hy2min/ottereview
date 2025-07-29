@@ -1,21 +1,19 @@
 const PRReview = () => {
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 py-4">
       {/* 헤더 영역 */}
       <div className="flex items-start justify-between">
         {/* 오른쪽: 승인 진행률 + 머지 버튼 */}
         <div className="flex items-center gap-4">
           <div className="w-40 border p-2">
             <div className="flex justify-between mb-1">
-              <p className="text-sm font-semibold">승인 진행률</p>
+              <p className="text-sm">승인 진행률</p>
               <span className="text-xs text-gray-600">2/2</span>
             </div>
             <div className="w-full h-4 bg-gray-200">
               <div className="h-full bg-green-500" style={{ width: '100%' }} />
             </div>
           </div>
-
-          <button className="border px-4 py-2">머지</button>
         </div>
       </div>
 
@@ -28,21 +26,24 @@ const PRReview = () => {
         </p>
       </div>
 
-      {/* 탭 영역 */}
-      <div className="flex gap-4 pb-2 border-b">
-        <button className="border px-3 py-1">파일</button>
-        <button className="border px-3 py-1">댓글</button>
-        <button className="border px-3 py-1">커밋</button>
-      </div>
+      <div className="border">
+        {/* 탭 영역 */}
 
-      {/* 파일 영역 */}
-      <div className="border p-4">
-        <p className="text-sm font-semibold mb-2">변경된 파일 목록</p>
-        <ul className="list-disc list-inside text-sm">
-          <li>auth.js</li>
-          <li>jwtUtils.js</li>
-          <li>LoginForm.jsx</li>
-        </ul>
+        <div className="flex gap-4 pb-2 m-4">
+          <button className="border px-3 py-1">파일</button>
+          <button className="border px-3 py-1">댓글</button>
+          <button className="border px-3 py-1">커밋</button>
+        </div>
+
+        {/* 파일 영역 */}
+        <div className="border p-4 m-4">
+          <p className="text-sm mb-2 ">변경된 파일 목록</p>
+          <ul className="list-disc list-inside text-sm">
+            <li>auth.js</li>
+            <li>jwtUtils.js</li>
+            <li>LoginForm.jsx</li>
+          </ul>
+        </div>
       </div>
     </div>
   )

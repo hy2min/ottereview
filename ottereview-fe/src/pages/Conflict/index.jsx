@@ -22,14 +22,11 @@ const Conflict = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-4 py-4">
       <div className="border p-4">
         <div className="flex gap-4">
           {mockReviewers.map((name) => (
-            <label
-              key={name}
-              className="flex items-center gap-2 border px-3 py-1 rounded cursor-pointer"
-            >
+            <label key={name} className="flex items-center gap-2 border px-3 py-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selected.includes(name)}
@@ -43,9 +40,11 @@ const Conflict = () => {
 
       <div className="border p-4">충돌 파일 목록</div>
 
-      <button className="border px-4 py-1 fixed bottom-6 right-6" onClick={handleCreateChat}>
-        채팅방 개설
-      </button>
+      <div className="flex justify-end mt-4">
+        <button className="border px-4 py-1 cursor-pointer" onClick={handleCreateChat}>
+          채팅방 개설
+        </button>
+      </div>
     </div>
   )
 }

@@ -12,15 +12,21 @@ const Header = () => {
   const title = matchedRoute?.title || ''
 
   return (
-    <header className="w-full p-4 border-b flex items-center justify-between bg-white">
-      <button
-        onClick={() => navigate('/dashboard')}
-        className="text-sm font-semibold border px-3 py-1 rounded hover:bg-gray-100"
-      >
-        🦦 Ottereview
-      </button>
-      <div className="text-base font-bold text-gray-700">{title}</div>
-      <LogoutButton />
+    <header className="bg-transparent py-4">
+      <div className="max-w-8xl mx-auto px-4">
+        <div className="grid grid-cols-3 items-center border-2 border-black rounded-4xl bg-white px-6 py-4">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="text-xl justify-self-start cursor-pointer"
+          >
+            🦦 Ottereview
+          </button>
+          <div className="text-xl text-gray-800 justify-self-center">{title}</div>
+          <div className="justify-self-end">
+            <LogoutButton />
+          </div>
+        </div>
+      </div>
     </header>
   )
 }

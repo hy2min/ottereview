@@ -18,15 +18,13 @@ const RepositoryDetail = () => {
   }, [repoId])
 
   return (
-    <div className="p-6">
-      {/* PR 목록 */}
-      <div className="space-y-4 py-4">
-        {prs.length === 0 ? (
-          <p>PR이 없습니다.</p>
-        ) : (
-          prs.map((pr) => <PRCard key={pr.id} pr={pr} context="repositoryDetail" />)
-        )}
-      </div>
+    // PR 목록
+    <div className="space-y-4 py-4">
+      {prs.length === 0 ? (
+        <p>PR이 없습니다.</p>
+      ) : (
+        prs.map((pr) => <PRCard key={pr.id} pr={pr} context="repositoryDetail" />)
+      )}
     </div>
   )
 }

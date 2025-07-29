@@ -1,37 +1,35 @@
 // PRCard.jsx
 import { useNavigate } from 'react-router-dom'
 
-const PRCard = ({ pr, context }) => {
+const PRCard = ({ pr }) => {
   const navigate = useNavigate()
 
   return (
     <div className="border p-4 space-y-1">
       <div>
-        <strong>ID:</strong> {pr.id}
+        <p>ID: {pr.id}</p>
       </div>
       <div>
-        <strong>PR 제목:</strong> {pr.title}
+        <p>PR 제목: {pr.title}</p>
       </div>
       <div>
-        <strong>작성자:</strong> {pr.author}
+        <p>작성자: {pr.author}</p>
       </div>
 
-      {context === 'repositoryDetail' && (
-        <div className="flex gap-2 pt-2">
-          <button
-            className="border px-2 py-1 text-sm"
-            onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/review`)}
-          >
-            리뷰하기
-          </button>
-          <button
-            className="border px-2 py-1 text-sm"
-            onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/conflict`)}
-          >
-            머지
-          </button>
-        </div>
-      )}
+      <div className="flex gap-2 pt-2">
+        <button
+          className="border px-2 py-1 text-sm cursor-pointer"
+          onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/review`)}
+        >
+          리뷰하기
+        </button>
+        <button
+          className="border px-2 py-1 text-sm cursor-pointer"
+          onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/conflict`)}
+        >
+          머지
+        </button>
+      </div>
     </div>
   )
 }
