@@ -53,7 +53,7 @@ public class GithubApiClient {
         }
     }
 
-    public List<GithubRepoResponse> getRepositories(Long installationId) {
+    public List<GHRepository> getRepositories(Long installationId) {
         try {
             // InstallationTokenService를 통해 GitHub App 설치 인스턴스 가져오기
             GitHub github = githubAppUtil.getGitHub(installationId);
@@ -64,18 +64,7 @@ public class GithubApiClient {
                     .listRepositories()
                     .toList();
 
-            // 저장소 이름을 문자열 리스트로 변환하여 반환
-            return repositories.stream()
-                    .map(repo -> {
-                        try {
-                            return GithubRepoResponse.from(repo);
-                        } catch (Exception e) {
-                            log.error("Error converting repository to DTO: {}", e.getMessage());
-                            // 실패한 경우 기본값으로 처리하거나 null 반환
-                            return null;
-                        }
-                    }) // GHRepository의 fullName을 문자열로 변환
-                    .collect(Collectors.toList());
+            return repositories;
 
         } catch (IOException e) {
             e.printStackTrace();

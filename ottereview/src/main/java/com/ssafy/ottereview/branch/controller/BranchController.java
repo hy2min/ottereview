@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/repositories/{repo-id}/branches")
+@RequestMapping("/api/account/{account-id}/repositories/{repo-id}/branches")
 public class BranchController {
 
     private final BranchServiceImpl branchServiceImpl;
