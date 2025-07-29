@@ -2,8 +2,10 @@ package com.ssafy.ottereview.branch.service;
 
 import com.ssafy.ottereview.branch.dto.BranchCreateRequest;
 import com.ssafy.ottereview.branch.entity.Branch;
+import com.ssafy.ottereview.repo.entity.Repo;
 import java.util.List;
 import java.util.Optional;
+import org.kohsuke.github.GHRepository;
 
 public interface BranchService {
 
@@ -16,9 +18,9 @@ public interface BranchService {
 
     /**
      * 사용자에게 branch 정보를 받거나 github로부터 동기화 해올때 db에 branch를 저장하는 코드
-     * @param branchCreateRequest
+     * @param
      */
-    void createBranch(BranchCreateRequest branchCreateRequest);
+    List<Branch> createBranchList(GHRepository ghRepository, Repo repo);
 
     /**
      * repoId를 가지고 branch list를 가져오는 코드
@@ -27,9 +29,5 @@ public interface BranchService {
      */
     List<Branch> getBranchesByRepoId(Long repoId);
 
-    /**
-     * branch Id값을 가지고 branch 삭제가 가능하다.
-     * @param id
-     */
-    void deleteBranch(Long id);
+    void saveAllBranchList(List<Branch> branches);
 }
