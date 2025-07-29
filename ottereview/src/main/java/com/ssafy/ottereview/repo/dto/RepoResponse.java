@@ -29,7 +29,7 @@ public class RepoResponse {
     public static RepoResponse of(Repo repo){
         return RepoResponse.builder()
                 .id(repo.getId())
-                .repoId(repo.getId())
+                .repoId(repo.getRepoId())
                 .fullName(repo.getFullName())
                 .accountId(repo.getAccount().getId())
                 .isCushion(repo.isCushion())
