@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 
 const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
   const navigate = useNavigate()
+
   return (
     <div onClick={onClick} className="border p-4 space-y-1 cursor-pointer hover:bg-gray-100">
       <div>
@@ -18,7 +19,7 @@ const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
         onClick={(e) => {
           e.stopPropagation()
           if (createEnabled) {
-            navigate(`/${repo.id}/pr/create/`)
+            navigate(`/${repo.id}/pr/create`)
           }
         }}
         disabled={!createEnabled}

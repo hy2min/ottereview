@@ -1,7 +1,7 @@
 import NavigationButton from '../../components/Buttons/NavigationButton'
 import FormField from '../../components/FormField'
 import FormSectionBox from '../../components/FormSectionBox'
-import { usePRCreateStore } from './prCreateStore'
+import { usePRCreateStore } from './stores/prCreateStore'
 
 const PRCreateStep2 = ({ goToStep }) => {
   const { formData, setFormData } = usePRCreateStore()
