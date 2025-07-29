@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
+import StepIndicator from '../../components/StepIndicator'
 import PRCreateStep1 from '../../features/pullRequest/PRCreateStep1'
 import PRCreateStep2 from '../../features/pullRequest/PRCreateStep2'
 import PRCreateStep3 from '../../features/pullRequest/PRCreateStep3'
@@ -16,6 +17,8 @@ const PRCreate = () => {
   return (
     <div className="p-6">
       <h2 className="text-xl font-bold mb-4">PR 생성 페이지</h2>
+
+      <StepIndicator />
 
       <Routes>
         <Route index element={<Navigate to="1" replace />} />

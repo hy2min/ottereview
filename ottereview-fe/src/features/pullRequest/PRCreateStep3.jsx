@@ -1,3 +1,5 @@
+import FormSectionBox from '../../components/FormSectionBox'
+import NavigationButton from '../../components/NavigationButton'
 import { usePRCreateStore } from './prCreateStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
@@ -19,9 +21,7 @@ const PRCreateStep3 = ({ goToStep }) => {
 
   return (
     <div className="space-y-4">
-      <div className="p-4 border">
-        <h2 className="text-xl font-bold mb-4">PR 생성 3</h2>
-
+      <FormSectionBox title={`PR 생성 3`}>
         <div className="space-y-2">
           <div className="flex gap-8">
             <div className="w-1/2 border p-4">
@@ -53,17 +53,10 @@ const PRCreateStep3 = ({ goToStep }) => {
             </div>
           </div>
         </div>
-      </div>
+      </FormSectionBox>
 
       {/* 이동 버튼 */}
-      <div className="flex justify-between">
-        <button className="border px-4 py-1" onClick={() => goToStep(2)}>
-          이전
-        </button>
-        <button className="border px-4 py-1" onClick={() => goToStep(4)}>
-          다음
-        </button>
-      </div>
+      <NavigationButton onPrev={() => goToStep(2)} onNext={() => goToStep(4)} />
     </div>
   )
 }
