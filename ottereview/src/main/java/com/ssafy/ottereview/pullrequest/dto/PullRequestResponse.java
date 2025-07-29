@@ -1,7 +1,7 @@
 package com.ssafy.ottereview.pullrequest.dto;
 
-import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.repo.dto.RepoResponse;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -38,7 +38,8 @@ public class PullRequestResponse {
     private String diffUrl;
     private LocalDateTime mergedAt;
     private String mergeCommitSha;
-    private Repo repoId;
-    private User authorId;
+    private RepoResponse repo;
+    private UserResponseDto author;
+    private LocalDateTime createdAt;
 
 }
