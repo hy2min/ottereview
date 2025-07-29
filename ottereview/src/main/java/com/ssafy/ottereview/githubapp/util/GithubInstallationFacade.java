@@ -8,17 +8,14 @@ import com.ssafy.ottereview.auth.dto.GithubUserDto;
 import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
-import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
-import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,40 +58,22 @@ public class GithubInstallationFacade {
 
         userAccountRepository.save(userAccount);
 
-        // 4. 저장소 목록 생성
-        try {
-            GitHub github = githubAppUtil.getGitHub(installationId);
-            List<GHRepository> repositories = github.getInstallation()
-                    .listRepositories()
-                    .toList();
+        // 4. github에서 repository 목록 가져오기
+        List<GHRepository> repositories = githubApiClient.getRepositories(installationId);
 
-            // log 확인용
-            for (GHRepository repo : repositories) {
-                log.info("Repo ID: {}, Full Name: {}, Private: {}",
-                        repo.getId(), repo.getFullName(), repo.isPrivate());
-            }
-
-            List<Repo> toCreate = repositories.stream()
-                    .map(r -> {
-                        return Repo.builder()
-                                .repoId(r.getId())
-                                .fullName(r.getFullName())
-                                .isPrivate(r.isPrivate())
-                                .account(newAccount)
-                                .build();
-                    })
-                    .toList();
-            if (!toCreate.isEmpty()) {
-                repoRepository.saveAll(toCreate);
-            }
-            log.info("save 성공");
-        } catch (IOException e) {
-            e.printStackTrace();
+        // log 확인용
+        for (GHRepository repo : repositories) {
+            log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                    repo.getId(), repo.getFullName(), repo.isPrivate());
         }
+
+        //5. repo리스트 db에 저장하는 메소드 (이미 저장된 것은 넘긴다)
+        repoService.processSyncRepo(newAccount, installationId);
+
     }
 
     // process update 로직 추가
-    public void processUpdatewithOAuth(Long installationId) {
+    public void processUpdateWithOAuth(Long installationId) {
         Account account = accountService.getAccountByInstallationId(installationId);
         repoService.processSyncRepo(account, installationId);
     }

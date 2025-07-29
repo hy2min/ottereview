@@ -7,7 +7,10 @@ import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import org.kohsuke.github.GHRepository;
 
 public interface RepoService {
 
@@ -47,5 +50,14 @@ public interface RepoService {
      */
     public List<RepoResponse> getReposByUserId(Long userId);
 
+    /**
+     * Repo 동기화를 통해서 추가 및 삭제 로직 메소드
+     * @param account
+     * @param installationId
+     */
     public void processSyncRepo(Account account, Long installationId);
+
+    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,  Map<Long, GHRepository> repoMap  ,Account account);
+
+    public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account);
 }
