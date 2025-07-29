@@ -14,32 +14,33 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PullRequestResponse {
 
+    // 식별자
     private Long id;
-    private Long githubPrId;
+    private Integer githubPrNumber;
+
+    // Pull Request 관련 정보
     private String title;
-    private String description;
+    private String body;
     private String summary;
-    private String headBranch;
-    private String baseBranch;
-    private String status;
-    private Integer approveCount;
-    private boolean mergeable;
-    private String authorLogin;
-    private String htmlUrl;
+    private Integer approveCnt;
+    private String state;
+    private Boolean merged;
+    private Boolean mergeable;
+
+    // 브랜치 정보
+    private String head;
+    private String base;
+
+    // 통계 정보
     private Integer commitCnt;
-    private Integer additionCnt;
-    private Integer deletionCnt;
     private Integer changedFilesCnt;
     private Integer commentCnt;
     private Integer reviewCommentCnt;
+
+    // GitHub에서의 생성 및 수정 일시
     private LocalDateTime githubCreatedAt;
     private LocalDateTime githubUpdatedAt;
-    private String patchUrl;
-    private String diffUrl;
-    private LocalDateTime mergedAt;
-    private String mergeCommitSha;
+
     private RepoResponse repo;
     private UserResponseDto author;
-    private LocalDateTime createdAt;
-
 }

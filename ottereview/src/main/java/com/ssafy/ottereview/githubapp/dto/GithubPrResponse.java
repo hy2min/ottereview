@@ -1,69 +1,72 @@
 package com.ssafy.ottereview.githubapp.dto;
 
 import java.io.IOException;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.kohsuke.github.GHPullRequest;
+import org.kohsuke.github.GHUser;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 public class GithubPrResponse {
 
-    private Long githubPrId;
-    private Long repoId;
+    private Integer githubPrNumber;
     private String title;
-    private String description;
-    private String headBranch;
-    private String baseBranch;
-    private String status;
+    private String body;
+    private String state;
+    private GHUser author;
+    private List<GHUser> assignees;
+    private List<GHUser> requestedReviewers;
+    private Boolean merged;
+    private String base;
+    private String head;
     private Boolean mergeable;
-    private String authorLogin;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private String htmlUrl;
+    private LocalDateTime githubCreatedAt;
+    private LocalDateTime githubUpdatedAt;
+
     private Integer commitCnt;
-    private Integer additionCnt;
-    private Integer deletionCnt;
     private Integer changedFilesCnt;
     private Integer commentCnt;
     private Integer reviewCommentCnt;
 
+    private URL htmlUrl;
+    private URL patchUrl;
+    private URL issueUrl;
+    private URL diffUrl;
 
-    public static GithubPrResponse from(GHPullRequest pr) {
+    public static GithubPrResponse from(GHPullRequest ghPullRequest) {
         try {
             return new GithubPrResponse(
-                    pr.getId(),                              // githubPrId
-                    pr.getRepository()
-                            .getId(),              // repoId
-                    pr.getTitle(),                           // title
-                    pr.getBody(),                            // description
-                    pr.getHead()
-                            .getRef(),                   // headBranch
-                    pr.getBase()
-                            .getRef(),                   // baseBranch
-                    pr.getState()
-                            .name(),                    // status
-                    pr.getMergeable(),                       // mergeable
-                    pr.getUser()
-                            .getLogin(),                 // authorLogin
-                    convertToLocalDateTime(pr.getCreatedAt()), // createdAt
-                    convertToLocalDateTime(pr.getUpdatedAt()), // updatedAt
-                    pr.getHtmlUrl()
-                            .toString(),              // htmlUrl
-                    pr.getCommits(),                         // commitCnt
-                    pr.getAdditions(),                       // additionCnt
-                    pr.getDeletions(),                       // deletionCnt
-                    pr.getChangedFiles(),                    // changedFilesCnt
-                    pr.getComments()
-                            .size(),                        // commentCnt ← 추가
-                    pr.getReviewComments()                   // reviewCommentCnt ← 추가
+                    ghPullRequest.getNumber(),
+                    ghPullRequest.getTitle(),
+                    ghPullRequest.getBody(),
+                    ghPullRequest.getState().name(),
+                    ghPullRequest.getUser(),
+                    ghPullRequest.getAssignees(),
+                    ghPullRequest.getRequestedReviewers(),
+                    ghPullRequest.isMerged(),
+                    ghPullRequest.getBase().getRef(),
+                    ghPullRequest.getHead().getRef(),
+                    ghPullRequest.getMergeable(),
+                    convertToLocalDateTime(ghPullRequest.getCreatedAt()),
+                    convertToLocalDateTime(ghPullRequest.getUpdatedAt()),
+                    ghPullRequest.getCommits(),
+                    ghPullRequest.getChangedFiles(),
+                    ghPullRequest.getCommentsCount(),
+                    ghPullRequest.getReviewComments(),
+                    ghPullRequest.getHtmlUrl(),
+                    ghPullRequest.getPatchUrl(),
+                    ghPullRequest.getIssueUrl(),
+                    ghPullRequest.getDiffUrl()
             );
         } catch (IOException e) {
-            throw new RuntimeException("Failed to convert GHPullRequest to DTO", e);
+            throw new RuntimeException("GitHub API 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
     }
 
