@@ -2,8 +2,11 @@ package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.pullrequest.dto.PullRequestCreateRequest;
-import com.ssafy.ottereview.pullrequest.dto.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
+import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
+import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
@@ -69,12 +72,29 @@ public class PullRequestServiceImpl implements PullRequestService {
     }
 
     @Override
-    public PullRequestResponse getPullRequestById(Long pullRequestId) {
-        return null;
+    public PullRequestDetailResponse getPullRequestById(CustomUserDetail customUserDetail, Long pullRequestId) {
+
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Pull Request not found with id: " + pullRequestId));
+
+        Long installationId = pullRequest.getRepo()
+                .getAccount()
+                .getInstallationId();
+        // 파일변환 목록 가져오기
+        List<PullRequestFileDetail> pullRequestFileChanges = githubApiClient.getPullRequestFileChanges(installationId, pullRequest.getRepo()
+                .getFullName(), pullRequest.getGithubPrNumber());
+
+        // commit 목록 가져오기
+        List<PullRequestCommitDetail> pullRequestCommitDetails = githubApiClient.getPullRequestCommits(installationId, pullRequest.getRepo()
+                .getFullName(), pullRequest.getGithubPrNumber());
+
+        // dto 변환 후 리턴
+        return convertToDetailResponse(pullRequest, pullRequestFileChanges, pullRequestCommitDetails);
+
     }
 
     @Override
-    public void createPullRequest(PullRequestCreateRequest pullRequestCreateRequest) {
+    public void createPullRequest(CustomUserDetail customUserDetail, PullRequestCreateRequest pullRequestCreateRequest) {
 
     }
 
@@ -183,6 +203,32 @@ public class PullRequestServiceImpl implements PullRequestService {
         }
     }
 
+    private PullRequestDetailResponse convertToDetailResponse(PullRequest pr, List<PullRequestFileDetail> pullRequestFileChanges, List<PullRequestCommitDetail> pullRequestCommitDetails) {
+        return PullRequestDetailResponse.builder()
+                .id(pr.getId())
+                .githubPrNumber(pr.getGithubPrNumber())
+                .title(pr.getTitle())
+                .body(pr.getBody())
+                .summary(pr.getSummary())
+                .approveCnt(pr.getApproveCnt())
+                .state(pr.getState())
+                .merged(pr.getMerged())
+                .mergeable(pr.isMergeable())
+                .head(pr.getHead())
+                .base(pr.getBase())
+                .commitCnt(pr.getCommitCnt())
+                .changedFilesCnt(pr.getChangedFilesCnt())
+                .commentCnt(pr.getCommentCnt())
+                .reviewCommentCnt(pr.getReviewCommentCnt())
+                .githubCreatedAt(pr.getGithubCreatedAt())
+                .githubUpdatedAt(pr.getGithubUpdatedAt())
+                .repo(RepoResponse.of(pr.getRepo()))
+                .author(convertToUserResponse(pr.getAuthor()))
+                .files(pullRequestFileChanges)
+                .commits(pullRequestCommitDetails)
+                .build();
+    }
+
     private PullRequest convertToEntity(GithubPrResponse githubPrResponse, User author, Repo repo) {
 
         return PullRequest.builder()
@@ -231,11 +277,11 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .githubCreatedAt(pr.getGithubCreatedAt())
                 .githubUpdatedAt(pr.getGithubUpdatedAt())
                 .repo(RepoResponse.of(pr.getRepo()))
-                .author(toDto(pr.getAuthor()))
+                .author(convertToUserResponse(pr.getAuthor()))
                 .build();
     }
 
-    private UserResponseDto toDto(User user) {
+    private UserResponseDto convertToUserResponse(User user) {
         return new UserResponseDto(
                 user.getId(),
                 user.getGithubUsername(),
