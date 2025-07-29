@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto;
+package com.ssafy.ottereview.pullrequest.dto.response;
 
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
