@@ -57,6 +57,10 @@ services:
       APP_JWT_SECRET: ${APP_JWT_SECRET}
       APP_JWT_ACCESS_EXPMIN: ${APP_JWT_ACCESS_EXPMIN}
       APP_JWT_REFRESH_EXPMIN: ${APP_JWT_REFRESH_EXPMIN}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      S3_REGION: ${S3_REGION}
     volumes:
       # 소스코드를 volume mount로 실시간 반영
       - ./src:/app/src:rw
