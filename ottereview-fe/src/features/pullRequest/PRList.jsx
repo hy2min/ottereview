@@ -24,7 +24,7 @@ const PRList = () => {
 
   return (
     <section className="border p-4 space-y-4">
-      <h2 className="text-xl font-semibold">📦 PR 목록</h2>
+      <h2 className="text-xl font-semibold">PR 목록</h2>
 
       {/* 필터 드롭다운 */}
       <div>

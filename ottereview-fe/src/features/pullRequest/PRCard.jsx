@@ -24,7 +24,10 @@ const PRCard = ({ pr, context }) => {
           >
             리뷰하기
           </button>
-          <button className="border px-2 py-1 text-sm" onClick={() => alert('머지 기능 미정')}>
+          <button
+            className="border px-2 py-1 text-sm"
+            onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/conflict`)}
+          >
             머지
           </button>
         </div>

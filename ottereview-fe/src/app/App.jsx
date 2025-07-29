@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import Conflict from '../pages/Conflict'
 import Dashboard from '../pages/Dashboard'
 import Landing from '../pages/Landing'
 import PRCreate from '../pages/PRCreate'
@@ -27,6 +28,7 @@ const App = () => {
           {/* 다른 라우트들 추가 */}
           <Route path="/:repoId" element={<RepositoryDetail />} />
           <Route path="/:repoId/pr/:prId/review" element={<PRreview />} />
+          <Route path="/:repoId/pr/:prId/conflict" element={<Conflict />} />
           <Route path="/pr/create/*" element={<PRCreate />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>
