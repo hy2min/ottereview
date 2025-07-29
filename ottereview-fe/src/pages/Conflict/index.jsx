@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { useChatStore } from '../../features/chat/chatStore'
+
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
 
 const Conflict = () => {
@@ -12,12 +14,15 @@ const Conflict = () => {
   }
 
   const handleCreateChat = () => {
-    alert(`선택된 팀원: ${selected.join(', ')}`)
-    // 추후 navigate 등으로 확장
+    useChatStore.getState().addRoom({
+      members: selected,
+      conflictFiles: ['fileA.js', 'fileB.jsx'], // 추후 동적 처리 가능
+    })
+    navigate('/dashboard')
   }
 
   return (
-    <div className="relative p-6 space-y-6">
+    <div className="p-6 space-y-6">
       <div className="flex items-center gap-4">
         <button className="border px-4 py-1" onClick={() => navigate(-1)}>
           ← 뒤로가기

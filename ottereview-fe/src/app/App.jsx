@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import ChatRoom from '../pages/ChatRoom'
 import Conflict from '../pages/Conflict'
 import Dashboard from '../pages/Dashboard'
 import Landing from '../pages/Landing'
@@ -25,10 +26,10 @@ const App = () => {
         // 로그인 후: 대시보드 중심으로 라우팅
         <>
           <Route path="/dashboard" element={<Dashboard />} />
-          {/* 다른 라우트들 추가 */}
           <Route path="/:repoId" element={<RepositoryDetail />} />
           <Route path="/:repoId/pr/:prId/review" element={<PRreview />} />
           <Route path="/:repoId/pr/:prId/conflict" element={<Conflict />} />
+          <Route path="/chatroom/:roomId" element={<ChatRoom />} />
           <Route path="/pr/create/*" element={<PRCreate />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </>

@@ -1,5 +1,5 @@
 const LandingPage = () => {
-  return;
-};
+  return
+}
 
-export default LandingPage;
+export default LandingPage
