@@ -1,4 +1,5 @@
 import Button from '../../components/Button'
+import Card from '../../components/Card'
 import { usePRCreateStore } from './stores/prCreateStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
@@ -21,7 +22,7 @@ const PRCreateStep3 = () => {
   return (
     <div className="space-y-4">
       <div className="flex gap-8">
-        <div className="w-1/2 border p-4">
+        <Card className="w-1/2">
           <h3 className="mb-2">리뷰어 목록</h3>
           {mockReviewers
             .filter((name) => !formData.reviewers.includes(name))
@@ -38,9 +39,9 @@ const PRCreateStep3 = () => {
                 </Button>
               </div>
             ))}
-        </div>
+        </Card>
 
-        <div className="w-1/2 border p-4">
+        <Card className="w-1/2">
           <h3 className="mb-2">선택된 리뷰어</h3>
           {formData.reviewers.map((name) => (
             <div key={name} className="flex justify-between my-4">
@@ -50,7 +51,7 @@ const PRCreateStep3 = () => {
               </Button>
             </div>
           ))}
-        </div>
+        </Card>
       </div>
     </div>
   )

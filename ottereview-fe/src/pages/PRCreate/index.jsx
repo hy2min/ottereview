@@ -4,17 +4,31 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../components/Button'
 import Section from '../../components/Section'
 import StepIndicator from '../../components/StepIndicator'
+import { submitPR } from '../../features/pullRequest/prApi'
 import PRCreateStep1 from '../../features/pullRequest/PRCreateStep1'
 import PRCreateStep2 from '../../features/pullRequest/PRCreateStep2'
 import PRCreateStep3 from '../../features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '../../features/pullRequest/PRCreateStep4'
+import { usePRCreateStore } from '../../features/pullRequest/stores/prCreateStore'
 
 const PRCreate = () => {
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
 
+  const formData = usePRCreateStore((state) => state.formData)
+
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
+  }
+
+  const handleSubmit = async () => {
+    try {
+      await submitPR(formData)
+      navigate('/dashboard')
+    } catch (err) {
+      console.error(err)
+      alert('제출 실패')
+    }
   }
 
   const renderStepComponent = () => {
@@ -37,9 +51,7 @@ const PRCreate = () => {
       <StepIndicator currentStep={step} />
       <Section>{renderStepComponent()}</Section>
 
-      {/* 버튼 영역 */}
       <div className="flex justify-between items-center mt-4">
-        {/* 이전 버튼 */}
         <Button
           onClick={() => {
             if (step > 1) {
@@ -53,13 +65,12 @@ const PRCreate = () => {
           이전
         </Button>
 
-        {/* 다음 또는 제출 버튼 */}
         <Button
           onClick={() => {
             if (step < 4) {
               setStep((prev) => prev + 1)
             } else {
-              navigate('/dashboard')
+              handleSubmit()
             }
           }}
           variant="primary"

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 
 import Section from '../../components/Section'
 import { fetchPR } from './prApi'
-import PRCard from './PRCard'
+import PRCardCompact from './PRCardCompact'
 
 const PRList = () => {
   const [prs, setPrs] = useState([])
@@ -16,12 +16,12 @@ const PRList = () => {
     fetchData()
   }, [])
 
-  // repoId별로 고유한 목록 추출 (repoId + repo 이름 묶어서)
-  const repoOptions = [...new Map(prs.map((pr) => [pr.repoId, pr.repo])).entries()]
+  // repo.id별로 고유한 레포 목록 추출
+  const repoOptions = [...new Map(prs.map((pr) => [pr.repo.id, pr.repo.name])).entries()]
 
-  // 필터링된 PR
+  // 선택된 레포 기준 필터링
   const filteredPRs =
-    selectedRepoId === 'all' ? prs : prs.filter((pr) => pr.repoId === Number(selectedRepoId))
+    selectedRepoId === 'all' ? prs : prs.filter((pr) => pr.repo.id === Number(selectedRepoId))
 
   return (
     <Section>
@@ -48,7 +48,7 @@ const PRList = () => {
 
       <div className="space-y-2">
         {filteredPRs.map((pr) => (
-          <PRCard key={pr.id} pr={pr} context="dashboard" />
+          <PRCardCompact key={pr.id} pr={pr} />
         ))}
       </div>
     </Section>

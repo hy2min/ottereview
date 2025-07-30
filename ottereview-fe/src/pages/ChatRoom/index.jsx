@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom'
 
+import Section from '../../components/Section'
 import ChatRoomDetail from '../../features/chat/ChatRoomDetail'
 
 const ChatRoom = () => {
@@ -7,7 +8,9 @@ const ChatRoom = () => {
 
   return (
     <div className="space-y-4 py-4">
-      <ChatRoomDetail roomId={Number(roomId)} />
+      <Section>
+        <ChatRoomDetail roomId={Number(roomId)} />
+      </Section>
     </div>
   )
 }

@@ -15,8 +15,8 @@ const Header = () => {
 
   return (
     <header className="bg-transparent py-4">
-      <div className="max-w-8xl mx-auto px-4">
-        <div className="grid grid-cols-3 items-center border-2 border-black rounded-4xl bg-white px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="grid grid-cols-3 bg-white border-2 border-black shadow-pixel p-4 rounded-4xl">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-xl justify-self-start cursor-pointer"

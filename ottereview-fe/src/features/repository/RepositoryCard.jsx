@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 
 import Button from '../../components/Button'
+import Card from '../../components/Card'
 
 const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
   const navigate = useNavigate()
 
   return (
-    <div onClick={onClick} className="border p-4 space-y-1 hover:bg-gray-100">
+    <Card onClick={onClick}>
       <div>
         <p>ID: {repo.id}</p>
         <p>이름: {repo.name}</p>
@@ -25,7 +26,7 @@ const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
       >
         PR 생성
       </Button>
-    </div>
+    </Card>
   )
 }
 
