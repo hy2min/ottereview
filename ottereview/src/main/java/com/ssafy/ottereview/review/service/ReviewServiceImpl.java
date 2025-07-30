@@ -30,58 +30,58 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewCommentService reviewCommentService;
     private final S3Service s3Service;
 
-    @Override
-    @Transactional
-    public ReviewResponse createReview(Long accountId, Long repoId, Long prId,
-            ReviewRequest reviewRequest, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
-
-        PullRequest pullRequest = pullRequestRepository.findById(prId)
-                .orElseThrow(() -> new RuntimeException("Pull request not found: " + prId));
-
-        Review review = Review.builder()
-                .pullRequest(pullRequest)
-                .user(user)
-                .state(reviewRequest.getState())
-                .body(reviewRequest.getBody())
-                .commitSha(reviewRequest.getCommitSha())
-                .build();
-
-        // Review 먼저 저장하여 ID 확보
-        Review savedReview = reviewRepository.save(review);
-
-        // ReviewComment들이 있으면 ReviewCommentService를 통해 생성
-        List<com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse> createdComments = new ArrayList<>();
-        if (reviewRequest.getReviewComments() != null && !reviewRequest.getReviewComments()
-                .isEmpty()) {
-            ReviewCommentCreateRequest commentCreateRequest = ReviewCommentCreateRequest.builder()
-                    .comments(reviewRequest.getReviewComments())
-                    .build();
-
-            // ReviewCommentService의 createComments 메소드 사용하고 결과 받기
-            createdComments = reviewCommentService.createComments(
-                    savedReview.getId(),
-                    commentCreateRequest,
-                    null, // 파일 없음
-                    userId
-            );
-        }
-
-        // ReviewResponse를 직접 생성 (DB 재조회 없이)
-        return new ReviewResponse(
-                savedReview.getId(),
-                savedReview.getPullRequest().getId(),
-                savedReview.getUser().getGithubUsername(),
-                savedReview.getState(),
-                savedReview.getBody(),
-                savedReview.getCommitSha(),
-                createdComments,
-                savedReview.getGithubCreatedAt(),
-                savedReview.getCreatedAt(),
-                savedReview.getCreatedAt()
-        );
-    }
+//    @Override
+//    @Transactional
+//    public ReviewResponse createReview(Long accountId, Long repoId, Long prId,
+//            ReviewRequest reviewRequest, Long userId) {
+//        User user = userRepository.findById(userId)
+//                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+//
+//        PullRequest pullRequest = pullRequestRepository.findById(prId)
+//                .orElseThrow(() -> new RuntimeException("Pull request not found: " + prId));
+//
+//        Review review = Review.builder()
+//                .pullRequest(pullRequest)
+//                .user(user)
+//                .state(reviewRequest.getState())
+//                .body(reviewRequest.getBody())
+//                .commitSha(reviewRequest.getCommitSha())
+//                .build();
+//
+//        // Review 먼저 저장하여 ID 확보
+//        Review savedReview = reviewRepository.save(review);
+//
+//        // ReviewComment들이 있으면 ReviewCommentService를 통해 생성
+//        List<com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse> createdComments = new ArrayList<>();
+//        if (reviewRequest.getReviewComments() != null && !reviewRequest.getReviewComments()
+//                .isEmpty()) {
+//            ReviewCommentCreateRequest commentCreateRequest = ReviewCommentCreateRequest.builder()
+//                    .comments(reviewRequest.getReviewComments())
+//                    .build();
+//
+//            // ReviewCommentService의 createComments 메소드 사용하고 결과 받기
+//            createdComments = reviewCommentService.createComments(
+//                    savedReview.getId(),
+//                    commentCreateRequest,
+//                    null, // 파일 없음
+//                    userId
+//            );
+//        }
+//
+//        // ReviewResponse를 직접 생성 (DB 재조회 없이)
+//        return new ReviewResponse(
+//                savedReview.getId(),
+//                savedReview.getPullRequest().getId(),
+//                savedReview.getUser().getGithubUsername(),
+//                savedReview.getState(),
+//                savedReview.getBody(),
+//                savedReview.getCommitSha(),
+//                createdComments,
+//                savedReview.getGithubCreatedAt(),
+//                savedReview.getCreatedAt(),
+//                savedReview.getCreatedAt()
+//        );
+//    }
 
     @Override
     @Transactional
