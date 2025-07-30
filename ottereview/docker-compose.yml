@@ -63,6 +63,7 @@ services:
       S3_REGION: ${S3_REGION}
     volumes:
       # 소스코드를 volume mount로 실시간 반영
+      - /etc/localtime:/etc/localtime:ro
       - ./src:/app/src:rw
       - ./build.gradle:/app/build.gradle:ro
       - ./settings.gradle:/app/settings.gradle:ro

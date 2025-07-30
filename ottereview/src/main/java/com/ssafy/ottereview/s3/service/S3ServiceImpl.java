@@ -35,16 +35,16 @@ public class S3ServiceImpl implements S3Service {
     private String region;
 
     @Override
-    public String uploadFile(MultipartFile file, Long pullRequestId) {
+    public String uploadFile(MultipartFile file, Long reviewId) {
         try {
             String fileName = String.format("%s%s", System.currentTimeMillis(),
                     file.getOriginalFilename());
-            String fileKey = String.format("voice-comments/pr_%d/%s", pullRequestId, fileName);
+            String fileKey = String.format("voice-comments/review_%d/%s", reviewId, fileName);
 
             Map<String, String> metadata = new HashMap<>();
             metadata.put("fileKey", fileKey);
             metadata.put("fileName", fileName);
-            metadata.put("prId", pullRequestId.toString());
+            metadata.put("reviewId", reviewId.toString());
 
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
@@ -59,16 +59,16 @@ public class S3ServiceImpl implements S3Service {
 
             return fileKey;
         } catch (Exception e) {
-            log.error("음성 파일 업로드 실패 - PR: {}, File: {}", pullRequestId, file.getOriginalFilename(),
+            log.error("음성 파일 업로드 실패 - review: {}, File: {}", reviewId, file.getOriginalFilename(),
                     e);
             throw new RuntimeException("음성 파일 업로드 실패: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public void deleteFiles(String fileUrl, Long pullRequestId) {
+    public void deleteFiles(Long reviewId) {
         try {
-            String prefix = String.format("voice-comments/pr_%d/", pullRequestId);
+            String prefix = String.format("voice-comments/review_%d/", reviewId);
 
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(bucketName)
@@ -97,7 +97,7 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
-    public void deleteFile(String fileKey, Long reviewId) {
+    public void deleteFile(String fileKey) {
         try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
@@ -105,7 +105,7 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("S3에서 파일 삭제 완료 - Key: {}, PR ID: {}", fileKey, reviewId);
+            log.info("S3에서 파일 삭제 완료 - Key: {}", fileKey);
 
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패 - Key: {}, Error: {}", fileKey, e.getMessage());
@@ -117,9 +117,9 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
-    public List<S3Object> listVoiceFilesByRepository(Long pullRequestId) {
+    public List<S3Object> listVoiceFilesByReviewId(Long reviewId) {
         try {
-            String prefix = String.format("voice-comments/pr_%d/", pullRequestId);
+            String prefix = String.format("voice-comments/review_%d/", reviewId);
             ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .prefix(prefix)
@@ -144,7 +144,7 @@ public class S3ServiceImpl implements S3Service {
 
         for (String recordKey : uploadedFileKeys) {
             try {
-                deleteFile(recordKey, null); // commentId는 아직 없으므로 null
+                deleteFile(recordKey); // commentId는 아직 없으므로 null
                 log.info("보상 트랜잭션 - 파일 정리 완료: {}", recordKey);
             } catch (Exception cleanupException) {
                 log.error("보상 트랜잭션 - 파일 정리 실패: {}, 오류: {}",
