@@ -3,11 +3,13 @@ package com.ssafy.ottereview.reviewcomment.entity;
 import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.user.entity.User;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
@@ -28,10 +30,12 @@ public class ReviewComment extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY,
+            cascade = CascadeType.PERSIST)
     private User user;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "review_id")
     private Review review;
 
     @Column(nullable = false)
