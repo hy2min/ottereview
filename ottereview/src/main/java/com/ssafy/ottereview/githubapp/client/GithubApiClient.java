@@ -182,4 +182,8 @@ public class GithubApiClient {
             throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
         }
     }
+
+    public String getOrgName(GHAppInstallation installation){
+        return installation.getAccount().getLogin();
+    }
 }

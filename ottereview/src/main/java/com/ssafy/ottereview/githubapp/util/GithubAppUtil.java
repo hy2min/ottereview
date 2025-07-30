@@ -4,6 +4,7 @@ import com.ssafy.ottereview.githubapp.config.GithubAppConfig;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import java.io.IOException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
@@ -114,6 +115,10 @@ public class GithubAppUtil {
             e.printStackTrace();
             throw new RuntimeException("GitHub 클라이언트 생성 중 오류 발생: " + e.getMessage(), e);
         }
+    }
+    public GHAppInstallation getInstallation(Long installationId) throws IOException {
+        GitHub gitHub = getGitHubAsApp();
+        return gitHub.getApp().getInstallationById(installationId);
     }
 
     public String requestGithubAccessToken(String code) {
