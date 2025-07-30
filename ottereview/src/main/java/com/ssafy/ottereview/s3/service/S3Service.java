@@ -9,7 +9,7 @@ public interface S3Service {
     /**
      * S3에 파일을 업로드 하는 함수.
      *
-     * @param file          S3에 올릴 파일(반드시 영문,숫자)
+     * @param file     S3에 올릴 파일(반드시 영문,숫자)
      * @param reviewId 풀리퀘스트 ID
      * @return
      */
