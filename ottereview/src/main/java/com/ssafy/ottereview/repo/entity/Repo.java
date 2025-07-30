@@ -21,28 +21,28 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Table(name = "Repository")
 public class Repo {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-    
-    @Column(name = "repo_id", nullable = false)
+
+    @Column(name = "repo_id", nullable = false, unique = true)
     private Long repoId;
-    
+
     @Column(name = "full_name", nullable = false)
     private String fullName;
-    
+
     @Column(name = "is_cushion", nullable = false)
     private boolean isCushion;
-    
+
     @Column(name = "is_private", nullable = false)
     private boolean isPrivate;
-    
+
     @ManyToOne
-    @JoinColumn(name="account_id")
+    @JoinColumn(name = "account_id")
     private Account account;
-    
+
     public Repo(Long repoId, String fullName, Account account, boolean isCushion, boolean isPrivate) {
         this.repoId = repoId;
         this.fullName = fullName;
@@ -50,18 +50,16 @@ public class Repo {
         this.isCushion = isCushion;
         this.isPrivate = isPrivate;
     }
-    
+
     public void enrollAccount(Account account) {
         this.account = account;
     }
-    
+
     public void cushionToggle(boolean isCushion) {
         this.isCushion = isCushion;
     }
-    
+
     public void changeOpenType(boolean isPrivate) {
         this.isPrivate = isPrivate;
     }
-    
-    
 }
