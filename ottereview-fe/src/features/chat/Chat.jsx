@@ -13,7 +13,6 @@ const Chat = ({ roomId }) => {
     const stompClient = Stomp.over(socket)
 
     const token = localStorage.getItem('accessToken')
-    console.log('🧩 연결 시도 roomId:', roomId)
 
     stompClient.connect(
       {
@@ -50,7 +49,6 @@ const Chat = ({ roomId }) => {
       type: 'TALK',
       message: input,
     }
-    console.log('📤 보내는 메시지:', chatMessage)
 
     stompClientRef.current.send(`/app/meetings/${roomId}/chat`, {}, JSON.stringify(chatMessage))
 
