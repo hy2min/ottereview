@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic WebSocket Chat Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<h3>WebSocket Chat Test (Dynamic Rooms)</h3>
+
+<div>
+  <input id="roomIdInput" type="text" placeholder="Meeting Room ID 입력 (예: 1)">
+  <button onclick="subscribeRoom()">방 구독</button>
+</div>
+
+<div>
+  <input id="messageInput" type="text" placeholder="메시지 입력">
+  <button onclick="sendMessage()">메시지 전송</button>
+</div>
+
+<div id="log" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto;"></div>
+
+<script>
+  const log = (msg) => {
+    const div = document.getElementById('log');
+    div.innerHTML += `<p>${msg}</p>`;
+    div.scrollTop = div.scrollHeight; // 자동 스크롤
+    console.log(msg);
+  };
+
+  const token = localStorage.getItem('accessToken'); // 로그인 후 저장된 토큰
+  const socket = new SockJS('http://localhost:8080/ws'); // 연결 URL
+  const stompClient = Stomp.over(socket);
+
+  let currentRoom = null;
+
+  // 서버 연결 (STOMP 헤더에 JWT 포함)
+  stompClient.connect(
+          { Authorization: `Bearer ${token}` },
+          () => {
+            log('Connected to WebSocket');
+          }
+  );
+
+  // 방 구독 함수
+  function subscribeRoom() {
+    const roomId = document.getElementById('roomIdInput').value;
+    if (!roomId) {
+      alert('Room ID를 입력하세요');
+      return;
+    }
+    currentRoom = roomId;
+
+    // meetings 경로로 수정
+    stompClient.subscribe(`/topic/meetings/${roomId}/chat`, (message) => {
+      const data = JSON.parse(message.body);
+      log(`[${data.timestamp || ''}] ${data.senderName}: ${data.message}`);
+    });
+
+    log(`Subscribed to meeting room ${roomId}`);
+  }
+
+  // 메시지 전송 함수
+  function sendMessage() {
+    if (!currentRoom) {
+      alert('먼저 방을 구독하세요');
+      return;
+    }
+    const msg = document.getElementById('messageInput').value;
+
+    // meetings 경로로 수정
+    stompClient.send(`/app/meetings/${currentRoom}/chat`, {}, JSON.stringify({
+      type: "TALK",
+      message: msg
+    }));
+
+    document.getElementById('messageInput').value = ''; // 입력창 초기화
+  }
+</script>
+</body>
+</html>

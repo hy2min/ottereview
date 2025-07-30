@@ -65,7 +65,7 @@ logging:
 
 app:
   front:
-    url: http://localhost:3000
+    url: http://localhost:5173
   ai:
     url: http://localhost:8000
 
