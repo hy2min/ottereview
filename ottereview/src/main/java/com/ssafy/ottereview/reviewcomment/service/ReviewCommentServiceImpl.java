@@ -184,7 +184,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     if (oldRecordKey != null && !oldRecordKey.isEmpty() && !oldRecordKey.equals(
                             newRecordKey)) {
                         try {
-                            s3Service.deleteFile(oldRecordKey, commentId);
+                            s3Service.deleteFile(oldRecordKey);
                             log.info("댓글 수정 - 기존 파일 삭제 완료: CommentId: {}, OldRecordKey: {}",
                                     commentId, oldRecordKey);
                         } catch (Exception oldFileDeleteException) {
@@ -203,7 +203,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
                     // DB 업데이트 실패 시 새로 업로드한 파일 정리
                     try {
-                        s3Service.deleteFile(newRecordKey, commentId);
+                        s3Service.deleteFile(newRecordKey);
                         log.info("댓글 수정 - 보상 트랜잭션 완료: 새 파일 정리됨: {}", newRecordKey);
                     } catch (Exception cleanupException) {
                         log.error("댓글 수정 - 보상 트랜잭션 실패: 새 파일 정리 실패: {}, 오류: {}",
@@ -261,7 +261,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
         // 1단계: S3 파일 먼저 삭제 (외부 리소스 우선 정리)
         if (recordKey != null && !recordKey.isEmpty()) {
             try {
-                s3Service.deleteFile(recordKey, commentId);
+                s3Service.deleteFile(recordKey);
                 log.info("S3 파일 삭제 완료 - CommentId: {}, RecordKey: {}", commentId, recordKey);
             } catch (Exception s3Exception) {
                 log.error("S3 파일 삭제 실패 - CommentId: {}, RecordKey: {}, 오류: {}",
