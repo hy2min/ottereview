@@ -37,13 +37,14 @@ public class S3ServiceImpl implements S3Service {
     @Override
     public String uploadFile(MultipartFile file, Long pullRequestId) {
         try {
-            String fileName = String.format("%s%s", System.currentTimeMillis(),file.getOriginalFilename());
+            String fileName = String.format("%s%s", System.currentTimeMillis(),
+                    file.getOriginalFilename());
             String fileKey = String.format("voice-comments/pr_%d/%s", pullRequestId, fileName);
 
-            Map<String,String> metadata = new HashMap<>();
-            metadata.put("fileKey",fileKey);
-            metadata.put("fileName",fileName);
-            metadata.put("prId",pullRequestId.toString());
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("fileKey", fileKey);
+            metadata.put("fileName", fileName);
+            metadata.put("prId", pullRequestId.toString());
 
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucketName)
@@ -53,12 +54,13 @@ public class S3ServiceImpl implements S3Service {
                     .metadata(metadata)
                     .build();
 
-            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+            s3Client.putObject(putObjectRequest,
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
 
             return fileKey;
-        }
-        catch (Exception e) {
-            log.error("음성 파일 업로드 실패 - PR: {}, File: {}", pullRequestId, file.getOriginalFilename(), e);
+        } catch (Exception e) {
+            log.error("음성 파일 업로드 실패 - PR: {}, File: {}", pullRequestId, file.getOriginalFilename(),
+                    e);
             throw new RuntimeException("음성 파일 업로드 실패: " + e.getMessage(), e);
         }
     }
@@ -90,12 +92,12 @@ public class S3ServiceImpl implements S3Service {
 
             s3Client.deleteObjects(deleteRequest);
         } catch (Exception e) {
-            throw new RuntimeException("파일 삭제 실패",e);
+            throw new RuntimeException("파일 삭제 실패", e);
         }
     }
 
     @Override
-    public void deleteFile(String fileKey, Long pullRequestId) {
+    public void deleteFile(String fileKey, Long reviewId) {
         try {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(bucketName)
@@ -103,7 +105,7 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("S3에서 파일 삭제 완료 - Key: {}, PR ID: {}", fileKey, pullRequestId);
+            log.info("S3에서 파일 삭제 완료 - Key: {}, PR ID: {}", fileKey, reviewId);
 
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패 - Key: {}, Error: {}", fileKey, e.getMessage());
@@ -116,17 +118,39 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public List<S3Object> listVoiceFilesByRepository(Long pullRequestId) {
-        try{
+        try {
             String prefix = String.format("voice-comments/pr_%d/", pullRequestId);
             ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .prefix(prefix)
                     .build();
-            ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(listObjectsV2Request);
+            ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(
+                    listObjectsV2Request);
             return listObjectsV2Response.contents();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException("파일 목록 조회 실패", e);
+        }
+    }
+
+    /**
+     * 업로드된 파일들을 정리하는 보상 트랜잭션 메서드
+     */
+    public void cleanupUploadedFiles(List<String> uploadedFileKeys) {
+        if (uploadedFileKeys.isEmpty()) {
+            return;
+        }
+
+        log.info("보상 트랜잭션 시작 - 정리할 파일 수: {}", uploadedFileKeys.size());
+
+        for (String recordKey : uploadedFileKeys) {
+            try {
+                deleteFile(recordKey, null); // commentId는 아직 없으므로 null
+                log.info("보상 트랜잭션 - 파일 정리 완료: {}", recordKey);
+            } catch (Exception cleanupException) {
+                log.error("보상 트랜잭션 - 파일 정리 실패: {}, 오류: {}",
+                        recordKey, cleanupException.getMessage());
+                // 정리 실패는 로그만 남기고 계속 진행 (운영팀이 수동으로 정리할 수 있도록)
+            }
         }
     }
 
