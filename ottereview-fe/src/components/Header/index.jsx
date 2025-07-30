@@ -1,11 +1,13 @@
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
 import { protectedRoutes } from '../../app/routes'
-import LogoutButton from '../Buttons/LogoutButton'
+import { useUserStore } from '../../store/userStore'
+import Button from '../Buttons/Button'
 
 const Header = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const logout = useUserStore((state) => state.logout)
 
   const matches = matchRoutes(protectedRoutes, location)
   const matchedRoute = matches?.[0]?.route
@@ -23,7 +25,9 @@ const Header = () => {
           </button>
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
           <div className="justify-self-end">
-            <LogoutButton />
+            <Button onClick={logout} variant="secondary" size="sm" className="soft-btn">
+              로그아웃
+            </Button>
           </div>
         </div>
       </div>

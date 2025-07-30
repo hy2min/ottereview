@@ -7,11 +7,7 @@ const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
     <div onClick={onClick} className="border p-4 space-y-1 cursor-pointer hover:bg-gray-100">
       <div>
         <p>ID: {repo.id}</p>
-      </div>
-      <div>
         <p>이름: {repo.name}</p>
-      </div>
-      <div>
         <p>전체 이름: {repo.full_name}</p>
       </div>
       <button
