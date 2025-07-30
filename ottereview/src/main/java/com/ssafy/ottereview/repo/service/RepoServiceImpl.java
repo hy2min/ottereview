@@ -1,7 +1,9 @@
 package com.ssafy.ottereview.repo.service;
 
 import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.AccountRepository;
+import com.ssafy.ottereview.account.repository.UserAccountRepository;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.service.BranchServiceImpl;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
@@ -11,8 +13,7 @@ import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.userreporelation.entity.UserRepoRelation;
-import com.ssafy.ottereview.userreporelation.repository.UserRepoRelationRepository;
+import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -33,11 +34,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class RepoServiceImpl implements RepoService {
 
-    private final UserRepoRelationRepository userRepoRelationRepository;
     private final RepoRepository repoRepository;
     private final AccountRepository accountRepository;
     private final GithubApiClient githubApiClient;
     private final BranchServiceImpl branchService;
+    private final UserAccountRepository userAccountRepository;
+
     private final PullRequestService pullRequestService;
 
     @Transactional
@@ -100,15 +102,17 @@ public class RepoServiceImpl implements RepoService {
         repoRepository.deleteById(id);
     }
 
+
     @Override
     @Transactional(readOnly = true)
-    public List<RepoResponse> getReposByUserId(Long userId) {
-        return userRepoRelationRepository.findByUser_Id(userId)
-                .stream()
-                .map(UserRepoRelation::getRepo)          // 이 시점엔 세션 열려 있음
-                .map(RepoResponse::of)                  // DTO 변환도 여기서!
-                .collect(Collectors.toList());
-
+    public List<RepoResponse> getReposByUserId(User user) {
+        List<UserAccount> userAccounts = userAccountRepository.findAllByUser(user);
+        List<Account> accountList = userAccounts.stream().map(UserAccount::getAccount).toList();
+        List<Repo> repoList = accountList.stream()
+                .flatMap(account -> repoRepository.findAllByAccount(account).stream())
+                .distinct()
+                .toList();
+        return repoList.stream().map(RepoResponse::of).toList();
     }
 
     @Transactional
@@ -146,7 +150,8 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Map<Long, GHRepository> repoMap, Account account) {
+    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
+            Map<Long, GHRepository> repoMap, Account account) {
         List<Branch> branchesToSave = new ArrayList<>();
         List<GHRepository> ghRepositoriesToCreate = new ArrayList<>(); // 추가
 
@@ -183,6 +188,14 @@ public class RepoServiceImpl implements RepoService {
         if (!toDelete.isEmpty()) {
             repoRepository.deleteByAccount_IdAndRepoIdIn(account.getId(), toDelete);
         }
+    }
+
+    @Transactional
+    @Override
+    public List<UserAccount> getUserListByRepoId(Long repoId) {
+        // repoId 기반으로 같은 Account를 가져옵니다.
+        Repo repo = repoRepository.findByRepoId(repoId);
+        return userAccountRepository.findAllByAccount(repo.getAccount());
     }
 
 

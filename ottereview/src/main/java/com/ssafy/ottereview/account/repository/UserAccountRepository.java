@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.account.repository;
 
+import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
@@ -10,4 +11,8 @@ import org.springframework.stereotype.Repository;
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
     
     List<UserAccount> findAllByUser(User user);
+
+    List<UserAccount> findAllByAccount(Account account);
+
+
 }
