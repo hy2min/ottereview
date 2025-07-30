@@ -1,0 +1,29 @@
+package com.ssafy.ottereview.common.webhook.dto;
+
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class PushEventInfo {
+
+    private String ref;
+    private String branchName;
+    private String repoFullName;
+    private Long repoId;
+    private String defaultBranch;
+    private String pusherName;
+    private String pusherEmail;
+    private boolean isNewBranch;
+    private boolean isDeleted;
+    private boolean isForced;
+    private String beforeSha;
+    private String afterSha;
+    private List<String> commitShas;
+    private int commitCount;
+}
