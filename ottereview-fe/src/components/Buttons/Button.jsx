@@ -2,7 +2,7 @@ import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
 const Button = ({ children, variant = 'primary', size = 'md', className, ...props }) => {
-  const layoutClasses = 'inline-flex items-center justify-center rounded-[8px]'
+  const layoutClasses = 'inline-flex items-center justify-center rounded-[8px], font-medium'
   const visualClasses = 'border-2 border-black shadow-pixel [image-rendering:pixelated]'
   const interactionClasses = [
     'transition-all duration-200',
