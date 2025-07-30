@@ -1,4 +1,4 @@
-import Button from '../../components/Buttons/Button'
+import Button from '../../components/Button'
 import { useUserStore } from '../../store/userStore'
 
 const Landing = () => {
@@ -15,7 +15,7 @@ const Landing = () => {
       <p className="text-gray-600 text-lg">
         GitHub PR을 리뷰하고 충돌을 해결하는 협업 서비스입니다.
       </p>
-      <Button onClick={handleLogin} variant="secondary" size="sm" className="soft-btn">
+      <Button onClick={handleLogin} variant="secondary">
         GitHub로 로그인
       </Button>
     </div>

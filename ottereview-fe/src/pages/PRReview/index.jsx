@@ -1,3 +1,5 @@
+import Button from '../../components/Button'
+
 const PRReview = () => {
   return (
     <div className="space-y-4 py-4">
@@ -30,9 +32,15 @@ const PRReview = () => {
         {/* 탭 영역 */}
 
         <div className="flex gap-4 pb-2 m-4">
-          <button className="border px-3 py-1">파일</button>
-          <button className="border px-3 py-1">댓글</button>
-          <button className="border px-3 py-1">커밋</button>
+          <Button variant="" size="sm">
+            파일
+          </Button>
+          <Button variant="" size="sm">
+            댓글
+          </Button>
+          <Button variant="" size="sm">
+            커밋
+          </Button>
         </div>
 
         {/* 파일 영역 */}

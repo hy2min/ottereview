@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Button from '../../components/Button'
 import { useChatStore } from '../../features/chat/chatStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
@@ -40,10 +41,10 @@ const Conflict = () => {
 
       <div className="border p-4">충돌 파일 목록</div>
 
-      <div className="flex justify-end mt-4">
-        <button className="border px-4 py-1 cursor-pointer" onClick={handleCreateChat}>
+      <div className="flex justify-end">
+        <Button onClick={handleCreateChat} variant="">
           채팅방 개설
-        </button>
+        </Button>
       </div>
     </div>
   )
