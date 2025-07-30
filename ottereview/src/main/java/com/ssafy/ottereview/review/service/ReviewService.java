@@ -7,8 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface ReviewService {
 
-    ReviewResponse createReview(Long accountId, Long repoId, Long prId, ReviewRequest reviewRequest,
-            Long userId);
+//    ReviewResponse createReview(Long accountId, Long repoId, Long prId, ReviewRequest reviewRequest,
+//            Long userId);
 
     ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
             ReviewRequest reviewRequest, MultipartFile[] files, Long userId);
