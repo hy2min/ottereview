@@ -8,10 +8,11 @@ import com.ssafy.ottereview.auth.dto.GithubUserDto;
 import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
+import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,16 +32,13 @@ public class GithubInstallationFacade {
     private final AccountService accountService;
     private final UserAccountRepository userAccountRepository;
     private final GithubAppUtil githubAppUtil;
-    private final RepoRepository repoRepository;
     private final RepoService repoService;
+    private final PullRequestService pullRequestService;
 
-    public void processInstallationWithOAuth(Long installationId, String code) {
+    public void processInstallationWithOAuth(Long installationId, String code) throws IOException {
 
-        // code -> github app oauth AccessToken 가져오기
         String accessToken = githubAppUtil.requestGithubAccessToken(code);
-        log.debug("accessToken 성공: {} ", accessToken);
-        // 사용자 정보 가져오기
-        log.debug("사용자 정보 가져오기 로직 실행");
+
         GithubUserDto githubUserDto = authService.requestGithubUser(accessToken);
 
         User loginUser = userRepository.findByGithubEmail(githubUserDto.getEmail())
@@ -58,23 +56,7 @@ public class GithubInstallationFacade {
 
         userAccountRepository.save(userAccount);
 
-        // 4. github에서 repository 목록 가져오기
-        List<GHRepository> repositories = githubApiClient.getRepositories(installationId);
-
-        // log 확인용
-        for (GHRepository repo : repositories) {
-            log.info("Repo ID: {}, Full Name: {}, Private: {}",
-                    repo.getId(), repo.getFullName(), repo.isPrivate());
-        }
-
         //5. repo리스트 db에 저장하는 메소드 (이미 저장된 것은 넘긴다)
         repoService.processSyncRepo(newAccount, installationId);
-
-    }
-
-    // process update 로직 추가
-    public void processUpdateWithOAuth(Long installationId) {
-        Account account = accountService.getAccountByInstallationId(installationId);
-        repoService.processSyncRepo(account, installationId);
     }
 }

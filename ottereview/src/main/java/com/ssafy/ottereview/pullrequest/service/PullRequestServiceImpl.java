@@ -15,6 +15,7 @@ import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kohsuke.github.GHIssueState;
+import org.kohsuke.github.GHRepository;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -34,6 +37,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final GithubApiClient githubApiClient;
     private final PullRequestRepository pullRequestRepository;
     private final RepoRepository repoRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<PullRequestResponse> getPullRequestsByRepositoryId(CustomUserDetail userDetail, Long repositoryId) {
@@ -95,6 +99,48 @@ public class PullRequestServiceImpl implements PullRequestService {
 
     @Override
     public void createPullRequest(CustomUserDetail customUserDetail, PullRequestCreateRequest pullRequestCreateRequest) {
+
+    }
+
+    @Override
+    public void createPullRequestFromGithubRepository(List<GHRepository> githubRepositories) {
+
+        try {
+            //6. Repo 별 PR 생성
+            for (GHRepository repo : githubRepositories) {
+                log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                        repo.getId(), repo.getFullName(), repo.isPrivate());
+
+                List<GithubPrResponse> githubPrResponses = repo.queryPullRequests()
+                        .state(GHIssueState.OPEN)
+                        .list()
+                        .toList()
+                        .stream()
+                        .map(GithubPrResponse::from)
+                        .toList();
+
+                // 1. repositoryId로 Repo 엔티티를 조회한다.
+                Repo targetRepo = repoRepository.findByRepoId(repo.getId())
+                        .orElseThrow(() -> new IllegalArgumentException("Repository not found with id: " + repo.getId()));
+
+                // 2. GitHub PR 응답을 PullRequest 엔티티로 변환
+                List<PullRequest> newPullRequests = new ArrayList<>();
+                for (GithubPrResponse githubPr : githubPrResponses) {
+                    User author = userRepository.findByGithubEmail(githubPr.getAuthor()
+                                    .getEmail())
+                            .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + githubPr.getAuthor()));
+
+                    newPullRequests.add(convertToEntity(githubPr, author, targetRepo));
+                }
+
+                if (!newPullRequests.isEmpty()) {
+                    pullRequestRepository.saveAll(newPullRequests);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error while creating pull requests from GitHub repositories: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create pull requests from GitHub repositories", e);
+        }
 
     }
 
@@ -241,7 +287,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .merged(githubPrResponse.getMerged())
                 .base(githubPrResponse.getBase())
                 .head(githubPrResponse.getHead())
-                .mergeable(githubPrResponse.getMergeable() != null ? githubPrResponse.getMergeable() : false)
+                .mergeable(githubPrResponse.getMergeable())
                 .githubCreatedAt(githubPrResponse.getGithubCreatedAt())
                 .githubUpdatedAt(githubPrResponse.getGithubUpdatedAt())
                 .commitCnt(githubPrResponse.getCommitCnt())
