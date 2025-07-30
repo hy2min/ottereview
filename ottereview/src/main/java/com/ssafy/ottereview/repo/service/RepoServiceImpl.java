@@ -5,6 +5,7 @@ import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.service.BranchServiceImpl;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
@@ -30,26 +31,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RepoServiceImpl implements RepoService{
+public class RepoServiceImpl implements RepoService {
+
     private final UserRepoRelationRepository userRepoRelationRepository;
     private final RepoRepository repoRepository;
     private final AccountRepository accountRepository;
     private final GithubApiClient githubApiClient;
     private final BranchServiceImpl branchService;
+    private final PullRequestService pullRequestService;
 
     @Transactional
     @Override
     public List<RepoResponse> syncReposForAccount(Long accountId) {
-            // account 객체도 생성 (추후에 저장하기 위한 repo 객체를 만들기 위해서)
-            Account account = accountRepository.getReferenceById(accountId);
-            // accountId를 통해서 InstallationId를 뽑아서 그걸로 githubRepoResponse를 반환한다.
-            Long installationId = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new EntityNotFoundException("Account not found"))
-                    .getInstallationId();
-            // 동기화 작업 해주는 로직
-            processSyncRepo(account, installationId);
+        // account 객체도 생성 (추후에 저장하기 위한 repo 객체를 만들기 위해서)
+        Account account = accountRepository.getReferenceById(accountId);
+        // accountId를 통해서 InstallationId를 뽑아서 그걸로 githubRepoResponse를 반환한다.
+        Long installationId = accountRepository.findById(accountId)
+                .orElseThrow(() -> new EntityNotFoundException("Account not found"))
+                .getInstallationId();
+        // 동기화 작업 해주는 로직
+        processSyncRepo(account, installationId);
 
-        return repoRepository.findAllByAccount_Id(accountId).stream()
+        return repoRepository.findAllByAccount_Id(accountId)
+                .stream()
                 .map(RepoResponse::of)
                 .toList();
     }
@@ -99,12 +103,14 @@ public class RepoServiceImpl implements RepoService{
     @Override
     @Transactional(readOnly = true)
     public List<RepoResponse> getReposByUserId(Long userId) {
-        return userRepoRelationRepository.findByUser_Id(userId).stream()
+        return userRepoRelationRepository.findByUser_Id(userId)
+                .stream()
                 .map(UserRepoRelation::getRepo)          // 이 시점엔 세션 열려 있음
                 .map(RepoResponse::of)                  // DTO 변환도 여기서!
                 .collect(Collectors.toList());
 
     }
+
     @Transactional
     @Override
     public void processSyncRepo(Account account, Long installationId) {
@@ -134,18 +140,21 @@ public class RepoServiceImpl implements RepoService{
         deleteRepoList(remoteSet, dbRepoSet, account);
 
         // github에서 가져온 레포지토리 리스트 우리 db에 저장하는 로직
-        createRepoList(remoteSet, dbRepoSet, repoMap ,account);
+        createRepoList(remoteSet, dbRepoSet, repoMap, account);
 
 
     }
 
     @Override
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,  Map<Long, GHRepository> repoMap  ,Account account) {
+    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Map<Long, GHRepository> repoMap, Account account) {
         List<Branch> branchesToSave = new ArrayList<>();
+        List<GHRepository> ghRepositoriesToCreate = new ArrayList<>(); // 추가
+
         List<Repo> toCreate = remoteSet.stream()
                 .filter(id -> !dbRepoSet.contains(id))
                 .map(id -> {
                     GHRepository gh = repoMap.get(id);
+                    ghRepositoriesToCreate.add(gh);
                     Repo repo = Repo.builder()
                             .repoId(id)
                             .fullName(gh.getFullName())
@@ -154,18 +163,22 @@ public class RepoServiceImpl implements RepoService{
                             .build();
                     branchesToSave.addAll(branchService.createBranchList(gh, repo));
                     return repo;
-                }).toList();
+                })
+                .toList();
 
-        if(!toCreate.isEmpty()){
+        if (!toCreate.isEmpty()) {
             repoRepository.saveAll(toCreate);
+            pullRequestService.createPullRequestFromGithubRepository(ghRepositoriesToCreate);
         }
         // branch에 branchList 한번에 저장하는 로직
         branchService.saveAllBranchList(branchesToSave);
     }
 
     @Override
-    public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet , Account account) {
-        List<Long> toDelete = dbRepoSet.stream().filter(id -> !remoteSet.contains(id)).toList();
+    public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account) {
+        List<Long> toDelete = dbRepoSet.stream()
+                .filter(id -> !remoteSet.contains(id))
+                .toList();
 
         if (!toDelete.isEmpty()) {
             repoRepository.deleteByAccount_IdAndRepoIdIn(account.getId(), toDelete);
