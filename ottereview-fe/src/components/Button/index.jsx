@@ -1,7 +1,10 @@
 import { clsx } from 'clsx'
+import { useEffect, useRef } from 'react'
 import { twMerge } from 'tailwind-merge'
 
 const Button = ({ children, variant = 'primary', size = 'md', className, onClick, ...props }) => {
+  const buttonRef = useRef(null)
+
   const baseClasses =
     'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
 
@@ -22,12 +25,17 @@ const Button = ({ children, variant = 'primary', size = 'md', className, onClick
 
   const classes = twMerge(clsx(baseClasses, variants[variant], sizes[size]), className, 'soft-btn')
 
-  const handleClick = (e) => {
-    onClick?.(e)
-    e.currentTarget.blur()
-  }
+  useEffect(() => {
+    const handleMouseUp = () => {
+      buttonRef.current?.blur()
+    }
+
+    document.addEventListener('mouseup', handleMouseUp)
+    return () => document.removeEventListener('mouseup', handleMouseUp)
+  }, [])
+
   return (
-    <button className={classes} onClick={handleClick} {...props}>
+    <button ref={buttonRef} className={classes} {...props} onClick={onClick}>
       {children}
     </button>
   )
