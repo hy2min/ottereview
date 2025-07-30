@@ -16,7 +16,11 @@ import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kohsuke.github.GHAppInstallation;
+import org.kohsuke.github.GHOrganization;
 import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
+import org.kohsuke.github.GitHub;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +51,30 @@ public class GithubInstallationFacade {
         // 2. Account 생성/조회
         GithubAccountResponse githubAccountResponse = githubApiClient.getAccount(installationId);
         Account newAccount = accountService.createAccount(githubAccountResponse);
+
+        if(githubAccountResponse.getType().equals("Organization")){
+            GHAppInstallation githubAppUtilInstallation = githubAppUtil.getInstallation(installationId);
+            String orgName = githubApiClient.getOrgName(githubAppUtilInstallation);
+            GitHub gitHub = githubAppUtil.getGitHub(installationId);
+            GHOrganization organization = gitHub.getOrganization(orgName);
+            List<GHUser> orgMembers = organization.listMembers().toList();
+            log.info("Organization {} has {} members", orgName, orgMembers.size());
+            for(GHUser user : orgMembers){
+                if(user.getLogin().equals(loginUser.getGithubUsername())) continue;
+                User u = User.builder()
+                        .githubUsername(user.getLogin())
+                        .githubEmail(user.getEmail())
+                        .profileImageUrl(user.getAvatarUrl())
+                        .userGrade("BASIC")
+                        .rewardPoints(0)
+                        .build();
+                userRepository.save(u);
+                userAccountRepository.save(UserAccount.builder()
+                                .account(newAccount)
+                                .user(u)
+                                .build());
+            }
+        }
 
         // 3. 사용자-계정 매핑 생성
         UserAccount userAccount = UserAccount.builder()
