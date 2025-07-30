@@ -2,6 +2,7 @@ package com.ssafy.ottereview.review.dto;
 
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.entity.ReviewState;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -34,12 +35,12 @@ public class ReviewResponse {
                 review.getBody(),
                 review.getCommitSha(),
                 review.getReviewComments().stream()
-                        .map(comment -> com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse.from(
+                        .map(comment -> ReviewCommentResponse.from(
                                 comment))
                         .collect(Collectors.toList()),
                 review.getGithubCreatedAt(),
                 review.getCreatedAt(),
-                review.getCreatedAt()
+                review.getModifiedAt()
         );
     }
 }
