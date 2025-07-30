@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.repo.repository;
 
+import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.repo.entity.Repo;
 import java.util.Collection;
 import java.util.List;
@@ -23,4 +24,8 @@ public interface RepoRepository extends JpaRepository<Repo, Long> {
     void deleteByAccount_IdAndRepoIdIn(Long accountId, Collection<Long> repoIds);
 
     List<Repo> findAllByAccount_Id(Long accountId);
+
+    Repo findByRepoId(Long repoId);
+
+    List<Repo> findAllByAccount(Account account);
 }
