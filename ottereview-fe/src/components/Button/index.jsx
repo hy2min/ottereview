@@ -1,18 +1,9 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-const Button = ({ children, variant = 'primary', size = 'md', className, ...props }) => {
-  const layoutClasses = 'inline-flex items-center justify-center rounded-[8px]'
-  const visualClasses = 'border-2 border-black shadow-pixel [image-rendering:pixelated]'
-  const interactionClasses = [
-    'transition-all duration-200',
-    'hover:shadow-pixel-lg hover:-translate-y-1',
-    'active:shadow-pixel-inset active:translate-y-0',
-    'focus:outline-none focus:ring-2 focus:ring-offset-2',
-    'disabled:opacity-50 disabled:pointer-events-none',
-  ]
-
-  const baseClasses = clsx(layoutClasses, visualClasses, interactionClasses)
+const Button = ({ children, variant = 'primary', size = 'md', className, onClick, ...props }) => {
+  const baseClasses =
+    'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
 
   const variants = {
     primary: 'bg-purple-600 text-white hover:bg-purple-700 focus:ring-purple-500',
@@ -29,10 +20,14 @@ const Button = ({ children, variant = 'primary', size = 'md', className, ...prop
     lg: 'px-6 py-3 text-base',
   }
 
-  const classes = twMerge(clsx(baseClasses, variants[variant], sizes[size]), className)
+  const classes = twMerge(clsx(baseClasses, variants[variant], sizes[size]), className, 'soft-btn')
 
+  const handleClick = (e) => {
+    onClick?.(e)
+    e.currentTarget.blur()
+  }
   return (
-    <button className={classes} {...props}>
+    <button className={classes} onClick={handleClick} {...props}>
       {children}
     </button>
   )

@@ -2,7 +2,7 @@ import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
 import { protectedRoutes } from '../../app/routes'
 import { useUserStore } from '../../store/userStore'
-import Button from '../Buttons/Button'
+import Button from '../Button'
 
 const Header = () => {
   const navigate = useNavigate()
@@ -25,7 +25,7 @@ const Header = () => {
           </button>
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
           <div className="justify-self-end">
-            <Button onClick={logout} variant="secondary" size="sm" className="soft-btn">
+            <Button onClick={logout} variant="secondary">
               로그아웃
             </Button>
           </div>

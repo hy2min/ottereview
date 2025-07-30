@@ -1,5 +1,6 @@
-// PRCard.jsx
 import { useNavigate } from 'react-router-dom'
+
+import Button from '../../components/Button'
 
 const PRCard = ({ pr }) => {
   const navigate = useNavigate()
@@ -13,18 +14,20 @@ const PRCard = ({ pr }) => {
       </div>
 
       <div className="flex gap-2 pt-2">
-        <button
-          className="border px-2 py-1 text-sm cursor-pointer"
+        <Button
           onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/review`)}
+          variant="outline"
+          size="sm"
         >
           리뷰하기
-        </button>
-        <button
-          className="border px-2 py-1 text-sm cursor-pointer"
+        </Button>
+        <Button
           onClick={() => navigate(`/${pr.repoId}/pr/${pr.id}/conflict`)}
+          variant="primary"
+          size="sm"
         >
           머지
-        </button>
+        </Button>
       </div>
     </div>
   )

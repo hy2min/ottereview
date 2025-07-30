@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Section from '../../components/Section'
 import { fetchRepo } from './repositoryApi'
 import RepositoryCard from './RepositoryCard'
 
@@ -21,7 +22,7 @@ const RepositoryList = () => {
   }
 
   return (
-    <section className="border p-4">
+    <Section>
       <h2 className="text-xl mb-4">레포지토리 목록</h2>
       <div className="space-y-2">
         {repos.map((repo) => (
@@ -33,7 +34,7 @@ const RepositoryList = () => {
           />
         ))}
       </div>
-    </section>
+    </Section>
   )
 }
 

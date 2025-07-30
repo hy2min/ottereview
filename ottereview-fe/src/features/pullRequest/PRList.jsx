@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import Section from '../../components/Section'
 import { fetchPR } from './prApi'
 import PRCard from './PRCard'
 
@@ -23,24 +24,26 @@ const PRList = () => {
     selectedRepoId === 'all' ? prs : prs.filter((pr) => pr.repoId === Number(selectedRepoId))
 
   return (
-    <section className="border p-4 space-y-4">
-      <h2 className="text-xl">PR 목록</h2>
+    <Section>
+      <div className="flex mb-2">
+        <h2 className="text-xl mr-8">PR 목록</h2>
 
-      {/* 필터 드롭다운 */}
-      <div>
-        <label className="mr-2">레포 필터:</label>
-        <select
-          className="border px-2 py-1"
-          value={selectedRepoId}
-          onChange={(e) => setSelectedRepoId(e.target.value)}
-        >
-          <option value="all">전체</option>
-          {repoOptions.map(([repoId, repoName]) => (
-            <option key={repoId} value={repoId}>
-              {repoName}
-            </option>
-          ))}
-        </select>
+        {/* 필터 드롭다운 */}
+        <div>
+          <label className="mr-2">레포 필터:</label>
+          <select
+            className="border px-2 py-1"
+            value={selectedRepoId}
+            onChange={(e) => setSelectedRepoId(e.target.value)}
+          >
+            <option value="all">전체</option>
+            {repoOptions.map(([repoId, repoName]) => (
+              <option key={repoId} value={repoId}>
+                {repoName}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -48,7 +51,7 @@ const PRList = () => {
           <PRCard key={pr.id} pr={pr} context="dashboard" />
         ))}
       </div>
-    </section>
+    </Section>
   )
 }
 
