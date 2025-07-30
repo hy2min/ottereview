@@ -3,20 +3,18 @@ package com.ssafy.ottereview.review.controller;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
-
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestReview;
 import org.kohsuke.github.GHPullRequestReviewComment;
-import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GHRepository;
+import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -30,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 public class ReviewTestController {
+
     private final GithubAppUtil githubAppUtil;
     private final RepoRepository repoRepository;
     private final AccountRepository accountRepository;
@@ -44,13 +43,15 @@ public class ReviewTestController {
         try {
             // getReferenceById 대신 findById 사용 (실제 데이터 조회)
             Long installationId = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Account not found with id: " + accountId))
                     .getInstallationId();
             GitHub github = githubAppUtil.getGitHub(installationId);
 
             // 레포지토리 정보 가져오기 (findById 사용)
             String repoFullName = repoRepository.findById(repoId)
-                    .orElseThrow(() -> new RuntimeException("Repository not found with id: " + repoId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Repository not found with id: " + repoId))
                     .getFullName();
             GHRepository repository = github.getRepository(repoFullName);
 
@@ -71,13 +72,15 @@ public class ReviewTestController {
             // 4. 요청된 리뷰어 정보 가져오기
             result.put("requestedReviewers", getRequestedReviewersInfo(pullRequest));
 
-            log.info("Successfully retrieved review info for PR #{} in repo {}", prId, repoFullName);
+            log.info("Successfully retrieved review info for PR #{} in repo {}", prId,
+                    repoFullName);
             return ResponseEntity.ok(result);
 
         } catch (Exception e) {
             log.error("Error retrieving review info for PR #{}", prId, e);
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Failed to retrieve review information: " + e.getMessage()));
+                    .body(Map.of("error",
+                            "Failed to retrieve review information: " + e.getMessage()));
         }
     }
 
@@ -111,7 +114,8 @@ public class ReviewTestController {
         for (GHPullRequestReview review : pr.listReviews()) {
             Map<String, Object> reviewInfo = new HashMap<>();
             reviewInfo.put("id", review.getId());
-            reviewInfo.put("state", review.getState().toString()); // APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED
+            reviewInfo.put("state", review.getState()
+                    .toString()); // APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED
             reviewInfo.put("body", review.getBody());
             reviewInfo.put("submittedAt", review.getSubmittedAt());
             reviewInfo.put("commitId", review.getCommitId());
@@ -202,12 +206,14 @@ public class ReviewTestController {
 
         try {
             Long installationId = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Account not found with id: " + accountId))
                     .getInstallationId();
             GitHub github = githubAppUtil.getGitHub(installationId);
 
             String repoFullName = repoRepository.findById(repoId)
-                    .orElseThrow(() -> new RuntimeException("Repository not found with id: " + repoId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Repository not found with id: " + repoId))
                     .getFullName();
             GHRepository repository = github.getRepository(repoFullName);
             GHPullRequest pullRequest = repository.getPullRequest(prId.intValue());
@@ -254,12 +260,14 @@ public class ReviewTestController {
 
         try {
             Long installationId = accountRepository.findById(accountId)
-                    .orElseThrow(() -> new RuntimeException("Account not found with id: " + accountId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Account not found with id: " + accountId))
                     .getInstallationId();
             GitHub github = githubAppUtil.getGitHub(installationId);
 
             String repoFullName = repoRepository.findById(repoId)
-                    .orElseThrow(() -> new RuntimeException("Repository not found with id: " + repoId))
+                    .orElseThrow(
+                            () -> new RuntimeException("Repository not found with id: " + repoId))
                     .getFullName();
             GHRepository repository = github.getRepository(repoFullName);
             GHPullRequest pullRequest = repository.getPullRequest(prId.intValue());

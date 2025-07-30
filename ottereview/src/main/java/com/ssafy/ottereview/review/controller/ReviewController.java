@@ -5,16 +5,23 @@ import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.service.ReviewService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/accounts/{account-id}/repositories/{repo-id}/pull-requests/{pr-id}/review")
@@ -32,10 +39,10 @@ public class ReviewController {
             @RequestPart @Valid ReviewRequest reviewRequest,
             @RequestPart(value = "files", required = false) MultipartFile[] files,
             @AuthenticationPrincipal CustomUserDetail userDetail) {
-        
+
         try {
             ReviewResponse response = reviewService.createReviewWithFiles(
-                accountId, repoId, prId, reviewRequest, files, userDetail.getUser().getId());
+                    accountId, repoId, prId, reviewRequest, files, userDetail.getUser().getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (Exception e) {
             log.error("Failed to create review for PR #{}", prId, e);
@@ -51,10 +58,10 @@ public class ReviewController {
             @PathVariable("review-id") Long reviewId,
             @Valid @RequestBody ReviewRequest reviewRequest,
             @AuthenticationPrincipal CustomUserDetail userDetail) {
-        
+
         try {
             ReviewResponse response = reviewService.updateReview(
-                accountId, repoId, prId, reviewId, reviewRequest, userDetail.getUser().getId());
+                    accountId, repoId, prId, reviewId, reviewRequest, userDetail.getUser().getId());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Failed to update review {} for PR #{}", reviewId, prId, e);
@@ -69,9 +76,10 @@ public class ReviewController {
             @PathVariable("pr-id") Long prId,
             @PathVariable("review-id") Long reviewId,
             @AuthenticationPrincipal CustomUserDetail userDetail) {
-        
+
         try {
-            reviewService.deleteReview(accountId, repoId, prId, reviewId, userDetail.getUser().getId());
+            reviewService.deleteReview(accountId, repoId, prId, reviewId,
+                    userDetail.getUser().getId());
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             log.error("Failed to delete review {} for PR #{}", reviewId, prId, e);
@@ -84,9 +92,10 @@ public class ReviewController {
             @PathVariable("account-id") Long accountId,
             @PathVariable("repo-id") Long repoId,
             @PathVariable("pr-id") Long prId) {
-        
+
         try {
-            List<ReviewResponse> reviews = reviewService.getReviewsByPullRequest(accountId, repoId, prId);
+            List<ReviewResponse> reviews = reviewService.getReviewsByPullRequest(accountId, repoId,
+                    prId);
             return ResponseEntity.ok(reviews);
         } catch (Exception e) {
             log.error("Failed to get reviews for PR #{}", prId, e);
@@ -100,7 +109,7 @@ public class ReviewController {
             @PathVariable("repo-id") Long repoId,
             @PathVariable("pr-id") Long prId,
             @PathVariable("review-id") Long reviewId) {
-        
+
         try {
             ReviewResponse review = reviewService.getReviewById(accountId, repoId, prId, reviewId);
             return ResponseEntity.ok(review);
