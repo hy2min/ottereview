@@ -1,4 +1,4 @@
-const steps = ['컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
+const steps = ['브랜치 선택', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
 const StepIndicator = ({ currentStep = 1 }) => {
   const progressPercent = (currentStep / steps.length) * 100

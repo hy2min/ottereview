@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react' // useMemo 임포트
 import { useNavigate } from 'react-router-dom'
 
 import Box from '../../components/Box'
@@ -16,6 +16,17 @@ const PRCreate = () => {
   const navigate = useNavigate()
 
   const formData = usePRCreateStore((state) => state.formData)
+
+  const isNextButtonDisabled = useMemo(() => {
+    if (step === 1) {
+      return (
+        !formData.sourceBranch ||
+        !formData.targetBranch ||
+        formData.sourceBranch === formData.targetBranch
+      )
+    }
+    return false
+  }, [step, formData.sourceBranch, formData.targetBranch])
 
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
@@ -67,13 +78,16 @@ const PRCreate = () => {
 
         <Button
           onClick={() => {
-            if (step < 4) {
-              setStep((prev) => prev + 1)
-            } else {
-              handleSubmit()
+            if (!isNextButtonDisabled) {
+              if (step < 4) {
+                setStep((prev) => prev + 1)
+              } else {
+                handleSubmit()
+              }
             }
           }}
           variant="primary"
+          disabled={isNextButtonDisabled}
         >
           {step === 4 ? '제출' : '다음'}
         </Button>
