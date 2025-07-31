@@ -24,13 +24,11 @@ const RepositoryDetail = () => {
   const repoName = prs[0]?.repo.name || ''
 
   return (
-    <div>
+    <div className="pt-2 px-4">
       <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <div>
-            <h1 className="text-2xl mb-1">{repoName} PR 목록</h1>
-            <p className="text-stone-600">{prs.length}개의 Pull Request</p>
-          </div>
+        <div>
+          <h1 className="text-2xl mb-1">{repoName} PR 목록</h1>
+          <p className="text-stone-600">{prs.length}개의 Pull Request</p>
         </div>
 
         <Button

@@ -14,6 +14,16 @@ export const fetchPR = async () => {
       mergeable: true,
       repo: { id: 1, name: 'ottereview-fe' },
       comments: 2,
+      additions: 5,
+      deletions: 1,
+      changes: 6,
+      patch: `@@ -12,7 +12,10 @@ function authenticate(user) {
+-  if (!token) throw new Error('No token');
++  if (!token) {
++    logger.error('Token missing');
++    throw new Error('Authentication failed');
++  }
+ }`,
     },
     {
       id: 102,
@@ -29,6 +39,15 @@ export const fetchPR = async () => {
       mergeable: false,
       repo: { id: 2, name: 'ottereview-be' },
       comments: 5,
+      additions: 3,
+      deletions: 3,
+      changes: 6,
+      patch: `@@ -45,6 +45,9 @@ function handleConflict() {
+-  console.log('Conflict detected');
++  showAlert('Conflict detected');
++  // TODO: integrate with retry logic
++  retryMerge();
+ }`,
     },
     {
       id: 103,
@@ -44,6 +63,14 @@ export const fetchPR = async () => {
       mergeable: true,
       repo: { id: 3, name: 'ottereview-ai' },
       comments: 1,
+      additions: 2,
+      deletions: 0,
+      changes: 2,
+      patch: `@@ -22,6 +22,8 @@ const buildPrompt = (data) => {
++  prompt += '\\nPlease focus on edge cases.';
++  prompt += '\\nEnsure formatting is JSON.';
+  return prompt;
+}`,
     },
     {
       id: 104,
@@ -59,6 +86,22 @@ export const fetchPR = async () => {
       mergeable: true,
       repo: { id: 1, name: 'ottereview-fe' },
       comments: 4,
+      additions: 8,
+      deletions: 4,
+      changes: 12,
+      patch: `@@ -5,9 +5,12 @@ class AuthService {
+-  this.validateCredentials = validateCredentials;
++  // extract validation into separate module
++  this.validator = new CredentialValidator();
++  this.validateCredentials = this.validator.validate;
+ 
+-  this.generateToken = generateToken;
++  this.tokenService = new TokenService();
++  this.generateToken = this.tokenService.generate;
+ 
+  this.authenticate = async (user) => {
+    // ...
+  };`,
     },
   ]
 }

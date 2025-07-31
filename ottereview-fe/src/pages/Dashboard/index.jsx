@@ -6,7 +6,7 @@ const Dashboard = () => {
   return (
     <div className="pt-2">
       <div className="flex justify-between items-center">
-        <div>
+        <div className="px-4">
           <h1 className="text-2xl mb-1">안녕하세요, 김개발자님! 👋</h1>
           <p className="text-stone-600">오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!</p>
         </div>
