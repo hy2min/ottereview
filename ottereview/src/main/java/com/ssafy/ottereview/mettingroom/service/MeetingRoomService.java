@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.service;
 
+import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
 import com.ssafy.ottereview.user.entity.User;
@@ -11,5 +12,5 @@ public interface MeetingRoomService {
 
     void closeMeetingRoom(Long userId, Long roomId);
 
-    String joinMeetingRoom(Long roomId, Long userId);
+    JoinMeetingRoomResponseDto joinMeetingRoom(Long roomId, User user);
 }

@@ -28,7 +28,7 @@ public class Priority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "index", nullable = false)
+    @Column(name = "priority_index", nullable = false)
     private int idx;
 
     @Column(name = "title", nullable = false)
