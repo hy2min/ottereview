@@ -14,7 +14,7 @@
 /* ===== 전역 폰트 적용 ===== */
 body {
   font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
-  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+  /* background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%); */
   background-attachment: fixed;
   min-height: 100vh;
 }

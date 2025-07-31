@@ -1,3 +1,4 @@
+import Chat from '../features/chat/Chat'
 import ChatRoom from '../pages/ChatRoom'
 import Conflict from '../pages/Conflict'
 import Dashboard from '../pages/Dashboard'
@@ -12,4 +13,5 @@ export const protectedRoutes = [
   { path: '/:repoId/pr/:prId/conflict', element: <Conflict />, title: '충돌 해결' },
   { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
+  { path: '/chat', element: <Chat />, title: '채팅 테스트' },
 ]

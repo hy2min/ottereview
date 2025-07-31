@@ -1,12 +1,18 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Header from '../components/Header'
+import Chat from '../features/chat/Chat'
 import Landing from '../pages/Landing'
 import { useUserStore } from '../store/userStore'
 import { protectedRoutes } from './routes'
 
 const App = () => {
   const isLoggedIn = useUserStore((state) => state.isLoggedIn)
+  const { pathname } = useLocation()
+
+  if (pathname === '/chat') {
+    return <Chat />
+  }
 
   return (
     <div className="bg-gray-50 min-h-screen">
