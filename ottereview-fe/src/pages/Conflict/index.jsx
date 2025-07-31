@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Button from '../../components/Button'
+import Section from '../../components/Section'
 import { useChatStore } from '../../features/chat/chatStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
@@ -22,14 +24,11 @@ const Conflict = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="border p-4">
+    <div className="space-y-4 py-4">
+      <Section>
         <div className="flex gap-4">
           {mockReviewers.map((name) => (
-            <label
-              key={name}
-              className="flex items-center gap-2 border px-3 py-1 rounded cursor-pointer"
-            >
+            <label key={name} className="flex items-center gap-2 border px-3 py-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={selected.includes(name)}
@@ -39,13 +38,15 @@ const Conflict = () => {
             </label>
           ))}
         </div>
+      </Section>
+
+      <Section>충돌 파일 목록</Section>
+
+      <div className="flex justify-end">
+        <Button onClick={handleCreateChat} variant="">
+          채팅방 개설
+        </Button>
       </div>
-
-      <div className="border p-4">충돌 파일 목록</div>
-
-      <button className="border px-4 py-1 fixed bottom-6 right-6" onClick={handleCreateChat}>
-        채팅방 개설
-      </button>
     </div>
   )
 }

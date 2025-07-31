@@ -1,21 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 
+import Button from '../../components/Button'
+import Card from '../../components/Card'
+
 const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
   const navigate = useNavigate()
 
   return (
-    <div onClick={onClick} className="border p-4 space-y-1 cursor-pointer hover:bg-gray-100">
+    <Card onClick={onClick}>
       <div>
-        <strong>ID:</strong> {repo.id}
+        <p>ID: {repo.id}</p>
+        <p>이름: {repo.name}</p>
+        <p>전체 이름: {repo.full_name}</p>
       </div>
-      <div>
-        <strong>이름:</strong> {repo.name}
-      </div>
-      <div>
-        <strong>전체 이름:</strong> {repo.full_name}
-      </div>
-      <button
-        className={`border px-4 py-1 ${!createEnabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      <Button
         onClick={(e) => {
           e.stopPropagation()
           if (createEnabled) {
@@ -23,10 +21,12 @@ const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
           }
         }}
         disabled={!createEnabled}
+        variant="success"
+        size="sm"
       >
         PR 생성
-      </button>
-    </div>
+      </Button>
+    </Card>
   )
 }
 
