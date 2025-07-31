@@ -36,7 +36,7 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserResponseById(userDetail.getUser().getId()));
     }
 
-    @GetMapping("/meetingroom")
+    @GetMapping("/me/meetingroom")
     public ResponseEntity<List<MyMeetingRoomResponseDto>> getMyReposMeetingRooms(@AuthenticationPrincipal CustomUserDetail userDetail){
         return ResponseEntity.ok(userService.getMyReposMeetingRooms(userDetail.getUser().getId()));
     }

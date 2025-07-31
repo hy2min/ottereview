@@ -12,12 +12,13 @@ import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
 import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
-import com.ssafy.ottereview.repo.dto.RepoResponse;
-import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
-import com.ssafy.ottereview.user.repository.UserRepository;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,24 +27,18 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingRoomServiceImpl implements MeetingRoomService {
+
     private final MeetingRoomRepository meetingRoomRepository;
     private final PullRequestRepository pullRequestRepository;
-    private final UserRepository userRepository;
     private final UserAccountRepository userAccountRepository;
-    private final RepoRepository repoRepository;
+    private final MeetingParticipantRepository meetingParticipantRepository;
     private final OpenViduService openViduService;
     private final RedisTemplate<String, Object> redisTemplate;
+
     private static final String SESSION_KEY_PREFIX = "meeting:session:";
 
     @Value("${openvidu.session.ttl-hours}")
@@ -66,9 +61,11 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         Set<Long> inviteeIds = request.getInviteeIds() != null
                 ? new HashSet<>(request.getInviteeIds())
                 : new HashSet<>();
+        log.debug("초대받은 사람" + inviteeIds);
 
         // 레포 멤버 조회
-        List<User> repoUsers = userAccountRepository.findAllByAccount(pullRequest.getRepo().getAccount())
+        List<User> repoUsers = userAccountRepository.findAllByAccount(
+                        pullRequest.getRepo().getAccount())
                 .stream()
                 .map(UserAccount::getUser)
                 .distinct()
@@ -93,14 +90,16 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         // OpenVidu 세션 생성 & Redis 저장
         String sessionId = openViduService.createSession();
-        redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + room.getId(), sessionId, sessionTtlHours, TimeUnit.HOURS);
+        redisTemplate.opsForValue()
+                .set(SESSION_KEY_PREFIX + room.getId(), sessionId, sessionTtlHours, TimeUnit.HOURS);
 
         // DTO 변환 
         List<MeetingParticipantDto> participantDtos = room.getParticipants().stream()
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
-        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(), participantDtos);
+        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(),
+                participantDtos);
     }
 
     @Override
@@ -122,7 +121,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .findFirst()
                 .orElse(null);
 
-        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId, participantDtos);
+        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId,
+                participantDtos);
     }
 
     @Override
@@ -144,7 +144,6 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         }
         // Redis 세션 삭제
         String key = SESSION_KEY_PREFIX + roomId;
-        String sessionId = (String) redisTemplate.opsForValue().get(key);
         redisTemplate.delete(key);
         // openvidu 세션은 사람이 없으면 자동 삭제 됨
         // cascade로 참여자 같이 삭제
@@ -157,10 +156,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // 방 존재 여부 확인
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-        
+
         // 내가 속한 레포의 방인지 확인
-        Long repoId = room.getPullRequest().getRepo().getId();
-        boolean isMember = repoRepository.existsByUserIdAndRepoId(user.getId(), repoId);
+        boolean isMember = meetingParticipantRepository.existsByMeetingRoomIdAndUserId(roomId,
+                user.getId());
         if (!isMember) {
             throw new AccessDeniedException("User does not belong to this repository");
         }
@@ -172,7 +171,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // 세션 없거나 OpenVidu에 존재하지 않으면 새로 생성
         if (sessionId == null || !openViduService.isSessionActive(sessionId)) {
             sessionId = openViduService.createSession();
-            redisTemplate.opsForValue().set(key, sessionId, sessionTtlHours, TimeUnit.HOURS); // TTL 2시간
+            redisTemplate.opsForValue()
+                    .set(key, sessionId, sessionTtlHours, TimeUnit.HOURS); // TTL 2시간
         }
 
         // OpenVidu 토큰 발급

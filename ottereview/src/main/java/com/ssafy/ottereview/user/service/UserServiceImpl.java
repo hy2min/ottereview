@@ -1,6 +1,9 @@
 package com.ssafy.ottereview.user.service;
 
 import com.ssafy.ottereview.mettingroom.dto.MyMeetingRoomResponseDto;
+import com.ssafy.ottereview.mettingroom.entity.MeetingParticipant;
+import com.ssafy.ottereview.mettingroom.entity.MeetingRoom;
+import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
@@ -15,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final MeetingParticipantRepository meetingParticipantRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -26,7 +30,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public UserResponseDto getUserResponseById(Long userId) {
-        return toDto(getUserById(userId));
+        return UserResponseDto.fromEntity(getUserById(userId));
     }
 
     @Override
@@ -40,26 +44,17 @@ public class UserServiceImpl implements UserService {
     public List<UserResponseDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(this::toDto)
+                .map(UserResponseDto::fromEntity)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<MyMeetingRoomResponseDto> getMyReposMeetingRooms(Long id) {
-
+    public List<MyMeetingRoomResponseDto> getMyReposMeetingRooms(Long userId) {
+        List<MeetingParticipant> myRooms = meetingParticipantRepository.findMeetingRoomsByUserId(userId);
+        return myRooms.stream()
+                .map(MyMeetingRoomResponseDto::fromEntity)
+                .toList();
     }
-
-    private UserResponseDto toDto(User user) {
-        return new UserResponseDto(
-                user.getId(),
-                user.getGithubUsername(),
-                user.getGithubEmail(),
-                user.getProfileImageUrl(),
-                user.getRewardPoints(),
-                user.getUserGrade()
-        );
-    }
-
 
 }

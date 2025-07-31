@@ -36,8 +36,4 @@ public class MeetingRoom {
         participant.assignMeetingRoom(this);
     }
 
-    public void removeParticipant(MeetingParticipant participant) {
-        participants.remove(participant);
-        participant.assignMeetingRoom(null);
-    }
 }
