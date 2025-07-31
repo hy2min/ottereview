@@ -17,13 +17,29 @@ export const fetchPR = async () => {
       additions: 5,
       deletions: 1,
       changes: 6,
-      patch: `@@ -12,7 +12,10 @@ function authenticate(user) {
--  if (!token) throw new Error('No token');
-+  if (!token) {
-+    logger.error('Token missing');
-+    throw new Error('Authentication failed');
-+  }
- }`,
+      files: {
+        'src/auth/jwt.js': {
+          additions: 45,
+          deletions: 12,
+          patch:
+            '@@ -10,7 +10,9 @@ function signToken() {\n' +
+            '-  return jwt.sign(payload, secret);\n' +
+            "+  if (!secret) throw new Error('No secret');\n" +
+            "+  return jwt.sign(payload, secret, { expiresIn: '1h' });\n" +
+            '}\n',
+        },
+        'src/middleware/auth.js': {
+          additions: 23,
+          deletions: 8,
+          patch:
+            '@@ -5,6 +5,8 @@ function authenticate(req, res, next) {\n' +
+            '-  if (!req.headers.token) return res.status(401).send();\n' +
+            '+  const token = req.headers.token;\n' +
+            "+  if (!verify(token)) return res.status(401).json({ error: 'Invalid' });\n" +
+            '  next();\n' +
+            '}\n',
+        },
+      },
     },
     {
       id: 102,
@@ -42,12 +58,19 @@ export const fetchPR = async () => {
       additions: 3,
       deletions: 3,
       changes: 6,
-      patch: `@@ -45,6 +45,9 @@ function handleConflict() {
--  console.log('Conflict detected');
-+  showAlert('Conflict detected');
-+  // TODO: integrate with retry logic
-+  retryMerge();
- }`,
+      files: {
+        'src/conflict/handler.js': {
+          additions: 3,
+          deletions: 3,
+          patch:
+            '@@ -45,6 +45,9 @@ function handleConflict() {\n' +
+            "-  console.log('Conflict detected');\n" +
+            "+  showAlert('Conflict detected');\n" +
+            '+  // TODO: integrate with retry logic\n' +
+            '+  retryMerge();\n' +
+            '}\n',
+        },
+      },
     },
     {
       id: 103,
@@ -66,11 +89,18 @@ export const fetchPR = async () => {
       additions: 2,
       deletions: 0,
       changes: 2,
-      patch: `@@ -22,6 +22,8 @@ const buildPrompt = (data) => {
-+  prompt += '\\nPlease focus on edge cases.';
-+  prompt += '\\nEnsure formatting is JSON.';
-  return prompt;
-}`,
+      files: {
+        'src/ai/promptBuilder.js': {
+          additions: 2,
+          deletions: 0,
+          patch:
+            '@@ -22,6 +22,8 @@ const buildPrompt = (data) => {\n' +
+            "+  prompt += '\\nPlease focus on edge cases.';\n" +
+            "+  prompt += '\\nEnsure formatting is JSON.';\n" +
+            '  return prompt;\n' +
+            '}\n',
+        },
+      },
     },
     {
       id: 104,
@@ -89,19 +119,27 @@ export const fetchPR = async () => {
       additions: 8,
       deletions: 4,
       changes: 12,
-      patch: `@@ -5,9 +5,12 @@ class AuthService {
--  this.validateCredentials = validateCredentials;
-+  // extract validation into separate module
-+  this.validator = new CredentialValidator();
-+  this.validateCredentials = this.validator.validate;
- 
--  this.generateToken = generateToken;
-+  this.tokenService = new TokenService();
-+  this.generateToken = this.tokenService.generate;
- 
-  this.authenticate = async (user) => {
-    // ...
-  };`,
+      files: {
+        'src/auth/AuthService.js': {
+          additions: 8,
+          deletions: 4,
+          patch:
+            '@@ -5,9 +5,12 @@ class AuthService {\n' +
+            '-  this.validateCredentials = validateCredentials;\n' +
+            '+  // extract validation into separate module\n' +
+            '+  this.validator = new CredentialValidator();\n' +
+            '+  this.validateCredentials = this.validator.validate;\n' +
+            '\n' +
+            '-  this.generateToken = generateToken;\n' +
+            '+  this.tokenService = new TokenService();\n' +
+            '+  this.generateToken = this.tokenService.generate;\n' +
+            '\n' +
+            '  this.authenticate = async (user) => {\n' +
+            '    // ...\n' +
+            '  };\n' +
+            '}\n',
+        },
+      },
     },
   ]
 }

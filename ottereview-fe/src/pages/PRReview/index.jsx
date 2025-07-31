@@ -1,8 +1,40 @@
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+
 import Button from '../../components/Button'
 import Card from '../../components/Card'
 import Section from '../../components/Section'
+import { fetchPR } from '../../features/pullRequest/prApi'
 
 const PRReview = () => {
+  const { prId } = useParams()
+  const [files, setFiles] = useState([])
+  const [expandedFile, setExpandedFile] = useState(null)
+  const [activeTab, setActiveTab] = useState('files')
+
+  useEffect(() => {
+    const load = async () => {
+      const prList = await fetchPR()
+      const pr = prList.find((p) => String(p.id) === prId)
+      if (!pr || !pr.files) {
+        setFiles([])
+        return
+      }
+      const filesArr = Object.entries(pr.files).map(
+        ([filename, { additions, deletions, patch }]) => ({
+          filename,
+          additions,
+          deletions,
+          patch,
+        })
+      )
+      setFiles(filesArr)
+    }
+    load()
+  }, [prId])
+
+  const toggle = (filename) => setExpandedFile(expandedFile === filename ? null : filename)
+
   return (
     <div className="space-y-4 py-4">
       {/* 헤더 영역 */}
@@ -20,7 +52,6 @@ const PRReview = () => {
           </Section>
         </div>
       </div>
-
       {/* AI 요약 */}
       <Section>
         <p className="text-sm">
@@ -31,29 +62,45 @@ const PRReview = () => {
       </Section>
 
       <Section>
-        {/* 탭 영역 */}
-
-        <div className="flex gap-4 pb-2 m-4">
-          <Button variant="" size="sm">
+        <div className="flex gap-4 pb-4">
+          <Button variant="" size="sm" onClick={() => setActiveTab('files')}>
             파일
           </Button>
-          <Button variant="" size="sm">
+          <Button variant="" size="sm" onClick={() => setActiveTab('comments')}>
             댓글
           </Button>
-          <Button variant="" size="sm">
+          <Button variant="" size="sm" onClick={() => setActiveTab('commits')}>
             커밋
           </Button>
         </div>
 
-        {/* 파일 영역 */}
-        <Card>
-          <p className="text-sm mb-2 ">변경된 파일 목록</p>
-          <ul className="list-disc list-inside text-sm">
-            <li>auth.js</li>
-            <li>jwtUtils.js</li>
-            <li>LoginForm.jsx</li>
-          </ul>
-        </Card>
+        {activeTab === 'files' && (
+          <Card>
+            <ul className="space-y-2 text-sm">
+              {files.map((f) => (
+                <li key={f.filename}>
+                  <div
+                    className="flex justify-between items-center cursor-pointer p-2 bg-gray-50 rounded"
+                    onClick={() => toggle(f.filename)}
+                  >
+                    <span>{f.filename}</span>
+                    <span className="text-green-600">+{f.additions}</span>
+                    <span className="text-red-600">-{f.deletions}</span>
+                  </div>
+                  {expandedFile === f.filename && (
+                    <pre className="whitespace-pre-wrap overflow-auto bg-gray-100 p-2 mt-1 rounded text-xs">
+                      {f.patch}
+                    </pre>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        {activeTab === 'comments' && <Card>{/* 댓글 영역 구현 */}</Card>}
+
+        {activeTab === 'commits' && <Card>{/* 커밋 영역 구현 */}</Card>}
       </Section>
     </div>
   )

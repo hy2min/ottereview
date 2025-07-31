@@ -24,7 +24,7 @@ const RepositoryDetail = () => {
   const repoName = prs[0]?.repo.name || ''
 
   return (
-    <div className="pt-2 px-4">
+    <div className="pt-2">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl mb-1">{repoName} PR 목록</h1>

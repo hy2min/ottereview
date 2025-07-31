@@ -11,7 +11,7 @@ const App = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       {isLoggedIn && <Header />}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
         <Routes>
           {!isLoggedIn ? (
             <>
