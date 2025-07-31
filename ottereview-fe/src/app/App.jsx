@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import Chat from '../features/chat/Chat'
 import CodeEditor from '../features/chat/CodeEditor'
+import Whiteboard from '../features/chat/Whiteboard'
 
 function App() {
   const [roomIdInput, setRoomIdInput] = useState('')
@@ -14,7 +15,7 @@ function App() {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h2>🧪 WebSocket 채팅 + Yorkie 코드 공유</h2>
+      <h2>🧪 WebSocket 채팅 + Yorkie 코드 공유 + 화이트보드</h2>
 
       <div style={{ marginBottom: '1rem' }}>
         <input
@@ -40,6 +41,10 @@ function App() {
             <div style={{ flex: 2 }}>
               <CodeEditor roomId={roomId} />
             </div>
+          </div>
+
+          <div style={{ marginTop: '2rem', height: '500px', border: '1px solid #ccc' }}>
+            <Whiteboard roomId={roomId} />
           </div>
         </>
       )}

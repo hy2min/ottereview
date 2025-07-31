@@ -3,7 +3,7 @@ import * as yorkie from '@yorkie-js/sdk'
 import { basicSetup, EditorView } from 'codemirror'
 import { useEffect, useRef } from 'react'
 
-const CollaborativeEditor = () => {
+const CollaborativeEditor = ({ roomId }) => {
   const editorRef = useRef(null)
   const viewRef = useRef(null)
   const docRef = useRef(null)
