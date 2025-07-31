@@ -6,7 +6,6 @@ import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +49,14 @@ public interface RepoService {
 
     /**
      * Repo 동기화를 통해서 추가 및 삭제 로직 메소드
+     *
      * @param account
      * @param installationId
      */
     public void processSyncRepo(Account account, Long installationId);
 
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,  Map<Long, GHRepository> repoMap  ,Account account);
+    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
+            Map<Long, GHRepository> repoMap, Account account);
 
     public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account);
 

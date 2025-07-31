@@ -43,7 +43,8 @@ public class Repo {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    public Repo(Long repoId, String fullName, Account account, boolean isCushion, boolean isPrivate) {
+    public Repo(Long repoId, String fullName, Account account, boolean isCushion,
+            boolean isPrivate) {
         this.repoId = repoId;
         this.fullName = fullName;
         this.account = account;
