@@ -1,13 +1,13 @@
 import { useNavigate } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
-import Card from '../../components/Card'
 
 const PRCardCompact = ({ pr }) => {
   const navigate = useNavigate()
 
   return (
-    <Card>
+    <Box shadow>
       <div className="space-y-1">
         <p className="font-semibold text-stone-900">제목: {pr.title}</p>
         <p className="text-sm text-stone-700">설명: {pr.description}</p>
@@ -32,7 +32,7 @@ const PRCardCompact = ({ pr }) => {
           머지
         </Button>
       </div>
-    </Card>
+    </Box>
   )
 }
 

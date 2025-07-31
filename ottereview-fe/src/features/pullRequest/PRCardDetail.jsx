@@ -1,14 +1,14 @@
 import { Clock, Eye, GitBranch, GitMerge, MessageCircle, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
-import Card from '../../components/Card'
 
 const PRCardDetail = ({ pr }) => {
   const navigate = useNavigate()
 
   return (
-    <Card>
+    <Box shadow>
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-500 border-2 border-black rounded-lg flex items-center justify-center">
@@ -56,7 +56,7 @@ const PRCardDetail = ({ pr }) => {
           </Button>
         </div>
       </div>
-    </Card>
+    </Box>
   )
 }
 

@@ -2,8 +2,8 @@ import { Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
-import Section from '../../components/Section'
 import { fetchPR } from '../../features/pullRequest/prApi'
 import PRCardDetail from '../../features/pullRequest/PRCardDetail'
 
@@ -43,13 +43,13 @@ const RepositoryDetail = () => {
       </div>
 
       <div className="space-y-4 py-4">
-        <Section className="space-y-2">
+        <Box shadow className="space-y-2">
           {prs.length === 0 ? (
             <p>PR이 없습니다.</p>
           ) : (
             prs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
           )}
-        </Section>
+        </Box>
       </div>
     </div>
   )

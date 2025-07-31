@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
-import Section from '../../components/Section'
 import { useChatStore } from '../../features/chat/chatStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
@@ -25,7 +25,7 @@ const Conflict = () => {
 
   return (
     <div className="space-y-4 py-4">
-      <Section>
+      <Box shadow>
         <div className="flex gap-4">
           {mockReviewers.map((name) => (
             <label key={name} className="flex items-center gap-2 border px-3 py-1 cursor-pointer">
@@ -38,9 +38,9 @@ const Conflict = () => {
             </label>
           ))}
         </div>
-      </Section>
+      </Box>
 
-      <Section>충돌 파일 목록</Section>
+      <Box shadow>충돌 파일 목록</Box>
 
       <div className="flex justify-end">
         <Button onClick={handleCreateChat} variant="">
