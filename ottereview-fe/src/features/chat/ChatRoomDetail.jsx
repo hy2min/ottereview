@@ -1,5 +1,4 @@
-import Card from '../../components/Card'
-import Section from '../../components/Section'
+import Box from '../../components/Box'
 import { useChatStore } from './chatStore'
 
 const ChatRoomDetail = ({ roomId }) => {
@@ -9,23 +8,23 @@ const ChatRoomDetail = ({ roomId }) => {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Box shadow>
         <h2 className=" mb-2">참여자</h2>
         <ul className="list-disc list-inside text-sm">
           {room.members.map((name) => (
             <li key={name}>{name}</li>
           ))}
         </ul>
-      </Card>
+      </Box>
 
-      <Card>
+      <Box shadow>
         <h2 className=" mb-2">충돌 파일</h2>
         <ul className="list-disc list-inside text-sm">
           {room.conflictFiles.map((file) => (
             <li key={file}>{file}</li>
           ))}
         </ul>
-      </Card>
+      </Box>
     </div>
   )
 }
