@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.service;
 
+import com.ssafy.ottereview.mettingroom.dto.MyMeetingRoomResponseDto;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
@@ -41,6 +42,12 @@ public class UserServiceImpl implements UserService {
                 .stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<MyMeetingRoomResponseDto> getMyReposMeetingRooms(Long id) {
+
     }
 
     private UserResponseDto toDto(User user) {

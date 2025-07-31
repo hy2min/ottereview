@@ -1,5 +1,7 @@
 package com.ssafy.ottereview.mettingroom.service;
 
+import com.ssafy.ottereview.account.entity.UserAccount;
+import com.ssafy.ottereview.account.repository.UserAccountRepository;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
@@ -11,6 +13,7 @@ import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
+import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
@@ -23,8 +26,10 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -35,6 +40,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final MeetingRoomRepository meetingRoomRepository;
     private final PullRequestRepository pullRequestRepository;
     private final UserRepository userRepository;
+    private final UserAccountRepository userAccountRepository;
     private final RepoRepository repoRepository;
     private final OpenViduService openViduService;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -56,29 +62,30 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .pullRequest(pullRequest)
                 .build();
 
-        // Owner 참여자 추가
-        MeetingParticipant owner = MeetingParticipant.builder()
-                .user(user)
-                .isOwner(true)
-                .build();
-        room.addParticipant(owner);
+        // 초대받은 사람 셋
+        Set<Long> inviteeIds = request.getInviteeIds() != null
+                ? new HashSet<>(request.getInviteeIds())
+                : new HashSet<>();
 
-        // 초대 대상 추가
-        if (request.getInviteeIds() != null && !request.getInviteeIds().isEmpty()) {
-            List<User> invitees = userRepository.findAllById(request.getInviteeIds());
+        // 레포 멤버 조회
+        List<User> repoUsers = userAccountRepository.findAllByAccount(pullRequest.getRepo().getAccount())
+                .stream()
+                .map(UserAccount::getUser)
+                .distinct()
+                .toList();
 
-            // 유효하지 않은 ID 체크
-            if (invitees.size() != request.getInviteeIds().size()) {
-                throw new IllegalArgumentException("Invalid user exists.");
-            }
+        // 전체 멤버 루프 돌면서 Participant 생성
+        for (User repoUser : repoUsers) {
+            boolean isOwner = repoUser.getId().equals(user.getId());
+            boolean sendMail = !isOwner && inviteeIds.contains(repoUser.getId());
 
-            for (User invitee : invitees) {
-                MeetingParticipant participant = MeetingParticipant.builder()
-                        .user(invitee)
-                        .isOwner(false)
-                        .build();
-                room.addParticipant(participant);
-            }
+            MeetingParticipant participant = MeetingParticipant.builder()
+                    .user(repoUser)
+                    .isOwner(isOwner)
+                    .sendMail(sendMail)
+                    .build();
+
+            room.addParticipant(participant);
         }
 
         // Cascade로 참여자까지 함께 저장됨
@@ -93,7 +100,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
-        return new MeetingRoomResponseDto(room.getId(), user.getId(), participantDtos);
+        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(), participantDtos);
     }
 
     @Override
@@ -115,7 +122,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .findFirst()
                 .orElse(null);
 
-        return new MeetingRoomResponseDto(room.getId(), ownerId, participantDtos);
+        return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId, participantDtos);
     }
 
     @Override
@@ -171,6 +178,6 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // OpenVidu 토큰 발급
         String token = openViduService.generateToken(sessionId);
 
-        return new JoinMeetingRoomResponseDto(roomId, token);
+        return new JoinMeetingRoomResponseDto(roomId, room.getRoomName(), token);
     }
 }
