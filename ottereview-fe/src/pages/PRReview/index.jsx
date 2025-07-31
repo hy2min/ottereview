@@ -84,32 +84,38 @@ const PRReview = () => {
         </div>
 
         {activeTab === 'files' && (
-          <Box shadow>
+          <div>
             <ul className="space-y-2 text-sm">
               {files.map((f) => (
                 <li key={f.filename}>
-                  <div
-                    className="flex justify-between items-center cursor-pointer p-2 bg-gray-50 rounded"
+                  <Box
+                    shadow
+                    className="flex justify-between items-center cursor-pointer p-2 bg-gray-50"
                     onClick={() => toggle(f.filename)}
                   >
                     <span>{f.filename}</span>
-                    <span className="text-green-600">+{f.additions}</span>
-                    <span className="text-red-600">-{f.deletions}</span>
-                  </div>
+                    <div className="space-x-2">
+                      <span className="text-green-600">+{f.additions}</span>
+                      <span className="text-red-600">-{f.deletions}</span>
+                    </div>
+                  </Box>
                   {expandedFile === f.filename && (
-                    <pre className="whitespace-pre-wrap overflow-auto bg-gray-100 p-2 mt-1 rounded text-xs">
+                    <Box
+                      shadow
+                      className="whitespace-pre-wrap overflow-auto bg-gray-100 p-2 mt-2 text-xs"
+                    >
                       {f.patch}
-                    </pre>
+                    </Box>
                   )}
                 </li>
               ))}
             </ul>
-          </Box>
+          </div>
         )}
 
-        {activeTab === 'comments' && <Box shadow>{/* 댓글 영역 구현 */}</Box>}
+        {activeTab === 'comments' && <div>{/* 댓글 영역 구현 */}</div>}
 
-        {activeTab === 'commits' && <Box shadow>{/* 커밋 영역 구현 */}</Box>}
+        {activeTab === 'commits' && <div>{/* 커밋 영역 구현 */}</div>}
       </Box>
     </div>
   )
