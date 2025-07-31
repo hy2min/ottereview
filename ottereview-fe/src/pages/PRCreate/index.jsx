@@ -47,7 +47,7 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="max-w-2xl mx-auto space-y-4 py-4">
       <StepIndicator currentStep={step} />
       <Box shadow>{renderStepComponent()}</Box>
 
