@@ -1,82 +1,37 @@
-import { Stomp } from '@stomp/stompjs'
-import { useEffect, useRef, useState } from 'react'
-import SockJS from 'sockjs-client'
+import { useState } from 'react'
+import Whiteboard from './components/Whiteboard'
+import ChatSection from './components/ChatSection'
+import { useSocketStore } from './store/socketStore'
 
-const ChatSection = ({ roomId, userId }) => {
-  const [stompClient, setStompClient] = useState(null)
-  const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('')
-  const messageBoxRef = useRef(null)
+const App = () => {
+  const [roomId, setRoomId] = useState('')
+  const [userId] = useState(() => crypto.randomUUID())
+  const [color] = useState(() => {
+    const hue = Math.floor(Math.random() * 360)
+    return `hsl(${hue}, 100%, 40%)`
+  })
+  const connect = useSocketStore((state) => state.connect)
 
-  useEffect(() => {
-    if (!roomId || !userId) return
-
-    const socket = new SockJS('https://localhost:8080/ws')
-    const client = Stomp.over(socket)
-
-    client.connect({}, () => {
-      client.subscribe(`/topic/meetings/${roomId}/chat`, (msg) => {
-        const data = JSON.parse(msg.body)
-
-        if (data.type === 'TALK' && data.message && data.userId !== userId) {
-          setMessages((prev) => [
-            ...prev,
-            { userId: data.userId, content: JSON.parse(data.message).text },
-          ])
-        }
-      })
-      setStompClient(client)
-    })
-    return () => {
-      if (client.connected) client.disconnect()
-    }
-  }, [roomId, userId])
-
-  const sendMessage = () => {
-    if (!input.trim() || !stompClient) return
-
-    const payload = {
-      type: 'TALK',
-      userId,
-      message: JSON.stringify({ text: input }),
-    }
-    stompClient.send(`app/meetings/${roomId}/chat`, {}, JSON.stringify(payload))
-    setMessages((prev) => [...prev, { userId, content: input }])
-    setInput('')
+  const handleJoin = () => {
+    if (!roomId) return alert('방 ID를 입력하세요')
+    connect(roomId, localStorage.getItem('accessToken'))
   }
-  useEffect(() => {
-    messageBoxRef.current?.scrollTo({ top: messageBoxRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages])
 
   return (
-    <div
-      style={{
-        width: '300px',
-        height: '100vh',
-        borderLeft: '1px solid #ccc',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px' }} ref={messageBoxRef}>
-        {messages.map((msg, idx) => (
-          <div key={idx} style={{ marginBottom: '5px' }}>
-            <b>{msg.userId === userId ? '나' : msg.userId}:</b> {msg.content}
-          </div>
-        ))}
+    <div style={{ display: 'flex', height: '100vh' }}>
+      <div style={{ position: 'absolute', top: 10, left: 10 }}>
+        <input value={roomId} onChange={(e) => setRoomId(e.target.value)} placeholder="Room ID" />
+        <button onClick={handleJoin}>입장</button>
       </div>
-      <div style={{ display: 'flex', padding: '10px', borderTop: '1px solid #ccc' }}>
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-          style={{ flex: 1, marginRight: '5px' }}
-        />
-        <button onClick={sendMessage}>전송</button>
-      </div>
+
+      {roomId && (
+        <>
+          <Whiteboard roomId={roomId} userId={userId} color={color} />
+          <ChatSection roomId={roomId} userId={userId} />
+        </>
+      )}
     </div>
   )
 }
 
-export default ChatSection
+export default App
