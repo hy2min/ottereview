@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 @Getter
 public class JoinMeetingRoomResponseDto {
     private Long roomId;
+    private String roomName;
     private String openviduToken;
 }

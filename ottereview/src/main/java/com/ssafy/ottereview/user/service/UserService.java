@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.service;
 
+import com.ssafy.ottereview.mettingroom.dto.MyMeetingRoomResponseDto;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
@@ -13,4 +14,6 @@ public interface UserService {
     void createUser(User user);
 
     List<UserResponseDto> getAllUsers();
+
+    List<MyMeetingRoomResponseDto> getMyReposMeetingRooms(Long id);
 }

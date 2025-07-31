@@ -5,15 +5,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Builder
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class MeetingRoomResponseDto {
+public class MyMeetingRoomResponseDto {
     private Long roomId;
     private String roomName;
-    private Long ownerId;
-    private List<MeetingParticipantDto> participants;
+    private boolean isInvited;
 }
