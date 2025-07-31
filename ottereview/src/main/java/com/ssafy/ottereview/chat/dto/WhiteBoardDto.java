@@ -12,13 +12,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatMessageDto {
-    public enum MessageType { JOIN, TALK, LEAVE }
-    private MessageType type;
+public class WhiteBoardDto {
+    public enum DrawType { DRAW, ERASE, CLEAR }
+    private DrawType type;
     private Long senderId;
     private String senderName;
     private String senderProfileUrl;
-    private String message;
+    private String color;  // DRAW일 때만 사용, 나머지는 null 가능
+    private String content;
 
     @Builder.Default
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd HH:mm:ss")
