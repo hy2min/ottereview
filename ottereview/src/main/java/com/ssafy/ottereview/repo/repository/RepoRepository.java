@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RepoRepository extends JpaRepository<Repo, Long> {
+
     // 레포Id를 가지고 레포지토리 조회한다.
     Optional<Repo> findByRepoId(Long repoId);
 

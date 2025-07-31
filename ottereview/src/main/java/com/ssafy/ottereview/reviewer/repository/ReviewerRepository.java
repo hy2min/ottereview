@@ -1,0 +1,16 @@
+package com.ssafy.ottereview.reviewer.repository;
+
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ReviewerRepository extends JpaRepository<Reviewer, Long> {
+
+    // 해당 PR의 모든 reviewer 조회시 사용
+    List<Reviewer> findAllByPullRequest(PullRequest pullRequest);
+
+
+}
