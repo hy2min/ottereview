@@ -11,15 +11,17 @@ import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -27,9 +29,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final MeetingRoomRepository meetingRoomRepository;
-    private final MeetingParticipantRepository meetingParticipantRepository;
     private final PullRequestRepository pullRequestRepository;
     private final UserRepository userRepository;
+    private final OpenViduService openViduService;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String SESSION_KEY_PREFIX = "meeting:session:";
+
+    @Value("${openvidu.session.ttl-hours}")
+    private long sessionTtlHours;
 
     @Override
     @Transactional
@@ -72,7 +79,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // Cascade로 참여자까지 함께 저장됨
         meetingRoomRepository.save(room);
 
-        log.debug("참여자 로그" + room.getParticipants());
+        // OpenVidu 세션 생성 & Redis 저장
+        String sessionId = openViduService.createSession();
+        redisTemplate.opsForValue().set(SESSION_KEY_PREFIX + room.getId(), sessionId, sessionTtlHours, TimeUnit.HOURS);
+
         // DTO 변환 
         List<MeetingParticipantDto> participantDtos = room.getParticipants().stream()
                 .map(MeetingParticipantDto::fromEntity)
@@ -85,7 +95,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     @Transactional(readOnly = true)
     public MeetingRoomResponseDto getMeetingRoomDetail(Long roomId) {
         // Room 조회
-        MeetingRoom room = meetingRoomRepository.findById(roomId)
+        MeetingRoom room = meetingRoomRepository.findByIdWithParticipantsAndUsers(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
 
         // 참여자 조회
@@ -120,7 +130,43 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         if (!Objects.equals(ownerId, userId)) {
             throw new AccessDeniedException("not the owner of this room.");
         }
+        // Redis 세션 삭제
+        String key = SESSION_KEY_PREFIX + roomId;
+        String sessionId = (String) redisTemplate.opsForValue().get(key);
+        redisTemplate.delete(key);
+        // openvidu 세션은 사람이 없으면 자동 삭제 됨
         // cascade로 참여자 같이 삭제
         meetingRoomRepository.delete(room);
+    }
+
+    @Override
+    @Transactional
+    public String joinMeetingRoom(Long roomId, Long userId) {
+        // 방 존재 여부 확인
+        MeetingRoom room = meetingRoomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+
+        // 참여자 검증
+        boolean isParticipant = room.getParticipants().stream()
+                .anyMatch(p -> p.getUser().getId().equals(userId));
+
+        if (!isParticipant) {
+            throw new AccessDeniedException("User is not invited to this room.");
+        }
+
+        // Redis에서 세션 ID 가져오기
+        String key = SESSION_KEY_PREFIX + roomId;
+        String sessionId = (String) redisTemplate.opsForValue().get(key);
+
+        // 세션 없거나 OpenVidu에 존재하지 않으면 새로 생성
+        if (sessionId == null || !openViduService.isSessionActive(sessionId)) {
+            sessionId = openViduService.createSession();
+            redisTemplate.opsForValue().set(key, sessionId, sessionTtlHours, TimeUnit.HOURS); // TTL 2시간
+        }
+
+        // OpenVidu 토큰 발급
+        String token = openViduService.generateToken(sessionId);
+
+        return token;
     }
 }

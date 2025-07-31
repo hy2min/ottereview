@@ -10,4 +10,6 @@ public interface MeetingRoomService {
     MeetingRoomResponseDto getMeetingRoomDetail(Long roomId);
 
     void closeMeetingRoom(Long userId, Long roomId);
+
+    String joinMeetingRoom(Long roomId, Long userId);
 }

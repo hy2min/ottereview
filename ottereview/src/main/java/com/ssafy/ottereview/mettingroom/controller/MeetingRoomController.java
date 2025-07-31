@@ -40,4 +40,10 @@ public class MeetingRoomController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/{meetingroom-id}/join")
+    public ResponseEntity<String> joinMeetingRoom(@PathVariable("meetingroom-id") Long roomId, @AuthenticationPrincipal CustomUserDetail userDetail) {
+        Long userId = userDetail.getUser().getId();
+        return ResponseEntity.ok(meetingRoomService.joinMeetingRoom(roomId, userId));
+    }
+
 }
