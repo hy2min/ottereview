@@ -1,21 +1,8 @@
 import Box from '../../components/Box'
+import { useCommentStore } from './commentStore'
 
-const PRCommentList = () => {
-  // 나중에 prId를 이용해 서버에서 댓글 fetch하거나 store에서 가져오기
-  const comments = [
-    {
-      id: 1,
-      author: '박리뷰어',
-      content: 'JWT 토큰 만료 시간이 너무 짧은 것 같습니다.',
-      time: '2시간 전',
-    },
-    {
-      id: 2,
-      author: '김개발',
-      content: '30분으로 늘리는 방향으로 개선하겠습니다.',
-      time: '1시간 전',
-    },
-  ]
+const PRCommentList = ({ prId }) => {
+  const comments = useCommentStore((state) => state.prComments[prId] || [])
 
   return (
     <div className="space-y-4">
