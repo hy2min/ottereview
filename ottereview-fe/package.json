@@ -18,12 +18,14 @@
     "codemirror": "^6.0.2",
     "fabric": "^6.7.1",
     "monaco-editor": "^0.52.2",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.534.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
     "sockjs": "^0.3.24",
     "sockjs-client": "^1.6.1",
-    "tailwindcss": "^4.1.11",
+    "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27",
@@ -45,6 +47,7 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "globals": "^16.3.0",
     "prettier": "^3.6.2",
+    "tailwindcss": "^4.1.11",
     "vite": "^7.0.4"
   }
 }

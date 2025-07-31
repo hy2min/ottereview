@@ -1,1 +1,346 @@
 @import 'tailwindcss';
+
+/* ===== 폰트 등록 ===== */
+@font-face {
+  font-family: 'BMJUA';
+  src:
+    url('../fonts/BMJUA_ttf.ttf') format('truetype'),
+    url('../fonts/BMJUA_otf.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== 전역 폰트 적용 ===== */
+body {
+  font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
+  background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c8 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+html {
+  scrollbar-gutter: stable;
+}
+
+@theme {
+  --color-primary-50: #e8f5e8;
+  --color-primary-100: #c8e6c8;
+  --color-primary-200: #a8d7a8;
+  --color-primary-300: #88c888;
+  --color-primary-400: #68b968;
+  --color-primary-500: #48aa48;
+  --color-primary-600: #3a8a3a;
+  --color-primary-700: #2c6a2c;
+  --color-primary-800: #1e4a1e;
+  --color-primary-900: #102a10;
+
+  --color-secondary-50: #f0f8ff;
+  --color-secondary-100: #e0f0ff;
+  --color-secondary-200: #c0e0ff;
+  --color-secondary-300: #a0d0ff;
+  --color-secondary-400: #80c0ff;
+  --color-secondary-500: #60b0ff;
+  --color-secondary-600: #4d8ccc;
+  --color-secondary-700: #3a6899;
+  --color-secondary-800: #274466;
+  --color-secondary-900: #142033;
+
+  --color-accent-50: #fff8e1;
+  --color-accent-100: #ffecb3;
+  --color-accent-200: #ffe082;
+  --color-accent-300: #ffd54f;
+  --color-accent-400: #ffca28;
+  --color-accent-500: #ffc107;
+  --color-accent-600: #ffb300;
+  --color-accent-700: #ffa000;
+  --color-accent-800: #ff8f00;
+  --color-accent-900: #ff6f00;
+
+  --color-earth-50: #f5f5dc;
+  --color-earth-100: #e8e8b8;
+  --color-earth-200: #d4d494;
+  --color-earth-300: #c0c070;
+  --color-earth-400: #acac4c;
+  --color-earth-500: #989828;
+  --color-earth-600: #7a7a20;
+  --color-earth-700: #5c5c18;
+  --color-earth-800: #3e3e10;
+  --color-earth-900: #202008;
+
+  --color-stone-50: #f8f8f8;
+  --color-stone-100: #e8e8e8;
+  --color-stone-200: #d0d0d0;
+  --color-stone-300: #b8b8b8;
+  --color-stone-400: #a0a0a0;
+  --color-stone-500: #888888;
+  --color-stone-600: #6d6d6d;
+  --color-stone-700: #525252;
+  --color-stone-800: #373737;
+  --color-stone-900: #1c1c1c;
+
+  --color-danger-50: #ffeaea;
+  --color-danger-100: #ffd5d5;
+  --color-danger-200: #ffb3b3;
+  --color-danger-300: #ff9191;
+  --color-danger-400: #ff6f6f;
+  --color-danger-500: #ff4d4d;
+  --color-danger-600: #cc3e3e;
+  --color-danger-700: #992e2e;
+  --color-danger-800: #661f1f;
+  --color-danger-900: #330f0f;
+
+  --color-success-50: #e8f5e8;
+  --color-success-100: #c8e6c8;
+  --color-success-200: #a8d7a8;
+  --color-success-300: #88c888;
+  --color-success-400: #68b968;
+  --color-success-500: #48aa48;
+  --color-success-600: #3a8a3a;
+  --color-success-700: #2c6a2c;
+  --color-success-800: #1e4a1e;
+  --color-success-900: #102a10;
+
+  --color-warning-50: #fff8e1;
+  --color-warning-100: #ffecb3;
+  --color-warning-200: #ffe082;
+  --color-warning-300: #ffd54f;
+  --color-warning-400: #ffca28;
+  --color-warning-500: #ffc107;
+  --color-warning-600: #ffb300;
+  --color-warning-700: #ffa000;
+  --color-warning-800: #ff8f00;
+  --color-warning-900: #ff6f00;
+
+  --color-info-50: #e3f2fd;
+  --color-info-100: #bbdefb;
+  --color-info-200: #90caf9;
+  --color-info-300: #64b5f6;
+  --color-info-400: #42a5f5;
+  --color-info-500: #2196f3;
+  --color-info-600: #1e88e5;
+  --color-info-700: #1976d2;
+  --color-info-800: #1565c0;
+  --color-info-900: #0d47a1;
+}
+
+:root {
+  /* =======================================================
+     🖋️ Font Families
+     ======================================================= */
+  --font-bmjua: 'BMJUA', sans-serif;
+  --font-pixel: 'Press Start 2P', monospace;
+  --font-minecraft: 'Minecraft', monospace;
+  --font-sans: 'BMJUA', 'Inter', system-ui, sans-serif;
+
+  /* =======================================================
+     📦 Box Shadows
+     ======================================================= */
+  --shadow-pixel: 4px 4px 0px rgba(0, 0, 0, 0.3);
+  --shadow-pixel-lg: 8px 8px 0px rgba(0, 0, 0, 0.3);
+  --shadow-pixel-inset: inset 2px 2px 0px rgba(0, 0, 0, 0.2);
+
+  /* =======================================================
+     📏 Border Widths
+     ======================================================= */
+  --border-width-3: 3px;
+  --border-width-4: 4px;
+
+  /* =======================================================
+     ⭕ Border Radii
+     ======================================================= */
+  --border-radius-pixel: 4px;
+  --border-radius-pixel-lg: 8px;
+}
+
+/* Pixel Art Animations */
+.pixel-hover {
+  transition-property: all; /* @apply transition-all */
+  transition-duration: 200ms; /* @apply duration-200 */
+}
+.pixel-hover:hover {
+  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
+  transform: translateY(-4px); /* @apply hover:-translate-y-1 (Tailwind translate-y-1은 4px) */
+}
+
+/* Minecraft-style progress bar */
+.minecraft-progress {
+  width: 100%; /* @apply w-full */
+  background-color: var(--color-stone-300); /* @apply bg-stone-300 */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  height: 20px;
+}
+
+.minecraft-progress-fill {
+  background-color: var(--color-primary-500); /* @apply bg-primary-500 */
+  height: 100%; /* @apply h-full */
+  background-image:
+    linear-gradient(
+      45deg,
+      transparent 33%,
+      rgba(255, 255, 255, 0.2) 33%,
+      rgba(255, 255, 255, 0.2) 66%,
+      transparent 66%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 33%,
+      rgba(255, 255, 255, 0.2) 33%,
+      rgba(255, 255, 255, 0.2) 66%,
+      transparent 66%
+    );
+  background-size: 8px 8px;
+  animation: minecraft-progress 1s linear infinite;
+}
+
+/* Pixel Art Logo - Reduced shadow */
+.pixel-logo {
+  font-family: var(--font-pixel); /* @apply font-pixel */
+  color: var(--color-primary-600); /* @apply text-primary-600 */
+  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+}
+
+.minecraft-container {
+  background-color: white; /* @apply bg-white */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  border-radius: 8px;
+}
+
+/* Soft rounded containers */
+.soft-container {
+  background-color: white; /* @apply bg-white */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  border-radius: 12px;
+}
+
+/* Utility classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Soft rounded cards */
+.soft-card {
+  background-color: white; /* @apply bg-white */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  border-radius: 12px;
+  transition-property: all; /* @apply transition-all */
+  transition-duration: 200ms; /* @apply duration-200 */
+}
+.soft-card:hover {
+  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
+}
+
+/* Soft rounded buttons */
+.soft-btn {
+  display: inline-flex; /* @apply inline-flex */
+  align-items: center; /* @apply items-center */
+  justify-content: center; /* @apply justify-center */
+  font-weight: 500; /* @apply font-medium (Tailwind font-medium은 500) */
+  transition-property: all; /* @apply transition-all */
+  transition-duration: 200ms; /* @apply duration-200 */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  border-radius: 8px;
+}
+.soft-btn:hover {
+  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
+  transform: translateY(-4px); /* @apply hover:-translate-y-1 */
+}
+.soft-btn:active {
+  box-shadow: var(--shadow-pixel-inset); /* @apply active:shadow-pixel-inset */
+  transform: translateY(0); /* @apply active:translate-y-0 */
+}
+.soft-btn:focus {
+  outline: 2px solid transparent; /* @apply focus:outline-none */
+  outline-offset: 2px; /* @apply focus:ring-offset-2 */
+  --tw-ring-color: currentColor; /* @apply focus:ring-2 */
+  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+    var(--tw-ring-color);
+}
+
+/* Soft rounded inputs */
+.soft-input {
+  width: 100%; /* @apply w-full */
+  padding: 0.5rem 0.75rem; /* @apply px-3 py-2 */
+  border-width: 2px; /* @apply border-2 */
+  border-color: black; /* @apply border-black */
+  background-color: white; /* @apply bg-white */
+  color: #1a202c; /* @apply text-gray-900 (Tailwind gray-900) */
+  border-radius: 8px;
+}
+.soft-input:focus {
+  outline: 2px solid transparent; /* @apply focus:outline-none */
+  outline-offset: 2px; /* @apply focus:ring-offset-2 (일반적으로 ring-offset-width는 2px) */
+  --tw-ring-color: var(--color-primary-500); /* @apply focus:ring-primary-500 */
+  border-color: var(--color-primary-500); /* @apply focus:border-primary-500 */
+  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
+    var(--tw-ring-color);
+}
+
+.soft-input::placeholder {
+  color: #6b7280; /* @apply placeholder-gray-500 (Tailwind gray-500) */
+}
+
+/* Soft rounded badges */
+.soft-badge {
+  display: inline-flex; /* @apply inline-flex */
+  align-items: center; /* @apply items-center */
+  padding: 0.25rem 0.5rem; /* @apply px-2 py-1 */
+  font-size: 0.75rem; /* @apply text-xs */
+  font-weight: 500; /* @apply font-medium */
+  border-width: 1px; /* @apply border */
+  border-color: black; /* @apply border-black */
+  border-radius: 6px;
+}
+
+/* 박스 쉐도우를 위한 유틸리티 클래스 */
+.shadow-pixel {
+  box-shadow: var(--shadow-pixel);
+}
+
+.shadow-pixel-lg {
+  box-shadow: var(--shadow-pixel-lg);
+}
+
+.shadow-pixel-inset {
+  box-shadow: var(--shadow-pixel-inset);
+}
+
+/* 보더 너비를 위한 유틸리티 클래스 */
+.border-3 {
+  border-width: var(--border-width-3);
+}
+
+.border-4 {
+  border-width: var(--border-width-4);
+}
+
+/* 보더 라디우스를 위한 유틸리티 클래스 */
+.rounded-pixel {
+  border-radius: var(--border-radius-pixel);
+}
+
+.rounded-pixel-lg {
+  border-radius: var(--border-radius-pixel-lg);
+}
+
+@keyframes minecraft-progress {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 8px 8px;
+  }
+}
