@@ -13,6 +13,8 @@ import { useParams } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import Button from '../../components/Button'
+import CommentForm from '../../features/comment/CommentForm'
+import PRCommentList from '../../features/comment/PRCommentList'
 import { fetchPR } from '../../features/pullRequest/prApi'
 
 const PRReview = () => {
@@ -20,6 +22,7 @@ const PRReview = () => {
   const [files, setFiles] = useState([])
   const [expandedFile, setExpandedFile] = useState(null)
   const [activeTab, setActiveTab] = useState('files')
+  const [comment, setComment] = useState('')
 
   useEffect(() => {
     const load = async () => {
@@ -113,10 +116,23 @@ const PRReview = () => {
           </div>
         )}
 
-        {activeTab === 'comments' && <div>{/* 댓글 영역 구현 */}</div>}
+        {activeTab === 'comments' && (
+          <div className="space-y-4">
+            <PRCommentList prId={prId} />
+          </div>
+        )}
 
         {activeTab === 'commits' && <div>{/* 커밋 영역 구현 */}</div>}
       </Box>
+      <CommentForm
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onSubmit={() => {
+          // 예시: 상태 저장 또는 API 호출
+          console.log('댓글 작성:', comment)
+          setComment('')
+        }}
+      />
     </div>
   )
 }

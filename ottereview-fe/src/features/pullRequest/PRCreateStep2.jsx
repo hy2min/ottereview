@@ -16,8 +16,9 @@ const PRCreateStep2 = () => {
 
         {/* PR 설명 (textarea) */}
         <InputBox
+          className="h-50"
           label="PR 설명"
-          as="textarea" // as="textarea" 지정
+          as="textarea"
           value={formData.description || ''}
           onChange={(e) => setFormData({ description: e.target.value })}
         />

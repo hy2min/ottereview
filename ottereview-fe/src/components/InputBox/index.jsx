@@ -9,6 +9,7 @@ const InputBox = ({
   options = [], // CustomSelect로 전달될 options
   value,
   onChange,
+  className,
   placeholder, // CustomSelect의 placeholder prop을 위해 추가
   ...props
 }) => {
@@ -17,8 +18,8 @@ const InputBox = ({
   const inputSpecificClasses = 'w-full px-2 py-1'
   const textareaSpecificClasses = 'w-full px-2 py-1 resize-none'
 
-  const inputClasses = twMerge(base, inputSpecificClasses)
-  const textareaClasses = twMerge(base, textareaSpecificClasses)
+  const inputClasses = twMerge(base, inputSpecificClasses, className)
+  const textareaClasses = twMerge(base, textareaSpecificClasses, className)
 
   const renderControl = () => {
     if (as === 'textarea') {
@@ -31,6 +32,7 @@ const InputBox = ({
           options={options}
           value={value}
           onChange={onChange}
+          className={className}
           placeholder={placeholder} // placeholder prop 전달
           {...props} // InputBox로 넘어온 추가 props를 CustomSelect에 전달
         />
