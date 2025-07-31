@@ -27,4 +27,15 @@ public interface RepoRepository extends JpaRepository<Repo, Long> {
     List<Repo> findAllByAccount_Id(Long accountId);
 
     List<Repo> findAllByAccount(Account account);
+
+    @Query("""
+                SELECT
+                    CASE WHEN COUNT(r) > 0
+                        THEN true
+                        ELSE false
+                    END
+                FROM Repo r JOIN r.account a JOIN UserAccount ua ON ua.account = a
+                WHERE ua.user.id = :userId AND r.id = :repoId
+            """)
+    boolean existsByUserIdAndRepoId(@Param("userId") Long userId, @Param("repoId") Long repoId);
 }

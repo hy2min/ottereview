@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.service;
 
+import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
@@ -9,6 +10,9 @@ import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
 import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.repo.dto.RepoResponse;
+import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +35,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final MeetingRoomRepository meetingRoomRepository;
     private final PullRequestRepository pullRequestRepository;
     private final UserRepository userRepository;
+    private final RepoRepository repoRepository;
     private final OpenViduService openViduService;
     private final RedisTemplate<String, Object> redisTemplate;
     private static final String SESSION_KEY_PREFIX = "meeting:session:";
@@ -141,17 +146,16 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
     @Override
     @Transactional
-    public String joinMeetingRoom(Long roomId, Long userId) {
+    public JoinMeetingRoomResponseDto joinMeetingRoom(Long roomId, User user) {
         // 방 존재 여부 확인
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
-
-        // 참여자 검증
-        boolean isParticipant = room.getParticipants().stream()
-                .anyMatch(p -> p.getUser().getId().equals(userId));
-
-        if (!isParticipant) {
-            throw new AccessDeniedException("User is not invited to this room.");
+        
+        // 내가 속한 레포의 방인지 확인
+        Long repoId = room.getPullRequest().getRepo().getId();
+        boolean isMember = repoRepository.existsByUserIdAndRepoId(user.getId(), repoId);
+        if (!isMember) {
+            throw new AccessDeniedException("User does not belong to this repository");
         }
 
         // Redis에서 세션 ID 가져오기
@@ -167,6 +171,6 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // OpenVidu 토큰 발급
         String token = openViduService.generateToken(sessionId);
 
-        return token;
+        return new JoinMeetingRoomResponseDto(roomId, token);
     }
 }
