@@ -45,7 +45,7 @@ const InputBox = ({
   }
 
   return (
-    <div className="space-y-1">
+    <div className="relative space-y-1">
       <label className="block font-medium">{label}</label>
       {renderControl()}
     </div>

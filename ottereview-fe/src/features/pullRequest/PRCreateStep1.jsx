@@ -1,5 +1,5 @@
 import InputBox from '../../components/InputBox'
-import { usePRCreateStore } from './stores/prCreateStore' // usePRCreateStore 경로는 프로젝트에 맞게 확인해주세요
+import { usePRCreateStore } from './stores/prCreateStore'
 
 const PRCreateStep1 = () => {
   const { formData, setFormData } = usePRCreateStore()
