@@ -22,9 +22,9 @@ const RepositoryList = () => {
   }
 
   return (
-    <Section>
-      <h2 className="text-xl mb-4">레포지토리 목록</h2>
-      <div className="space-y-2">
+    <Section className="w-full h-[70vh] flex flex-col">
+      <h2 className="text-xl mb-2">레포지토리 목록</h2>
+      <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {repos.map((repo) => (
           <RepositoryCard
             key={repo.id}

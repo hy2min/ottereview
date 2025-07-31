@@ -1,5 +1,4 @@
 import Card from '../../components/Card'
-import Section from '../../components/Section'
 import { useChatStore } from './chatStore'
 
 const ChatRoomDetail = ({ roomId }) => {

@@ -11,7 +11,6 @@ const RepositoryDetail = () => {
   const { repoId } = useParams()
   const navigate = useNavigate()
   const [prs, setPrs] = useState([])
-  console.log(repoId)
 
   useEffect(() => {
     const load = async () => {
