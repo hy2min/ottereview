@@ -10,10 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/state": "^6.5.2",
     "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
+    "@yorkie-js/sdk": "^0.6.22",
     "axios": "^1.11.0",
+    "codemirror": "^6.0.2",
     "fabric": "^6.7.1",
+    "monaco-editor": "^0.52.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
@@ -21,6 +25,8 @@
     "sockjs-client": "^1.6.1",
     "tailwindcss": "^4.1.11",
     "uuid": "^11.1.0",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27",
     "zustand": "^5.0.6"
   },
   "devDependencies": {
