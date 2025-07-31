@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
 import StepIndicator from '../../components/StepIndicator'
 import { submitPR } from '../../features/pullRequest/prApi'
