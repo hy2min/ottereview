@@ -1,13 +1,14 @@
 package com.ssafy.ottereview.auth.service;
 
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
-import com.ssafy.ottereview.auth.jwt.dto.AccessTokenResponseDto;
 import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 import com.ssafy.ottereview.auth.jwt.service.TokenService;
 import com.ssafy.ottereview.auth.jwt.util.JwtUtil;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.user.service.UserService;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHMyself;
@@ -15,20 +16,22 @@ import org.kohsuke.github.GitHub;
 import org.kohsuke.github.GitHubBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
+
     @Value("${github.oauth.client-id}")
     private String clientId;
     @Value("${github.oauth.client-secret}")
@@ -141,7 +144,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String requestGithubAccessToken(String code) {
-        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret, redirectUri);
+        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret,
+                redirectUri);
         String url = "https://github.com/login/oauth/access_token";
 
         HttpHeaders headers = new HttpHeaders();
