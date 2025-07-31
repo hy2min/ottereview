@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
 
-import Chat from '../features/chat/Chat'
+import Header from '../components/Header'
+import Landing from '../pages/Landing'
+import { useUserStore } from '../store/userStore'
+import { protectedRoutes } from './routes'
 
 const App = () => {
   const isLoggedIn = useUserStore((state) => state.isLoggedIn)
