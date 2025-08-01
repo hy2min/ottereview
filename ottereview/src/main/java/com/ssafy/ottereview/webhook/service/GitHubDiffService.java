@@ -1,8 +1,6 @@
-package com.ssafy.ottereview.common.webhook.service;
+package com.ssafy.ottereview.webhook.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.ottereview.common.webhook.dto.DiffHunk;
+import com.ssafy.ottereview.webhook.dto.DiffHunk;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,50 +8,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.kohsuke.github.GHCommit;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class GitHubDiffService {
-
-//    @Value("${github.token}")
-//    private String githubToken;
-
-//    private final RestTemplate restTemplate;
-//    private final ObjectMapper objectMapper;
-
-//    public String getFilePatch(String repoFullName, GHCommit.File file) {
-//        try {
-//            // GitHub API로 특정 커밋의 파일 diff 가져오기
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setBearerAuth(githubToken);
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            HttpEntity<String> request = new HttpEntity<>(headers);
-//
-//            // 파일의 blob URL을 통해 상세 정보 가져오기
-//            String url = file.getBlobUrl().toString(); // hub4j에서 제공하는 blob URL
-//
-//            ResponseEntity<String> response = restTemplate.exchange(
-//                    url, HttpMethod.GET, request, String.class);
-//
-//            JsonNode fileData = objectMapper.readTree(response.getBody());
-//            return fileData.path("patch").asText();
-//
-//        } catch (Exception e) {
-//            log.error("Error fetching file patch for: {}", file.getFileName(), e);
-//            return "";
-//        }
-//    }
 
     public List<DiffHunk> parseDiffHunks(String patch) {
         if (patch == null || patch.isEmpty()) {
