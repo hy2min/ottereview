@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.controller;
 
+import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.service.MeetingRoomService;
@@ -41,9 +42,8 @@ public class MeetingRoomController {
     }
 
     @PostMapping("/{meetingroom-id}/join")
-    public ResponseEntity<String> joinMeetingRoom(@PathVariable("meetingroom-id") Long roomId, @AuthenticationPrincipal CustomUserDetail userDetail) {
-        Long userId = userDetail.getUser().getId();
-        return ResponseEntity.ok(meetingRoomService.joinMeetingRoom(roomId, userId));
+    public ResponseEntity<JoinMeetingRoomResponseDto> joinMeetingRoom(@PathVariable("meetingroom-id") Long roomId, @AuthenticationPrincipal CustomUserDetail userDetail) {
+        return ResponseEntity.ok(meetingRoomService.joinMeetingRoom(roomId, userDetail.getUser()));
     }
 
 }

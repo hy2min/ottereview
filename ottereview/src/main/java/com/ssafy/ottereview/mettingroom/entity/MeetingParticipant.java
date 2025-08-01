@@ -26,6 +26,9 @@ public class MeetingParticipant {
     @Column(nullable = false)
     private boolean isOwner;
 
+    @Column(nullable = false)
+    private boolean sendMail;
+
     void assignMeetingRoom(MeetingRoom meetingRoom) {
         this.meetingRoom = meetingRoom;
     }

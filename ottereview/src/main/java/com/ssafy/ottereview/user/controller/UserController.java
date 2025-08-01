@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.controller;
 
+import com.ssafy.ottereview.mettingroom.dto.MyMeetingRoomResponseDto;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.service.UserService;
@@ -22,21 +23,22 @@ public class UserController {
 
     @GetMapping()
     public ResponseEntity<List<UserResponseDto>> getAllUsers(){
-        List<UserResponseDto> users = userService.getAllUsers();
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{user-id}")
     public ResponseEntity<UserResponseDto> getUser(@PathVariable("user-id") Long userId){
-        UserResponseDto user = userService.getUserResponseById(userId);
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(userService.getUserResponseById(userId));
     }
 
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getMyInfo(@AuthenticationPrincipal CustomUserDetail userDetail) {
-        Long userId = userDetail.getUser().getId();
-        UserResponseDto response = userService.getUserResponseById(userId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(userService.getUserResponseById(userDetail.getUser().getId()));
+    }
+
+    @GetMapping("/me/meetingroom")
+    public ResponseEntity<List<MyMeetingRoomResponseDto>> getMyReposMeetingRooms(@AuthenticationPrincipal CustomUserDetail userDetail){
+        return ResponseEntity.ok(userService.getMyReposMeetingRooms(userDetail.getUser().getId()));
     }
 
 
