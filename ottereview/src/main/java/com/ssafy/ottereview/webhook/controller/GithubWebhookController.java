@@ -1,9 +1,6 @@
-package com.ssafy.ottereview.common.webhook.controller;
+package com.ssafy.ottereview.webhook.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.ottereview.common.webhook.service.PushEventService;
-import com.ssafy.ottereview.common.webhook.service.WebhookService;
+import com.ssafy.ottereview.webhook.service.PushEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -18,31 +15,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Slf4j
 public class GithubWebhookController {
-
-    private final WebhookService webhookService;
+    
     private final PushEventService pushEventService;
-
+    
     @PostMapping
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,
             @RequestHeader("X-GitHub-Event") String event,
             @RequestHeader("X-GitHub-Delivery") String delivery,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature) {
-
+        
         log.info("[DEBUG] 깃헙 웹훅 이벤트 - Event: {}, Delivery: {}", event, delivery);
-
         // 이벤트별 처리
         switch (event) {
             case "push":
                 pushEventService.processPushEvent(payload);
                 break;
             case "pull_request":
-                webhookService.handlePullRequestEvent(payload);
+                log.info("Handling pull request event");
                 break;
             default:
                 log.info("Unhandled event type: {}", event);
         }
-
+        
         return ResponseEntity.ok("OK");
     }
 }
