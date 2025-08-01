@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import Section from '../../components/Section'
+import Box from '../../components/Box'
 import { fetchPR } from './prApi'
 import PRCardCompact from './PRCardCompact'
 
@@ -24,7 +24,7 @@ const PRList = () => {
     selectedRepoId === 'all' ? prs : prs.filter((pr) => pr.repo.id === Number(selectedRepoId))
 
   return (
-    <Section>
+    <Box shadow className="w-full h-[70vh] flex flex-col pl-4 pr-2">
       <div className="flex mb-2">
         <h2 className="text-xl mr-8">PR 목록</h2>
 
@@ -46,12 +46,12 @@ const PRList = () => {
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {filteredPRs.map((pr) => (
           <PRCardCompact key={pr.id} pr={pr} />
         ))}
       </div>
-    </Section>
+    </Box>
   )
 }
 

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Button from '../../components/Button'
-import Section from '../../components/Section'
 import StepIndicator from '../../components/StepIndicator'
 import { submitPR } from '../../features/pullRequest/prApi'
 import PRCreateStep1 from '../../features/pullRequest/PRCreateStep1'
@@ -49,7 +48,7 @@ const PRCreate = () => {
   return (
     <div className="space-y-4 py-4">
       <StepIndicator currentStep={step} />
-      <Section>{renderStepComponent()}</Section>
+      <Box shadow>{renderStepComponent()}</Box>
 
       <div className="flex justify-between items-center mt-4">
         <Button
