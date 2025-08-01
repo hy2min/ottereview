@@ -13,12 +13,6 @@ import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.user.entity.User;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,20 +21,25 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
+    private static final String SESSION_KEY_PREFIX = "meeting:session:";
     private final MeetingRoomRepository meetingRoomRepository;
     private final PullRequestRepository pullRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final MeetingParticipantRepository meetingParticipantRepository;
     private final OpenViduService openViduService;
     private final RedisTemplate<String, Object> redisTemplate;
-
-    private static final String SESSION_KEY_PREFIX = "meeting:session:";
-
     @Value("${openvidu.session.ttl-hours}")
     private long sessionTtlHours;
 
@@ -168,13 +167,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         String key = SESSION_KEY_PREFIX + roomId;
         String sessionId = (String) redisTemplate.opsForValue().get(key);
 
-        // 세션 없거나 OpenVidu에 존재하지 않으면 새로 생성
+        // 세션 없거나 OpenVidu에 존재하지 않으면 에러 발생
         if (sessionId == null || !openViduService.isSessionActive(sessionId)) {
-            sessionId = openViduService.createSession();
-            redisTemplate.opsForValue()
-                    .set(key, sessionId, sessionTtlHours, TimeUnit.HOURS); // TTL 2시간
+            throw new IllegalStateException("Session expired or room closed. Please create a new room.");
         }
-
         // OpenVidu 토큰 발급
         String token = openViduService.generateToken(sessionId);
 
