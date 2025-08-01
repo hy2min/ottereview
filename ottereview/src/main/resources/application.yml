@@ -1,0 +1,118 @@
+# -----------------------------------------------------------
+# 공통 설정 (모든 프로필에 적용)
+# -----------------------------------------------------------
+spring:
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+  application:
+    name: ottereview
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # local 개발 시 update 등으로 바꿀 수 있음
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+    show-sql: false
+
+  sql:
+    init:
+      mode: never  # 필요 시 always로
+
+github:
+  app:
+    app-id: ${GITHUB_APP_ID:}
+    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:kb-github-app-private-key.der}
+    authentication-jwt-expm: ${GITHUB_APP_AUTHENTICATION_JWT_ACCESS_EXPMIN:60}  # 분 단위
+    oauth:
+      client-id: ${GITHUB_APP_CLIENT_ID}      # Client ID (General 탭)
+      client-secret: ${GITHUB_APP_CLIENT_SECRET}        # Client secret (General 탭)
+      redirect-uri: ${GITHUB_APP_OAUTH_REDIRECT_URI:http://localhost:8080/github-app/installation/callback}  # OAuth2 리다이렉트 URI
+
+  oauth:
+    client-id: ${GITHUB_OAUTH_CLIENT_ID}
+    client-secret: ${GITHUB_OAUTH_CLIENT_SECRET}
+    redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI}
+
+logging:
+  level:
+    root: INFO
+    com.ssafy.ottereview: DEBUG
+
+app:
+  front:
+    url: http://localhost:5173
+  ai:
+    url: http://localhost:8000
+
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    access-expmin: ${APP_JWT_ACCESS_EXPMIN}
+    refresh-expmin: ${APP_JWT_REFRESH_EXPMIN}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${S3_ACCESS_KEY:test-access-key}
+      secret-key: ${S3_SECRET_KEY:test-secret-key}
+    S3:
+      bucket: ${S3_BUCKET_NAME:test-bucket} # 버켓 이름 설정
+    region:
+      static: ${S3_REGION:ap-northeast-2} # 버켓이 위치한 region 설정
+    stack:
+      auto: false # 자동 스택 생성 기능 사용 여부
+
+openvidu:
+  url: ${OPENVIDU_URL}
+  secret: ${OPENVIDU_SECRET}
+  session:
+    ttl-hours: 2
+
+
+---
+# -----------------------------------------------------------
+# local 프로필 (개발용)
+# docker-compose 환경 변수와 주로 함께 사용
+# -----------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+    show-sql: true
+
+  sql:
+    init:
+      mode: never
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
