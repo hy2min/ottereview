@@ -1,63 +1,120 @@
-import * as monaco from 'monaco-editor'
+import { Transaction } from '@codemirror/state'
+import * as yorkie from '@yorkie-js/sdk'
+import { basicSetup, EditorView } from 'codemirror'
 import { useEffect, useRef } from 'react'
-import * as Y from 'yorkie-js-sdk'
 
-const CodeEditor = ({ roomId }) => {
+const CollaborativeEditor = ({ roomId }) => {
   const editorRef = useRef(null)
-  const monacoInstanceRef = useRef(null)
-  const yorkieClientRef = useRef(null)
-  const yorkieDocRef = useRef(null)
+  const viewRef = useRef(null)
+  const docRef = useRef(null)
+  const clientRef = useRef(null)
 
   useEffect(() => {
-    const init = async () => {
+    const initialize = async () => {
       // 1. Yorkie 클라이언트 생성 및 활성화
-      const client = new Y.client('http://localhost:8080')
+      const client = new yorkie.Client({
+        rpcAddr: import.meta.env.VITE_YORKIE_API_ADDR,
+        apiKey: import.meta.env.VITE_YORKIE_API_KEY,
+      })
       await client.activate()
-      yorkieClientRef.current = client
+      clientRef.current = client
 
-      //   2. 문서 생성 및 초기화
-      const doc = new Y.Document(`code-room-${roomId}`)
-      doc.update((root) => {
-        if (!root.code) root.code = new Y.text()
+      // 2. 문서 생성 및 연결
+      const doc = new yorkie.Document(`chatroom-${roomId}`, {
+        enableDevtools: true,
       })
       await client.attach(doc)
-      yorkieDocRef.current = doc
+      docRef.current = doc
 
-      // 3. Monaco Editor 생성
-      const editor = monaco.editor.create(editorRef.current, {
-        value: doc.getRoot().code.toString(),
-        language: 'javascript',
-        theme: 'vs-dark',
-        automaticLayout: true,
-      })
-      monacoInstanceRef.current = editor
-
-      // 4. Monaco -> Yorkie 동기화
-      editor.onDidChangeModelContent(() => {
-        const newValue = editor.getValue()
-        doc.update((root) => {
-          root.code.edit(0, root.code.length, newValue)
-        })
-      })
-      // 5. Yorkie -> Monaco 반영
-      doc.getRoot().code.onChanges(() => {
-        const newVal = doc.getRoot().code.toString()
-        if (editor.getValue() !== newVal) {
-          editor.setValue(newVal)
+      // 초기 content 생성
+      doc.update((root) => {
+        if (!root.content) {
+          root.content = new yorkie.Text()
         }
       })
-    }
-    init()
 
-    return () => {
-      if (yorkieClientRef.current && yorkieDocRef.current) {
-        yorkieClientRef.current.detach(yorkieDocRef.current)
-        yorkieDocRef.current.deactivate()
+      // 3. 문서 변경 이벤트 감지 및 반영
+      const syncText = () => {
+        const yText = doc.getRoot().content
+        const view = viewRef.current
+        if (view && yText) {
+          view.dispatch({
+            changes: {
+              from: 0,
+              to: view.state.doc.length,
+              insert: yText.toString(),
+            },
+            annotations: [Transaction.remote.of(true)],
+          })
+        }
+      }
+
+      doc.subscribe((event) => {
+        if (event.type === 'snapshot') syncText()
+      })
+
+      doc.subscribe('$.content', (event) => {
+        if (event.type === 'remote-change') {
+          const { operations } = event.value
+          handleOperations(operations)
+        }
+      })
+
+      await client.sync()
+
+      // 4. EditorView 생성
+      const updateListener = EditorView.updateListener.of((v) => {
+        if (!doc || !v.docChanged) return
+        for (const tr of v.transactions) {
+          const events = ['input', 'delete', 'move', 'undo', 'redo', 'select']
+          const userEvent = events.some((e) => tr.isUserEvent(e))
+          if (!userEvent || tr.annotation(Transaction.remote)) continue
+
+          tr.changes.iterChanges((from, to, _, __, inserted) => {
+            const text = inserted.toJSON().join('\n')
+            doc.update((root) => {
+              root.content.edit(from, to, text)
+            })
+          })
+        }
+      })
+
+      const view = new EditorView({
+        doc: '',
+        extensions: [basicSetup, updateListener],
+        parent: editorRef.current,
+      })
+      viewRef.current = view
+
+      syncText()
+    }
+
+    const handleOperations = (operations) => {
+      const view = viewRef.current
+      if (!view) return
+      for (const op of operations) {
+        if (op.type === 'edit') {
+          view.dispatch({
+            changes: {
+              from: Math.max(0, op.from),
+              to: Math.max(0, op.to),
+              insert: op.value.content,
+            },
+            annotations: [Transaction.remote.of(true)],
+          })
+        }
       }
     }
-  }, [roomId])
 
-  return <div ref={editorRef} style={{ height: '500px', border: '1px solid #ccc' }}></div>
+    initialize()
+
+    return () => {
+      if (clientRef.current) clientRef.current.deactivate()
+      if (viewRef.current) viewRef.current.destroy()
+    }
+  }, [])
+
+  return <div id="editor" ref={editorRef} style={{ height: '400px' }} />
 }
 
-export default CodeEditor
+export default CollaborativeEditor

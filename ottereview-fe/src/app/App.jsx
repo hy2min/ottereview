@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Header from '../components/Header'
-import Chat from '../features/chat/Chat'
+import ChatRoom from '../pages/ChatRoom'
 import Landing from '../pages/Landing'
 import { useUserStore } from '../store/userStore'
 import { protectedRoutes } from './routes'
@@ -10,12 +10,12 @@ const App = () => {
   const isLoggedIn = useUserStore((state) => state.isLoggedIn)
   const { pathname } = useLocation()
 
-  if (pathname === '/chat') {
-    return <Chat />
+  if (pathname === '/chatroom/test') {
+    return <ChatRoom />
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="min-h-screen">
       {isLoggedIn && <Header />}
       <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
         <Routes>
