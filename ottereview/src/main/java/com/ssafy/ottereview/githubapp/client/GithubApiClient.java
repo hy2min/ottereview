@@ -2,11 +2,9 @@ package com.ssafy.ottereview.githubapp.client;
 
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.githubapp.dto.GithubRepoResponse;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.Arrays;
@@ -37,7 +35,6 @@ import org.springframework.stereotype.Service;
 public class GithubApiClient {
 
     private final GithubAppUtil githubAppUtil;
-    private final RepoRepository repoRepository;
 
     public GithubAccountResponse getAccount(Long installationId) {
         try {
@@ -132,13 +129,8 @@ public class GithubApiClient {
         }
     }
 
-    public boolean pullRequestExists(Long repoId, String repositoryName, String branchName) {
+    public boolean pullRequestExists(Long installationId, String repositoryName, String branchName) {
         try {
-            Long installationId = repoRepository.findById(repoId)
-                    .orElseThrow(() -> new RuntimeException("Repository not found"))
-                    .getAccount()
-                    .getInstallationId();
-
             GitHub github = githubAppUtil.getGitHub(installationId);
             GHRepository repo = github.getRepository(repositoryName);
 
@@ -243,9 +235,14 @@ public class GithubApiClient {
      */
     public GHCompare getCompare(Long installationId, String repositoryName, String baseSha, String headSha) {
         try {
-            GitHub github = githubAppUtil.getGitHub(installationId);
-            GHRepository repo = github.getRepository(repositoryName);
+            log.info("getCompare 호출: installationId={}, repositoryName={}, baseSha={}, headSha={}",
+                    installationId, repositoryName, baseSha, headSha);
 
+            GitHub github = githubAppUtil.getGitHub(installationId);
+
+            log.info("GitHub 클라이언트 생성 완료");
+            GHRepository repo = github.getRepository(repositoryName);
+            log.info("Repository 정보 가져오기 완료: {}", repo.getName());
             return repo.getCompare(baseSha, headSha);
 
         } catch (IOException e) {
@@ -262,6 +259,9 @@ public class GithubApiClient {
      */
     public List<GHCommit.File> getChangedFiles(Long installationId, String repositoryName, String baseSha, String headSha) {
         try {
+            log.info("getChangedFiles 호출: installationId={}, repositoryName={}, baseSha={}, headSha={}",
+                    installationId, repositoryName, baseSha, headSha);
+
             GHCompare compare = getCompare(installationId, repositoryName, baseSha, headSha);
             return Arrays.stream(compare.getFiles())
                     .toList();
@@ -381,6 +381,9 @@ public class GithubApiClient {
      */
     public List<Commit> getCommits(Long installationId, String repositoryName, String baseSha, String headSha) {
         try {
+            log.info("getCommits 호출: installationId={}, repositoryName={}, baseSha={}, headSha={}",
+                    installationId, repositoryName, baseSha, headSha);
+
             GHCompare compare = getCompare(installationId, repositoryName, baseSha, headSha);
             return Arrays.stream(compare.getCommits())
                     .toList();
