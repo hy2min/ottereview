@@ -1,0 +1,92 @@
+{
+  "pr_info": {
+    "repository": "username/example-repo",
+    "language": "Java",
+    "branch": "feature/user-authentication",
+    "base_branch": "main"
+  },
+  "commits": [
+    {
+      "order": 1,
+      "commit_info": {
+        "author": "김개발 (kimdev)",
+        "message": "feat: 사용자 인증 시스템 구현"
+      },
+      "changes": {
+        "total_stats": {
+          "additions": 150,
+          "deletions": 20,
+          "files_changed": 3
+        },
+        "files": [
+          {
+            "path": "src/main/java/com/example/auth/AuthController.java",
+            "status": "added",
+            "category": "controller",
+            "changes": "+45/-0",
+            "summary": "로그인/로그아웃 API 엔드포인트 구현",
+            "patch": [
+              "@RestController",
+              "@RequestMapping(\"/api/auth\")",
+              "@PostMapping(\"/login\")",
+              "public ResponseEntity<TokenResponse> login(...)"
+            ]
+          },
+          {
+            "path": "src/main/java/com/example/config/SecurityConfig.java",
+            "status": "modified",
+            "category": "config",
+            "changes": "+40/-20",
+            "summary": "Spring Security 설정 추가",
+            "patch": [
+              "@Configuration",
+              "@EnableWebSecurity",
+              "public class SecurityConfig extends WebSecurityConfigurerAdapter {"
+            ]
+          },
+          {
+            "path": "src/main/java/com/example/util/JwtUtil.java",
+            "status": "added",
+            "category": "util",
+            "changes": "+65/-0",
+            "summary": "JWT 토큰 생성 및 검증 유틸리티 클래스 추가",
+            "patch": [
+              "public class JwtUtil {",
+              "public String generateToken(UserDetails userDetails) {",
+              "return Jwts.builder()"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "commit_info": {
+        "author": "이개발 (leedev)",
+        "message": "fix: 비밀번호 유효성 검사 버그 수정"
+      },
+      "changes": {
+        "total_stats": {
+          "additions": 10,
+          "deletions": 5,
+          "files_changed": 1
+        },
+        "files": [
+          {
+            "path": "src/main/java/com/example/validator/PasswordValidator.java",
+            "status": "modified",
+            "category": "validator",
+            "changes": "+10/-5",
+            "summary": "비밀번호 유효성 검사 로직 개선",
+            "patch": [
+              "public class PasswordValidator {",
+              "public boolean isValid(String password) {",
+              "// 개선된 유효성 검사 로직",
+              "return password.length() >= 8 && hasSpecialChar(password);"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
