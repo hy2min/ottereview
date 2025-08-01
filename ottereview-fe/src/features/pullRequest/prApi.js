@@ -22,11 +22,7 @@ export const fetchPR = async () => {
           additions: 45,
           deletions: 12,
           patch:
-            '@@ -10,7 +10,9 @@ function signToken() {\n' +
-            '-  return jwt.sign(payload, secret);\n' +
-            "+  if (!secret) throw new Error('No secret');\n" +
-            "+  return jwt.sign(payload, secret, { expiresIn: '1h' });\n" +
-            '}\n',
+            '@@ -145,8 +145,12 @@ function mountEffect(\n   create: () => (() => void) | void,\n   deps: Array<mixed> | void | null,\n ): void {\n-  return mountEffectImpl(\n-    PassiveEffect | PassiveStaticEffect,\n+  const hook = mountWorkInProgressHook();\n+  const nextDeps = deps === undefined ? null : deps;\n+  currentlyRenderingFiber.flags |= PassiveEffect;\n+  hook.memoizedState = pushEffect(\n+    HookHasEffect | PassiveEffect,\n+    create,\n     create,\n-    deps,\n-  );\n+    undefined,\n+    nextDeps,\n+  );\n ',
         },
         'src/middleware/auth.js': {
           additions: 23,

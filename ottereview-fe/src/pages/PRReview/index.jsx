@@ -13,6 +13,9 @@ import { useParams } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import Button from '../../components/Button'
+import CommentForm from '../../features/comment/CommentForm'
+import { useCommentStore } from '../../features/comment/commentStore'
+import PRCommentList from '../../features/comment/PRCommentList'
 import { fetchPR } from '../../features/pullRequest/prApi'
 
 const PRReview = () => {
@@ -20,6 +23,17 @@ const PRReview = () => {
   const [files, setFiles] = useState([])
   const [expandedFile, setExpandedFile] = useState(null)
   const [activeTab, setActiveTab] = useState('files')
+  const [comment, setComment] = useState('')
+
+  const loadPRComments = useCommentStore((state) => state.loadPRComments)
+  const submitPRComment = useCommentStore((state) => state.submitPRComment)
+
+  useEffect(() => {
+    const existing = useCommentStore.getState().prComments[prId]
+    if (!existing || existing.length === 0) {
+      loadPRComments(prId)
+    }
+  }, [prId, loadPRComments])
 
   useEffect(() => {
     const load = async () => {
@@ -43,6 +57,15 @@ const PRReview = () => {
   }, [prId])
 
   const toggle = (filename) => setExpandedFile(expandedFile === filename ? null : filename)
+
+  const handleSubmit = async () => {
+    if (!comment.trim()) return
+    await submitPRComment(prId, {
+      author: '김개발',
+      content: comment,
+    })
+    setComment('')
+  }
 
   return (
     <div className="space-y-4 py-4">
@@ -113,10 +136,19 @@ const PRReview = () => {
           </div>
         )}
 
-        {activeTab === 'comments' && <div>{/* 댓글 영역 구현 */}</div>}
+        {activeTab === 'comments' && (
+          <div className="space-y-4">
+            <PRCommentList prId={prId} />
+          </div>
+        )}
 
         {activeTab === 'commits' && <div>{/* 커밋 영역 구현 */}</div>}
       </Box>
+      <CommentForm
+        value={comment}
+        onChange={(e) => setComment(e.target.value)}
+        onSubmit={handleSubmit}
+      />
     </div>
   )
 }

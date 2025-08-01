@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react' // useMemo 임포트
 import { useNavigate } from 'react-router-dom'
 
+import Box from '../../components/Box'
 import Button from '../../components/Button'
 import StepIndicator from '../../components/StepIndicator'
 import { submitPR } from '../../features/pullRequest/prApi'
@@ -15,6 +16,17 @@ const PRCreate = () => {
   const navigate = useNavigate()
 
   const formData = usePRCreateStore((state) => state.formData)
+
+  const isNextButtonDisabled = useMemo(() => {
+    if (step === 1) {
+      return (
+        !formData.sourceBranch ||
+        !formData.targetBranch ||
+        formData.sourceBranch === formData.targetBranch
+      )
+    }
+    return false
+  }, [step, formData.sourceBranch, formData.targetBranch])
 
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
@@ -46,7 +58,7 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="space-y-4 py-4">
+    <div className="max-w-2xl mx-auto space-y-4 py-4">
       <StepIndicator currentStep={step} />
       <Box shadow>{renderStepComponent()}</Box>
 
@@ -66,13 +78,16 @@ const PRCreate = () => {
 
         <Button
           onClick={() => {
-            if (step < 4) {
-              setStep((prev) => prev + 1)
-            } else {
-              handleSubmit()
+            if (!isNextButtonDisabled) {
+              if (step < 4) {
+                setStep((prev) => prev + 1)
+              } else {
+                handleSubmit()
+              }
             }
           }}
           variant="primary"
+          disabled={isNextButtonDisabled}
         >
           {step === 4 ? '제출' : '다음'}
         </Button>

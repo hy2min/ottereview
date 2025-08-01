@@ -1,46 +1,54 @@
-import Button from '../../components/Button'
+import InputBox from '../../components/InputBox'
+import { usePRCreateStore } from './stores/prCreateStore'
 
 const PRCreateStep1 = () => {
+  const { formData, setFormData } = usePRCreateStore()
+
+  const branchOptions = [
+    { label: '브랜치를 선택하세요', value: '' },
+    { label: 'main', value: 'main' },
+    { label: 'develop', value: 'develop' },
+    { label: 'feature/new-feature', value: 'feature/new-feature' },
+    { label: 'bugfix/issue-123', value: 'bugfix/issue-123' },
+  ]
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {/* 컨벤션 선택 드롭다운 1 */}
-        <div>
-          <label>컨벤션 선택지 1</label>
-          <select className="w-full border px-2 py-1">
-            <option value="">선택하세요</option>
-            <option value="a">옵션 A</option>
-            <option value="b">옵션 B</option>
-          </select>
-        </div>
+        <InputBox
+          label="소스 브랜치"
+          as="select"
+          options={branchOptions}
+          value={formData.sourceBranch || ''}
+          onChange={(e) => setFormData({ sourceBranch: e.target.value })}
+          placeholder="소스 브랜치를 선택하세요"
+        />
 
-        {/* 컨벤션 선택 드롭다운 2 */}
-        <div>
-          <label>컨벤션 선택지 2</label>
-          <select className="w-full border px-2 py-1">
-            <option value="">선택하세요</option>
-            <option value="c">옵션 C</option>
-            <option value="d">옵션 D</option>
-          </select>
-        </div>
-
-        {/* 컨벤션 선택 드롭다운 3 */}
-        <div>
-          <label>컨벤션 선택지 3</label>
-          <select className="w-full border px-2 py-1">
-            <option value="">선택하세요</option>
-            <option value="e">옵션 E</option>
-            <option value="f">옵션 F</option>
-          </select>
-        </div>
-
-        {/* 컨벤션 체크 버튼 */}
-        <div>
-          <Button variant="" size="sm">
-            컨벤션 체크
-          </Button>
-        </div>
+        <InputBox
+          label="타겟 브랜치"
+          as="select"
+          options={branchOptions}
+          value={formData.targetBranch || ''}
+          onChange={(e) => setFormData({ targetBranch: e.target.value })}
+          placeholder="타겟 브랜치를 선택하세요"
+        />
       </div>
+      {/* 추가 UI */}
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch !== formData.targetBranch && (
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800">
+            <strong>{formData.sourceBranch}</strong> 에서 <strong>{formData.targetBranch}</strong>{' '}
+            로의 변경을 생성합니다.
+          </div>
+        )}
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch === formData.targetBranch && (
+          <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800">
+            소스 브랜치와 타겟 브랜치가 동일합니다.
+          </div>
+        )}
     </div>
   )
 }
