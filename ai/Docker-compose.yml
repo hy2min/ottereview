@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  # FastAPI AI 서비스
+  ai-service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6380
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ENV=devleopment
+    volumes:
+      - ./models:/app/models  # AI 모델 캐시용
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - ai-network
+
+  # Redis (벡터 DB)
+  redis:
+    image: redis/redis-stack:latest  # RedisSearch 포함된 이미지
+    ports:
+      - "6379:6379"
+      - "8002:8001"  # Redis Insight (관리 도구)
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - ai-network
+
+volumes:
+  redis_data:
+
+networks:
+  ai-network:
+    driver: bridge
