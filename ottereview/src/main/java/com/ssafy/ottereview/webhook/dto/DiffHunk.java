@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.common.webhook.dto;
+package com.ssafy.ottereview.webhook.dto;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
