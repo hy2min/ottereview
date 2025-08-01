@@ -17,10 +17,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -139,7 +141,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .orElse(null);
 
         if (!Objects.equals(ownerId, userId)) {
-            throw new AccessDeniedException("not the owner of this room.");
+            throw new AccessDeniedException("not thㅁe owner of this room.");
         }
         // Redis 세션 삭제
         String key = SESSION_KEY_PREFIX + roomId;
@@ -175,5 +177,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         String token = openViduService.generateToken(sessionId);
 
         return new JoinMeetingRoomResponseDto(roomId, room.getRoomName(), token);
+    }
+
+    @Scheduled(fixedRate = 600000) // 10분마다 실행
+    @Transactional
+    public void cleanExpiredMeetingRooms() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(sessionTtlHours);
+        meetingRoomRepository.deleteAllByCreatedAtBefore(cutoff);
     }
 }

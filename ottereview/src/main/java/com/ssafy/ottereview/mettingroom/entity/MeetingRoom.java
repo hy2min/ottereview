@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.entity;
 
+import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import jakarta.persistence.*;
 import java.util.ArrayList;
@@ -15,7 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-public class MeetingRoom {
+public class MeetingRoom extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
