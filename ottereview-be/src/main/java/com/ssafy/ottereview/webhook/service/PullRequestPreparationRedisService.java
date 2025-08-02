@@ -1,6 +1,6 @@
 package com.ssafy.ottereview.webhook.service;
 
-import com.ssafy.ottereview.webhook.dto.PullRequestPrepareData;
+import com.ssafy.ottereview.pullrequest.dto.PreparePullRequestResponse;
 import com.ssafy.ottereview.webhook.dto.PushEventInfo;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +22,14 @@ public class PullRequestPreparationRedisService {
     /**
      * PullRequestData를 Redis에 저장
      */
-    public void savePullRequestData(PullRequestPrepareData prData) {
+    public void savePullRequestData(PreparePullRequestResponse prData) {
         try {
-            String cacheKey = createCacheKey(prData.getPushInfo());
-            
-            redisTemplate.opsForValue()
-                    .set(cacheKey, prData, CACHE_TTL);
-            
-            log.info("PR 데이터 캐시 저장 완료: {}", cacheKey);
+//            String cacheKey = createCacheKey(prData);
+//
+//            redisTemplate.opsForValue()
+//                    .set(cacheKey, prData, CACHE_TTL);
+//
+//            log.info("PR 데이터 캐시 저장 완료: {}", cacheKey);
         } catch (Exception e) {
             log.error("PR 데이터 캐시 저장 실패", e);
             throw new RuntimeException("캐시 저장 실패", e);
@@ -39,15 +39,15 @@ public class PullRequestPreparationRedisService {
     /**
      * Redis에서 PR 데이터 조회
      */
-    public PullRequestPrepareData getCachedPullRequestData(PushEventInfo pushInfo) {
+    public PreparePullRequestResponse getCachedPullRequestData(PushEventInfo pushInfo) {
         try {
             String cacheKey = createCacheKey(pushInfo);
             Object cached = redisTemplate.opsForValue()
                     .get(cacheKey);
             
-            if (cached instanceof PullRequestPrepareData) {
+            if (cached instanceof PreparePullRequestResponse) {
                 log.info("PR 데이터 캐시 조회 성공: {}", cacheKey);
-                return (PullRequestPrepareData) cached;
+                return (PreparePullRequestResponse) cached;
             }
             
             log.info("PR 데이터 캐시 미스: {}", cacheKey);

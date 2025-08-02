@@ -3,6 +3,7 @@ package com.ssafy.ottereview.webhook.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.pullrequest.service.PullRequestPreparationService;
 import com.ssafy.ottereview.webhook.dto.PushEventInfo;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,17 +32,6 @@ public class PushEventService {
             // Push 이벤트 기본 정보 추출
             PushEventInfo pushInfo = extractPushEventInfo(json);
             
-            String formattedPushInfo = objectMapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(pushInfo);
-            
-            log.debug("PushEventInfo 정보 출력:\n{}", formattedPushInfo);
-            
-            // PR 생성 조건 확인
-//            if (shouldCreatePR(pushInfo)) {
-            // 상세 정보 수집 및 PR 준비
-            prPreparationService.preparePullRequestCreation(pushInfo);
-//            }
-        
         } catch (Exception e) {
             log.error("Error processing push event", e);
         }
@@ -93,28 +83,5 @@ public class PushEventService {
                         .path("id")
                         .asLong())
                 .build();
-    }
-    
-    private boolean shouldCreatePR(PushEventInfo pushInfo) {
-        // 삭제된 브랜치 제외
-        if (pushInfo.isDeleted()) {
-            log.debug("브랜치가 삭제된 경우, PR 생성하지 않음");
-            return false;
-        }
-        
-        // 기본 브랜치 제외
-        if (pushInfo.getBranchName()
-                .equals(pushInfo.getDefaultBranch())) {
-            log.debug("기본 브랜치로 푸시된 경우, PR 생성하지 않음");
-            return false;
-        }
-        
-        // 이미 PR이 존재하는지 확인
-        if (githubApiClient.pullRequestExists(pushInfo.getInstallationId(), pushInfo.getRepoFullName(), pushInfo.getBranchName())) {
-            log.info("PR already exists for branch: {}", pushInfo.getBranchName());
-            return false;
-        }
-        
-        return true;
     }
 }
