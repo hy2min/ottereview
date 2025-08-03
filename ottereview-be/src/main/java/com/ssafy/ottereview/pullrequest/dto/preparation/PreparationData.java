@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto;
+package com.ssafy.ottereview.pullrequest.dto.preparation;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -11,7 +11,7 @@ import org.kohsuke.github.GHCompare.Status;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PreparePullRequestResponse {
+public class PreparationData {
     
     private String source;
     private String target;
@@ -28,4 +28,24 @@ public class PreparePullRequestResponse {
     private CommitInfo mergeBaseCommit;
     private List<CommitInfo> commits;
     private List<FileChangeInfo> files;
+    private String summary;
+    private List<ReviewerInfo> reviewers;
+    private List<ReviewInfo> reviews;
+    private List<DescriptionInfo> descriptions;
+    
+    public void enrollSummary(String summary) {
+        this.summary = summary;
+    }
+    
+    public void enrollReviewers(List<ReviewerInfo> reviewer) {
+        this.reviewers = reviewer;
+    }
+    
+    public void enrollReviews(List<ReviewInfo> review) {
+        this.reviews = review;
+    }
+    
+    public void enrollDescriptions(List<DescriptionInfo> description) {
+        this.descriptions = description;
+    }
 }
