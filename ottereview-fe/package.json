@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
     "fabric": "^6.7.1",
+    "livekit-client": "^2.15.4",
     "lucide-react": "^0.534.0",
     "monaco-editor": "^0.52.2",
     "randomcolor": "^0.6.2",
