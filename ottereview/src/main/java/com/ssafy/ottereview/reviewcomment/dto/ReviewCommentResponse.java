@@ -1,32 +1,41 @@
 package com.ssafy.ottereview.reviewcomment.dto;
+
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
+import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
 @Builder
 @Getter
 public class ReviewCommentResponse {
+
     private Long id;
-    private Long pullRequestId;
-    private Long authorId;
-    private String authorName;
-    private String commitSha;
-    private String filePath;
-    private Integer lineNumber;
-    private String content;
+    private Long userId;
+    private String userName;
+    private Long review;
+    private String path;
+    private String body;
     private String recordKey;
+    private Integer position;
+    private LocalDateTime githubCreatedAt;
+    private LocalDateTime githubUpdatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
 
     public static ReviewCommentResponse from(ReviewComment comment) {
         return ReviewCommentResponse.builder()
                 .id(comment.getId())
-                .pullRequestId(comment.getPullRequest().getId())
-                .authorId(comment.getAuthor().getId())
-                .authorName(comment.getAuthor().getGithubUsername())
-                .commitSha(comment.getCommitSha())
-                .filePath(comment.getFilePath())
-                .lineNumber(comment.getLineNumber())
-                .content(comment.getContent())
-                .recordKey(comment.getRecord_key())
+                .userId(comment.getUser().getId())
+                .userName(comment.getUser().getGithubUsername())
+                .review(comment.getReview().getId())
+                .path(comment.getPath())
+                .body(comment.getBody())
+                .recordKey(comment.getRecordKey())
+                .position(comment.getPosition())
+                .githubCreatedAt(comment.getGithubCreatedAt())
+                .githubUpdatedAt(comment.getGithubUpdatedAt())
+                .createdAt(comment.getCreatedAt())
+                .modifiedAt(comment.getModifiedAt())
                 .build();
     }
 }

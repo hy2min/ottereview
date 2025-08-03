@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -38,6 +40,7 @@ public class PullRequest extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Repo repo;
 
     @Column(nullable = false)
@@ -70,7 +73,6 @@ public class PullRequest extends BaseEntity {
 
     @Column
     private LocalDateTime githubUpdatedAt; // GitHub에서의 수정일시
-
 
     @Column
     private Integer commitCnt;

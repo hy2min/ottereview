@@ -6,5 +6,6 @@ import lombok.Getter;
 @Builder
 @Getter
 public class ReviewCommentUpdateRequest {
-    private String content;
+
+    private String body;
 }

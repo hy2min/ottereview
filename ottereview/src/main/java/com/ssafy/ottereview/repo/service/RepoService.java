@@ -1,11 +1,12 @@
 package com.ssafy.ottereview.repo.service;
 
 import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,19 +46,21 @@ public interface RepoService {
      */
     public void deleteRepo(Long id);
 
-    /**
-     * UserId를 가지고 User가 가지고 있는 모든 레포지토리를 가져온다.
-     */
-    public List<RepoResponse> getReposByUserId(Long userId);
 
     /**
      * Repo 동기화를 통해서 추가 및 삭제 로직 메소드
+     *
      * @param account
      * @param installationId
      */
     public void processSyncRepo(Account account, Long installationId);
 
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,  Map<Long, GHRepository> repoMap  ,Account account);
+    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
+            Map<Long, GHRepository> repoMap, Account account);
 
     public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account);
+
+    public List<UserAccount> getUserListByRepoId(Long userId);
+
+    public List<RepoResponse> getReposByUserId(User user);
 }
