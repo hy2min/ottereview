@@ -2,6 +2,8 @@ package com.ssafy.ottereview.mettingroom.service;
 
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
+import com.ssafy.ottereview.email.dto.EmailRequestDto;
+import com.ssafy.ottereview.email.service.EmailService;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
@@ -41,6 +43,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final UserAccountRepository userAccountRepository;
     private final MeetingParticipantRepository meetingParticipantRepository;
     private final OpenViduService openViduService;
+    private final EmailService emailService;
     private final RedisTemplate<String, Object> redisTemplate;
     @Value("${openvidu.session.ttl-hours}")
     private long sessionTtlHours;
@@ -89,12 +92,25 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         // Cascade로 참여자까지 함께 저장됨
         meetingRoomRepository.save(room);
 
+        // 이메일 보내는 로직
+        room.getParticipants().stream()
+                .filter(MeetingParticipant::isSendMail) // sendMail == true인 유저만
+                .forEach(participant -> {
+                    EmailRequestDto.ChatInvite inviteDto = new EmailRequestDto.ChatInvite(
+                            participant.getUser().getGithubEmail(),
+                            room.getId(),
+                            user.getGithubUsername(),
+                            room.getRoomName()
+                    );
+                    emailService.sendChatInvite(inviteDto); // @Async 메서드 호출
+                });
+
         // OpenVidu 세션 생성 & Redis 저장
         String sessionId = openViduService.createSession();
         redisTemplate.opsForValue()
                 .set(SESSION_KEY_PREFIX + room.getId(), sessionId, sessionTtlHours, TimeUnit.HOURS);
 
-        // DTO 변환 
+        // DTO 변환
         List<MeetingParticipantDto> participantDtos = room.getParticipants().stream()
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
