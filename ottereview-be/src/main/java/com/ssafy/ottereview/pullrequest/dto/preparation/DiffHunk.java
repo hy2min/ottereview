@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto;
+package com.ssafy.ottereview.pullrequest.dto.preparation;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
