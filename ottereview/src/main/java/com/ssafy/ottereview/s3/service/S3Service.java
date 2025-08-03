@@ -8,17 +8,18 @@ public interface S3Service {
 
     /**
      * S3에 파일을 업로드 하는 함수.
-     * @param file S3에 올릴 파일(반드시 영문,숫자)
-     * @param pullRequestId 풀리퀘스트 ID
+     *
+     * @param file     S3에 올릴 파일(반드시 영문,숫자)
+     * @param reviewId 풀리퀘스트 ID
      * @return
      */
-    String uploadFile(MultipartFile file, Long pullRequestId) ;
+    String uploadFile(MultipartFile file, Long reviewId);
 
-    List<S3Object> listVoiceFilesByRepository(Long repositoryId);
+    List<S3Object> listVoiceFilesByReviewId(Long reviewId);
 
-    void deleteFiles(String fileKey,Long pullRequestId);
+    void deleteFiles(Long reviewId);
 
-    void deleteFile(String fileKey,Long pullRequestId);
+    void deleteFile(String fileKey);
 
-
+    void cleanupUploadedFiles(List<String> uploadedFileKeys);
 }

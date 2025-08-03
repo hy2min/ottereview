@@ -1,6 +1,5 @@
 package com.ssafy.ottereview.repo.dto;
 
-import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.repo.entity.Repo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +13,7 @@ import lombok.ToString;
 @Builder
 @ToString
 public class RepoResponse {
+
     private Long id;
 
     private Long repoId;
@@ -26,7 +26,7 @@ public class RepoResponse {
 
     private boolean isPrivate;
 
-    public static RepoResponse of(Repo repo){
+    public static RepoResponse of(Repo repo) {
         return RepoResponse.builder()
                 .id(repo.getId())
                 .repoId(repo.getRepoId())

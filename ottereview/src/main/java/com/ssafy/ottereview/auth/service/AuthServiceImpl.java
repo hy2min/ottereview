@@ -1,31 +1,37 @@
 package com.ssafy.ottereview.auth.service;
 
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
-import com.ssafy.ottereview.auth.jwt.dto.AccessTokenResponseDto;
 import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 import com.ssafy.ottereview.auth.jwt.service.TokenService;
 import com.ssafy.ottereview.auth.jwt.util.JwtUtil;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.user.service.UserService;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.kohsuke.github.GHMyself;
+import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
-import java.util.Map;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthServiceImpl implements AuthService {
+
     @Value("${github.oauth.client-id}")
     private String clientId;
     @Value("${github.oauth.client-secret}")
@@ -70,31 +76,43 @@ public class AuthServiceImpl implements AuthService {
     }
 
     public GithubUserDto requestGithubUser(String githubAccessToken) {
-        String url = "https://api.github.com/user";
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(githubAccessToken);
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        ResponseEntity<Map<String, Object>> responseEntity =
-                restTemplate.exchange(
-                        url,
-                        HttpMethod.GET,
-                        entity,
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-        Map<String, Object> response = responseEntity.getBody();
-        String login = (String) response.get("login");
-        String email = (String) response.get("email");
-        String avatarUrl = (String) response.get("avatar_url");
-        if (email == null) {
-            email = requestPrimaryEmail(githubAccessToken);
-            if (email == null) {
-                throw new RuntimeException("GitHub email not provided or private.");
-            }
-        }
+        try {
+            // 토큰으로 GitHub 클라이언트 생성
+            GitHub github = new GitHubBuilder()
+                    .withOAuthToken(githubAccessToken)
+                    .build();
 
-        return new GithubUserDto(login, email, avatarUrl);
+            GHMyself myself = github.getMyself();
+
+            String login = myself.getLogin();
+            String email = myself.getEmail();
+
+            // 이메일이 없거나 private일 경우, 추가로 primary 이메일을 찾아야 함
+            if (email == null || email.isEmpty()) {
+                // hub4j에서 getEmails() 호출 가능 (이메일 목록)
+                // 가장 먼저 기본(primary, verified) 이메일을 찾아봅니다.
+                var emails = github.getMyself().listEmails().toList();
+                if (emails != null && !emails.isEmpty()) {
+                    email = emails.stream()
+                            .filter(emailObj -> emailObj.isPrimary() && emailObj.isVerified())
+                            .map(emailObj -> emailObj.getEmail())
+                            .findFirst()
+                            .orElse(null);
+                }
+                if (email == null) {
+                    throw new RuntimeException("GitHub email not provided or private.");
+                }
+            }
+
+            String avatarUrl = myself.getAvatarUrl();
+
+            return new GithubUserDto(login, email, avatarUrl);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to request GitHub user via hub4j", e);
+        }
     }
+
 
     // 이메일 공개가 되어 있지 않으면 토큰으로 가져오기
     private String requestPrimaryEmail(String githubAccessToken) {
@@ -126,7 +144,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private String requestGithubAccessToken(String code) {
-        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret, redirectUri);
+        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret,
+                redirectUri);
         String url = "https://github.com/login/oauth/access_token";
 
         HttpHeaders headers = new HttpHeaders();

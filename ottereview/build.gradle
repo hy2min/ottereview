@@ -42,12 +42,22 @@ dependencies {
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// WebSocket + STOMP
+	implementation 'org.springframework.boot:spring-boot-starter-websocket'
+	implementation 'org.springframework:spring-messaging'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation platform('software.amazon.awssdk:bom:2.27.21')
 	implementation 'software.amazon.awssdk:s3'
 	implementation 'software.amazon.awssdk:sso'
 	implementation 'software.amazon.awssdk:ssooidc'
-
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0'
+	// OPENVIDU
+	implementation 'io.openvidu:openvidu-java-client:2.31.0'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.apache.httpcomponents.client5:httpclient5'
+	// email
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 }
 
 tasks.named('test') {
