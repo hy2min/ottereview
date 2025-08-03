@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Header from '../components/Header'
-import AudioComponent from '../features/chat/AudioComponent'
+import AudioChatRoom from '../features/chat/AudioChatRoom'
 import ChatRoom from '../pages/ChatRoom'
 import Dashboard from '../pages/Dashboard'
 import Landing from '../pages/Landing'
@@ -31,7 +31,7 @@ const App = () => {
 
               {/* ✅ 테스트용 페이지도 라우터로 등록 */}
               <Route path="/chatroom/test" element={<ChatRoom />} />
-              <Route path="/audiotest" element={<AudioComponent />} />
+              <Route path="/audiotest" element={<AudioChatRoom />} />
 
               {/* ✅ 예외 경로는 대시보드로 */}
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
