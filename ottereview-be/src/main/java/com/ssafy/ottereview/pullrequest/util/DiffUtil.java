@@ -1,6 +1,6 @@
-package com.ssafy.ottereview.pullrequest.service;
+package com.ssafy.ottereview.pullrequest.util;
 
-import com.ssafy.ottereview.pullrequest.dto.DiffHunk;
+import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GitHubDiffService {
+public class DiffUtil {
     
     public List<DiffHunk> parseDiffHunks(String patch) {
         if (patch == null || patch.isEmpty()) {
