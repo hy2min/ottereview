@@ -23,6 +23,7 @@
     "livekit-client": "^2.15.4",
     "lucide-react": "^0.534.0",
     "monaco-editor": "^0.52.2",
+    "openvidu-browser": "^2.31.0",
     "randomcolor": "^0.6.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
