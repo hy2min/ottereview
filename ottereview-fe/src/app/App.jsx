@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import { Room, createLocalAudioTrack } from 'livekit-client'
 import { LiveKitRoom } from '@livekit/components-react'
+import { createLocalAudioTrack, Room } from 'livekit-client'
+import { useState } from 'react'
 
 const APPLICATION_SERVER_URL =
   window.location.hostname === 'localhost'
@@ -20,8 +20,8 @@ const App = () => {
   const [token, setToken] = useState('')
   const [room, setRoom] = useState(null)
   const [isConnected, setIsConnected] = useState(false)
-  const [localTrack, setLocalTrack] = useState(undefined)
-  const [remoteTracks, setRemoteTracks] = useState([])
+  // const [localTrack, setLocalTrack] = useState(undefined)
+  // const [remoteTracks, setRemoteTracks] = useState([])
 
   // ✅ 토큰 요청
   const getTokenFromServer = async () => {

@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@codemirror/state": "^6.5.2",
+    "@livekit/components-react": "^2.9.14",
     "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "@tldraw/tldraw": "^3.15.0",
