@@ -11,9 +11,26 @@ import { protectedRoutes } from './routes'
 const App = () => {
   const isLoggedIn = useUserStore((state) => state.isLoggedIn)
 
+  // const isLoggedIn = !!user // null이 아니면 로그인된 상태
+  const isLoggedIn = true
+
+  if (!isLoggedIn) {
+    // 로그인 안 된 경우: Landing, OAuthCallback만 허용
+    return (
+      <main>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    )
+  }
+
+  // 로그인 된 경우: Header + 보호된 경로
   return (
     <div className="min-h-screen">
-      {isLoggedIn && <Header />}
+      <Header />
       <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
         <Routes>
           {/* ✅ 비로그인 사용자 경로 */}

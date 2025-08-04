@@ -196,7 +196,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     }
 
     // 30분 마다 회의방 지난거 확인하고 삭제하기
-    @Scheduled(fixedRate = 1000) // 30분마다 실행
+    @Scheduled(fixedRate = 1000*60*30) // 30분마다 실행
     @Transactional
     public void cleanExpiredMeetingRooms() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(sessionTtlHours);

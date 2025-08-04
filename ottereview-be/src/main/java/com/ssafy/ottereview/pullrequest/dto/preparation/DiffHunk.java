@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.webhook.dto;
+package com.ssafy.ottereview.pullrequest.dto.preparation;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiffHunk {
-
+    
     private int oldStart;
     private int oldLines;
     private int newStart;
     private int newLines;
     private String context;
     private List<String> lines;
-
+    
     public void addLine(String line) {
         lines.add(line);
     }

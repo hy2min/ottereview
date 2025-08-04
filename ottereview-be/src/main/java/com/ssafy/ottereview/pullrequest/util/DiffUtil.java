@@ -1,6 +1,6 @@
-package com.ssafy.ottereview.webhook.service;
+package com.ssafy.ottereview.pullrequest.util;
 
-import com.ssafy.ottereview.webhook.dto.DiffHunk;
+import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -13,18 +13,18 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class GitHubDiffService {
-
+public class DiffUtil {
+    
     public List<DiffHunk> parseDiffHunks(String patch) {
         if (patch == null || patch.isEmpty()) {
             return Collections.emptyList();
         }
-
+        
         List<DiffHunk> hunks = new ArrayList<>();
         String[] lines = patch.split("\n");
-
+        
         DiffHunk currentHunk = null;
-
+        
         for (String line : lines) {
             if (line.startsWith("@@")) {
                 // 새로운 hunk 시작
@@ -37,26 +37,29 @@ public class GitHubDiffService {
                 currentHunk.addLine(line);
             }
         }
-
+        
         if (currentHunk != null) {
             hunks.add(currentHunk);
         }
-
+        
         return hunks;
     }
-
+    
     private DiffHunk parseHunkHeader(String header) {
         // @@ -1,3 +1,4 @@ 형식 파싱
         Pattern pattern = Pattern.compile("@@\\s+-([0-9]+),?([0-9]*)\\s+\\+([0-9]+),?([0-9]*)\\s+@@(.*)");
         Matcher matcher = pattern.matcher(header);
-
+        
         if (matcher.find()) {
             int oldStart = Integer.parseInt(matcher.group(1));
-            int oldLines = matcher.group(2).isEmpty() ? 1 : Integer.parseInt(matcher.group(2));
+            int oldLines = matcher.group(2)
+                    .isEmpty() ? 1 : Integer.parseInt(matcher.group(2));
             int newStart = Integer.parseInt(matcher.group(3));
-            int newLines = matcher.group(4).isEmpty() ? 1 : Integer.parseInt(matcher.group(4));
-            String context = matcher.group(5).trim();
-
+            int newLines = matcher.group(4)
+                    .isEmpty() ? 1 : Integer.parseInt(matcher.group(4));
+            String context = matcher.group(5)
+                    .trim();
+            
             return DiffHunk.builder()
                     .oldStart(oldStart)
                     .oldLines(oldLines)
@@ -66,7 +69,9 @@ public class GitHubDiffService {
                     .lines(new ArrayList<>())
                     .build();
         }
-
-        return DiffHunk.builder().lines(new ArrayList<>()).build();
+        
+        return DiffHunk.builder()
+                .lines(new ArrayList<>())
+                .build();
     }
 }

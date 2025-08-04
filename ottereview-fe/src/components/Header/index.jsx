@@ -26,7 +26,7 @@ const Header = () => {
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
           <div className="justify-self-end">
             {/* 예: 개발용 페이지로 가는 링크 */}
-            <Link to="/chat" className="text-lg underline pr-4">
+            <Link to="/chatroom/test" className="text-lg underline pr-4">
               채팅 테스트
             </Link>
             <Button onClick={logout} variant="secondary">

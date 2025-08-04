@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.webhook.dto;
+package com.ssafy.ottereview.pullrequest.dto.preparation;
 
 import java.net.URL;
 import java.util.List;
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class FileChangeInfo {
-
+    
     private String filename;
     private String status;
     private int additions;

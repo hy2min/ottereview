@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,10 +28,12 @@ public class Reviewer {
 
     @ManyToOne
     @JoinColumn(name = "pull_request_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private PullRequest pullRequest;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
 }
