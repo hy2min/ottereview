@@ -7,7 +7,10 @@ import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
+import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,8 @@ public class AccountServiceImpl implements AccountService {
     private final GithubApiClient githubApiClient;
     private final AccountRepository accountRepository;
     private final UserAccountRepository userAccountRepository;
+    private final UserRepository userRepository;
+    private final RepoRepository repoRepository;
     
     @Override
     public AccountResponse getGithubAccount() {
@@ -66,12 +71,29 @@ public class AccountServiceImpl implements AccountService {
         
         userAccountRepository.save(userAccount);
     }
-
+    
     @Override
     public Account getAccountByInstallationId(Long installationId) {
-       return accountRepository.findByInstallationId(installationId);
+        return accountRepository.findByInstallationId(installationId);
     }
-
+    
+    @Override
+    public Repo validateUserPermission(Long userId, Long repoId) {
+        
+        User loginUser = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+        
+        Repo repo = repoRepository.findById(repoId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Repository not found with id: " + repoId));
+        
+        if (!userAccountRepository.existsByUserAndAccount(loginUser, repo.getAccount())) {
+            throw new IllegalArgumentException("유저는 해당 레포지토리의 계정에 속하지 않습니다.");
+        }
+        
+        return repo;
+    }
+    
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),
