@@ -18,8 +18,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # .dockerignore에 의해 불필요한 파일은 제외됨
 COPY . .
 
-# 모델 캐시 디렉토리 생성
-RUN mkdir -p /app/models
+# 필요한 디렉토리 생성
+RUN mkdir -p /app/models /app/chroma_db /app/backup_data
 
 # 포트 8000 노출
 EXPOSE 8000
@@ -28,6 +28,9 @@ EXPOSE 8000
 RUN adduser --disabled-password --gecos '' --uid 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
+
+# ChromaDB 데이터 디렉토리를 볼륨으로 선언
+VOLUME ["/app/chroma_db", "/app/models"]
 
 # FastAPI 애플리케이션 실행
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
