@@ -1,13 +1,10 @@
-import redis
+import chromadb
+from chromadb.config import Settings
 import json
 import logging
 import numpy as np
 from typing import List, Dict, Optional, Any, Tuple
-from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from redis.commands.search.field import TextField, VectorField, NumericField, TagField
-from redis.commands.search.indexing import IndexDefinition, IndexType
-from redis.commands.search.query import Query
 import hashlib
 import os
 from dotenv import load_dotenv
@@ -19,441 +16,584 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 @dataclass
-class FileChange:
+class FileInfo:
     """파일 변경 정보"""
-    path: str
-    status: str
-    category: str
-    changes: str
-    summary: str
+    filename: str
+    status: str  # modified, added, deleted
+    additions: int
+    deletions: int
     patch: str
 
 @dataclass
 class CommitInfo:
     """커밋 정보"""
-    order: int
-    author: str
+    sha: str
     message: str
-    total_additions: int
-    total_deletions: int
-    files_changed: int
-    files: List[FileChange]
+    author_name: str
+    author_email: str
+    additions: int
+    deletions: int
 
 @dataclass
-class PRInfo:
-    """Pull Request 정보를 담는 데이터 클래스 (FastAPI 요청 바디와 1:1 매핑)"""
-    pr_id: str
-    repository: str
-    language: str
-    branch: str
-    base_branch: str
+class ReviewCommentInfo:
+    """리뷰 코멘트 정보"""
+    user_name: str
+    path: str
+    body: str
+    position: Optional[int]
+
+@dataclass
+class ReviewInfo:
+    """리뷰 정보"""
+    user_github_username: str
+    state: str  # APPROVED, REQUEST_CHANGES, COMMENTED
+    body: str
+    commit_sha: str
+    review_comments: List[ReviewCommentInfo] = field(default_factory=list)
+
+@dataclass
+class PRData:
+    """Pull Request 전체 데이터"""
+    # PR 기본 정보
+    source_branch: str
+    target_branch: str
+    title: str
+    body: str
+    
+    # 저장소 정보 (reviewers에서 추출)
+    repository_name: str  # reviewers[0]의 정보에서 추출 가능하다고 가정
+    
+    # 변경 사항
+    files: List[FileInfo]
     commits: List[CommitInfo]
-    reviewers: List[str] = field(default_factory=list)
+    
+    # 리뷰 정보
+    reviewers: List[str]  # 리뷰어 username 목록
+    reviews: List[ReviewInfo] = field(default_factory=list)
+
 
 class VectorDB:
-    """Redis를 사용한 PR 벡터 데이터베이스 클래스"""
+    """ChromaDB를 사용한 PR 벡터 데이터베이스 클래스"""
     
-    def __init__(self, redis_url: str = None):
+    def __init__(self, db_path: str = None):
         """벡터 DB 초기화 및 설정"""
-        self.redis_url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
-        self.redis_client = redis.from_url(self.redis_url, decode_responses=True)
+        self.db_path = db_path or os.getenv("CHROMA_DB_PATH", "./chroma_db")
+        
+        # ChromaDB 클라이언트 초기화
+        self.client = chromadb.PersistentClient(
+            path=self.db_path,
+            settings=Settings(
+                anonymized_telemetry=False,
+                allow_reset=True
+            )
+        )
         
         self.embeddings = OpenAIEmbeddings(
+            model="text-embedding-3-small",
             openai_api_key=os.getenv("OPENAI_API_KEY"),
             openai_api_base=os.getenv("OPENAI_API_BASE", "https://gms.ssafy.io/gmsapi/api.openai.com/v1")
         )
         
-        self.vector_dim = 1536
-        self.index_name = "pr_index"
-        
-        self._ensure_index()
+        # 컬렉션 초기화
+        self._ensure_collections()
     
-    def _get_schema_hash(self, schema):
-        """스키마를 해시하여 고유한 인덱스 이름 생성"""
-        schema_str = json.dumps([str(field) for field in schema], sort_keys=True)
-        return hashlib.md5(schema_str.encode()).hexdigest()[:8]
-
-    def _ensure_index(self):
-        schema = [
-                TextField("pr_id"),
-                TextField("repository"),
-                TextField("language"),
-                TextField("branch"),
-                TextField("base_branch"),
-                TagField("reviewers"),
-                TextField("commits_json", sortable=False, no_stem=True),
-                VectorField(
-                    "content_vector",
-                    "HNSW",
-                    {
-                        "TYPE": "FLOAT32",
-                        "DIM": self.vector_dim,
-                        "DISTANCE_METRIC": "COSINE"
-                    }
+    def _ensure_collections(self):
+        """ChromaDB 컬렉션들 생성 및 확인"""
+        collections = {
+            "pr_collection": "PR 기본 정보와 코드 변경사항",
+            "review_collection": "리뷰 내용과 피드백 패턴", 
+            "reviewer_collection": "리뷰어 전문성과 경험"
+        }
+        
+        for collection_name, description in collections.items():
+            try:
+                collection = self.client.get_collection(name=collection_name)
+                logger.info(f"컬렉션 {collection_name}이 이미 존재합니다")
+            except:
+                logger.info(f"컬렉션 {collection_name}을 생성합니다: {description}")
+                collection = self.client.create_collection(
+                    name=collection_name,
+                    metadata={"hnsw:space": "cosine", "description": description}
                 )
-            ]
         
-        schema_hash = self._get_schema_hash(schema)
-        self.index_name = f"pr_index_{schema_hash}"
-        """Redis 벡터 인덱스 생성 및 확인"""
-        try:
-            self.redis_client.ft(self.index_name).info()
-            logger.info(f"인덱스 {self.index_name}가 이미 존재합니다")
-        except:
-            logger.info(f"인덱스 {self.index_name}를 생성합니다")
-            definition = IndexDefinition(prefix=["pr:"], index_type=IndexType.HASH)
-            self.redis_client.ft(self.index_name).create_index(schema, definition=definition)
-            logger.info("인덱스가 성공적으로 생성되었습니다")
+        # 컬렉션 참조 저장
+        self.pr_collection = self.client.get_collection("pr_collection")
+        self.review_collection = self.client.get_collection("review_collection")
+        self.reviewer_collection = self.client.get_collection("reviewer_collection")
     
-    def _prepare_pr_data_for_vectorization(self, pr_info: PRInfo) -> Tuple[str, List[str], List[str], List[str], Dict[str, int], int, int, int]:
-        """PR 정보를 벡터화 및 Redis 저장을 위해 준비하는 함수"""
-        all_changed_files = []
-        all_authors = []
-        all_commit_messages = []
-        file_categories_count = {}
-        total_additions = 0
-        total_deletions = 0
-        total_files_changed = 0
-        
-        file_summaries = []
-        
-        for commit in pr_info.commits:
-            all_authors.append(commit.author)
-            all_commit_messages.append(commit.message)
-            total_additions += commit.total_additions
-            total_deletions += commit.total_deletions
-            total_files_changed += commit.files_changed
+    def _extract_file_categories(self, files: List[FileInfo]) -> Dict[str, int]:
+        """파일 확장자별 카테고리 분류"""
+        categories = {}
+        for file in files:
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext in ['.py', '.java', '.js', '.ts', '.cpp', '.c', '.go']:
+                category = 'source_code'
+            elif ext in ['.md', '.txt', '.rst']:
+                category = 'documentation'
+            elif ext in ['.json', '.yaml', '.yml', '.xml', '.toml']:
+                category = 'configuration'
+            elif 'test' in file.filename.lower() or ext in ['.test.js', '.spec.js']:
+                category = 'test'
+            else:
+                category = 'other'
             
-            for file_change in commit.files:
-                all_changed_files.append(file_change.path)
-                file_summaries.append(file_change.summary)
-                category = file_change.category
-                file_categories_count[category] = file_categories_count.get(category, 0) + 1
-        
-        # 중복 제거
-        all_changed_files = list(set(all_changed_files))
-        all_authors = list(set(all_authors))
-        
-        content_parts = [
-            f"저장소: {pr_info.repository}",
-            f"언어: {pr_info.language}",
-            f"브랜치: {pr_info.branch} -> {pr_info.base_branch}",
-            f"변경된 파일: {', '.join(all_changed_files)}",
-            f"커밋 메시지: {' '.join(all_commit_messages)}",
-            f"작성자: {', '.join(all_authors)}",
-            f"파일 카테고리: {', '.join(file_categories_count.keys())}",
-        ]
-        
-        if file_summaries:
-            content_parts.append(f"파일 요약: {' '.join(file_summaries)}")
-            
-        return (
-            " ".join(content_parts), 
-            all_changed_files, 
-            all_authors, 
-            all_commit_messages, 
-            file_categories_count, 
-            total_additions, 
-            total_deletions, 
-            total_files_changed
-        )
+            categories[category] = categories.get(category, 0) + 1
+        return categories
     
-    async def store_pr(self, pr_info: PRInfo) -> bool:
-        """PR 정보를 벡터 DB에 저장 (머지 완료 후에만 호출)"""
+    async def store_pr_data(self, pr_id: str, pr_data: PRData) -> bool:
+        """PR 데이터를 벡터 DB에 저장 (머지 완료 후 호출)"""
         try:
-            (
-                content, 
-                all_changed_files, 
-                all_authors, 
-                all_commit_messages, 
-                file_categories_count, 
-                total_additions, 
-                total_deletions, 
-                total_files_changed
-            ) = self._prepare_pr_data_for_vectorization(pr_info)
+            # 1. PR 기본 정보 저장
+            await self._store_pr_info(pr_id, pr_data)
             
-            content_vector = await self.embeddings.aembed_query(content)
+            # 2. 리뷰 정보 저장 (있는 경우에만)
+            if pr_data.reviews:
+                await self._store_review_info(pr_id, pr_data)
             
-            # 스키마에 맞춰 commits_json으로 저장
-            commits_data = []
-            for commit in pr_info.commits:
-                commit_dict = {
-                    "order": commit.order,
-                    "author": commit.author,
-                    "message": commit.message,
-                    "total_additions": commit.total_additions,
-                    "total_deletions": commit.total_deletions,
-                    "files_changed": commit.files_changed,
-                    "files": [
-                        {
-                            "path": f.path,
-                            "status": f.status,
-                            "category": f.category,
-                            "changes": f.changes,
-                            "summary": f.summary,
-                            "patch": f.patch
-                        } for f in commit.files
-                    ]
-                }
-                commits_data.append(commit_dict)
+            # 3. 리뷰어 전문성 정보 업데이트
+            await self._update_reviewer_expertise(pr_id, pr_data)
             
-            pr_data = {
-                "pr_id": pr_info.pr_id,
-                "repository": pr_info.repository,
-                "language": pr_info.language,
-                "branch": pr_info.branch,
-                "base_branch": pr_info.base_branch,
-                "reviewers": ",".join(pr_info.reviewers),
-                "all_authors": ",".join(all_authors),
-                "all_changed_files": ",".join(all_changed_files),
-                "file_categories": ",".join(file_categories_count.keys()),
-                "all_commit_messages": " ".join(all_commit_messages),
-                "file_summaries": " ".join([f.summary for commit in pr_info.commits for f in commit.files]),
-                "total_additions": total_additions,
-                "total_deletions": total_deletions,
-                "total_files_changed": total_files_changed,
-                "commits_json": json.dumps(commits_data, ensure_ascii=False),
-                "content_vector": np.array(content_vector).astype(np.float32).tobytes()
-            }
-            
-            key = f"pr:{pr_info.pr_id}"
-            self.redis_client.hset(key, mapping=pr_data)
-            
-            logger.info(f"PR {pr_info.pr_id}가 성공적으로 저장되었습니다")
+            logger.info(f"PR {pr_id} 데이터가 성공적으로 저장되었습니다")
             return True
             
         except Exception as e:
-            logger.error(f"PR {pr_info.pr_id} 저장 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"PR {pr_id} 저장 중 오류: {str(e)}\n{traceback.format_exc()}")
             return False
     
+    async def _store_pr_info(self, pr_id: str, pr_data: PRData):
+        """PR 기본 정보 저장"""
+        # 변경된 파일 정보 정리
+        file_paths = [f.filename for f in pr_data.files]
+        file_categories = self._extract_file_categories(pr_data.files)
+        
+        # 커밋 메시지들 수집
+        commit_messages = [c.message for c in pr_data.commits]
+        authors = list(set([c.author_name for c in pr_data.commits]))
+        
+        # 전체 변경량 계산
+        total_additions = sum(f.additions for f in pr_data.files)
+        total_deletions = sum(f.deletions for f in pr_data.files)
+        
+        # 벡터화용 텍스트 생성
+        content_parts = [
+            f"저장소: {pr_data.repository_name}",
+            f"브랜치: {pr_data.source_branch} -> {pr_data.target_branch}",
+            f"제목: {pr_data.title}",
+            f"설명: {pr_data.body}",
+            f"변경된 파일: {', '.join(file_paths)}",
+            f"커밋 메시지: {' '.join(commit_messages)}",
+            f"작성자: {', '.join(authors)}",
+            f"파일 카테고리: {', '.join(file_categories.keys())}"
+        ]
+        
+        content = " ".join(content_parts)
+        content_vector = await self.embeddings.aembed_query(content)
+        
+        # 메타데이터 준비
+        metadata = {
+            "pr_id": pr_id,
+            "repository": pr_data.repository_name,
+            "source_branch": pr_data.source_branch,
+            "target_branch": pr_data.target_branch,
+            "title": pr_data.title,
+            "authors": ",".join(authors),
+            "file_paths": ",".join(file_paths),
+            "file_categories": ",".join(file_categories.keys()),
+            "total_additions": total_additions,
+            "total_deletions": total_deletions,
+            "files_changed": len(pr_data.files),
+            "commits_count": len(pr_data.commits),
+            "reviewers": ",".join(pr_data.reviewers)
+        }
+        
+        # ChromaDB에 저장
+        self.pr_collection.upsert(
+            ids=[pr_id],
+            embeddings=[content_vector],
+            documents=[content],
+            metadatas=[metadata]
+        )
+    
+    async def _store_review_info(self, pr_id: str, pr_data: PRData):
+        """리뷰 정보 저장"""
+        for i, review in enumerate(pr_data.reviews):
+            review_id = f"{pr_id}_review_{i}"
+            
+            # 리뷰 코멘트들 수집
+            comment_texts = [rc.body for rc in review.review_comments]
+            comment_files = [rc.path for rc in review.review_comments]
+            
+            # 벡터화용 텍스트 생성
+            content_parts = [
+                f"리뷰어: {review.user_github_username}",
+                f"리뷰 상태: {review.state}",
+                f"리뷰 내용: {review.body}",
+            ]
+            
+            if comment_texts:
+                content_parts.append(f"코멘트: {' '.join(comment_texts)}")
+            if comment_files:
+                content_parts.append(f"코멘트 파일: {', '.join(set(comment_files))}")
+            
+            content = " ".join(content_parts)
+            content_vector = await self.embeddings.aembed_query(content)
+            
+            # 메타데이터 준비
+            metadata = {
+                "pr_id": pr_id,
+                "reviewer": review.user_github_username,
+                "review_state": review.state,
+                "comment_count": len(review.review_comments),
+                "reviewed_files": ",".join(set(comment_files)),
+                "has_detailed_comments": len(comment_texts) > 0
+            }
+            
+            # ChromaDB에 저장
+            self.review_collection.upsert(
+                ids=[review_id],
+                embeddings=[content_vector],
+                documents=[content],
+                metadatas=[metadata]
+            )
+    
+    async def _update_reviewer_expertise(self, pr_id: str, pr_data: PRData):
+        """리뷰어 전문성 정보 업데이트"""
+        file_categories = self._extract_file_categories(pr_data.files)
+        file_paths = [f.filename for f in pr_data.files]
+        
+        for reviewer in pr_data.reviewers:
+            reviewer_id = f"reviewer_{reviewer}"
+            
+            # 기존 전문성 정보 조회
+            try:
+                existing = self.reviewer_collection.get(ids=[reviewer_id])
+                if existing['metadatas']:
+                    # 기존 정보 업데이트
+                    existing_metadata = existing['metadatas'][0]
+                    reviewed_repos = existing_metadata.get("reviewed_repositories", "").split(",")
+                    if pr_data.repository_name not in reviewed_repos:
+                        reviewed_repos.append(pr_data.repository_name)
+                    
+                    total_prs = int(existing_metadata.get("total_prs_reviewed", 0)) + 1
+                    
+                    # 파일 카테고리별 경험 업데이트
+                    for category in file_categories.keys():
+                        category_key = f"{category}_experience"
+                        current_exp = int(existing_metadata.get(category_key, 0))
+                        existing_metadata[category_key] = current_exp + 1
+                    
+                    existing_metadata.update({
+                        "reviewed_repositories": ",".join(filter(None, reviewed_repos)),
+                        "total_prs_reviewed": total_prs,
+                        "last_reviewed_files": ",".join(file_paths)
+                    })
+                    
+                    metadata = existing_metadata
+                else:
+                    # 새로운 리뷰어
+                    metadata = self._create_new_reviewer_metadata(reviewer, pr_data, file_categories, file_paths)
+            except:
+                # 새로운 리뷰어
+                metadata = self._create_new_reviewer_metadata(reviewer, pr_data, file_categories, file_paths)
+            
+            # 벡터화용 텍스트 생성
+            content = f"리뷰어: {reviewer} 전문 분야: {', '.join(file_categories.keys())} 저장소: {pr_data.repository_name}"
+            content_vector = await self.embeddings.aembed_query(content)
+            
+            # ChromaDB에 저장
+            self.reviewer_collection.upsert(
+                ids=[reviewer_id],
+                embeddings=[content_vector],
+                documents=[content],
+                metadatas=[metadata]
+            )
+    
+    def _create_new_reviewer_metadata(self, reviewer: str, pr_data: PRData, file_categories: Dict[str, int], file_paths: List[str]) -> Dict[str, Any]:
+        """새로운 리뷰어 메타데이터 생성"""
+        metadata = {
+            "reviewer_username": reviewer,
+            "reviewed_repositories": pr_data.repository_name,
+            "total_prs_reviewed": 1,
+            "last_reviewed_files": ",".join(file_paths)
+        }
+        
+        # 파일 카테고리별 경험 초기화
+        for category in file_categories.keys():
+            metadata[f"{category}_experience"] = 1
+        
+        return metadata
+    
     async def find_similar_prs(self, query_content: str, limit: int = 10) -> List[Dict[str, Any]]:
-        """주어진 내용과 유사한 PR들을 찾는 함수"""
+        """유사한 PR들 찾기"""
         try:
             query_vector = await self.embeddings.aembed_query(query_content)
-            query_bytes = np.array(query_vector).astype(np.float32).tobytes()
             
-            q = Query(f"*=>[KNN {limit} @content_vector $query_vector AS score]").return_fields(
-                "pr_id", "repository", "language", "branch", "base_branch", 
-                "reviewers", "all_authors", "all_changed_files", "file_categories",
-                "total_additions", "total_deletions", "score"
-            ).sort_by("score").dialect(2)
-            
-            results = self.redis_client.ft(self.index_name).search(q, {"query_vector": query_bytes})
+            results = self.pr_collection.query(
+                query_embeddings=[query_vector],
+                n_results=limit,
+                include=["metadatas", "distances", "documents"]
+            )
             
             similar_prs = []
-            for doc in results.docs:
-                similar_prs.append({
-                    "pr_id": doc.pr_id,
-                    "repository": doc.repository,
-                    "language": doc.language,
-                    "branch": doc.branch,
-                    "base_branch": doc.base_branch,
-                    "all_authors": doc.all_authors.split(",") if hasattr(doc, 'all_authors') and doc.all_authors else [],
-                    "reviewers": doc.reviewers.split(",") if doc.reviewers else [],
-                    "all_changed_files": doc.all_changed_files.split(",") if hasattr(doc, 'all_changed_files') and doc.all_changed_files else [],
-                    "file_categories": doc.file_categories.split(",") if hasattr(doc, 'file_categories') and doc.file_categories else [],
-                    "total_additions": int(doc.total_additions) if hasattr(doc, 'total_additions') else 0,
-                    "total_deletions": int(doc.total_deletions) if hasattr(doc, 'total_deletions') else 0,
-                    "similarity_score": float(doc.score)
-                })
+            if results['ids'] and results['metadatas'] and results['distances']:
+                for pr_id, metadata, distance in zip(
+                    results['ids'][0], results['metadatas'][0], results['distances'][0]
+                ):
+                    similarity_score = 1 - distance
+                    
+                    similar_prs.append({
+                        "pr_id": metadata.get("pr_id"),
+                        "repository": metadata.get("repository"),
+                        "title": metadata.get("title"),
+                        "source_branch": metadata.get("source_branch"),
+                        "target_branch": metadata.get("target_branch"),
+                        "authors": metadata.get("authors", "").split(",") if metadata.get("authors") else [],
+                        "reviewers": metadata.get("reviewers", "").split(",") if metadata.get("reviewers") else [],
+                        "file_paths": metadata.get("file_paths", "").split(",") if metadata.get("file_paths") else [],
+                        "file_categories": metadata.get("file_categories", "").split(",") if metadata.get("file_categories") else [],
+                        "total_additions": int(metadata.get("total_additions", 0)),
+                        "total_deletions": int(metadata.get("total_deletions", 0)),
+                        "similarity_score": float(similarity_score)
+                    })
             
             return similar_prs
             
         except Exception as e:
-            logger.error(f"유사한 PR 찾기 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"유사한 PR 찾기 중 오류: {str(e)}")
             return []
-            
-    async def get_reviewer_context(self, pr_info: PRInfo, similarity_threshold: float = 0.3, limit: int = 20) -> Dict[str, Any]:
-        """리뷰어 추천을 위한 컨텍스트 정보 제공 (LLM 호출용)"""
+    
+    async def get_reviewer_recommendations(self, pr_data: PRData, limit: int = 5) -> Dict[str, Any]:
+        """리뷰어 추천을 위한 컨텍스트"""
         try:
-            (
-                content, 
-                all_changed_files, 
-                all_authors, 
-                all_commit_messages, 
-                file_categories_count, 
-                total_additions, 
-                total_deletions, 
-                total_files_changed
-            ) = self._prepare_pr_data_for_vectorization(pr_info)
+            # 현재 PR 정보로 쿼리 생성
+            file_categories = self._extract_file_categories(pr_data.files)
+            query_content = f"파일 카테고리: {', '.join(file_categories.keys())} 저장소: {pr_data.repository_name}"
             
-            similar_prs = await self.find_similar_prs(content, limit=limit)
+            # 유사한 PR들 찾기
+            similar_prs = await self.find_similar_prs(query_content, limit=20)
             
-            reviewer_experience = {}
+            # 리뷰어 경험 정보 수집
+            query_vector = await self.embeddings.aembed_query(query_content)
+            reviewer_results = self.reviewer_collection.query(
+                query_embeddings=[query_vector],
+                n_results=10,
+                include=["metadatas", "distances"]
+            )
             
+            reviewer_scores = {}
+            
+            # 유사한 PR에서 리뷰어 점수 계산
             for similar_pr in similar_prs:
-                similarity = similar_pr["similarity_score"]
-                if similarity >= similarity_threshold:
-                    reviewers = similar_pr["reviewers"]
-                    
-                    file_overlap = len(set(all_changed_files) & set(similar_pr["all_changed_files"]))
-                    file_overlap_ratio = file_overlap / max(len(all_changed_files), 1)
-                    
-                    for reviewer in reviewers:
-                        if reviewer and reviewer not in all_authors:
-                            if reviewer not in reviewer_experience:
-                                reviewer_experience[reviewer] = {
-                                    "reviewed_prs": [],
-                                    "total_reviews": 0,
-                                    "avg_similarity": 0.0,
-                                    "file_expertise": []
+                if similar_pr["similarity_score"] > 0.3:
+                    for reviewer in similar_pr["reviewers"]:
+                        if reviewer and reviewer not in [c.author_name for c in pr_data.commits]:
+                            if reviewer not in reviewer_scores:
+                                reviewer_scores[reviewer] = {
+                                    "similarity_score": 0,
+                                    "pr_count": 0,
+                                    "file_expertise": set()
                                 }
                             
-                            reviewer_experience[reviewer]["reviewed_prs"].append({
-                                "pr_id": similar_pr["pr_id"],
-                                "repository": similar_pr["repository"],
-                                "similarity": similarity,
-                                "file_overlap": file_overlap_ratio,
-                                "files": similar_pr["all_changed_files"],
-                                "categories": similar_pr["file_categories"]
-                            })
-                            reviewer_experience[reviewer]["total_reviews"] += 1
-                            reviewer_experience[reviewer]["avg_similarity"] += similarity
-                            
-                            for file in similar_pr["all_changed_files"]:
-                                if file in all_changed_files:
-                                    reviewer_experience[reviewer]["file_expertise"].append(file)
+                            reviewer_scores[reviewer]["similarity_score"] += similar_pr["similarity_score"]
+                            reviewer_scores[reviewer]["pr_count"] += 1
+                            reviewer_scores[reviewer]["file_expertise"].update(similar_pr["file_categories"])
             
-            for reviewer_data in reviewer_experience.values():
-                if reviewer_data["total_reviews"] > 0:
-                    reviewer_data["avg_similarity"] /= reviewer_data["total_reviews"]
-                    reviewer_data["file_expertise"] = list(set(reviewer_data["file_expertise"]))
+            # 리뷰어 전문성 점수 추가
+            if reviewer_results['metadatas']:
+                for metadata, distance in zip(reviewer_results['metadatas'][0], reviewer_results['distances'][0]):
+                    reviewer = metadata.get("reviewer_username")
+                    if reviewer and reviewer not in reviewer_scores:
+                        reviewer_scores[reviewer] = {
+                            "similarity_score": 0,
+                            "pr_count": 0,
+                            "file_expertise": set()
+                        }
+                    
+                    if reviewer:
+                        expertise_score = 1 - distance
+                        reviewer_scores[reviewer]["expertise_score"] = expertise_score
+                        reviewer_scores[reviewer]["total_reviews"] = int(metadata.get("total_prs_reviewed", 0))
+                        
+                        # 파일 카테고리별 경험 추가
+                        for category in file_categories.keys():
+                            exp_key = f"{category}_experience"
+                            if exp_key in metadata:
+                                reviewer_scores[reviewer]["file_expertise"].add(category)
+            
+            # 점수 정규화 및 정렬
+            for reviewer_data in reviewer_scores.values():
+                if reviewer_data["pr_count"] > 0:
+                    reviewer_data["avg_similarity"] = reviewer_data["similarity_score"] / reviewer_data["pr_count"]
+                else:
+                    reviewer_data["avg_similarity"] = 0
+                
+                reviewer_data["file_expertise"] = list(reviewer_data["file_expertise"])
+            
+            # 추천 점수 계산 및 정렬
+            recommendations = []
+            for reviewer, data in reviewer_scores.items():
+                score = (
+                    data.get("avg_similarity", 0) * 0.4 +
+                    data.get("expertise_score", 0) * 0.3 +
+                    min(data.get("total_reviews", 0) / 10, 1) * 0.3
+                )
+                
+                recommendations.append({
+                    "reviewer": reviewer,
+                    "score": score,
+                    "rationale": {
+                        "similar_prs_reviewed": data["pr_count"],
+                        "avg_similarity": data.get("avg_similarity", 0),
+                        "expertise_areas": data["file_expertise"],
+                        "total_reviews": data.get("total_reviews", 0)
+                    }
+                })
+            
+            recommendations.sort(key=lambda x: x["score"], reverse=True)
             
             return {
                 "current_pr": {
-                    "repository": pr_info.repository,
-                    "language": pr_info.language,
-                    "branch": pr_info.branch,
-                    "all_authors": all_authors,
-                    "all_changed_files": all_changed_files,
-                    "file_categories": file_categories_count,
-                    "total_additions": total_additions,
-                    "total_deletions": total_deletions
+                    "repository": pr_data.repository_name,
+                    "file_categories": list(file_categories.keys()),
+                    "files_changed": len(pr_data.files),
+                    "authors": list(set([c.author_name for c in pr_data.commits]))
                 },
-                "reviewer_experience": reviewer_experience,
-                "similar_prs_count": len(similar_prs)
+                "recommendations": recommendations[:limit],
+                "similar_prs_analyzed": len(similar_prs)
             }
             
         except Exception as e:
-            logger.error(f"리뷰어 컨텍스트 생성 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"리뷰어 추천 중 오류: {str(e)}")
             return {"error": str(e)}
     
-    async def get_pr_context_for_title_generation(self, pr_info: PRInfo, similarity_threshold: float = 0.3) -> Dict[str, Any]:
-        """PR 제목 생성을 위한 컨텍스트 정보 제공 (LLM 호출용)"""
+    async def get_title_suggestions(self, pr_data: PRData) -> Dict[str, Any]:
+        """PR 제목 추천을 위한 컨텍스트"""
         try:
-            (
-                content, 
-                all_changed_files, 
-                all_authors, 
-                all_commit_messages, 
-                file_categories_count, 
-                total_additions, 
-                total_deletions, 
-                total_files_changed
-            ) = self._prepare_pr_data_for_vectorization(pr_info)
+            # 현재 PR 분석
+            file_categories = self._extract_file_categories(pr_data.files)
+            commit_messages = [c.message for c in pr_data.commits]
             
-            similar_prs = await self.find_similar_prs(content, limit=10)
+            query_content = f"저장소: {pr_data.repository_name} 파일: {', '.join([f.filename for f in pr_data.files])} 커밋: {' '.join(commit_messages)}"
+            similar_prs = await self.find_similar_prs(query_content, limit=10)
             
-            similar_patterns = []
+            # 패턴 분석
+            title_patterns = []
             for similar_pr in similar_prs:
-                if similar_pr["similarity_score"] >= similarity_threshold:
-                    similar_patterns.append({
-                        "repository": similar_pr["repository"],
-                        "language": similar_pr["language"],
-                        "branch": similar_pr["branch"],
+                if similar_pr["similarity_score"] > 0.3:
+                    title_patterns.append({
+                        "title": similar_pr["title"],
                         "similarity": similar_pr["similarity_score"],
-                        "files": similar_pr["all_changed_files"],
-                        "categories": similar_pr["file_categories"],
-                        "additions": similar_pr["total_additions"],
-                        "deletions": similar_pr["total_deletions"]
+                        "file_categories": similar_pr["file_categories"],
+                        "repository": similar_pr["repository"]
                     })
             
             return {
                 "current_pr": {
-                    "repository": pr_info.repository,
-                    "language": pr_info.language,
-                    "branch": pr_info.branch,
-                    "base_branch": pr_info.base_branch,
-                    "all_changed_files": all_changed_files,
-                    "all_commit_messages": all_commit_messages,
-                    "file_categories": file_categories_count,
-                    "total_additions": total_additions,
-                    "total_deletions": total_deletions,
-                    "commits_count": len(pr_info.commits)
+                    "repository": pr_data.repository_name,
+                    "source_branch": pr_data.source_branch,
+                    "target_branch": pr_data.target_branch,
+                    "commit_messages": commit_messages,
+                    "file_categories": list(file_categories.keys()),
+                    "total_additions": sum(f.additions for f in pr_data.files),
+                    "total_deletions": sum(f.deletions for f in pr_data.files),
+                    "files_changed": len(pr_data.files),
+                    "is_single_commit": len(pr_data.commits) == 1,
+                    "is_single_file": len(pr_data.files) == 1
                 },
-                "similar_patterns": similar_patterns[:5],
-                "file_patterns": {
-                    "is_single_file": len(all_changed_files) == 1,
-                    "has_tests": any("test" in f.lower() for f in all_changed_files),
-                    "has_docs": any("doc" in f.lower() or "readme" in f.lower() for f in all_changed_files),
-                    "is_major_addition": total_additions > total_deletions * 3,
-                    "is_major_refactor": total_deletions > total_additions * 2,
-                    "main_categories": list(file_categories_count.keys())
+                "similar_patterns": title_patterns[:5],
+                "analysis": {
+                    "has_tests": any("test" in f.filename.lower() for f in pr_data.files),
+                    "has_docs": any("doc" in f.filename.lower() or "readme" in f.filename.lower() for f in pr_data.files),
+                    "is_feature": sum(f.additions for f in pr_data.files) > sum(f.deletions for f in pr_data.files) * 2,
+                    "is_refactor": sum(f.deletions for f in pr_data.files) > sum(f.additions for f in pr_data.files),
+                    "main_category": max(file_categories.items(), key=lambda x: x[1])[0] if file_categories else "other"
                 }
             }
             
         except Exception as e:
-            logger.error(f"PR 제목 컨텍스트 생성 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"제목 추천 중 오류: {str(e)}")
             return {"error": str(e)}
     
-    async def get_priority_context(self, pr_info: PRInfo, similarity_threshold: float = 0.3) -> Dict[str, Any]:
-        """우선순위 결정을 위한 컨텍스트 정보 제공 (LLM 호출용)"""
+    async def get_priority_suggestions(self, pr_data: PRData) -> Dict[str, Any]:
+        """우선순위 추천을 위한 컨텍스트"""
         try:
-            (
-                content, 
-                all_changed_files, 
-                all_authors, 
-                all_commit_messages, 
-                file_categories_count, 
-                total_additions, 
-                total_deletions, 
-                total_files_changed
-            ) = self._prepare_pr_data_for_vectorization(pr_info)
+            file_categories = self._extract_file_categories(pr_data.files)
             
-            similar_prs = await self.find_similar_prs(content, limit=10)
+            # 파일별 우선순위 분석
+            file_priorities = []
+            for file_info in pr_data.files:
+                priority_score = 0
+                reasons = []
+                
+                # 파일 크기 기준
+                total_changes = file_info.additions + file_info.deletions
+                if total_changes > 100:
+                    priority_score += 3
+                    reasons.append("대규모 변경")
+                elif total_changes > 50:
+                    priority_score += 2
+                    reasons.append("중간 규모 변경")
+                
+                # 파일 타입 기준
+                ext = os.path.splitext(file_info.filename)[1].lower()
+                if ext in ['.py', '.java', '.js', '.ts']:
+                    priority_score += 2
+                    reasons.append("핵심 소스코드")
+                elif 'test' in file_info.filename.lower():
+                    priority_score += 1
+                    reasons.append("테스트 코드")
+                elif ext in ['.md', '.txt']:
+                    priority_score += 0
+                    reasons.append("문서")
+                
+                # 변경 타입 기준
+                if file_info.status == 'added':
+                    priority_score += 2
+                    reasons.append("새 파일 추가")
+                elif file_info.status == 'deleted':
+                    priority_score += 1
+                    reasons.append("파일 삭제")
+                
+                file_priorities.append({
+                    "filename": file_info.filename,
+                    "priority_score": priority_score,
+                    "reasons": reasons,
+                    "additions": file_info.additions,
+                    "deletions": file_info.deletions,
+                    "status": file_info.status
+                })
             
-            total_changes = total_additions + total_deletions
+            # 우선순위별로 정렬
+            file_priorities.sort(key=lambda x: x["priority_score"], reverse=True)
             
-            critical_files = [".py", ".js", ".ts", ".java", ".cpp", ".go"]
-            critical_changes = sum(1 for f in all_changed_files 
-                                 if any(f.endswith(ext) for ext in critical_files))
-            
-            similar_priority_patterns = []
-            for similar_pr in similar_prs:
-                if similar_pr["similarity_score"] >= similarity_threshold:
-                    similar_priority_patterns.append({
-                        "repository": similar_pr["repository"],
-                        "files": similar_pr["all_changed_files"],
-                        "categories": similar_pr["file_categories"],
-                        "total_changes": similar_pr["total_additions"] + similar_pr["total_deletions"]
-                    })
+            # 우선순위 그룹 생성
+            high_priority = [f for f in file_priorities if f["priority_score"] >= 4]
+            medium_priority = [f for f in file_priorities if 2 <= f["priority_score"] < 4]
+            low_priority = [f for f in file_priorities if f["priority_score"] < 2]
             
             return {
                 "current_pr": {
-                    "repository": pr_info.repository,
-                    "language": pr_info.language,
-                    "total_changes": total_changes,
-                    "critical_file_ratio": critical_changes / len(all_changed_files) if all_changed_files else 0,
-                    "all_changed_files": all_changed_files,
-                    "file_categories": file_categories_count,
-                    "total_additions": total_additions,
-                    "total_deletions": total_deletions,
-                    "all_authors": all_authors,
-                    "branch": pr_info.branch,
-                    "commits_count": len(pr_info.commits)
+                    "repository": pr_data.repository_name,
+                    "total_files": len(pr_data.files),
+                    "file_categories": list(file_categories.keys()),
+                    "total_additions": sum(f.additions for f in pr_data.files),
+                    "total_deletions": sum(f.deletions for f in pr_data.files)
                 },
-                "similar_priority_patterns": similar_priority_patterns[:5],
-                "metrics": {
-                    "has_critical_files": critical_changes > 0,
-                    "is_large_change": total_changes > 500,
-                    "has_multiple_authors": len(all_authors) > 1,
-                    "has_multiple_commits": len(pr_info.commits) > 1
+                "priority_groups": {
+                    "high": high_priority,
+                    "medium": medium_priority,
+                    "low": low_priority
+                },
+                "recommendations": {
+                    "review_order": [f["filename"] for f in file_priorities],
+                    "focus_areas": [f["filename"] for f in high_priority],
+                    "total_priority_files": len(high_priority) + len(medium_priority)
                 }
             }
             
         except Exception as e:
-            logger.error(f"우선순위 컨텍스트 생성 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"우선순위 추천 중 오류: {str(e)}")
             return {"error": str(e)}
-    
-# 전역 인스턴스 생성
+
+# 전역 인스턴스
 vector_db = VectorDB()
