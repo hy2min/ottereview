@@ -34,6 +34,9 @@ const Header = () => {
             <Link to="/chatroom/test" className="text-lg underline pr-4">
               채팅 테스트
             </Link>
+            <Link to="/chatroom/test" className="text-lg underline pr-4">
+              채팅 테스트
+            </Link>
             <Button onClick={handleLogout} variant="secondary">
               로그아웃
             </Button>
