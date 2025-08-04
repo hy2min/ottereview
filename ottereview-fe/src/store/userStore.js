@@ -3,14 +3,16 @@ import { persist } from 'zustand/middleware'
 
 export const useUserStore = create(
   persist(
-    (set) => ({
-      isLoggedIn: false,
-      login: () => set({ isLoggedIn: true }),
-      logout: () => set({ isLoggedIn: false }),
-    }),
-    {
-      name: 'user-storage',
-      getStorage: () => localStorage,
-    }
+    (set) => (
+      {
+        user: null,
+        setUser: (userData) => set({ user: userData }),
+        clearUser: () => set({ user: null }),
+      },
+      {
+        name: 'user-storage',
+        partialize: (state) => ({ user: state.user }),
+      }
+    )
   )
 )
