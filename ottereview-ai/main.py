@@ -1,4 +1,4 @@
-from utils.cushion_convert import convert_review_to_soft_tone,recommand_pull_request_title
+from utils.cushion_convert import convert_review_to_soft_tone
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai

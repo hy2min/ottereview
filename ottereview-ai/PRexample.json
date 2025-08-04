@@ -1,92 +1,179 @@
 {
-  "pr_info": {
-    "repository": "username/example-repo",
-    "language": "Java",
-    "branch": "feature/user-authentication",
-    "base_branch": "main"
-  },
-  "commits": [
-    {
-      "order": 1,
-      "commit_info": {
-        "author": "김개발 (kimdev)",
-        "message": "feat: 사용자 인증 시스템 구현"
-      },
-      "changes": {
-        "total_stats": {
-          "additions": 150,
-          "deletions": 20,
-          "files_changed": 3
-        },
-        "files": [
-          {
-            "path": "src/main/java/com/example/auth/AuthController.java",
-            "status": "added",
-            "category": "controller",
-            "changes": "+45/-0",
-            "summary": "로그인/로그아웃 API 엔드포인트 구현",
-            "patch": [
-              "@RestController",
-              "@RequestMapping(\"/api/auth\")",
-              "@PostMapping(\"/login\")",
-              "public ResponseEntity<TokenResponse> login(...)"
-            ]
-          },
-          {
-            "path": "src/main/java/com/example/config/SecurityConfig.java",
-            "status": "modified",
-            "category": "config",
-            "changes": "+40/-20",
-            "summary": "Spring Security 설정 추가",
-            "patch": [
-              "@Configuration",
-              "@EnableWebSecurity",
-              "public class SecurityConfig extends WebSecurityConfigurerAdapter {"
-            ]
-          },
-          {
-            "path": "src/main/java/com/example/util/JwtUtil.java",
-            "status": "added",
-            "category": "util",
-            "changes": "+65/-0",
-            "summary": "JWT 토큰 생성 및 검증 유틸리티 클래스 추가",
-            "patch": [
-              "public class JwtUtil {",
-              "public String generateToken(UserDetails userDetails) {",
-              "return Jwts.builder()"
-            ]
-          }
-        ]
-      }
+    "source": "pr-pr",
+    "target": "main",
+    "url": "https://api.github.com/repos/kangboom/Algorithm/compare/main...pr-pr",
+    "htmlUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr",
+    "permalinkUrl": "https://github.com/kangboom/Algorithm/compare/kangboom:8848741...kangboom:b98bec2",
+    "diffUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr.diff",
+    "patchUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr.patch",
+    "status": "ahead",
+    "aheadBy": 6,
+    "behindBy": 0,
+    "totalCommits": 6,
+    "baseCommit": {
+        "sha": "88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "message": "Merge pull request #4 from kangboom/test555\n\ntest555",
+        "authorName": "LimKangBeom",
+        "authorEmail": "jkl6147@naver.com",
+        "authorDate": "2025-07-28T07:24:55Z",
+        "committerName": "GitHub",
+        "committerEmail": "noreply@github.com",
+        "committerDate": "2025-07-28T07:24:55Z",
+        "url": "https://api.github.com/repos/kangboom/Algorithm/commits/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "htmlUrl": "https://github.com/kangboom/Algorithm/commit/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "additions": 3,
+        "deletions": 1,
+        "totalChanges": 4
     },
-    {
-      "order": 2,
-      "commit_info": {
-        "author": "이개발 (leedev)",
-        "message": "fix: 비밀번호 유효성 검사 버그 수정"
-      },
-      "changes": {
-        "total_stats": {
-          "additions": 10,
-          "deletions": 5,
-          "files_changed": 1
+    "mergeBaseCommit": {
+        "sha": "88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "message": "Merge pull request #4 from kangboom/test555\n\ntest555",
+        "authorName": "LimKangBeom",
+        "authorEmail": "jkl6147@naver.com",
+        "authorDate": "2025-07-28T07:24:55Z",
+        "committerName": "GitHub",
+        "committerEmail": "noreply@github.com",
+        "committerDate": "2025-07-28T07:24:55Z",
+        "url": "https://api.github.com/repos/kangboom/Algorithm/commits/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "htmlUrl": "https://github.com/kangboom/Algorithm/commit/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
+        "additions": 3,
+        "deletions": 1,
+        "totalChanges": 4
+    },
+    "commits": [
+        {
+            "sha": "69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
+            "message": "222",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T06:39:50Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T06:39:50Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
+            "additions": 2,
+            "deletions": 1,
+            "totalChanges": 3
         },
-        "files": [
-          {
-            "path": "src/main/java/com/example/validator/PasswordValidator.java",
+        {
+            "sha": "ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
+            "message": "11111",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T07:00:47Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T07:00:47Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
+            "additions": 2,
+            "deletions": 1,
+            "totalChanges": 3
+        },
+        {
+            "sha": "9080d043ff77c365dc587288f03a64c16aa39861",
+            "message": "44444",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T07:00:54Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T07:00:54Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/9080d043ff77c365dc587288f03a64c16aa39861",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/9080d043ff77c365dc587288f03a64c16aa39861",
+            "additions": 2,
+            "deletions": 1,
+            "totalChanges": 3
+        },
+        {
+            "sha": "14daa1146b37449a3d16843df7c48bdc88197c2e",
+            "message": "1234",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T15:16:04Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T15:16:04Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/14daa1146b37449a3d16843df7c48bdc88197c2e",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/14daa1146b37449a3d16843df7c48bdc88197c2e",
+            "additions": 3,
+            "deletions": 1,
+            "totalChanges": 4
+        },
+        {
+            "sha": "a98a755ae36f5f955fca475baf2b755fcd46ada2",
+            "message": "testtest",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T15:20:13Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T15:20:13Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/a98a755ae36f5f955fca475baf2b755fcd46ada2",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/a98a755ae36f5f955fca475baf2b755fcd46ada2",
+            "additions": 4,
+            "deletions": 1,
+            "totalChanges": 5
+        },
+        {
+            "sha": "b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
+            "message": "as",
+            "authorName": "Kangboom",
+            "authorEmail": "jkl6147@naver.com",
+            "authorDate": "2025-07-31T15:29:33Z",
+            "committerName": "Kangboom",
+            "committerEmail": "jkl6147@naver.com",
+            "committerDate": "2025-07-31T15:29:33Z",
+            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
+            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
+            "additions": 1,
+            "deletions": 9,
+            "totalChanges": 10
+        }
+    ],
+    "files": [
+        {
+            "filename": "test/a.txt",
             "status": "modified",
-            "category": "validator",
-            "changes": "+10/-5",
-            "summary": "비밀번호 유효성 검사 로직 개선",
-            "patch": [
-              "public class PasswordValidator {",
-              "public boolean isValid(String password) {",
-              "// 개선된 유효성 검사 로직",
-              "return password.length() >= 8 && hasSpecialChar(password);"
+            "additions": 1,
+            "deletions": 1,
+            "changes": 2,
+            "patch": "@@ -1,3 +1,3 @@\n PR 테스트를 위한 파일 생성\n \n-aaaaa\n\\ No newline at end of file\n+gdd\n\\ No newline at end of file",
+            "rawUrl": "https://github.com/kangboom/Algorithm/raw/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f/test%2Fa.txt",
+            "blobUrl": "https://github.com/kangboom/Algorithm/blob/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f/test%2Fa.txt",
+            "diffHunks": [
+                {
+                    "oldStart": 1,
+                    "oldLines": 3,
+                    "newStart": 1,
+                    "newLines": 3,
+                    "context": "",
+                    "lines": [
+                        " PR 테스트를 위한 파일 생성",
+                        " ",
+                        "-aaaaa",
+                        "\\ No newline at end of file",
+                        "+gdd",
+                        "\\ No newline at end of file"
+                    ]
+                }
             ]
-          }
-        ]
-      }
-    }
-  ]
+        }
+    ],
+    "summary": null,
+    "reviewers": [
+        {
+            "id": 1,
+            "githubUsername": "kangboom",
+            "githubEmail": "jkl6147@naver.com",
+            "profileImageUrl": null,
+            "rewardPoints": 0,
+            "userGrade": "BASIC"
+        }
+    ],
+    "reviews": null,
+    "descriptions": null,
+    "title": "PR 생성 테스트",
+    "body": "PR 생성 테스트 Body"
 }
