@@ -1,12 +1,14 @@
-import axios from 'axios'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import { api } from '../../lib/api'
 import { useUserStore } from '../../store/userStore'
 import { useAuthStore } from '../auth/authStore'
 
 const OAuthCallbackPage = () => {
   const navigate = useNavigate()
+  const setUser = useUserStore((state) => state.setUser)
+  const setAccessToken = useAuthStore((state) => state.setAccessToken)
 
   useEffect(() => {
     const code = new URL(window.location.href).searchParams.get('code')
@@ -17,8 +19,10 @@ const OAuthCallbackPage = () => {
       return navigate('/')
     }
 
-    axios
-      .get(`${import.meta.env.VITE_API_URL}/api/auth/github/callback?code=${code}`)
+    api
+      .get(`/api/auth/github/callback?code=${code}`, {
+        withCredentials: true,
+      })
       .then(async (res) => {
         console.log('[OAuth] 토큰 응답:', res.data)
 
@@ -28,13 +32,11 @@ const OAuthCallbackPage = () => {
           alert('토큰 발급 실패')
           return navigate('/')
         }
-        useAuthStore.getState().setAccessToken(accessToken)
 
-        // 유저 정보 요청
-        const userRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/users/me`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        useUserStore.getState().setUser(userRes.data)
+        setAccessToken(accessToken) // interceptor가 자동으로 토큰 붙임
+
+        const userRes = await api.get('/api/users/me')
+        setUser(userRes.data)
 
         navigate('/dashboard')
       })
