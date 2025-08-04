@@ -16,4 +16,6 @@ public class AdditionalInfoRequest {
     private List<Long> reviewers;
     private String summary;
     private List<DescriptionInfo> description;
+    private String title;
+    private String body;
 }

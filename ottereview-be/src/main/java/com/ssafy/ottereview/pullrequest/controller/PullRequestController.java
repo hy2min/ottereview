@@ -3,6 +3,7 @@ package com.ssafy.ottereview.pullrequest.controller;
 import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.AdditionalInfoRequest;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.PreparationValidationRequest;
+import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.service.PullRequestPreparationService;
@@ -73,12 +74,23 @@ public class PullRequestController {
      * @return repositoryId에 해당하는 Pull Request 목록
      */
     @GetMapping()
-    public ResponseEntity<List<PullRequestResponse>> getPullRequestsByRepositoryId(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequestsByRepositoryId(userDetail, repositoryId));
+    public ResponseEntity<List<PullRequestResponse>> getPullRequestsByGithub(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
+        return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
     }
     
     @GetMapping("/{pr-id}")
-    public ResponseEntity<PullRequestDetailResponse> getPullRequestById(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("pr-id") Long pullRequestId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequestById(userDetail, pullRequestId));
+    public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
+        return ResponseEntity.ok(pullRequestService.getPullRequestById(userDetail, repoId, pullRequestId));
+    }
+    
+    @PostMapping()
+    public ResponseEntity<Void> createPullRequest(
+            @AuthenticationPrincipal CustomUserDetail userDetail,
+            @PathVariable("repo-id") Long repoId,
+            @RequestBody PullRequestCreateRequest request) {
+        
+        pullRequestService.createPullRequest(userDetail, repoId, request);
+        return ResponseEntity.ok()
+                .build();
     }
 }
