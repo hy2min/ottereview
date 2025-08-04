@@ -8,8 +8,8 @@ const RepositoryCard = ({ repo, onClick }) => {
       <div className="flex space-x-4">
         <FolderCode className="my-auto" />
         <div>
-          <strong>{repo.name}</strong>
-          <p>{repo.description}</p>
+          <strong>{repo.fullName}</strong>
+          {/* <p>{repo.description}</p> */}
         </div>
       </div>
     </Box>
