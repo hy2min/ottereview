@@ -25,7 +25,7 @@ const App = () => {
         <Routes>
           {/* 🔓 로그인 없이 접근 가능한 경로 */}
           <Route path="/" element={<Landing />} />
-          <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+          <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
 
           {/* 🔐 로그인 이후 접근 가능한 경로 */}
           {isLoggedIn ? (
