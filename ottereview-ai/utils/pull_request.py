@@ -16,9 +16,9 @@ os.environ["OPENAI_API_BASE"] = "https://gms.ssafy.io/gmsapi/api.openai.com/v1"
 model = init_chat_model("gpt-4o-mini", model_provider="openai")
 
 async def recommand_pull_request_title(pr_data):
-
-
     """추천할 Pull Request의 제목을 생성합니다.
+    Args:
+        pr_data: PRData 객체 (vector_db.py의 구조)
     Returns:
         str: 추천할 Pull Request 제목
     """
@@ -31,11 +31,15 @@ async def recommand_pull_request_title(pr_data):
     - 제목은 50자 이내로 작성해야 합니다.
     - 제목은 한국어로 작성되어야 합니다.
     - 예시: '[FEATURE]: 유저 인증로직 구현 ' 또는 '[FIX]: 데이터 베이스 연결 오류 수정'
+    - 헤더의 구조는 '[TYPE]: 내용' 형식이어야 합니다.
+    - TYPE은 'FEATURE', 'FIX', 'DOCS', 'STYLE', 'REFACTOR', 'TEST' 중 하나여야 합니다.
     """
-    commit_messages = "\n".join(pr_data.commit_messages)
-    file_changes_summary = "\n".join(pr_data.file_changes)
-    code_changes = "\n".join(pr_data.code_changes)
-    branch_name = pr_data.branch_name
+    
+    # PRData 타입 (vector_db.py의 구조)에서 데이터 추출
+    commit_messages = "\n".join([commit.message for commit in pr_data.commits])
+    file_changes_summary = "\n".join([f"{file.filename} ({file.status})" for file in pr_data.files])
+    code_changes = "\n".join([f"{file.filename}: +{file.additions}/-{file.deletions}" for file in pr_data.files])
+    branch_name = f"{pr_data.source} -> {pr_data.target}"
 
     user_prompt = f"""다음 정보를 바탕으로 Pull Request 제목을 생성해주세요:
 

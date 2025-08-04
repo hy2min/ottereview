@@ -1,5 +1,6 @@
 from utils.cushion_convert import convert_review_to_soft_tone
 from utils.vector_db import vector_db, PRData
+from utils.pull_request import recommand_pull_request_title
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai
@@ -59,27 +60,10 @@ async def convert_review(review_data: reviewRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 변환 중 오류가 발생했습니다: {str(e)}")
 
-class PullRequestTitleRequest(BaseModel):
-
-    commit_messages: list[str]
-    file_changes: list[str]
-    code_changes: list[str]
-    branch_name: Optional[str] = None
-    """
-    Pull Request 제목 생성을 위한 요청 모델
-    - commit_messages: 커밋 메시지 목록
-    - file_changes: 변경된 파일 목록
-    - code_changes: 주요 코드 변경사항 목록
-    - branch_name: 브랜치명 (선택적)
-    """
-
-class PRDataRequest(BaseModel):
-    pr_id: str
-    pr_data: PRData
 
 
 @app.post("/ai/pull_requests/title")
-async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
+async def generate_pull_request_title(pr_data: PRData):
     """
     Pull Request 제목을 생성합니다.
     
@@ -101,7 +85,7 @@ async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
         )
 
 @app.post("/ai/vector-db/store")
-async def store_pr_to_vector_db(pr_request: PRDataRequest):
+async def store_pr_to_vector_db(pr_request: PRData):
     """
     PR 데이터를 벡터 DB에 저장합니다.
     
