@@ -2,10 +2,7 @@ import Button from '../../components/Button'
 
 const Landing = () => {
   const handleLogin = () => {
-    const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID
-    const redirectUri = import.meta.env.VITE_AUTH_REDIRECT_URI
-
-    const githubLoginUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}`
+    const githubLoginUrl = `${import.meta.env.VITE_API_URL}/api/auth/login`
 
     window.location.href = githubLoginUrl
   }
