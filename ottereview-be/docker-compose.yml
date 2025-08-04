@@ -75,6 +75,8 @@ services:
       S3_REGION: ${S3_REGION}
       OPENVIDU_SECRET: ${OPENVIDU_SECRET}
       OPENVIDU_URL: ${OPENVIDU_URL}
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
     volumes:
       # 소스코드를 volume mount로 실시간 반영
       - /etc/localtime:/etc/localtime:ro
