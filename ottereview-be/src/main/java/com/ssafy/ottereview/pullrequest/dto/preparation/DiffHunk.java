@@ -1,0 +1,25 @@
+package com.ssafy.ottereview.pullrequest.dto.preparation;
+
+import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class DiffHunk {
+    
+    private int oldStart;
+    private int oldLines;
+    private int newStart;
+    private int newLines;
+    private String context;
+    private List<String> lines;
+    
+    public void addLine(String line) {
+        lines.add(line);
+    }
+}
