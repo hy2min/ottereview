@@ -13,6 +13,11 @@ const Header = () => {
   const matchedRoute = matches?.[0]?.route
   const title = matchedRoute?.title || ''
 
+  const handleLogout = async () => {
+    await logout()
+    navigate('/') // 로그인 페이지로 이동
+  }
+
   return (
     <header className="bg-transparent py-4">
       <div className="max-w-7xl mx-auto px-4">
@@ -29,7 +34,7 @@ const Header = () => {
             <Link to="/chatroom/test" className="text-lg underline pr-4">
               채팅 테스트
             </Link>
-            <Button onClick={logout} variant="secondary">
+            <Button onClick={handleLogout} variant="secondary">
               로그아웃
             </Button>
           </div>
