@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import Button from '../../components/Button'
+import CodeDiff from '../../components/CodeDiff'
 import CommentForm from '../../features/comment/CommentForm'
 import { useCommentStore } from '../../features/comment/commentStore'
 import PRCommentList from '../../features/comment/PRCommentList'
@@ -122,6 +123,9 @@ const PRReview = () => {
                       <span className="text-red-600">-{f.deletions}</span>
                     </div>
                   </Box>
+<<<<<<< HEAD
+                  {expandedFile === f.filename && <CodeDiff patch={f.patch} />}
+=======
                   {expandedFile === f.filename && (
                     <Box
                       shadow
@@ -130,6 +134,7 @@ const PRReview = () => {
                       {f.patch}
                     </Box>
                   )}
+>>>>>>> a9bd873cf03c91b8221f8a8e85ebc70232c5a699
                 </li>
               ))}
             </ul>
