@@ -107,8 +107,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     private String requestGithubAccessToken(String code) {
-        log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret,
-                redirectUri);
+        log.info("clientId={}, clientSecret={}", clientId, clientSecret);
         String url = "https://github.com/login/oauth/access_token";
 
         HttpHeaders headers = new HttpHeaders();
@@ -119,7 +118,7 @@ public class AuthServiceImpl implements AuthService {
         params.add("client_id", clientId);
         params.add("client_secret", clientSecret);
         params.add("code", code);
-        params.add("redirect_uri", redirectUri);
+//        params.add("redirect_uri", redirectUri);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         ResponseEntity<Map<String, Object>> responseEntity =
