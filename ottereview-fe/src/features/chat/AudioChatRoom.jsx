@@ -53,17 +53,44 @@ const AudioChatRoom = () => {
   }
 
   const getToken = async (sessionId) => {
+    const token = localStorage.getItem('accessToken')
+
+    console.log('📦 보내는 토큰:', token)
     // 1. 백엔드에 세션 생성 요청
-    await fetch(`${BACKEND_URL}/api/meetings`, {
+    const createResponse = await fetch(`${BACKEND_URL}/api/meetings`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionId }),
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // ✅ 여기 필수
+      },
+      body: JSON.stringify({
+        prId: 1,
+        roomName: sessionId,
+        inviteeIds: [],
+      }),
     })
 
+    if (!createResponse.ok) {
+      const msg = await createResponse.text()
+      throw new Error(`세션 생성 실패 (status=${createResponse.status}): ${msg}`)
+    }
+
     // 2. 백엔드에 토큰 요청
-    const tokenResponse = await fetch(`${BACKEND_URL}/api/meetings/${sessionId}/join`)
+    const tokenResponse = await fetch(`${BACKEND_URL}/api/meetings/${sessionId}/join`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`, // ✅ 여기도 필요
+      },
+    })
+
+    if (!tokenResponse.ok) {
+      const msg = await tokenResponse.text()
+      throw new Error(`토큰 요청 실패 (status=${tokenResponse.status}): ${msg}`)
+    }
+
     const tokenData = await tokenResponse.json()
-    return tokenData.token
+    return tokenData.openviduToken
   }
 
   const createAudioElement = () => {
