@@ -35,7 +35,15 @@ public class AuthController {
         LoginResponseDto loginResponseDto = authService.refreshAccessToken(refreshToken);
         return ResponseEntity.ok(new AccessTokenResponseDto(loginResponseDto.getAccessToken()));
     }
-    
+
+    // 로그인 요청
+    @GetMapping(value = "/login")
+    public String login() {
+        // 깃허브 로그인으로 리다이렉트
+        return "redirect:https://github.com/login/oauth/authorize?client_id=Ov23licvm1TN1GmHOIkj&redirect_uri=http://localhost:8080/api/auth/github/callback&scope=read:user,user:email";
+    }
+
+
     // GitHub 로그인 콜백
     @GetMapping(value = "/github/callback", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AccessTokenResponseDto> githubCallback(@RequestParam String code, HttpServletResponse response) {
@@ -54,6 +62,7 @@ public class AuthController {
 
         return ResponseEntity.ok(new AccessTokenResponseDto(tokens.getAccessToken()));
     }
+
     
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(Authentication authentication, HttpServletResponse response) {
