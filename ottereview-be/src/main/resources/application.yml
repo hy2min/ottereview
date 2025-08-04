@@ -32,6 +32,15 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
 
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  sql:
+    init:
+      mode: never  # 필요 시 always로
+
 github:
   app:
     app-id: ${GITHUB_APP_ID}
@@ -101,7 +110,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: update   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
     show-sql: true
 
   sql:

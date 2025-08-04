@@ -158,6 +158,9 @@ public class PullRequestServiceImpl implements PullRequestService {
                 List<PullRequest> newPullRequests = new ArrayList<>();
                 List<Reviewer> newReviewers = new ArrayList<>();
                 for (GithubPrResponse githubPr : githubPrResponses) {
+                    log.info("github id: {} ", githubPr.getAuthor().getId());
+                    log.info("github name: {}", githubPr.getAuthor().getName());
+                    log.info("github title: {}", githubPr.getTitle());
                     User author = userRepository.findByGithubEmail(githubPr.getAuthor()
                                     .getEmail())
                             .orElseThrow(() -> new IllegalArgumentException(
