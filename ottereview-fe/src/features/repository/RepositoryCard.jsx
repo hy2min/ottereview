@@ -1,31 +1,17 @@
-import { useNavigate } from 'react-router-dom'
+import { Folder } from 'lucide-react'
 
 import Box from '../../components/Box'
-import Button from '../../components/Button'
 
-const RepositoryCard = ({ repo, onClick, createEnabled = false }) => {
-  const navigate = useNavigate()
-
+const RepositoryCard = ({ repo, onClick }) => {
   return (
-    <Box shadow onClick={onClick}>
-      <div>
-        <p>ID: {repo.id}</p>
-        <p>이름: {repo.name}</p>
-        <p>전체 이름: {repo.full_name}</p>
+    <Box shadow pixelHover className="m-3" onClick={onClick}>
+      <div className="flex space-x-4">
+        <Folder className="my-auto" />
+        <div>
+          <strong>{repo.name}</strong>
+          <p>{repo.description}</p>
+        </div>
       </div>
-      <Button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (createEnabled) {
-            navigate(`/${repo.id}/pr/create`)
-          }
-        }}
-        disabled={!createEnabled}
-        variant="success"
-        size="sm"
-      >
-        PR 생성
-      </Button>
     </Box>
   )
 }
