@@ -143,6 +143,7 @@ public class RepoServiceImpl implements RepoService {
         // cashcade 때문에 사라질 것이다.
         deleteRepoList(remoteSet, dbRepoSet, account);
 
+        log.info("createRepo List 시작 지점1");
         // github에서 가져온 레포지토리 리스트 우리 db에 저장하는 로직
         createRepoList(remoteSet, dbRepoSet, repoMap, account);
 
@@ -150,11 +151,12 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
+    @Transactional
     public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
             Map<Long, GHRepository> repoMap, Account account) {
         List<Branch> branchesToSave = new ArrayList<>();
         List<GHRepository> ghRepositoriesToCreate = new ArrayList<>(); // 추가
-
+        log.info("createRepo List 시작 지점2");
         List<Repo> toCreate = remoteSet.stream()
                 .filter(id -> !dbRepoSet.contains(id))
                 .map(id -> {
@@ -166,7 +168,9 @@ public class RepoServiceImpl implements RepoService {
                             .isPrivate(gh.isPrivate())
                             .account(account)
                             .build();
+                    log.info("branch 설치 시작!!");
                     branchesToSave.addAll(branchService.createBranchList(gh, repo));
+                    log.info("branch 설치 끝!!");
                     return repo;
                 })
                 .toList();
@@ -180,11 +184,12 @@ public class RepoServiceImpl implements RepoService {
     }
 
     @Override
+    @Transactional
     public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account) {
         List<Long> toDelete = dbRepoSet.stream()
                 .filter(id -> !remoteSet.contains(id))
                 .toList();
-
+        log.info("repo를 다 삭제합니다!!!");
         if (!toDelete.isEmpty()) {
             repoRepository.deleteByAccount_IdAndRepoIdIn(account.getId(), toDelete);
         }
