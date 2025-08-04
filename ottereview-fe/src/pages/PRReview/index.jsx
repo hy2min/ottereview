@@ -17,7 +17,7 @@ import CodeDiff from '../../components/CodeDiff'
 import CommentForm from '../../features/comment/CommentForm'
 import { useCommentStore } from '../../features/comment/commentStore'
 import PRCommentList from '../../features/comment/PRCommentList'
-import { fetchPR } from '../../features/pullRequest/prApi'
+import { fetchPRsByRepoId } from '../../features/pullRequest/prApi'
 
 const PRReview = () => {
   const { prId } = useParams()
@@ -38,7 +38,7 @@ const PRReview = () => {
 
   useEffect(() => {
     const load = async () => {
-      const prList = await fetchPR()
+      const prList = await fetchPRsByRepoId()
       const pr = prList.find((p) => String(p.id) === prId)
       if (!pr || !pr.files) {
         setFiles([])

@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import Button from '../../components/Button'
-import { fetchPR } from '../../features/pullRequest/prApi'
+import { fetchPRsByRepoId } from '../../features/pullRequest/prApi'
 import PRCardDetail from '../../features/pullRequest/PRCardDetail'
 
 const RepositoryDetail = () => {
@@ -14,9 +14,9 @@ const RepositoryDetail = () => {
 
   useEffect(() => {
     const load = async () => {
-      const data = await fetchPR()
-      const filtered = data.filter((pr) => pr.repo.id === Number(repoId))
-      setPrs(filtered)
+      if (!repoId) return
+      const data = await fetchPRsByRepoId(repoId)
+      setPrs(data)
     }
     load()
   }, [repoId])
