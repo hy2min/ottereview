@@ -89,19 +89,11 @@ public class AuthServiceImpl implements AuthService {
 
             // 이메일이 없거나 private일 경우, 추가로 primary 이메일을 찾아야 함
             if (email == null || email.isEmpty()) {
-                // hub4j에서 getEmails() 호출 가능 (이메일 목록)
-                // 가장 먼저 기본(primary, verified) 이메일을 찾아봅니다.
-                var emails = github.getMyself().listEmails().toList();
-                if (emails != null && !emails.isEmpty()) {
-                    email = emails.stream()
-                            .filter(emailObj -> emailObj.isPrimary() && emailObj.isVerified())
-                            .map(emailObj -> emailObj.getEmail())
-                            .findFirst()
-                            .orElse(null);
-                }
-                if (email == null) {
-                    throw new RuntimeException("GitHub email not provided or private.");
-                }
+                email = github.getMyself().listEmails().toList().stream()
+                        .filter(e -> e.isPrimary() && e.isVerified())
+                        .map(e -> e.getEmail())
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("GitHub email not provided or private."));
             }
 
             String avatarUrl = myself.getAvatarUrl();
@@ -113,35 +105,6 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-
-    // 이메일 공개가 되어 있지 않으면 토큰으로 가져오기
-    private String requestPrimaryEmail(String githubAccessToken) {
-        String url = "https://api.github.com/user/emails";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(githubAccessToken);
-
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
-        ResponseEntity<List<Map<String, Object>>> responseEntity =
-                restTemplate.exchange(
-                        url,
-                        HttpMethod.GET,
-                        entity,
-                        new ParameterizedTypeReference<>() {
-                        }
-                );
-        List<Map<String, Object>> response = responseEntity.getBody();
-        if (response != null) {
-            for (Map<String, Object> emailEntry : response) {
-                Boolean primary = (Boolean) emailEntry.get("primary");
-                Boolean verified = (Boolean) emailEntry.get("verified");
-                if (Boolean.TRUE.equals(primary) && Boolean.TRUE.equals(verified)) {
-                    return (String) emailEntry.get("email");
-                }
-            }
-        }
-        return null;
-    }
 
     private String requestGithubAccessToken(String code) {
         log.info("clientId={}, clientSecret={}, redirectUri={}", clientId, clientSecret,
