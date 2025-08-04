@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방 초대</title>
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+<div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+    <h2 th:text="${inviterName} + '님이 채팅방으로 초대했습니다!'"
+        style="color: #333;"></h2>
+
+    <p style="font-size: 16px; color: #555;">
+        채팅방 이름: <span th:text="${roomName}" style="font-weight: bold;"></span>
+    </p>
+
+    <p style="font-size: 16px; color: #555; margin-top: 10px;">
+        아래 버튼을 클릭해 채팅방에 참여하세요:
+    </p>
+
+    <div style="margin-top: 20px; text-align: center;">
+        <a th:href="${roomLink}"
+           style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
+            채팅방 참여하기
+        </a>
+    </div>
+</div>
+</body>
+</html>
