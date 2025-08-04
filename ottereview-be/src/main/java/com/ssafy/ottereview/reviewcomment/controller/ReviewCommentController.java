@@ -36,18 +36,6 @@ public class ReviewCommentController {
         return ResponseEntity.ok(comments);
     }
 
-//    @PutMapping("/{comment-id}")
-//    public ResponseEntity<CommentResponse> getComment(
-//            @PathVariable("pr-id") Long prId,
-//            @PathVariable("comment-id") Long commentId) {
-//
-//        try {
-//            CommentResponse comment = commentService.getCommentById(commentId);
-//            return ResponseEntity.ok(comment);
-//        } catch (IllegalArgumentException e) {
-//            return ResponseEntity.notFound().build();
-//        }
-//    }
 
     @PutMapping("/{comment-id}")
     public ResponseEntity<?> updateComment(
@@ -89,18 +77,5 @@ public class ReviewCommentController {
                 reviewId, path);
         return ResponseEntity.ok(comments);
     }
-
-//    @PostMapping("/upload")
-//    public ResponseEntity<String> uploadFile(
-//            @PathVariable("pr-id") Long prId,
-//            @RequestPart("file") MultipartFile file) {
-//
-//        try {
-//            String fileUrl = commentService.uploadFile(file, prId);
-//            return ResponseEntity.ok(fileUrl);
-//        } catch (Exception e) {
-//            return ResponseEntity.internalServerError().body("파일 업로드에 실패했습니다.");
-//        }
-//    }
 
 }
