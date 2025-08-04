@@ -112,6 +112,9 @@ public class PullRequest extends BaseEntity {
         this.author = author;
     }
 
+    public void enrollSummary(String summary) {
+        this.summary = summary;
+    }
 
     public boolean hasChangedFrom(GithubPrResponse githubPr) {
         return !Objects.equals(this.githubPrNumber, githubPr.getGithubPrNumber()) ||
