@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.branch.controller;
 
 import com.ssafy.ottereview.branch.dto.BranchResponse;
+import com.ssafy.ottereview.branch.dto.BranchRoleCreateRequest;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.service.BranchService;
 import com.ssafy.ottereview.branch.service.BranchServiceImpl;
@@ -8,10 +9,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -37,5 +35,9 @@ public class BranchController {
         return ResponseEntity.ok(branchResponse);
     }
 
-
+    @PatchMapping("/{branch-id}/role")
+    public ResponseEntity<?> updateBranchRole(@RequestBody BranchRoleCreateRequest branchRoleCreateRequest){
+        branchServiceImpl.updateBranchRole(branchRoleCreateRequest);
+        return ResponseEntity.ok(branchRoleCreateRequest);
+    }
 }

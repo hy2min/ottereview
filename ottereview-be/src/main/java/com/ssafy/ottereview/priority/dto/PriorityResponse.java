@@ -26,4 +26,14 @@ public class PriorityResponse {
                 .pullRequest(priorityResponse.getPullRequest())
                 .build();
     }
+
+    public static PriorityResponse fromEntity(Priority priority){
+        return PriorityResponse.builder()
+                .id(priority.getId())
+                .idx(priority.getIdx())
+                .title(priority.getTitle())
+                .content(priority.getContent())
+                .pullRequest(priority.getPullRequest())
+                .build();
+    }
 }
