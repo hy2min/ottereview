@@ -37,10 +37,11 @@ public class AuthController {
     }
 
     // 로그인 요청
-    @GetMapping(value = "/login")
-    public String login() {
-        // 깃허브 로그인으로 리다이렉트
-        return "redirect:https://github.com/login/oauth/authorize?client_id=Ov23licvm1TN1GmHOIkj&redirect_uri=http://localhost:8080/api/auth/github/callback&scope=read:user,user:email";
+    @GetMapping("/login")
+    public ResponseEntity<Void> login() {
+        return ResponseEntity.status(302)
+                .header("Location", "https://github.com/login/oauth/authorize?client_id=Ov23licvm1TN1GmHOIkj&redirect_uri=http://localhost:5173/oauth/github/callback&scope=read:user,user:email")
+                .build();
     }
 
 
@@ -65,7 +66,7 @@ public class AuthController {
 
     
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(Authentication authentication, HttpServletResponse response) {
+    public ResponseEntity<Void> logout(Authentication authentication) {
         Long userId = Long.valueOf(authentication.getName());
         authService.logout(userId);
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")
