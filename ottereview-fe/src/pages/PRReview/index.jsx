@@ -123,7 +123,18 @@ const PRReview = () => {
                       <span className="text-red-600">-{f.deletions}</span>
                     </div>
                   </Box>
+<<<<<<< HEAD
                   {expandedFile === f.filename && <CodeDiff patch={f.patch} />}
+=======
+                  {expandedFile === f.filename && (
+                    <Box
+                      shadow
+                      className="whitespace-pre-wrap overflow-auto bg-gray-100 p-2 mt-2 text-xs"
+                    >
+                      {f.patch}
+                    </Box>
+                  )}
+>>>>>>> a9bd873cf03c91b8221f8a8e85ebc70232c5a699
                 </li>
               ))}
             </ul>

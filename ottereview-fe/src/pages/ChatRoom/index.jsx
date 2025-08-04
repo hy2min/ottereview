@@ -43,9 +43,15 @@ const ChatRoom = () => {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* <div style={{ marginTop: '2rem', height: '500px', border: '1px solid #ccc' }}>
             <Whiteboard roomId={roomId} />
           </div> */}
+=======
+          <div style={{ marginTop: '2rem', height: '500px', border: '1px solid #ccc' }}>
+            <Whiteboard roomId={roomId} />
+          </div>
+>>>>>>> a9bd873cf03c91b8221f8a8e85ebc70232c5a699
         </>
       )}
     </div>
