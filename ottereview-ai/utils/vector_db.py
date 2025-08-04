@@ -4,7 +4,7 @@ import json
 import logging
 import numpy as np
 from typing import List, Dict, Optional, Any, Tuple
-from dataclasses import dataclass, field
+from pydantic import BaseModel, Field
 import hashlib
 import os
 from dotenv import load_dotenv
@@ -15,8 +15,7 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-@dataclass
-class FileInfo:
+class FileInfo(BaseModel):
     """파일 변경 정보"""
     filename: str
     status: str  # modified, added, deleted
@@ -24,8 +23,7 @@ class FileInfo:
     deletions: int
     patch: str
 
-@dataclass
-class CommitInfo:
+class CommitInfo(BaseModel):
     """커밋 정보"""
     sha: str
     message: str
@@ -34,25 +32,22 @@ class CommitInfo:
     additions: int
     deletions: int
 
-@dataclass
-class ReviewCommentInfo:
+class ReviewCommentInfo(BaseModel):
     """리뷰 코멘트 정보"""
     user_name: str
     path: str
     body: str
-    position: Optional[int]
+    position: Optional[int] = None
 
-@dataclass
-class ReviewInfo:
+class ReviewInfo(BaseModel):
     """리뷰 정보"""
     user_github_username: str
     state: str  # APPROVED, REQUEST_CHANGES, COMMENTED
     body: str
     commit_sha: str
-    review_comments: List[ReviewCommentInfo] = field(default_factory=list)
+    review_comments: List[ReviewCommentInfo] = Field(default_factory=list)
 
-@dataclass
-class PRData:
+class PRData(BaseModel):
     """Pull Request 전체 데이터"""
     # PR 기본 정보
     source_branch: str
@@ -69,7 +64,7 @@ class PRData:
     
     # 리뷰 정보
     reviewers: List[str]  # 리뷰어 username 목록
-    reviews: List[ReviewInfo] = field(default_factory=list)
+    reviews: List[ReviewInfo] = Field(default_factory=list)
 
 
 class VectorDB:
