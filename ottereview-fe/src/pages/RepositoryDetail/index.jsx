@@ -43,13 +43,11 @@ const RepositoryDetail = () => {
       </div>
 
       <div className="space-y-4 py-4">
-        <Box shadow className="space-y-2">
-          {prs.length === 0 ? (
-            <p>PR이 없습니다.</p>
-          ) : (
-            prs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
-          )}
-        </Box>
+        {prs.length === 0 ? (
+          <p>PR이 없습니다.</p>
+        ) : (
+          prs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
+        )}
       </div>
     </div>
   )
