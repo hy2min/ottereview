@@ -27,44 +27,53 @@ class CommitInfo(BaseModel):
     """커밋 정보"""
     sha: str
     message: str
-    author_name: str
-    author_email: str
+    author_name: str = Field(alias="authorName")
+    author_email: str = Field(alias="authorEmail")
     additions: int
     deletions: int
 
 class ReviewCommentInfo(BaseModel):
     """리뷰 코멘트 정보"""
-    user_name: str
+    user_name: str = Field(alias="userName")
+    path: str
+    body: str
+    position: Optional[int] = None
+    
+class ReviewerInfo(BaseModel):
+    """리뷰어 정보"""
+    github_username: str=Field(alias="githubUsername")
+    github_email: str=Field(alias="githubEmail")
+    
+class ReviewInfo(BaseModel):
+    """리뷰 정보"""
+    user_github_username: str = Field(alias="userGithubUsername")
+    state: str  # APPROVED, REQUEST_CHANGES, COMMENTED
+    body: str
+    commit_sha: str = Field(alias="commitSha")
+    review_comments: List[ReviewCommentInfo] = Field(default_factory=list, alias="reviewComments")
+
+class DescriptionInfo(BaseModel):
+    """Pull Request 설명"""
+    user_name: str = Field(alias="userName")
     path: str
     body: str
     position: Optional[int] = None
 
-class ReviewInfo(BaseModel):
-    """리뷰 정보"""
-    user_github_username: str
-    state: str  # APPROVED, REQUEST_CHANGES, COMMENTED
-    body: str
-    commit_sha: str
-    review_comments: List[ReviewCommentInfo] = Field(default_factory=list)
-
 class PRData(BaseModel):
     """Pull Request 전체 데이터"""
     # PR 기본 정보
-    source_branch: str
-    target_branch: str
+    source: str
+    target: str
     title: str
-    body: str
-    
-    # 저장소 정보 (reviewers에서 추출)
-    repository_name: str  # reviewers[0]의 정보에서 추출 가능하다고 가정
-    
+    body: str = None
+
     # 변경 사항
     files: List[FileInfo]
     commits: List[CommitInfo]
-    
+    descriptions: Optional[List[DescriptionInfo]] = None
     # 리뷰 정보
-    reviewers: List[str]  # 리뷰어 username 목록
-    reviews: List[ReviewInfo] = Field(default_factory=list)
+    reviewers: List[ReviewerInfo] = Field(default_factory=list)  # 리뷰어 정보 목록
+    reviews: Optional[List[ReviewInfo]] = None
 
 
 class VectorDB:
