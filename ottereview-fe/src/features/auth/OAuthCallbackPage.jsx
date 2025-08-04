@@ -12,7 +12,6 @@ const OAuthCallbackPage = () => {
 
   useEffect(() => {
     const code = new URL(window.location.href).searchParams.get('code')
-    console.log('[OAuth] 받은 code:', code)
 
     if (!code) {
       alert('인증 코드가 없습니다.')
@@ -24,8 +23,6 @@ const OAuthCallbackPage = () => {
         withCredentials: true,
       })
       .then(async (res) => {
-        console.log('[OAuth] 토큰 응답:', res.data)
-
         const accessToken = res.data.accessToken
         if (!accessToken) {
           console.error('[OAuth] accessToken이 없음')
@@ -34,7 +31,7 @@ const OAuthCallbackPage = () => {
         }
 
         setAccessToken(accessToken) // interceptor가 자동으로 토큰 붙임
-
+        await Promise.resolve()
         const userRes = await api.get('/api/users/me')
         setUser(userRes.data)
 
