@@ -1,12 +1,10 @@
 import Button from '../../components/Button'
-import { useUserStore } from '../../store/userStore'
 
 const Landing = () => {
-  const login = useUserStore((state) => state.login)
-
   const handleLogin = () => {
-    login() // GitHub 연동 없이 로그인 상태 전환
-    // 실제로는 여기서 GitHub redirect 처리할 예정
+    const githubLoginUrl = `${import.meta.env.VITE_API_URL}/api/auth/login`
+
+    window.location.href = githubLoginUrl
   }
 
   return (

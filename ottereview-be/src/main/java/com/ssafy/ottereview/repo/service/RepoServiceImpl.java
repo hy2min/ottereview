@@ -177,7 +177,7 @@ public class RepoServiceImpl implements RepoService {
 
         if (!toCreate.isEmpty()) {
             repoRepository.saveAll(toCreate);
-            pullRequestService.createPullRequestFromGithubRepository(ghRepositoriesToCreate);
+            pullRequestService.createPullRequestFromGithub(ghRepositoriesToCreate);
         }
         // branch에 branchList 한번에 저장하는 로직
         branchService.saveAllBranchList(branchesToSave);

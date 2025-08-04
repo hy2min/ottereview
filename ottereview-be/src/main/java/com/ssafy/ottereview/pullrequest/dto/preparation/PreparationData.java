@@ -32,6 +32,9 @@ public class PreparationData {
     private List<ReviewerInfo> reviewers;
     private List<ReviewInfo> reviews;
     private List<DescriptionInfo> descriptions;
+    private String title;
+    private String body;
+    
     
     public void enrollSummary(String summary) {
         this.summary = summary;
@@ -47,5 +50,13 @@ public class PreparationData {
     
     public void enrollDescriptions(List<DescriptionInfo> description) {
         this.descriptions = description;
+    }
+    
+    public void enrollTitle(String title) {
+        this.title = title;
+    }
+    
+    public void enrollBody(String body) {
+        this.body = body;
     }
 }
