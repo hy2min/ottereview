@@ -1,9 +1,10 @@
 from utils.cushion_convert import convert_review_to_soft_tone
+from utils.vector_db import vector_db, PRData
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai
 import os
-from typing import Optional
+from typing import Optional, List
 import logging
 
 # 로깅 설정
@@ -72,6 +73,10 @@ class PullRequestTitleRequest(BaseModel):
     - branch_name: 브랜치명 (선택적)
     """
 
+class PRDataRequest(BaseModel):
+    pr_id: str
+    pr_data: PRData
+
 
 @app.post("/ai/pull_requests/title")
 async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
@@ -93,6 +98,36 @@ async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
         raise HTTPException(
             status_code=500, 
             detail="PR 제목 생성 중 오류가 발생했습니다."
+        )
+
+@app.post("/ai/vector-db/store")
+async def store_pr_to_vector_db(pr_request: PRDataRequest):
+    """
+    PR 데이터를 벡터 DB에 저장합니다.
+    
+    Args:
+        pr_request: PR 데이터 (머지 완료 후 호출)
+        
+    Returns:
+        {"success": boolean, "message": "상태 메시지"}
+    """
+    try:
+        # 벡터 DB에 저장
+        success = await vector_db.store_pr_data(pr_request.pr_id, pr_request.pr_data)
+        
+        if success:
+            return {
+                "success": True,
+                "message": f"PR {pr_request.pr_id} 데이터가 성공적으로 저장되었습니다."
+            }
+        else:
+            raise HTTPException(status_code=500, detail="벡터 DB 저장에 실패했습니다.")
+        
+    except Exception as e:
+        logger.error(f"벡터 DB 저장 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"벡터 DB 저장 중 오류가 발생했습니다: {str(e)}"
         )
 
 
