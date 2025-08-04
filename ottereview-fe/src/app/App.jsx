@@ -16,28 +16,32 @@ const App = () => {
     return <ChatRoom />
   }
 
-  const isLoggedIn = !!user // null이 아니면 로그인된 상태
+  // const isLoggedIn = !!user // null이 아니면 로그인된 상태
+  const isLoggedIn = true
 
-  return (
-    <div className="min-h-screen">
-      {isLoggedIn && <Header />}
-      <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
+  if (!isLoggedIn) {
+    // 로그인 안 된 경우: Landing, OAuthCallback만 허용
+    return (
+      <main>
         <Routes>
-          {/* 🔓 로그인 없이 접근 가능한 경로 */}
           <Route path="/" element={<Landing />} />
           <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </main>
+    )
+  }
 
-          {/* 🔐 로그인 이후 접근 가능한 경로 */}
-          {isLoggedIn ? (
-            <>
-              {protectedRoutes.map(({ path, element }) => (
-                <Route key={path} path={path} element={element} />
-              ))}
-              <Route path="*" element={<Navigate to="/dashboard" replace />} />
-            </>
-          ) : (
-            <Route path="*" element={<Navigate to="/" replace />} />
-          )}
+  // 로그인 된 경우: Header + 보호된 경로
+  return (
+    <div className="min-h-screen">
+      <Header />
+      <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
+        <Routes>
+          {protectedRoutes.map(({ path, element }) => (
+            <Route key={path} path={path} element={element} />
+          ))}
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
     </div>

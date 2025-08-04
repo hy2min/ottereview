@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import Box from '../../components/Box'
+import InputBox from '../../components/InputBox'
 import { fetchPR } from './prApi'
 import PRCardCompact from './PRCardCompact'
 
@@ -25,24 +26,24 @@ const PRList = () => {
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col pl-4 pr-2">
-      <div className="flex mb-2">
+      <div className="flex mb-2 justify-between">
         <h2 className="text-xl mr-8">PR 목록</h2>
 
         {/* 필터 드롭다운 */}
-        <div>
-          <label className="mr-2">레포 필터:</label>
-          <select
-            className="border px-2 py-1"
+        <div className="-my-[9px] mr-7 w-80">
+          <InputBox
+            // label="레포 필터"
+            as="select"
+            options={[
+              { label: '전체', value: 'all' },
+              ...repoOptions.map(([repoId, repoName]) => ({
+                label: repoName,
+                value: String(repoId),
+              })),
+            ]}
             value={selectedRepoId}
             onChange={(e) => setSelectedRepoId(e.target.value)}
-          >
-            <option value="all">전체</option>
-            {repoOptions.map(([repoId, repoName]) => (
-              <option key={repoId} value={repoId}>
-                {repoName}
-              </option>
-            ))}
-          </select>
+          />
         </div>
       </div>
 

@@ -73,7 +73,7 @@ const PRReview = () => {
       {/* 헤더 영역 */}
       <div className="flex items-start justify-between">
         {/* 오른쪽: 승인 진행률 + 머지 버튼 */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-stretch gap-4">
           <Box shadow className="w-100">
             <div className="flex justify-between mb-1">
               <p className="text-sm">승인 진행률</p>
@@ -83,16 +83,17 @@ const PRReview = () => {
               <div className="minecraft-progress-fill" />
             </div>
           </Box>
+          <Box shadow className="flex">
+            <strong className="w-24">AI요약 : </strong>
+            <p className="text-sm">
+              JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
+              보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
+              변경사항입니다.
+            </p>
+          </Box>
         </div>
       </div>
       {/* AI 요약 */}
-      <Box shadow>
-        <p className="text-sm">
-          JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
-          보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
-          변경사항입니다.
-        </p>
-      </Box>
 
       <Box shadow>
         <div className="flex gap-4 pb-4">
