@@ -31,9 +31,7 @@ public class OpenViduServiceImpl implements OpenViduService{
             }
             ConnectionProperties properties = new ConnectionProperties.Builder().build(); // 토큰 객체 생성
             Connection connection = session.createConnection(properties); // 세션과 연결하여 토큰 생성
-            String url = connection.getToken();
-            String token = url.substring(url.indexOf("token=") + 6); // Session id 제외 token만 추출
-            return token;
+            return connection.getToken();
         } catch (OpenViduJavaClientException | OpenViduHttpException e) {
             log.error("Failed to generate token for session", e);
             throw new IllegalStateException("토큰 발급 실패", e);
