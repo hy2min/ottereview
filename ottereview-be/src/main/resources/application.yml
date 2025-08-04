@@ -37,16 +37,6 @@ spring:
       host: redis
       port: 6379
 
-  jpa:
-    hibernate:
-      ddl-auto: update  # local 개발 시 update 등으로 바꿀 수 있음
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.MySQL8Dialect
-    open-in-view: false
-    show-sql: false
-
   sql:
     init:
       mode: never  # 필요 시 always로
