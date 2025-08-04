@@ -1,26 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import Box from '../../components/Box'
 import InputBox from '../../components/InputBox'
-import { fetchPR } from './prApi'
+import { useRepoStore } from '../repository/repoStore'
 import PRCardCompact from './PRCardCompact'
+import { usePRStore } from './stores/prStore'
 
 const PRList = () => {
-  const [prs, setPrs] = useState([])
+  const prs = usePRStore((state) => state.pullRequests)
+  const repos = useRepoStore((state) => state.repos)
   const [selectedRepoId, setSelectedRepoId] = useState('all')
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const data = await fetchPR()
-      setPrs(data)
-    }
-    fetchData()
-  }, [])
+  // 전체 레포 기준으로 드롭다운 옵션 구성
+  const repoOptions = repos.map((repo) => ({
+    label: repo.fullName,
+    value: String(repo.id),
+  }))
 
-  // repo.id별로 고유한 레포 목록 추출
-  const repoOptions = [...new Map(prs.map((pr) => [pr.repo.id, pr.repo.name])).entries()]
-
-  // 선택된 레포 기준 필터링
+  // 선택된 레포 기준으로 PR 필터링
   const filteredPRs =
     selectedRepoId === 'all' ? prs : prs.filter((pr) => pr.repo.id === Number(selectedRepoId))
 
@@ -32,15 +29,8 @@ const PRList = () => {
         {/* 필터 드롭다운 */}
         <div className="-my-[9px] mr-7 w-80">
           <InputBox
-            // label="레포 필터"
             as="select"
-            options={[
-              { label: '전체', value: 'all' },
-              ...repoOptions.map(([repoId, repoName]) => ({
-                label: repoName,
-                value: String(repoId),
-              })),
-            ]}
+            options={[{ label: '전체', value: 'all' }, ...repoOptions]}
             value={selectedRepoId}
             onChange={(e) => setSelectedRepoId(e.target.value)}
           />

@@ -14,11 +14,13 @@ const PRCardCompact = ({ pr }) => {
       onClick={() => navigate(`/${pr.repo.id}/pr/${pr.id}/review`)}
     >
       <div className="space-y-1">
-        <p className="font-semibold text-stone-900">제목: {pr.title}</p>
-        <p className="text-sm text-stone-700">설명: {pr.description}</p>
-        <p className="text-sm text-stone-600">작성자: {pr.author.name}</p>
-        <p className="text-sm text-stone-600">레포지토리: {pr.repo.name}</p>
-        <p className="text-sm text-stone-600">승인 수: {pr.currentApprovals}</p>
+        <p className="font-semibold text-stone-900">{pr.title}</p>
+        <p className="text-sm text-stone-600">
+          {pr.author.githubUsername} / {pr.repo.fullName}
+        </p>
+        <p className="text-sm text-stone-500">
+          상태: {pr.state} / 승인: {pr.approveCnt} / 병합 가능: {pr.mergeable ? 'O' : 'X'}
+        </p>
       </div>
 
       {/* <div className="flex gap-2 pt-4">

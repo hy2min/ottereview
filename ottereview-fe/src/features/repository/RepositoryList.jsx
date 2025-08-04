@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import { useUserStore } from '../../store/userStore'
+import { fetchPRsByRepoId } from '../pullRequest/prApi'
+import { usePRStore } from '../pullRequest/stores/prStore'
 import { fetchRepoListByAccountId } from './repoApi'
 import RepositoryCard from './RepositoryCard'
 import { useRepoStore } from './repoStore'
@@ -11,23 +13,51 @@ const RepositoryList = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const { repos, setRepos } = useRepoStore()
+  const setPullRequests = usePRStore((state) => state.setPullRequests)
+
+  useEffect(() => {
+    // accountId가 준비되지 않은 경우 실행 안 함
+    if (!user?.id) {
+      console.warn('user.id 없음, 데이터 요청하지 않음')
+      return
+    }
+
+    const fetchData = async () => {
+      try {
+        const fetchedRepos = await fetchRepoListByAccountId(user.id)
+        console.log('📦 fetchedRepos:', fetchedRepos)
+        setRepos(fetchedRepos)
+
+        const allPRs = []
+
+        for (const repo of fetchedRepos) {
+          if (!repo?.id) {
+            console.warn('⚠️ repo.id 없음, 건너뜀:', repo)
+            continue
+          }
+
+          try {
+            const prs = await fetchPRsByRepoId(repo.id)
+            console.log(`✅ PRs for repo ${repo.id}:`, prs)
+            allPRs.push(...prs)
+          } catch (err) {
+            console.error(`❌ PR fetch 실패 (repoId: ${repo.id})`, err)
+          }
+        }
+
+        setPullRequests(allPRs)
+      } catch (err) {
+        console.error('❌ 전체 fetch 실패:', err)
+      }
+    }
+
+    fetchData()
+  }, [user?.id, setRepos, setPullRequests])
 
   const handleImport = () => {
     const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'
     window.location.href = importUrl
   }
-
-  useEffect(() => {
-    if (!user?.id) return
-
-    const fetchData = async () => {
-      const data = await fetchRepoListByAccountId(user.id)
-      console.log('📥 받은 데이터:', data)
-      setRepos(data)
-    }
-
-    fetchData()
-  }, [user?.id])
 
   const handleRepoClick = (repoId) => {
     navigate(`/${repoId}`)
