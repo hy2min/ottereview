@@ -10,10 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
@@ -47,4 +44,8 @@ public class Branch {
         this.repo = repo;
     }
 
+    public void settingMinApproveCnt(int minApproveCnt){
+        this.minApproveCnt = minApproveCnt;
+    }
 }
+
