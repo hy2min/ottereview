@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.branch.service;
 
 import com.ssafy.ottereview.branch.dto.BranchCreateRequest;
+import com.ssafy.ottereview.branch.dto.BranchRoleCreateRequest;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.repository.BranchRepository;
 import com.ssafy.ottereview.repo.entity.Repo;
@@ -11,8 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.kohsuke.github.GHBranch;
+import org.kohsuke.github.GHBranchProtection;
 import org.kohsuke.github.GHRepository;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +42,7 @@ public class BranchServiceImpl implements BranchService{
     }
 
     @Override
+    @Transactional
     public List<Branch> createBranchList(GHRepository ghRepository, Repo repo) {
 
         List<Branch> branchesToSave = new ArrayList<>();
@@ -45,13 +50,28 @@ public class BranchServiceImpl implements BranchService{
             Map<String, GHBranch> branches = ghRepository.getBranches();
 
             for (Map.Entry<String, GHBranch> entry : branches.entrySet()) {
-                Branch branch = Branch.builder()
-                        .name(entry.getKey())
-                        .minApproveCnt(0)
-                        .repo(repo)  // 아직 저장되지 않은 repo 객체 참조
-                        .build();
+                GHBranch branch = entry.getValue();
+                int requiredApprovals = 0;
+                if (branch.isProtected()) {
+                    GHBranchProtection protection = branch.getProtection();
+                    GHBranchProtection.RequiredReviews requiredReviews = protection.getRequiredReviews();
 
-                branchesToSave.add(branch);
+                    if (requiredReviews != null) {
+                        // 필요한 approve 개수 가져오기
+                        requiredApprovals = requiredReviews.getRequiredReviewers();
+                        System.out.println("Required approvals: " + requiredApprovals);
+                    }
+                }else {
+                    System.out.println("Branch " + entry.getKey() + " is not protected. Skipping protection info.");
+                }
+                    Branch branch1 = Branch.builder()
+                            .name(entry.getKey())
+                            .minApproveCnt(requiredApprovals)
+                            .repo(repo)  // 아직 저장되지 않은 repo 객체 참조
+                            .build();
+
+                    branchesToSave.add(branch1);
+
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -92,6 +112,13 @@ public class BranchServiceImpl implements BranchService{
         if(!branches.isEmpty()){
             branchRepository.saveAll(branches);
         }
+    }
+
+    @Override
+    @Transactional
+    public void updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest) {
+        Branch branch = branchRepository.getReferenceById(branchRoleCreateRequest.getId());
+        branch.settingMinApproveCnt(branchRoleCreateRequest.getMinApproved());
     }
 
 
