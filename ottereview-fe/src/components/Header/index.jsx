@@ -1,6 +1,7 @@
-import { Link, matchRoutes, useLocation, useNavigate } from 'react-router-dom'
+import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
 import { protectedRoutes } from '../../app/routes'
+import { useAuthStore } from '../../features/auth/authStore'
 import { useUserStore } from '../../store/userStore'
 import Button from '../Button'
 
@@ -15,6 +16,8 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout()
+    useUserStore.getState().clearUser()
+    useAuthStore.getState().clearTokens()
     navigate('/') // 로그인 페이지로 이동
   }
 
@@ -30,13 +33,6 @@ const Header = () => {
           </button>
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
           <div className="justify-self-end">
-            {/* 예: 개발용 페이지로 가는 링크 */}
-            <Link to="/chatroom/test" className="text-lg underline pr-4">
-              채팅 테스트
-            </Link>
-            <Link to="/audiotest" className="text-lg underline pr-4">
-              음성 테스트
-            </Link>
             <Button onClick={handleLogout} variant="secondary">
               로그아웃
             </Button>
