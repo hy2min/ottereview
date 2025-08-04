@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.branch.service;
 
 import com.ssafy.ottereview.branch.dto.BranchCreateRequest;
+import com.ssafy.ottereview.branch.dto.BranchRoleCreateRequest;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.repo.entity.Repo;
 import java.util.List;
@@ -30,4 +31,6 @@ public interface BranchService {
     List<Branch> getBranchesByRepoId(Long repoId);
 
     void saveAllBranchList(List<Branch> branches);
+
+    void updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest);
 }

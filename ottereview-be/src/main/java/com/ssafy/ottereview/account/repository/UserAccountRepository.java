@@ -11,8 +11,10 @@ import org.springframework.stereotype.Repository;
 public interface UserAccountRepository extends JpaRepository<UserAccount, Long> {
     
     List<UserAccount> findAllByUser(User user);
-
+    
     List<UserAccount> findAllByAccount(Account account);
-
-
+    
+    Boolean existsByUserAndAccount(User user, Account account);
+    
+    
 }

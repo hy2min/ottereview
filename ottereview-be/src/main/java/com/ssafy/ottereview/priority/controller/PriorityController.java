@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api/priority")
+@RequestMapping("/api/pull-requests/{pr-id}/priorities")
 public class PriorityController {
 
     private final PriorityService priorityService;
@@ -24,7 +24,7 @@ public class PriorityController {
      * @param pullRequestId
      * @return List<Priority>
      */
-    @GetMapping("/{pr-id}")
+    @GetMapping()
     public ResponseEntity<?> getPriorityByPriorityId(@PathVariable (name = "pr-id")Long pullRequestId){
         return ResponseEntity.ok(priorityService.getPriorityListByPullRequest(pullRequestId));
     }
