@@ -1,18 +1,17 @@
 package com.ssafy.ottereview.pullrequest.service;
 
-import com.ssafy.ottereview.account.repository.UserAccountRepository;
+import com.ssafy.ottereview.account.service.AccountService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.pullrequest.dto.preparation.CommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
 import com.ssafy.ottereview.pullrequest.dto.preparation.FileChangeInfo;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
 import com.ssafy.ottereview.pullrequest.dto.preparation.ReviewerInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.AdditionalInfoRequest;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.PreparationValidationRequest;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRedisRepository;
 import com.ssafy.ottereview.pullrequest.util.DiffUtil;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
@@ -39,13 +38,13 @@ public class PullRequestPreparationService {
     private final UserRepository userRepository;
     private final GithubApiClient githubApiClient;
     private final DiffUtil diffUtil;
-    private final RepoRepository repoRepository;
-    private final UserAccountRepository userAccountRepository;
+    private final AccountService accountService;
     private final PullRequestRedisRepository pullRequestRedisService;
     
     public PreparationData getPreparePullRequestInfo(CustomUserDetail userDetail, Long repoId, String source, String target) {
         
-        validateUserPermission(userDetail, repoId);
+        accountService.validateUserPermission(userDetail.getUser()
+                .getId(), repoId);
         
         PreparationData preparationData = pullRequestRedisService.getPrepareInfo(repoId, source, target);
         
@@ -59,12 +58,13 @@ public class PullRequestPreparationService {
     public PreparationData validatePullRequest(CustomUserDetail userDetail, Long repoId, PreparationValidationRequest request) {
         
         // 1. 유저 권한 검증
-        Repo repo = validateUserPermission(userDetail, repoId);
+        Repo repo = accountService.validateUserPermission(userDetail.getUser()
+                .getId(), repoId);
         
         GHCompare compare = githubApiClient.getCompare(repo.getAccount()
                 .getInstallationId(), repo.getFullName(), request.getTarget(), request.getSource());
         
-        PreparationData preparationData = convetToPreparePullRequestResponse(compare, request);
+        PreparationData preparationData = convertToPreparePullRequestResponse(compare, request);
         
         pullRequestRedisService.savePrepareInfo(repoId, preparationData);
         
@@ -73,12 +73,20 @@ public class PullRequestPreparationService {
     
     public void enrollAdditionalInfo(CustomUserDetail userDetail, Long repoId, AdditionalInfoRequest request) {
         try {
-            validateUserPermission(userDetail, repoId);
+            accountService.validateUserPermission(userDetail.getUser()
+                    .getId(), repoId);
             
             // 1. 기존 데이터 조회
             PreparationData prepareInfo = pullRequestRedisService.getPrepareInfo(repoId, request.getSource(), request.getTarget());
             
             // 2. 선택적 필드들 업데이트
+            if (request.getTitle() != null) {
+                prepareInfo.enrollTitle(request.getTitle());
+            }
+            
+            if (request.getBody() != null) {
+                prepareInfo.enrollBody(request.getBody());
+            }
             if (request.getReviewers() != null && !request.getReviewers()
                     .isEmpty()) {
                 List<ReviewerInfo> reviewerInfos = convertToReviewerInfos(request.getReviewers());
@@ -125,11 +133,7 @@ public class PullRequestPreparationService {
                 .build();
     }
     
-    public PreparationData createPullRequest(CustomUserDetail customUserDetail, Long repoId, PreparationValidationRequest request) {
-        return null;
-    }
-    
-    private PreparationData convetToPreparePullRequestResponse(GHCompare compare, PreparationValidationRequest request) {
+    private PreparationData convertToPreparePullRequestResponse(GHCompare compare, PreparationValidationRequest request) {
         return PreparationData.builder()
                 .source(request.getSource())
                 .target(request.getTarget())
@@ -239,22 +243,5 @@ public class PullRequestPreparationService {
                 .map(this::convertToCommitInfo)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-    
-    public Repo validateUserPermission(CustomUserDetail userDetail, Long repoId) {
-        User loginUser = userRepository.findById(userDetail.getUser()
-                        .getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userDetail.getUser()
-                        .getId()));
-        
-        Repo repo = repoRepository.findById(repoId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Repository not found with id: " + repoId));
-        
-        if (!userAccountRepository.existsByUserAndAccount(loginUser, repo.getAccount())) {
-            throw new IllegalArgumentException("유저는 해당 레포지토리의 계정에 속하지 않습니다.");
-        }
-        
-        return repo;
     }
 }
