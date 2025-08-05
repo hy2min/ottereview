@@ -12,6 +12,8 @@ const PRCardDetail = ({ pr }) => {
   const updatedAt = pr.githubUpdatedAt || '(업데이트 시간 없음)'
   const authorName = pr.author?.name || pr.author?.githubUsername || '(알 수 없음)'
   const commentCount = pr.commentCnt || 0
+  const repoId = pr.repo?.id
+  const prId = pr.id
 
   return (
     <Box shadow>
@@ -45,7 +47,7 @@ const PRCardDetail = ({ pr }) => {
 
         <div className="flex gap-2 pt-2">
           <Button
-            onClick={() => navigate(`/${pr.repo.id}/pr/${pr.id}/review`)}
+            onClick={() => navigate(`/${repoId}/pr/${prId}/review`)}
             variant="outline"
             size="sm"
           >
@@ -53,7 +55,7 @@ const PRCardDetail = ({ pr }) => {
             리뷰하기
           </Button>
           <Button
-            onClick={() => navigate(`/${pr.repo.id}/pr/${pr.id}/conflict`)}
+            onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
             variant="primary"
             size="sm"
           >
