@@ -26,6 +26,7 @@ const RepositoryDetail = () => {
     const load = async () => {
       try {
         const data = await fetchPRList(repoId)
+        console.log(data)
         setRepoPRs(data)
       } catch (err) {
         console.error('❌ PR 목록 불러오기 실패:', err)

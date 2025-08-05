@@ -1,7 +1,7 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-const Badge = ({ children, variant = 'default', size = 'md', className, ...props }) => {
+const Badge = ({ children, variant = 'default', size = 'lg', className, ...props }) => {
   const base = 'inline-flex items-center rounded-full font-medium'
   const variantClasses = {
     default: 'bg-gray-100 text-gray-800',
@@ -17,11 +17,7 @@ const Badge = ({ children, variant = 'default', size = 'md', className, ...props
     lg: 'px-3 py-1 text-sm',
   }
 
-  const classes = twMerge(
-    clsx(base, variantClasses[variant], sizeClasses[size]),
-    className,
-    'soft-badge'
-  )
+  const classes = twMerge(clsx(base, variantClasses[variant], sizeClasses[size]), className)
 
   return (
     <span className={classes} {...props}>
