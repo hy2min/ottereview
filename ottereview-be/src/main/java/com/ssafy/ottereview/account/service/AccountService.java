@@ -22,4 +22,8 @@ public interface AccountService {
     Account getAccountByInstallationId(Long installationId);
     
     Repo validateUserPermission(Long userId, Long repoId);
-}
+
+    List<User> getUserListByAccount(Account account);
+
+    Account getAccountByAccountId(Long accountId);
+ }
