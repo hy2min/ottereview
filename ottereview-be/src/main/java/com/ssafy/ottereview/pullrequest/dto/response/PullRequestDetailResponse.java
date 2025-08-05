@@ -46,4 +46,6 @@ public class PullRequestDetailResponse {
     private List<PullRequestFileDetail> files;
     private List<PullRequestCommitDetail> commits;
 
+
+
 }
