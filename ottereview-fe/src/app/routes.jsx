@@ -1,3 +1,4 @@
+import Whiteboard from '../features/chat/Whiteboard'
 import ChatRoom from '../pages/ChatRoom'
 import Conflict from '../pages/Conflict'
 import Dashboard from '../pages/Dashboard'
@@ -13,4 +14,5 @@ export const protectedRoutes = [
   // { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
   { path: '/chatroom/test', element: <ChatRoom />, title: '채팅 테스트' },
+  { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
 ]

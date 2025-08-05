@@ -1,6 +1,6 @@
 from utils.cushion_convert import convert_review_to_soft_tone
 from utils.vector_db import vector_db, PRData
-from utils.pull_request import recommand_pull_request_title,summary_pull_request
+from utils.pull_request import recommand_pull_request_title, summary_pull_request, recommend_reviewers
 from utils.whisper import whisper_service
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -164,6 +164,27 @@ async def transcribe_audio(
             detail="음성 변환 중 오류가 발생했습니다."
         )
 
+@app.post("/ai/reviewers/recommend")
+async def recommend_pr_reviewers(pr_data: PRData):
+    """
+    RAG를 활용해서 PR 리뷰어를 추천합니다.
+    
+    Args:
+        pr_data: PRData 객체 (PR 정보)
+        
+    Returns:
+        {"result": [{"github_username": "사용자명", "github_email": "이메일"}]}
+    """
+    try:
+        recommendations = await recommend_reviewers(pr_data, limit=5)
+        return {"result": recommendations}
+        
+    except Exception as e:
+        logger.error(f"리뷰어 추천 API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="리뷰어 추천 중 오류가 발생했습니다."
+        )
 
 
 if __name__ == "__main__":
