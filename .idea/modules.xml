@@ -3,6 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/S13P11C108.iml" filepath="$PROJECT_DIR$/.idea/S13P11C108.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.ssafy.ottereview.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.ssafy.ottereview.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ottereview.iml" filepath="$PROJECT_DIR$/.idea/modules/ottereview.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ottereview.main.iml" filepath="$PROJECT_DIR$/.idea/modules/ottereview.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ottereview.test.iml" filepath="$PROJECT_DIR$/.idea/modules/ottereview.test.iml" />
     </modules>
   </component>
 </project>
