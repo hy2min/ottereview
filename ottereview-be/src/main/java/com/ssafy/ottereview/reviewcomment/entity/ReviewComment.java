@@ -32,6 +32,9 @@ public class ReviewComment extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "github_id")
+    private Long githubId;
+
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY,
             cascade = CascadeType.PERSIST)
     private User user;
