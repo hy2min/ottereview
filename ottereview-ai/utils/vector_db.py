@@ -44,8 +44,8 @@ class ReviewCommentInfo(BaseModel):
     
 class ReviewerInfo(BaseModel):
     """리뷰어 정보"""
-    github_username: str = Field(alias="githubUsername")
-    github_email: str = Field(alias="githubEmail")
+    githubUsername: str
+    githubEmail: str
     
 class ReviewInfo(BaseModel):
     """리뷰 정보"""
@@ -177,12 +177,12 @@ class PineconeVectorDB:
             return
             
         file_categories = self._extract_file_categories(pr_data.files)
-        reviewer_usernames = [r.github_username for r in pr_data.reviewers]
+        reviewer_usernames = [r.githubUsername for r in pr_data.reviewers]
         
         # 각 리뷰어별로 패턴 저장
         for i, reviewer_info in enumerate(pr_data.reviewers):
             context_parts = [
-                f"리뷰어: {reviewer_info.github_username}",
+                f"리뷰어: {reviewer_info.githubUsername}",
                 f"파일 타입: {', '.join(file_categories.keys())}",
                 f"브랜치: {pr_data.source} -> {pr_data.target}",
                 f"파일들: {', '.join([f.filename for f in pr_data.files])}"
@@ -190,7 +190,7 @@ class PineconeVectorDB:
             
             # 리뷰 내용이 있으면 추가
             if pr_data.reviews:
-                reviewer_reviews = [r for r in pr_data.reviews if r.user_github_username == reviewer_info.github_username]
+                reviewer_reviews = [r for r in pr_data.reviews if r.user_github_username == reviewer_info.githubUsername]
                 if reviewer_reviews:
                     review_texts = [r.body for r in reviewer_reviews if r.body]
                     comment_texts = []
@@ -207,8 +207,8 @@ class PineconeVectorDB:
             
             metadata = {
                 "pr_id": str(pr_id),
-                "reviewer": reviewer_info.github_username,
-                "reviewer_email": reviewer_info.github_email,
+                "reviewer": reviewer_info.githubUsername,
+                "reviewer_email": reviewer_info.githubEmail,
                 "file_categories": ",".join(file_categories.keys()),
                 "files_reviewed": ",".join([f.filename for f in pr_data.files])[:500],
                 "review_provided": str(bool(pr_data.reviews)),
