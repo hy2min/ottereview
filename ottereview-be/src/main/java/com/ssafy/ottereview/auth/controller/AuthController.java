@@ -26,6 +26,12 @@ public class AuthController {
     
     private final AuthService authService;
     
+    @Value("${github.oauth.client-id}")
+    private String clientId;
+
+    @Value("${github.oauth.redirect-uri}")
+    private String redirectUri;
+
     // Refresh Token으로 Access Token 재발급
     @PostMapping("/refresh")
     public ResponseEntity<AccessTokenResponseDto> refresh(@CookieValue(name = "refreshToken", required = false) String refreshToken) {
@@ -40,7 +46,7 @@ public class AuthController {
     @GetMapping("/login")
     public ResponseEntity<Void> login() {
         return ResponseEntity.status(302)
-                .header("Location", "https://github.com/login/oauth/authorize?client_id=Ov23licvm1TN1GmHOIkj&redirect_uri=http://localhost:5173/oauth/github/callback&scope=read:user,user:email")
+                .header("Location", "https://github.com/login/oauth/authorize?client_id="+clientId+"&redirect_uri="+redirectUri+"&scope=read:user,user:email")
                 .build();
     }
 
