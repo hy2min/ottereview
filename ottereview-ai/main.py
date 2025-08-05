@@ -1,6 +1,6 @@
 from utils.cushion_convert import convert_review_to_soft_tone
 from utils.vector_db import vector_db, PRData
-from utils.pull_request import recommand_pull_request_title
+from utils.pull_request import recommand_pull_request_title,summary_pull_request
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import openai
@@ -75,7 +75,7 @@ async def generate_pull_request_title(pr_data: PRData):
     """
     try:
         title = await recommand_pull_request_title(pr_data)
-        return {"title": title}
+        return {"result": title}
         
     except Exception as e:
         logger.error(f"API 호출 중 오류: {str(e)}")
@@ -83,7 +83,29 @@ async def generate_pull_request_title(pr_data: PRData):
             status_code=500, 
             detail="PR 제목 생성 중 오류가 발생했습니다."
         )
-
+    
+@app.post("/ai/pull_requests/summary")
+async def summary_pull_request_title(pr_data: PRData):
+    """
+    Pull Request의 내용을 요약합니다.
+    
+    Args:
+        pr_data: PRData 객체 (vector_db.py의 구조)
+        
+    Returns:
+        {"summary": "요약된 PR 내용"}
+    """
+    try:
+        summary = await summary_pull_request(pr_data)
+        return {"result": summary}
+        
+    except Exception as e:
+        logger.error(f"API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Pull Request 요약 생성 중 오류가 발생했습니다."
+        )
+    
 @app.post("/ai/vector-db/store")
 async def store_pr_to_vector_db(pr_request: PRData):
     """
