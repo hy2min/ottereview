@@ -146,15 +146,6 @@ public class ReviewServiceImpl implements ReviewService {
                 .build();
 
         Review savedReview = reviewRepository.save(updatedReview);
-        // GitHub API 호출
-        String repoFullName = repoRepository.findById(repoId)
-                .orElseThrow(() -> new RuntimeException("Repository not found"))
-                .getFullName();
-
-        Long installationId = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"))
-                .getInstallationId();
-
 
         return ReviewResponse.from(savedReview);
     }

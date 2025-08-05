@@ -41,9 +41,10 @@ public class ReviewCommentController {
     public ResponseEntity<?> updateComment(
             @PathVariable("review-id") Long reviewId,
             @PathVariable("comment-id") Long commentId,
-            @ModelAttribute ReviewCommentUpdateRequest request,
+            @RequestPart ReviewCommentUpdateRequest request,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @AuthenticationPrincipal CustomUserDetail userDetail) {
+
 
         ReviewCommentResponse comment = reviewCommentService.updateComment(commentId, request,
                 userDetail.getUser().getId(), file);
