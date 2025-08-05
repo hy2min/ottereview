@@ -195,4 +195,16 @@ public class GithubAppUtil {
         }
     }
 
+    public String getInstallationToken(long installationId) {
+        try {
+            String jwtToken = generateJwt(jwtTExpirationMillis);
+            GitHub gitHubApp = new GitHubBuilder().withJwtToken(jwtToken).build();
+            GHAppInstallation installation = gitHubApp.getApp().getInstallationById(installationId);
+            GHAppInstallationToken token = installation.createToken().create();
+            return token.getToken();
+        } catch (Exception e) {
+            throw new RuntimeException("Installation Token 발급 실패: " + e.getMessage(), e);
+        }
+    }
+
 }

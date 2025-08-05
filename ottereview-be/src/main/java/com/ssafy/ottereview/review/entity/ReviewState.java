@@ -15,12 +15,4 @@ public enum ReviewState {
         return value;
     }
 
-    public static ReviewState fromValue(String value) {
-        for (ReviewState state : ReviewState.values()) {
-            if (state.value.equals(value)) {
-                return state;
-            }
-        }
-        throw new IllegalArgumentException("Unknown review state: " + value);
-    }
 }
