@@ -37,7 +37,6 @@ public class GithubInstallationFacade {
     private final UserAccountRepository userAccountRepository;
     private final GithubAppUtil githubAppUtil;
     private final RepoService repoService;
-    private final PullRequestService pullRequestService;
 
     public void processInstallationWithOAuth(Long installationId, String code) throws IOException {
 
