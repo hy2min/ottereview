@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.common.config.Security;
+package com.ssafy.ottereview.common.config.security;
 
 import com.ssafy.ottereview.auth.jwt.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;

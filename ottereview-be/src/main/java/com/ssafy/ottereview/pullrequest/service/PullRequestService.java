@@ -13,7 +13,17 @@ public interface PullRequestService {
      * Github repoId로 Github에서 Pull Request 리스트를 조회합니다.
      */
     List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail customUserDetail, Long repositoryId);
-    
+
+    /**
+     * 내가 작성한 PR 리스트를 조회합니다.
+     */
+    List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail);
+
+    /**
+     * 특정 레포에 댇한 Pull Request 리스트를 조회합니다.
+     */
+    List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId);
+
     /**
      * pr-id로 DB에 저장된 Pull Request를 조회합니다.
      */
