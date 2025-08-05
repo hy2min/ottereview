@@ -19,8 +19,8 @@ const App = () => {
     return <AudioChatRoom />
   }
 
-  // const isLoggedIn = !!user // null이 아니면 로그인된 상태
-  const isLoggedIn = true // null이 아니면 로그인된 상태
+  const isLoggedIn = !!user // null이 아니면 로그인된 상태
+  // const isLoggedIn = true // null이 아니면 로그인된 상태
 
   if (!isLoggedIn) {
     // 로그인 안 된 경우: Landing, OAuthCallback만 허용
