@@ -51,6 +51,14 @@ const Dashboard = () => {
           >
             오디오 테스트
           </button>
+
+          {/* ✅ 화이트보드 테스트 버튼 추가 */}
+          <button
+            onClick={() => navigate('/whiteboard')}
+            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
+          >
+            화이트보드 테스트
+          </button>
         </div>
       </div>
 
