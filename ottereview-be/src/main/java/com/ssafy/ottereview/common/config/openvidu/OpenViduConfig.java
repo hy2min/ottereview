@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.common.config.Openvidu;
+package com.ssafy.ottereview.common.config.openvidu;
 
 import io.openvidu.java.client.OpenVidu;
 import org.springframework.beans.factory.annotation.Value;

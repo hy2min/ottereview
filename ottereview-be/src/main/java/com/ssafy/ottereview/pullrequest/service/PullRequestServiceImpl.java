@@ -58,6 +58,21 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionRepository descriptionRepository;
 
     @Override
+    public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
+        // 1. 사용자 권한 검증 및 레포지토리 조회
+        Repo targetRepo = accountService.validateUserPermission(customUserDetail.getUser()
+                .getId(), repoId);
+
+        // 2. 해당 레포지토리의 Pull Request 목록 조회
+        List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
+
+        // 3. Pull Request 목록을 DTO로 변환하여 반환
+        return pullRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
     public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
             Long repoId) {
 
@@ -80,6 +95,18 @@ public class PullRequestServiceImpl implements PullRequestService {
         List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
 
         return finalPullRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
+    @Override
+    public List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail) {
+        User loginUser = userRepository.findById(customUserDetail.getUser().getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser().getId()));
+
+        List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser);
+
+        return pullRequests.stream()
                 .map(this::convertToResponse)
                 .toList();
     }
@@ -216,8 +243,10 @@ public class PullRequestServiceImpl implements PullRequestService {
                 List<PullRequest> newPullRequests = new ArrayList<>();
                 List<Reviewer> newReviewers = new ArrayList<>();
                 for (GithubPrResponse githubPr : githubPrResponses) {
-                    log.info("github id: {} ", githubPr.getAuthor().getId());
-                    log.info("github name: {}", githubPr.getAuthor().getName());
+                    log.info("github id: {} ", githubPr.getAuthor()
+                            .getId());
+                    log.info("github name: {}", githubPr.getAuthor()
+                            .getName());
                     log.info("github title: {}", githubPr.getTitle());
                     User author = userRepository.findByGithubEmail(githubPr.getAuthor()
                                     .getEmail())

@@ -36,7 +36,7 @@ public class PullRequest extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column
     private Integer githubPrNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
