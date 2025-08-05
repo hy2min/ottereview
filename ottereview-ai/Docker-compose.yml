@@ -1,19 +1,17 @@
 version: '3.8'
 
 services:
-  # FastAPI + Chroma 서비스
+  # FastAPI + Pinecone 서비스
   ai-service:
     build: .
     ports:
       - "8000:8000"
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ENV=development
-      - CHROMA_DB_PATH=/app/chroma_db
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
     volumes:
       - ./models:/app/models              # AI 모델 캐시
-      - chroma_data:/app/chroma_db        # ChromaDB 영구 저장 (Named Volume)
-    restart: unless-stopped
+    restart: always
     networks:
       - ai-network
     healthcheck:
@@ -26,7 +24,3 @@ services:
 networks:
   ai-network:
     driver: bridge
-
-volumes:
-  chroma_data:
-    driver: local

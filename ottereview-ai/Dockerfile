@@ -30,7 +30,7 @@ RUN adduser --disabled-password --gecos '' --uid 1000 appuser && \
 USER appuser
 
 # ChromaDB 데이터 디렉토리를 볼륨으로 선언
-VOLUME ["/app/chroma_db", "/app/models"]
+VOLUME ["/app/models"]
 
 # FastAPI 애플리케이션 실행
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
