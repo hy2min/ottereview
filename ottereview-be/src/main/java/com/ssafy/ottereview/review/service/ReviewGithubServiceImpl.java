@@ -9,7 +9,9 @@ import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -115,7 +117,7 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
     public void updateReviewCommentOnGithub(Long installationId, String repoFullName, Long githubId, String newBody, String githubUsername) {
         try {
             String url = String.format(
-                    "https://api.github.com/repos/%s/pulls/comment/%d",
+                    "https://api.github.com/repos/%s/pulls/comments/%d",
                     repoFullName, githubId
             );
 
@@ -130,14 +132,16 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             headers.setBearerAuth(token);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
             // PATCH 요청 전송
             RestTemplate restTemplate = new RestTemplate();
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
             restTemplate.exchange(url, HttpMethod.PATCH, entity, String.class);
 
             log.info("GitHub Review Comment Updated: commentId={}", githubId);
 
-        } catch (Exception e) {
+        } catch (HttpStatusCodeException e) {
+            log.error("PATCH failed: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("GitHub 리뷰 코멘트 수정 실패: " + e.getMessage(), e);
         }
     }
