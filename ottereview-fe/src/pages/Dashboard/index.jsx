@@ -10,11 +10,12 @@ import { useUserStore } from '../../store/userStore'
 const Dashboard = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
+  console.log(user)
   const repos = useRepoStore((state) => state.repos)
   const handleTest = async () => {
     try {
       const accountId = user.id
-      const res = await api.get(`/api/repositories/1/pull-requests`)
+      const res = await api.get(`/api/repositories/2/pull-requests/me`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
