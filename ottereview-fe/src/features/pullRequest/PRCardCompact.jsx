@@ -18,17 +18,17 @@ const PRCardCompact = ({ pr }) => {
           <p className="font-semibold text-stone-900">{pr.title}</p>
           <div className="flex gap-1 flex-wrap">
             {!pr.merged && pr.mergeable === false || (
-              <Badge variant="danger" size="sm">
+              <Badge variant="danger">
                 충돌 발생
               </Badge>
             )}
             {pr.approveCnt > 0 || (
-              <Badge variant="success" size="sm">
+              <Badge variant="success">
                 승인 {pr.approveCnt}
               </Badge>
             )}
             {pr.reviewCommentCnt > 0 || (
-              <Badge variant="warning" size="sm">
+              <Badge variant="warning">
                 리뷰 {pr.reviewCommentCnt}
               </Badge>
             )}
