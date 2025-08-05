@@ -6,6 +6,7 @@ import com.ssafy.ottereview.email.dto.EmailResponseDto;
 import com.ssafy.ottereview.email.util.EmailUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,9 @@ public class EmailServiceImpl implements EmailService {
 
     private final EmailUtil emailUtil;
 
+    @Value("${app.front.url}")
+    private String frontUrl;
+
     /**
      * 채팅방 초대 메일 발송
      */
@@ -23,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendChatInvite(EmailRequestDto.ChatInvite invite) {
         try {
             // 초대 링크 생성
-            String link = "https://i13c108.p.ssafy.io/meetingroom/join?roomId=" + invite.getRoomId();
+            String link = frontUrl + "/meetingroom/join?roomId=" + invite.getRoomId();
 
             // 메일 DTO 생성
             EmailResponseDto.EmailMessage emailMessage = EmailResponseDto.EmailMessage.builder()
