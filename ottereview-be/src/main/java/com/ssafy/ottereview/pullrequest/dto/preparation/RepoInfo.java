@@ -9,12 +9,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ReviewerInfo {
-    
+public class RepoInfo {
+
     private Long id;
-    private String githubUsername;
-    private String githubEmail;
-    private String profileImageUrl;
-    private int rewardPoints;
-    private String userGrade;
+    private String fullName;
+
+    public static RepoInfo of(Long id, String fullName) {
+        return RepoInfo.builder()
+                .id(id)
+                .fullName(fullName)
+                .build();
+    }
 }

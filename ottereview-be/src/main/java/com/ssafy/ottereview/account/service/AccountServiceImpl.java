@@ -56,6 +56,7 @@ public class AccountServiceImpl implements AccountService {
                 .installationId(githubAccountResponse.getInstallationId())
                 .type(githubAccountResponse.getType())
                 .name(githubAccountResponse.getName())
+                .githubId(githubAccountResponse.getGithubId())
                 .build();
         
         return accountRepository.save(account);
