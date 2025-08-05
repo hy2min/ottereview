@@ -1,121 +1,133 @@
 import 'tldraw/tldraw.css'
 
-import * as yorkie from '@yorkie-js/sdk'
+import { Stomp } from '@stomp/stompjs'
 import randomColor from 'randomcolor'
-import { useCallback, useEffect, useState } from 'react'
-import { Tldraw } from 'tldraw'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import SockJS from 'sockjs-client'
+import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
 
-let client
-let doc
-
-export default function Whiteboard({ roomId }) {
+const Whiteboard = ({ roomId }) => {
+  const [store] = useState(() => createTLStore({ shapeUtils: defaultShapeUtils }))
   const [loading, setLoading] = useState(true)
-  const [userId, setUserId] = useState(null) // New state for backend userId
 
-  // 1. 사용자 ID 시뮬레이션 (실제 앱에서는 백엔드에서 받아올 수도 있음)
+  // 사용자의 고유 ID, 색상, 이름을 생성
+  const [userId] = useState(() => `instance:${crypto.randomUUID()}`)
+  const [color] = useState(() => randomColor())
+  const [name] = useState(() => uniqueNamesGenerator({ dictionaries: [names] }))
+
+  const editorRef = useRef(null)
+  const stompClientRef = useRef(null)
+
+  // STOMP 웹소켓 연결을 설정
   useEffect(() => {
-    const fetchedUserId = `user-${Math.random().toString(36).substring(2, 9)}`
-    setUserId(fetchedUserId)
-  }, [])
+    const token = localStorage.getItem('accessToken')
+    const socket = new SockJS('http://localhost:8080/ws')
+    const stomp = Stomp.over(socket)
+    stomp.debug = () => {} // 디버그 로그 비활성화
 
-  // 2. Tldraw 초기 마운트 처리
-  const onMount = useCallback(
-    (app) => {
-      if (!userId) return
-      const randomName = uniqueNamesGenerator({ dictionaries: [names] })
-      const userColor = randomColor()
+    stomp.connect(
+      { Authorization: `Bearer ${token}` },
+      () => {
+        console.log('[STOMP] connected')
+        // 화이트보드 토픽을 구독
+        stomp.subscribe(`/topic/meetings/${roomId}/whiteboard`, (msg) => {
+          const editor = editorRef.current
+          if (!editor) return
 
-      // 2-1. 캔버스 로딩 및 일시정지
-      setLoading(true)
+          const data = JSON.parse(msg.body)
 
-      // 2-2. Yorkie 설정 및 연동
-      const setup = async () => {
-        client = new yorkie.Client({
-          rpcAddr: import.meta.env.VITE_YORKIE_API_ADDR,
-          apiKey: import.meta.env.VITE_YORKIE_API_KEY,
-        })
-        await client.activate()
+          // 자신이 보낸 메시지는 무시
+          if (data.senderName === name) {
+            return
+          }
 
-        doc = new yorkie.Document(roomId)
-        await client.attach(doc, {
-          initialPresence: {
-            tdUser: {
-              id: userId,
-              point: [0, 0],
-              color: userColor,
-              status: 'connected',
-              selectedIds: [],
-              metadata: { name: randomName },
-            },
-          },
-        })
+          const { type, content } = data
+          const shape = content ? JSON.parse(content) : null
 
-        doc.update((root) => {
-          if (!root.shapes) root.shapes = {}
-          if (!root.bindings) root.bindings = {}
-          if (!root.assets) root.assets = {}
-        })
-
-        doc.subscribe((event) => {
-          if (event.type === 'remote-change') {
-            const root = doc.getRoot()
-            app.replacePageContent(
-              JSON.parse(root.shapes.toJSON()),
-              JSON.parse(root.bindings.toJSON()),
-              JSON.parse(root.assets.toJSON())
-            )
+          try {
+            if (type === 'DRAW') {
+              // 다른 사용자로부터 받은 도형 정보를 스토어에 추가/업데이트
+              editor.store.put([shape], 'remote')
+            } else if (type === 'ERASE') {
+              // 다른 사용자로부터 받은 삭제 정보를 반영
+              editor.deleteShapes([shape.id])
+            } else if (type === 'CLEAR') {
+              // 캔버스를 초기화합니다. (필요시)
+              // editor.store.loadSnapshot({ store: {} })
+            }
+          } catch (error) {
+            console.error('Failed to apply remote change:', error)
           }
         })
 
-        doc.subscribe('others', () => {
-          const peers = doc.getPresences().map((p) => p.presence.tdUser)
-          console.log('🧑‍🤝‍🧑 현재 접속자:', peers)
-        })
+        stompClientRef.current = stomp
+      },
+      (err) => console.error('[STOMP] connection failed', err)
+    )
 
-        await client.sync()
+    return () => {
+      stompClientRef.current?.disconnect()
+    }
+  }, [roomId, name])
 
-        app.zoomToFit()
-        setLoading(false)
+  // Tldraw 에디터가 마운트될 때 호출
+  const onMount = useCallback(
+    (editor) => {
+      editorRef.current = editor
+      editor.updateInstanceState({ id: userId, meta: { name, color } })
+      setLoading(false)
+
+      // 스토어 변경 리스너를 설정
+      const handleChange = (change) => {
+        if (change.source !== 'user') return
+
+        const stomp = stompClientRef.current
+        if (!stomp?.connected) return
+
+        // 추가된 도형 처리
+        for (const record of Object.values(change.changes.added)) {
+          if (record.typeName !== 'shape') continue
+          const payload = {
+            type: 'DRAW',
+            color: record.props.color || color,
+            content: JSON.stringify(record),
+          }
+          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
+        }
+
+        // 업데이트된 도형 처리
+        for (const [from, to] of Object.values(change.changes.updated)) {
+          if (to.typeName !== 'shape') continue
+          const payload = {
+            type: 'DRAW',
+            color: to.props.color || color,
+            content: JSON.stringify(to),
+          }
+          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
+        }
+
+        // 삭제된 도형 처리
+        for (const record of Object.values(change.changes.removed)) {
+          if (record.typeName !== 'shape') continue
+          const payload = {
+            type: 'ERASE',
+            content: JSON.stringify({ id: record.id }), // ID 정보만 전송
+          }
+          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
+        }
       }
 
-      setup()
+      editor.store.listen(handleChange, { source: 'user', scope: 'document' })
     },
-    [roomId, userId]
+    [userId, name, color, roomId]
   )
 
-  // 3. 사용자 페이지 내 수정사항이 생겼을 때 → Yorkie에 동기화
-  const onChangePage = useCallback((app, shapes, bindings) => {
-    if (!doc) return
-    doc.update((root) => {
-      root.shapes = { ...shapes }
-      root.bindings = { ...bindings }
-      root.assets = { ...app.assets }
-    })
-  }, [])
-
-  // 4. 사용자 포인터/선택 변화 시 presence 업데이트
-  const onChangePresence = useCallback((app, user) => {
-    if (!doc || !client?.isActive()) return
-    doc.update((root, presence) => {
-      presence.set({ tdUser: user })
-    })
-  }, [])
-
-  // 5. userId 없으면 로딩
-  if (!userId) {
-    return <div>🔄 사용자 정보 로딩 중...</div>
-  }
-
   return (
-    <div style={{ height: '500px', border: '1px solid #ccc', marginTop: '2rem' }}>
-      <Tldraw
-        onMount={onMount}
-        onChangePage={onChangePage}
-        onChangePresence={onChangePresence}
-        showUi={!loading}
-        autofocus
-      />
+    <div style={{ height: '100vh', width: '100%' }}>
+      <Tldraw store={store} onMount={onMount} showUi={!loading} autofocus />
     </div>
   )
 }
+
+export default Whiteboard
