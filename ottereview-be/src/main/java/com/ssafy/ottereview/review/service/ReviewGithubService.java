@@ -10,4 +10,5 @@ import java.util.List;
 
 public interface ReviewGithubService {
     GithubReviewResult createReviewOnGithub(Long installationId, String repoFullName, int githubPrNumber, String body, @NotNull ReviewState state, @Valid List<ReviewCommentCreateRequest.CommentItem> reviewComments, String githubUsername);
+    void updateReviewCommentOnGithub(Long installationId, String repoFullName, Long githubId, String newBody, String githubUsername);
 }

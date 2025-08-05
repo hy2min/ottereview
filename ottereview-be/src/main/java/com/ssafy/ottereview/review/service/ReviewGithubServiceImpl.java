@@ -25,25 +25,24 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
 
     private final GithubAppUtil githubAppUtil;
 
+    private static final String REVIEW_TEMPLATE = """
+        ### ✏️ **Reviewer: @%s**
+        **리뷰 내용:**
+        > %s
+        """;
+
+    private static final String COMMENT_TEMPLATE = """
+        **👀 Reviewer: @%s**
+        %s
+        """;
+
     @Override
     public GithubReviewResult createReviewOnGithub(Long installationId, String repoFullName, int githubPrNumber, String body, ReviewState state, List<ReviewCommentCreateRequest.CommentItem> reviewComments, String githubUsername) {
         try {
             // API URL 구성
             String url = String.format("https://api.github.com/repos/%s/pulls/%d/reviews", repoFullName, githubPrNumber);
 
-            // 템플릿 포맷팅 (리뷰 본문 & 코멘트)
-            String reviewTemplate = """
-                    ### ✏️ **Reviewer: @%s**
-                    **리뷰 내용:**
-                    > %s
-                    """;
-
-            String commentTemplate = """
-                    **👀 Reviewer: @%s**
-                    %s
-                    """;
-
-            String formattedBody = reviewTemplate.formatted(githubUsername, body);
+            String formattedBody = REVIEW_TEMPLATE.formatted(githubUsername, body);
 
             List<Map<String, Object>> formattedComments = (reviewComments == null || reviewComments.isEmpty())
                     ? List.of()
@@ -52,7 +51,7 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
                         Map<String, Object> map = new HashMap<>();
                         map.put("path", c.getPath());
                         map.put("position", c.getPosition());
-                        map.put("body", commentTemplate.formatted(githubUsername, c.getBody()));
+                        map.put("body", COMMENT_TEMPLATE.formatted(githubUsername, c.getBody()));
                         return map;
                     })
                     .collect(Collectors.toList());
@@ -109,6 +108,37 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             return new GithubReviewResult(reviewId, commentIds);
         } catch (Exception e) {
             throw new RuntimeException("GitHub 리뷰 생성 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void updateReviewCommentOnGithub(Long installationId, String repoFullName, Long githubId, String newBody, String githubUsername) {
+        try {
+            String url = String.format(
+                    "https://api.github.com/repos/%s/pulls/comment/%d",
+                    repoFullName, githubId
+            );
+
+            String formattedBody = COMMENT_TEMPLATE.formatted(githubUsername, newBody);
+
+            // 요청 바디
+            Map<String, Object> requestBody = Map.of("body", formattedBody);
+
+            // 헤더
+            String token = githubAppUtil.getInstallationToken(installationId);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // PATCH 요청 전송
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            restTemplate.exchange(url, HttpMethod.PATCH, entity, String.class);
+
+            log.info("GitHub Review Comment Updated: commentId={}", githubId);
+
+        } catch (Exception e) {
+            throw new RuntimeException("GitHub 리뷰 코멘트 수정 실패: " + e.getMessage(), e);
         }
     }
 }
