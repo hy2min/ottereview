@@ -21,7 +21,7 @@ const RepositoryDetail = () => {
   const setRepoPRs = usePRStore((state) => state.setRepoPRs)
 
   const prs = repoPRs.filter((pr) => pr.repo?.id === Number(repoId))
-
+  console.log(repoId)
   useEffect(() => {
     const load = async () => {
       try {
