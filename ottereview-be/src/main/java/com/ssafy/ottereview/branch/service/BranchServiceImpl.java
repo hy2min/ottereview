@@ -104,7 +104,7 @@ public class BranchServiceImpl implements BranchService{
      */
     @Override
     public List<Branch> getBranchesByRepoId(Long repoId) {
-        return branchRepository.findAllByRepo_id(repoId);
+        return branchRepository.findAllById(repoId);
     }
 
     @Override
