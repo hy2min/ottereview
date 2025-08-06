@@ -425,3 +425,5 @@ def _fallback_simple_recommendation(similar_patterns: List[Dict[str, Any]], limi
         logger.error(f"폴백 추천도 실패: {str(e)}")
         return []
 
+
+
