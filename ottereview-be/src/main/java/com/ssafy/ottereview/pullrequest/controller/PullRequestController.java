@@ -9,6 +9,7 @@ import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.service.PullRequestPreparationService;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
+import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +29,12 @@ public class PullRequestController {
     
     private final PullRequestService pullRequestService;
     private final PullRequestPreparationService pullRequestPreparationService;
-    
-    /**
-     * @param userDetail 인증된 사용자 정보
-     * @param repoId     레포지토리 ID
-     * @param request    Pull Request 생성 가능한지에 대한 요청 정보
-     * @return PR 생성을 위해 필요한 정보 응답
-     */
+
     @PostMapping("/preparation/validation")
+    @Operation(
+            summary = "Pull Request 생성 검증",
+            description = "Pull Request 생성 가능 여부를 검증하고 필요한 준비 정보를 반환합니다."
+    )
     public ResponseEntity<PreparationData> validatePullRequest(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
@@ -44,8 +43,12 @@ public class PullRequestController {
         // GitHub API로 상태 확인 후 생성
         return ResponseEntity.ok(pullRequestPreparationService.validatePullRequest(userDetail, repoId, request));
     }
-    
+
     @GetMapping("/preparation")
+    @Operation(
+            summary = "Pull Request 준비 정보 조회",
+            description = "소스 브랜치와 타겟 브랜치 간의 Pull Request 생성을 위한 준비 정보를 조회합니다."
+    )
     public ResponseEntity<PreparationData> getPreparationInfo(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
@@ -54,8 +57,12 @@ public class PullRequestController {
         
         return ResponseEntity.ok(pullRequestPreparationService.getPreparePullRequestInfo(userDetail, repoId, source, target));
     }
-    
+
     @PostMapping("/preparation/additional-info")
+    @Operation(
+            summary = "Pull Request 추가 정보 등록",
+            description = "Pull Request 생성을 위한 추가 정보를 등록합니다."
+    )
     public ResponseEntity<Void> enrollPreparePullRequestAdditionalInfo(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
@@ -66,24 +73,48 @@ public class PullRequestController {
         return ResponseEntity.ok()
                 .build();
     }
-    
-    /**
-     * repositoryId에 해당하는 Pull Request 목록을 조회합니다. github api를 호출해서 동기화 한 후 저장된 Pull Request 목록을 반환합니다.
-     *
-     * @param repositoryId 레포지토리 ID
-     * @return repositoryId에 해당하는 Pull Request 목록
-     */
-    @GetMapping()
+
+    @GetMapping("/github")
+    @Operation(
+            summary = "Github에서 Pull Request 목록 조회",
+            description = "GitHub API를 호출하여 동기화한 후 해당 레포지토리의 Pull Request 목록을 반환합니다."
+    )
     public ResponseEntity<List<PullRequestResponse>> getPullRequestsByGithub(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
         return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
     }
-    
+
+    @GetMapping("/me")
+    @Operation(
+            summary = "내 Pull Request 목록 조회",
+            description = "로그인한 사용자가 작성한 Pull Request 목록을 조회합니다."
+    )
+    public ResponseEntity<List<PullRequestResponse>> getMyPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId) {
+        return ResponseEntity.ok(pullRequestService.getMyPullRequests(userDetail));
+    }
+
     @GetMapping("/{pr-id}")
+    @Operation(
+            summary = "Pull Request 상세 조회",
+            description = "특정 Pull Request의 상세 정보를 조회합니다."
+    )
     public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
         return ResponseEntity.ok(pullRequestService.getPullRequestById(userDetail, repoId, pullRequestId));
     }
-    
+
+    @GetMapping()
+    @Operation(
+            summary = "레포지토리 Pull Request 목록 조회",
+            description = "특정 레포지토리에 대한 Pull Request 목록을 조회합니다."
+    )
+    public ResponseEntity<List<PullRequestResponse>> getPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId) {
+        return ResponseEntity.ok(pullRequestService.getPullRequests(userDetail, repoId));
+    }
+
     @PostMapping()
+    @Operation(
+            summary = "Pull Request 생성",
+            description = "새로운 Pull Request를 생성합니다."
+    )
     public ResponseEntity<Void> createPullRequest(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,

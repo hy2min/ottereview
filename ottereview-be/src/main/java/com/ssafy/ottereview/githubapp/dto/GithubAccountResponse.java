@@ -12,5 +12,6 @@ public class GithubAccountResponse {
     private Long installationId;
     private String name;
     private String type;
+    private Long githubId;
     
 }

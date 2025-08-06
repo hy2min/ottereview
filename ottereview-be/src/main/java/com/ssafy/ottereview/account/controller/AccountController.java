@@ -1,12 +1,15 @@
 package com.ssafy.ottereview.account.controller;
 
 import com.ssafy.ottereview.account.dto.AccountResponse;
+import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.service.AccountService;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,5 +34,11 @@ public class AccountController {
     @GetMapping()
     public ResponseEntity<List<AccountResponse>> getAccountsByUser(User user) {
         return ResponseEntity.ok(accountService.getAccountsByUser(user));
+    }
+
+    @GetMapping("/{account-id}")
+    public ResponseEntity<List<User>> getUserAccountByAccount(@PathVariable (name = "account-id")Long accountId){
+        Account account = accountService.getAccountByAccountId(accountId);
+        return ResponseEntity.ok(accountService.getUserListByAccount(account));
     }
 }

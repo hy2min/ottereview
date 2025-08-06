@@ -32,4 +32,7 @@ public class Account extends BaseEntity {
     
     @Column
     private Long installationId;
+    
+    @Column
+    private Long githubId;
 }
