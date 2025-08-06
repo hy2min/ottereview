@@ -17,8 +17,8 @@ public enum ReviewState {
 
     public static ReviewState fromValue(String value) {
         return switch (value) {
-            case "comment" -> COMMENT;
-            case "approve" -> APPROVE;
+            case "commented" -> COMMENT;
+            case "approved" -> APPROVE;
             case "changes_requested" -> REQUEST_CHANGES;
             default -> throw new IllegalArgumentException("Unknown ReviewState value: " + value);
         };

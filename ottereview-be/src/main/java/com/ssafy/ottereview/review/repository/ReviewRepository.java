@@ -22,4 +22,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     @Query("SELECT r FROM Review r LEFT JOIN FETCH r.reviewComments WHERE r.id = :reviewId")
     Optional<Review> findByIdWithComments(@Param("reviewId") Long reviewId);
+
+    Optional<Review> findByGithubId(Long githubId);
 }

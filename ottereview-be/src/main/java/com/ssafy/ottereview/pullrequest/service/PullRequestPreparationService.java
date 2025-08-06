@@ -1,6 +1,6 @@
 package com.ssafy.ottereview.pullrequest.service;
 
-import com.ssafy.ottereview.account.service.AccountService;
+import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.pullrequest.dto.preparation.CommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
@@ -39,12 +39,12 @@ public class PullRequestPreparationService {
     private final UserRepository userRepository;
     private final GithubApiClient githubApiClient;
     private final DiffUtil diffUtil;
-    private final AccountService accountService;
+    private final UserAccountService userAccountService;
     private final PullRequestRedisRepository pullRequestRedisService;
     
     public PreparationData getPreparePullRequestInfo(CustomUserDetail userDetail, Long repoId, String source, String target) {
         
-        accountService.validateUserPermission(userDetail.getUser()
+        userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
         
         PreparationData preparationData = pullRequestRedisService.getPrepareInfo(repoId, source, target);
@@ -59,7 +59,7 @@ public class PullRequestPreparationService {
     public PreparationData validatePullRequest(CustomUserDetail userDetail, Long repoId, PreparationValidationRequest request) {
         
         // 1. 유저 권한 검증
-        Repo repo = accountService.validateUserPermission(userDetail.getUser()
+        Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
 
        User author = userDetail.getUser();
@@ -76,7 +76,7 @@ public class PullRequestPreparationService {
     
     public void enrollAdditionalInfo(CustomUserDetail userDetail, Long repoId, AdditionalInfoRequest request) {
         try {
-            accountService.validateUserPermission(userDetail.getUser()
+            userAccountService.validateUserPermission(userDetail.getUser()
                     .getId(), repoId);
             
             // 1. 기존 데이터 조회

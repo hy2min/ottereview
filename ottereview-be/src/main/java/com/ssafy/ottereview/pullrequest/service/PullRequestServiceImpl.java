@@ -1,6 +1,6 @@
 package com.ssafy.ottereview.pullrequest.service;
 
-import com.ssafy.ottereview.account.service.AccountService;
+import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.description.entity.Description;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
@@ -55,15 +55,14 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final UserRepository userRepository;
     private final ReviewerRepository reviewerRepository;
     private final PullRequestRedisRepository pullRequestRedisRepository;
-    private final AccountService accountService;
+    private final UserAccountService userAccountService;
     private final PriorityRepository priorityRepository;
     private final DescriptionRepository descriptionRepository;
-    private final AuthService authService;
 
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
         // 1. 사용자 권한 검증 및 레포지토리 조회
-        Repo targetRepo = accountService.validateUserPermission(customUserDetail.getUser()
+        Repo targetRepo = userAccountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
 
         // 2. 해당 레포지토리의 Pull Request 목록 조회
@@ -79,7 +78,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
             Long repoId) {
 
-        Repo targetRepo = accountService.validateUserPermission(userDetail.getUser()
+        Repo targetRepo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
 
         // 2. Repo 엔티티에서 GitHub 저장소 이름과 설치 ID를 가져온다.
@@ -120,7 +119,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     public PullRequestDetailResponse getPullRequestById(CustomUserDetail customUserDetail,
             Long repoId, Long pullRequestId) {
 
-        accountService.validateUserPermission(customUserDetail.getUser()
+        userAccountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
 
         PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
@@ -150,7 +149,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     public void createPullRequest(CustomUserDetail customUserDetail, Long repoId,
             PullRequestCreateRequest pullRequestCreateRequest) {
 
-        Repo repo = accountService.validateUserPermission(customUserDetail.getUser()
+        Repo repo = userAccountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
 
         // redis에 저장된 정보 불러오기

@@ -39,7 +39,7 @@ public class Review extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "github_id")
+    @Column(name = "github_id", unique = true, nullable = false)
     private Long githubId;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -79,5 +79,10 @@ public class Review extends BaseEntity {
 
     public void updateGithubId(Long githubId) {
         this.githubId = githubId;
+    }
+
+    public void updateBodyAndCreateAt(String body, LocalDateTime githubCreatedAt ){
+        this.body = body;
+        this.githubCreatedAt = githubCreatedAt;
     }
 }
