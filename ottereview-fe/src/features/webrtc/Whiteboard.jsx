@@ -7,6 +7,8 @@ import SockJS from 'sockjs-client'
 import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
 
+import { useAuthStore } from '@/features/auth/authStore'
+
 const Whiteboard = ({ roomId }) => {
   const [store] = useState(() => createTLStore({ shapeUtils: defaultShapeUtils }))
   const [loading, setLoading] = useState(true)
@@ -21,7 +23,7 @@ const Whiteboard = ({ roomId }) => {
 
   // STOMP 웹소켓 연결을 설정
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
+    const token = useAuthStore.getState().accessToken
     const socket = new SockJS('http://localhost:8080/ws')
     const stomp = Stomp.over(socket)
     stomp.debug = () => {} // 디버그 로그 비활성화

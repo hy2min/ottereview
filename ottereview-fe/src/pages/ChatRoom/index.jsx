@@ -1,8 +1,9 @@
 import { useState } from 'react'
 
-import Chat from '../../features/chat/Chat'
-import CodeEditor from '../../features/chat/CodeEditor'
-import Whiteboard from '../../features/chat/Whiteboard'
+import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
+import Chat from '@/features/webrtc/Chat'
+import CodeEditor from '@/features/webrtc/CodeEditor'
+import Whiteboard from '@/features/webrtc/Whiteboard'
 
 const ChatRoom = () => {
   const [roomIdInput, setRoomIdInput] = useState('')
@@ -15,7 +16,7 @@ const ChatRoom = () => {
 
   return (
     <div style={{ padding: '2rem' }}>
-      <h2>🧪 WebSocket 채팅 + Yorkie 코드 공유 + 화이트보드</h2>
+      <h2>🧪 채팅방 </h2>
 
       <div style={{ marginBottom: '1rem' }}>
         <input
@@ -36,6 +37,7 @@ const ChatRoom = () => {
 
           <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
             <div style={{ flex: 1 }}>
+              <AudioChatRoom roomId={roomId} />
               <Chat roomId={roomId} />
             </div>
             <div style={{ flex: 2 }}>
