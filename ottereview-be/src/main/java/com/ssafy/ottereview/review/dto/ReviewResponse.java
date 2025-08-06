@@ -17,6 +17,7 @@ public class ReviewResponse {
 
     private Long id;
     private Long pullRequestId;
+    private int githubPrNumber;
     private String userGithubUsername;
     private ReviewState state;
     private String body;
@@ -30,13 +31,13 @@ public class ReviewResponse {
         return new ReviewResponse(
                 review.getId(),
                 review.getPullRequest().getId(),
+                review.getPullRequest().getGithubPrNumber(),
                 review.getUser().getGithubUsername(),
                 review.getState(),
                 review.getBody(),
                 review.getCommitSha(),
                 review.getReviewComments().stream()
-                        .map(comment -> ReviewCommentResponse.from(
-                                comment))
+                        .map(comment -> ReviewCommentResponse.from(comment))
                         .collect(Collectors.toList()),
                 review.getGithubCreatedAt(),
                 review.getCreatedAt(),

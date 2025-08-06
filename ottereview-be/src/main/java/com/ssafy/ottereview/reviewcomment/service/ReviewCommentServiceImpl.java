@@ -1,7 +1,10 @@
 package com.ssafy.ottereview.reviewcomment.service;
 
+import com.ssafy.ottereview.account.repository.AccountRepository;
+import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
+import com.ssafy.ottereview.review.service.ReviewGithubService;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
@@ -29,6 +32,8 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     private final ReviewCommentRepository reviewCommentRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
+    private final ReviewGithubService reviewGithubService;
+    private final AccountRepository accountRepository;
     private final S3ServiceImpl s3Service;
 
     @Override
@@ -167,6 +172,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                 ReviewComment updatedComment = ReviewComment.builder()
                         .id(existingComment.getId())
                         .user(existingComment.getUser())
+                        .githubId(existingComment.getGithubId())
                         .review(existingComment.getReview())
                         .path(existingComment.getPath())
                         .body(newBody)
@@ -179,6 +185,9 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                 try {
                     reviewCommentRepository.save(updatedComment);
                     log.info("댓글 수정 - DB 업데이트 완료: CommentId: {}", commentId);
+
+                    // GitHub API 호출
+                    githubUpdateComment(updatedComment, newBody);
 
                     // 3단계: DB 업데이트 성공 후 기존 파일 삭제
                     if (oldRecordKey != null && !oldRecordKey.isEmpty() && !oldRecordKey.equals(
@@ -230,6 +239,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     .id(existingComment.getId())
                     .user(existingComment.getUser())
                     .review(existingComment.getReview())
+                    .githubId(existingComment.getGithubId())
                     .path(existingComment.getPath())
                     .body(newBody)
                     .recordKey(newRecordKey) // 기존 recordKey 유지
@@ -239,10 +249,42 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     .build();
 
             reviewCommentRepository.save(updatedComment);
+
+            // 깃허브 동기화
+            githubUpdateComment(updatedComment, newBody);
             return ReviewCommentResponse.from(updatedComment);
         } else {
             // 변경사항 없음
             return ReviewCommentResponse.from(existingComment);
+        }
+    }
+
+    private void githubUpdateComment(ReviewComment comment, String newBody) {
+        try {
+            String repoFullName = comment.getReview()
+                    .getPullRequest()
+                    .getRepo()
+                    .getFullName();
+
+            Long accountId = comment.getReview()
+                    .getPullRequest()
+                    .getRepo()
+                    .getAccount()
+                    .getId();
+
+            Long installationId = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found"))
+                    .getInstallationId();
+
+            reviewGithubService.updateReviewCommentOnGithub(
+                    installationId,
+                    repoFullName,
+                    comment.getGithubId(),
+                    newBody,
+                    comment.getUser().getGithubUsername()
+            );
+        } catch (Exception e) {
+            log.error("GitHub 코멘트 동기화 실패: commentId={}, message={}", comment.getId(), e.getMessage());
         }
     }
 
