@@ -26,7 +26,14 @@ const Dashboard = () => {
     const fetchData = async () => {
       try {
         const fetchedRepos = await fetchRepoList(user.id)
-        setRepos(fetchedRepos)
+        console.log('📦 레포 응답:', fetchedRepos)
+
+        if (Array.isArray(fetchedRepos)) {
+          setRepos(fetchedRepos)
+        } else {
+          console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
+          setRepos([]) // 또는 clearRepos()
+        }
 
         const authored = await fetchAuthoredPRs()
         setAuthoredPRs(authored)
@@ -35,6 +42,10 @@ const Dashboard = () => {
         setReviewerPRs(reviewed)
       } catch (err) {
         console.error('📛 대시보드 fetch 실패:', err)
+
+        setRepos([])
+        setAuthoredPRs([])
+        setReviewerPRs([])
       }
     }
 
@@ -43,7 +54,7 @@ const Dashboard = () => {
 
   const handleTest = async () => {
     try {
-      const res = await api.get(`/api/account/1/repositories/1/branches`)
+      const res = await api.get(`/api/repositories/7/pull-requests`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
