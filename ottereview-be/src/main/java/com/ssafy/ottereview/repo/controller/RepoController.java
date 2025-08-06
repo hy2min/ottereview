@@ -111,8 +111,8 @@ public class RepoController {
         return ResponseEntity.ok(repoResponse);
     }
 
-    @GetMapping("/{repo-id}/users")
-    public ResponseEntity<?> getUserListByRepoId(@PathVariable(name = "repo-id") Long repoId) {
+    @GetMapping("/{id}/users")
+    public ResponseEntity<?> getUserListByRepoId(@PathVariable(name = "id") Long repoId) {
         return ResponseEntity.ok(repoService.getUserListByRepoId(repoId));
     }
 
