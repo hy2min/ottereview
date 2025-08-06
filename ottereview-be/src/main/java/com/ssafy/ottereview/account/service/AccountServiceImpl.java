@@ -56,6 +56,7 @@ public class AccountServiceImpl implements AccountService {
                 .installationId(githubAccountResponse.getInstallationId())
                 .type(githubAccountResponse.getType())
                 .name(githubAccountResponse.getName())
+                .githubId(githubAccountResponse.getGithubId())
                 .build();
         
         return accountRepository.save(account);
@@ -93,7 +94,20 @@ public class AccountServiceImpl implements AccountService {
         
         return repo;
     }
-    
+
+    @Override
+    public List<User> getUserListByAccount(Account account) {
+        List<UserAccount> userAccountList = userAccountRepository.findAllByAccount(account);
+        List<User> userList = userAccountList.stream().map(UserAccount::getUser).toList();
+        return userList;
+    }
+
+    @Override
+    public Account getAccountByAccountId(Long accountId) {
+        Account account = accountRepository.findById(accountId).orElseThrow();
+        return account;
+    }
+
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),

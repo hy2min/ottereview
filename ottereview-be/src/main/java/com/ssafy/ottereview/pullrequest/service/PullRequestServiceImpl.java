@@ -1,11 +1,18 @@
 package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.account.service.AccountService;
+import com.ssafy.ottereview.description.entity.Description;
+import com.ssafy.ottereview.description.repository.DescriptionRepository;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.priority.entity.Priority;
+import com.ssafy.ottereview.priority.repository.PriorityRepository;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
+import com.ssafy.ottereview.pullrequest.dto.preparation.DescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PriorityInfo;
+import com.ssafy.ottereview.pullrequest.dto.preparation.UserInfo;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
@@ -39,7 +46,7 @@ import org.springframework.stereotype.Service;
 @Service
 @Transactional
 public class PullRequestServiceImpl implements PullRequestService {
-    
+
     private final GithubApiClient githubApiClient;
     private final PullRequestRepository pullRequestRepository;
     private final RepoRepository repoRepository;
@@ -47,45 +54,74 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final ReviewerRepository reviewerRepository;
     private final PullRequestRedisRepository pullRequestRedisRepository;
     private final AccountService accountService;
-    
+    private final PriorityRepository priorityRepository;
+    private final DescriptionRepository descriptionRepository;
+
+    @Override
+    public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
+        // 1. 사용자 권한 검증 및 레포지토리 조회
+        Repo targetRepo = accountService.validateUserPermission(customUserDetail.getUser()
+                .getId(), repoId);
+
+        // 2. 해당 레포지토리의 Pull Request 목록 조회
+        List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
+
+        // 3. Pull Request 목록을 DTO로 변환하여 반환
+        return pullRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
     @Override
     public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
             Long repoId) {
-        
+
         Repo targetRepo = accountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
-        
+
         // 2. Repo 엔티티에서 GitHub 저장소 이름과 설치 ID를 가져온다.
         String repositoryFullName = targetRepo.getFullName();
         Long installationId = targetRepo.getAccount()
                 .getInstallationId();
-        
+
         // 3. GitHub API를 호출하여 해당 레포지토리의 Pull Request 목록을 가져온다.
         List<GithubPrResponse> githubPrResponses = githubApiClient.getPullRequests(installationId,
                 repositoryFullName);
-        
+
         // 4~8. GitHub PR과 DB PR 동기화
         synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
-        
+
         // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
         List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-        
+
         return finalPullRequests.stream()
                 .map(this::convertToResponse)
                 .toList();
     }
-    
+
+    @Override
+    public List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail) {
+        User loginUser = userRepository.findById(customUserDetail.getUser().getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser().getId()));
+
+        List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser);
+
+        return pullRequests.stream()
+                .map(this::convertToResponse)
+                .toList();
+    }
+
     @Override
     public PullRequestDetailResponse getPullRequestById(CustomUserDetail customUserDetail,
             Long repoId, Long pullRequestId) {
-        
+
         accountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
-        
+
         PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "Pull Request not found with id: " + pullRequestId));
-        
+
         Long installationId = pullRequest.getRepo()
                 .getAccount()
                 .getInstallationId();
@@ -93,54 +129,103 @@ public class PullRequestServiceImpl implements PullRequestService {
         List<PullRequestFileDetail> pullRequestFileChanges = githubApiClient.getPullRequestFileChanges(
                 installationId, pullRequest.getRepo()
                         .getFullName(), pullRequest.getGithubPrNumber());
-        
+
         // commit 목록 가져오기
         List<PullRequestCommitDetail> pullRequestCommitDetails = githubApiClient.getPullRequestCommits(
                 installationId, pullRequest.getRepo()
                         .getFullName(), pullRequest.getGithubPrNumber());
-        
+
         // dto 변환 후 리턴
         return convertToDetailResponse(pullRequest, pullRequestFileChanges,
                 pullRequestCommitDetails);
-        
+
     }
-    
+
     @Override
     public void createPullRequest(CustomUserDetail customUserDetail, Long repoId,
             PullRequestCreateRequest pullRequestCreateRequest) {
-        
+
         Repo repo = accountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
-        
+
         // redis에 저장된 정보 불러오기
         PreparationData prepareInfo = pullRequestRedisRepository.getPrepareInfo(repoId, pullRequestCreateRequest.getSource(), pullRequestCreateRequest.getTarget());
-        
+
         if (prepareInfo == null) {
             throw new IllegalArgumentException("Preparation data not found for repoId: " + repoId);
         }
-        
+
         // PR 생성 검증
         validatePullRequestCreation(prepareInfo, repo);
-        
+
+        // PR 생성
         GithubPrResponse prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
                 .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), prepareInfo.getSource(), prepareInfo.getTarget())
         );
-        
+
+        // PR 저장
         PullRequest pullRequest = convertToEntity(prResponse, customUserDetail.getUser(), repo);
         pullRequest.enrollSummary(prepareInfo.getSummary());
-        
-        pullRequestRepository.save(pullRequest);
+        PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
+
+        // 리뷰어 저장
+        List<UserInfo> reviewers = prepareInfo.getReviewers();
+
+        List<User> userList = reviewers.stream()
+                .map(this::getUserFromUserInfo)
+                .toList();
+
+        List<Reviewer> reviewerList = userList.stream()
+                .map(user -> Reviewer.builder()
+                        .pullRequest(savePullRequest)
+                        .user(user)
+                        .build())
+                .toList();
+
+        reviewerRepository.saveAll(reviewerList);
+        log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
+
+        // 우선 순위 저장
+        List<PriorityInfo> priorities = prepareInfo.getPriorities();
+        List<Priority> priorityList = priorities.stream()
+                .map((priorityInfo) -> Priority.builder()
+                        .pullRequest(savePullRequest)
+                        .title(priorityInfo.getTitle())
+                        .idx(priorityInfo.getIdx())
+                        .content(priorityInfo.getContent())
+                        .build())
+                .toList();
+
+        priorityRepository.saveAll(priorityList);
+        log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
+
+        // 작성자 설명 저장
+        List<DescriptionInfo> descriptions = prepareInfo.getDescriptions();
+        List<Description> descriptionList = descriptions.stream()
+                .map(descriptionInfo ->
+                        Description.builder()
+                                .pullRequest(savePullRequest)
+                                .path(descriptionInfo.getPath())
+                                .position(descriptionInfo.getPosition())
+                                .recordKey(descriptionInfo.getRecordKey())
+                                .build()
+                )
+                .toList();
+
+        descriptionRepository.saveAll(descriptionList);
+        log.debug("설명 저장 완료, 설명 수: {}", descriptionList.size());
+
     }
-    
+
     @Override
     public void createPullRequestFromGithub(List<GHRepository> githubRepositories) {
-        
+
         try {
             //6. Repo 별 PR 생성
             for (GHRepository repo : githubRepositories) {
                 log.info("Repo ID: {}, Full Name: {}, Private: {}",
                         repo.getId(), repo.getFullName(), repo.isPrivate());
-                
+
                 List<GithubPrResponse> githubPrResponses = repo.queryPullRequests()
                         .state(GHIssueState.OPEN)
                         .list()
@@ -148,18 +233,20 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .stream()
                         .map(GithubPrResponse::from)
                         .toList();
-                
+
                 // 1. repositoryId로 Repo 엔티티를 조회한다.
                 Repo targetRepo = repoRepository.findByRepoId(repo.getId())
                         .orElseThrow(() -> new IllegalArgumentException(
                                 "Repository not found with id: " + repo.getId()));
-                
+
                 // 2. GitHub PR 응답을 PullRequest 엔티티로 변환
                 List<PullRequest> newPullRequests = new ArrayList<>();
                 List<Reviewer> newReviewers = new ArrayList<>();
                 for (GithubPrResponse githubPr : githubPrResponses) {
-                    log.info("github id: {} ", githubPr.getAuthor().getId());
-                    log.info("github name: {}", githubPr.getAuthor().getName());
+                    log.info("github id: {} ", githubPr.getAuthor()
+                            .getId());
+                    log.info("github name: {}", githubPr.getAuthor()
+                            .getName());
                     log.info("github title: {}", githubPr.getTitle());
                     User author = userRepository.findByGithubEmail(githubPr.getAuthor()
                                     .getEmail())
@@ -180,7 +267,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                     }
                     newPullRequests.add(pullRequest);
                 }
-                
+
                 if (!newPullRequests.isEmpty()) {
                     pullRequestRepository.saveAll(newPullRequests);
                     reviewerRepository.saveAll(newReviewers);
@@ -192,9 +279,15 @@ public class PullRequestServiceImpl implements PullRequestService {
             throw new RuntimeException("Failed to create pull requests from GitHub repositories",
                     e);
         }
-        
+
     }
-    
+
+    private User getUserFromUserInfo(UserInfo userInfo) {
+        return userRepository.findById(userInfo.getId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "User not found with id: " + userInfo.getId()));
+    }
+
     /**
      * pullRequest 생성 시 필요한 정보가 모두 있는지 검증하는 메서드
      */
@@ -203,7 +296,7 @@ public class PullRequestServiceImpl implements PullRequestService {
             throw new IllegalArgumentException("Source or target branch is null");
         }
     }
-    
+
     /**
      * GitHub에서 가져온 PR 정보와 DB의 PR을 동기화하는 메서드
      *
@@ -213,23 +306,23 @@ public class PullRequestServiceImpl implements PullRequestService {
      */
     private void synchronizePullRequestsWithGithub(List<GithubPrResponse> githubPrResponses,
             Repo targetRepo, User user) {
-        
+
         List<PullRequest> existingPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-        
+
         Map<Integer, PullRequest> existingPrMap = existingPullRequests.stream()
                 .collect(Collectors.toMap(PullRequest::getGithubPrNumber, pr -> pr));
-        
+
         // 5. GitHub에서 가져온 PR 번호 Set
         Set<Integer> githubPrNumbers = githubPrResponses.stream()
                 .map(GithubPrResponse::getGithubPrNumber)
                 .collect(Collectors.toSet());
-        
+
         // 6. 새로운 PR과 기존 PR을 비교하여 저장할 Pull Request 목록을 준비한다.
         List<PullRequest> pullRequestsToSave = new ArrayList<>();
-        
+
         for (GithubPrResponse githubPr : githubPrResponses) {
             PullRequest existingPr = existingPrMap.get(githubPr.getGithubPrNumber());
-            
+
             if (existingPr == null) {
                 // 6-1. 새로운 PR: 생성
                 PullRequest newPr = convertToEntity(githubPr, user, targetRepo);
@@ -243,20 +336,20 @@ public class PullRequestServiceImpl implements PullRequestService {
                 }
             }
         }
-        
+
         // 7. 데이터베이스에 없는 PR들을 삭제 처리한다.
         List<PullRequest> prsToMarkAsDeleted = existingPullRequests.stream()
                 .filter(pr -> !githubPrNumbers.contains(pr.getGithubPrNumber()))
                 .toList();
-        
+
         pullRequestRepository.deleteAll(prsToMarkAsDeleted);
-        
+
         if (!pullRequestsToSave.isEmpty()) {
             pullRequestRepository.saveAll(pullRequestsToSave);
             log.info("총 {}개의 PR이 동기화되었습니다.", pullRequestsToSave.size());
         }
     }
-    
+
     private PullRequestDetailResponse convertToDetailResponse(PullRequest pr,
             List<PullRequestFileDetail> pullRequestFileChanges,
             List<PullRequestCommitDetail> pullRequestCommitDetails) {
@@ -284,9 +377,9 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .commits(pullRequestCommitDetails)
                 .build();
     }
-    
+
     private PullRequest convertToEntity(GithubPrResponse githubPrResponse, User author, Repo repo) {
-        
+
         return PullRequest.builder()
                 .githubPrNumber(githubPrResponse.getGithubPrNumber())
                 .author(author)
@@ -311,7 +404,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .approveCnt(0) // 초기값 - 나중에 리뷰 분석으로 계산
                 .build();
     }
-    
+
     private PullRequestResponse convertToResponse(PullRequest pr) {
         return PullRequestResponse.builder()
                 .id(pr.getId())
@@ -335,7 +428,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .author(convertToUserResponse(pr.getAuthor()))
                 .build();
     }
-    
+
     private UserResponseDto convertToUserResponse(User user) {
         return new UserResponseDto(
                 user.getId(),
