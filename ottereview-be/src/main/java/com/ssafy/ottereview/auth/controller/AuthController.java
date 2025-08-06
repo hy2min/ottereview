@@ -69,10 +69,9 @@ public class AuthController {
 
         return ResponseEntity.ok(new AccessTokenResponseDto(tokens.getAccessToken()));
     }
-
     
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(Authentication authentication) {
+    public ResponseEntity<Void> logout(Authentication authentication, HttpServletResponse response) {
         Long userId = Long.valueOf(authentication.getName());
         authService.logout(userId);
         ResponseCookie deleteCookie = ResponseCookie.from("refreshToken", "")

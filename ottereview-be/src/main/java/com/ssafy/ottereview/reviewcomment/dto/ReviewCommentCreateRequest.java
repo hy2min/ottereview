@@ -24,7 +24,17 @@ public class ReviewCommentCreateRequest {
 
         private String body;
 
-        private Integer position;
+        /** 한 줄 코멘트의 라인 번호 */
+        private Integer line;
+
+        /** 한 줄 코멘트의 side ("LEFT" or "RIGHT") */
+        private String side;
+
+        /** 멀티 라인 코멘트 시작 라인 */
+        private Integer startLine;
+
+        /** 멀티 라인 코멘트 시작 side */
+        private String startSide;
 
         // 파일 인덱스 (files 배열에서의 위치, 없으면 null)
         private Integer fileIndex;
