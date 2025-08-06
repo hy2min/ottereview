@@ -12,7 +12,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class PushEventInfo {
+public class PushEventDto {
     
     private String ref;
     private String branchName;
