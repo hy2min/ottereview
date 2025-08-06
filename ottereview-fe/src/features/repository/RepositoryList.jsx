@@ -7,7 +7,7 @@ import { fetchAuthoredPRs, fetchReviewerPRs } from '../pullRequest/prApi'
 import { usePRStore } from '../pullRequest/stores/prStore'
 import { fetchRepoList } from './repoApi'
 import RepositoryCard from './RepositoryCard'
-import { useRepoStore } from './repoStore'
+import { useRepoStore } from './stores/repoStore'
 
 const RepositoryList = () => {
   const navigate = useNavigate()
@@ -55,7 +55,7 @@ const RepositoryList = () => {
   }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'
+    const importUrl = 'https://github.com/apps/Ottereviews/installations/new'
     window.location.href = importUrl
   }
 
@@ -67,7 +67,9 @@ const RepositoryList = () => {
     <Box shadow className="w-full h-[70vh] flex flex-col">
       <div className="flex justify-between">
         <h2 className="text-xl mb-2">레포지토리</h2>
-        <button onClick={handleImport}>연결</button>
+        <button className="border-2 border-black px-4" onClick={handleImport}>
+          연결
+        </button>
       </div>
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {repos.length === 0 ? (
