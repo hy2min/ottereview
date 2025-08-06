@@ -2,7 +2,8 @@ import InputBox from '../../components/InputBox'
 import { usePRCreateStore } from './stores/prCreateStore'
 
 const PRCreateStep2 = () => {
-  const { formData, setFormData } = usePRCreateStore()
+  const formData = usePRCreateStore((state) => state.formData)
+  const setFormData = usePRCreateStore((state) => state.setFormData)
 
   const branchOptions = [
     { label: '브랜치를 선택하세요', value: '' },
