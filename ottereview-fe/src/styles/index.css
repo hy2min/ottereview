@@ -14,7 +14,7 @@
 /* ===== 전역 폰트 적용 ===== */
 body {
   font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
-  background-color: var(--color-gray-50);
+  background-color: var(--color-warning-100);
   background-attachment: fixed;
   min-height: 100vh;
 }
@@ -124,6 +124,104 @@ html {
 }
 
 :root {
+  --color-primary-50: #e8f5e8;
+  --color-primary-100: #c8e6c8;
+  --color-primary-200: #a8d7a8;
+  --color-primary-300: #88c888;
+  --color-primary-400: #68b968;
+  --color-primary-500: #48aa48;
+  --color-primary-600: #3a8a3a;
+  --color-primary-700: #2c6a2c;
+  --color-primary-800: #1e4a1e;
+  --color-primary-900: #102a10;
+
+  --color-secondary-50: #f0f8ff;
+  --color-secondary-100: #e0f0ff;
+  --color-secondary-200: #c0e0ff;
+  --color-secondary-300: #a0d0ff;
+  --color-secondary-400: #80c0ff;
+  --color-secondary-500: #60b0ff;
+  --color-secondary-600: #4d8ccc;
+  --color-secondary-700: #3a6899;
+  --color-secondary-800: #274466;
+  --color-secondary-900: #142033;
+
+  --color-accent-50: #fff8e1;
+  --color-accent-100: #ffecb3;
+  --color-accent-200: #ffe082;
+  --color-accent-300: #ffd54f;
+  --color-accent-400: #ffca28;
+  --color-accent-500: #ffc107;
+  --color-accent-600: #ffb300;
+  --color-accent-700: #ffa000;
+  --color-accent-800: #ff8f00;
+  --color-accent-900: #ff6f00;
+
+  --color-earth-50: #f5f5dc;
+  --color-earth-100: #e8e8b8;
+  --color-earth-200: #d4d494;
+  --color-earth-300: #c0c070;
+  --color-earth-400: #acac4c;
+  --color-earth-500: #989828;
+  --color-earth-600: #7a7a20;
+  --color-earth-700: #5c5c18;
+  --color-earth-800: #3e3e10;
+  --color-earth-900: #202008;
+
+  --color-stone-50: #f8f8f8;
+  --color-stone-100: #e8e8e8;
+  --color-stone-200: #d0d0d0;
+  --color-stone-300: #b8b8b8;
+  --color-stone-400: #a0a0a0;
+  --color-stone-500: #888888;
+  --color-stone-600: #6d6d6d;
+  --color-stone-700: #525252;
+  --color-stone-800: #373737;
+  --color-stone-900: #1c1c1c;
+
+  --color-danger-50: #ffeaea;
+  --color-danger-100: #ffd5d5;
+  --color-danger-200: #ffb3b3;
+  --color-danger-300: #ff9191;
+  --color-danger-400: #ff6f6f;
+  --color-danger-500: #ff4d4d;
+  --color-danger-600: #cc3e3e;
+  --color-danger-700: #992e2e;
+  --color-danger-800: #661f1f;
+  --color-danger-900: #330f0f;
+
+  --color-success-50: #e8f5e8;
+  --color-success-100: #c8e6c8;
+  --color-success-200: #a8d7a8;
+  --color-success-300: #88c888;
+  --color-success-400: #68b968;
+  --color-success-500: #48aa48;
+  --color-success-600: #3a8a3a;
+  --color-success-700: #2c6a2c;
+  --color-success-800: #1e4a1e;
+  --color-success-900: #102a10;
+
+  --color-warning-50: #fff8e1;
+  --color-warning-100: #ffecb3;
+  --color-warning-200: #ffe082;
+  --color-warning-300: #ffd54f;
+  --color-warning-400: #ffca28;
+  --color-warning-500: #ffc107;
+  --color-warning-600: #ffb300;
+  --color-warning-700: #ffa000;
+  --color-warning-800: #ff8f00;
+  --color-warning-900: #ff6f00;
+
+  --color-info-50: #e3f2fd;
+  --color-info-100: #bbdefb;
+  --color-info-200: #90caf9;
+  --color-info-300: #64b5f6;
+  --color-info-400: #42a5f5;
+  --color-info-500: #2196f3;
+  --color-info-600: #1e88e5;
+  --color-info-700: #1976d2;
+  --color-info-800: #1565c0;
+  --color-info-900: #0d47a1;
   /* =======================================================
      🖋️ Font Families
      ======================================================= */
@@ -291,18 +389,6 @@ html {
 
 .soft-input::placeholder {
   color: #6b7280; /* @apply placeholder-gray-500 (Tailwind gray-500) */
-}
-
-/* Soft rounded badges */
-.soft-badge {
-  display: inline-flex; /* @apply inline-flex */
-  align-items: center; /* @apply items-center */
-  padding: 0.25rem 0.5rem; /* @apply px-2 py-1 */
-  font-size: 0.75rem; /* @apply text-xs */
-  font-weight: 500; /* @apply font-medium */
-  border-width: 1px; /* @apply border */
-  border-color: black; /* @apply border-black */
-  border-radius: 6px;
 }
 
 /* 박스 쉐도우를 위한 유틸리티 클래스 */

@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 import Chat from '../../features/chat/Chat'
 import CodeEditor from '../../features/chat/CodeEditor'
-// import Whiteboard from '../../features/chat/Whiteboard'
+import Whiteboard from '../../features/chat/Whiteboard'
 
 const ChatRoom = () => {
   const [roomIdInput, setRoomIdInput] = useState('')
@@ -43,9 +43,9 @@ const ChatRoom = () => {
             </div>
           </div>
 
-          {/* <div style={{ marginTop: '2rem', height: '500px', border: '1px solid #ccc' }}>
+          <div style={{ marginTop: '2rem', height: '500px', border: '1px solid #ccc' }}>
             <Whiteboard roomId={roomId} />
-          </div> */}
+          </div>
         </>
       )}
     </div>

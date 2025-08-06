@@ -1,6 +1,8 @@
 from utils.cushion_convert import convert_review_to_soft_tone
 from utils.vector_db import vector_db, PRData
-from fastapi import FastAPI, HTTPException
+from utils.pull_request import recommand_pull_request_title, summary_pull_request, recommend_reviewers
+from utils.whisper import whisper_service
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import openai
 import os
@@ -59,27 +61,10 @@ async def convert_review(review_data: reviewRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI 변환 중 오류가 발생했습니다: {str(e)}")
 
-class PullRequestTitleRequest(BaseModel):
-
-    commit_messages: list[str]
-    file_changes: list[str]
-    code_changes: list[str]
-    branch_name: Optional[str] = None
-    """
-    Pull Request 제목 생성을 위한 요청 모델
-    - commit_messages: 커밋 메시지 목록
-    - file_changes: 변경된 파일 목록
-    - code_changes: 주요 코드 변경사항 목록
-    - branch_name: 브랜치명 (선택적)
-    """
-
-class PRDataRequest(BaseModel):
-    pr_id: str
-    pr_data: PRData
 
 
 @app.post("/ai/pull_requests/title")
-async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
+async def generate_pull_request_title(pr_data: PRData):
     """
     Pull Request 제목을 생성합니다.
     
@@ -91,7 +76,7 @@ async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
     """
     try:
         title = await recommand_pull_request_title(pr_data)
-        return {"title": title}
+        return {"result": title}
         
     except Exception as e:
         logger.error(f"API 호출 중 오류: {str(e)}")
@@ -99,9 +84,31 @@ async def generate_pull_request_title(pr_data: PullRequestTitleRequest):
             status_code=500, 
             detail="PR 제목 생성 중 오류가 발생했습니다."
         )
-
+    
+@app.post("/ai/pull_requests/summary")
+async def summary_pull_request_title(pr_data: PRData):
+    """
+    Pull Request의 내용을 요약합니다.
+    
+    Args:
+        pr_data: PRData 객체 (vector_db.py의 구조)
+        
+    Returns:
+        {"summary": "요약된 PR 내용"}
+    """
+    try:
+        summary = await summary_pull_request(pr_data)
+        return {"result": summary}
+        
+    except Exception as e:
+        logger.error(f"API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500, 
+            detail="Pull Request 요약 생성 중 오류가 발생했습니다."
+        )
+    
 @app.post("/ai/vector-db/store")
-async def store_pr_to_vector_db(pr_request: PRDataRequest):
+async def store_pr_to_vector_db(pr_request: PRData):
     """
     PR 데이터를 벡터 DB에 저장합니다.
     
@@ -128,6 +135,55 @@ async def store_pr_to_vector_db(pr_request: PRDataRequest):
         raise HTTPException(
             status_code=500,
             detail=f"벡터 DB 저장 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@app.post("/ai/speech/transcribe")
+async def transcribe_audio(
+    file: UploadFile = File(...),
+):
+    """
+    음성 파일을 텍스트로 변환 (STT)
+    
+    Args:
+        audio_file: 업로드된 음성 파일 (mp3, mp4, mpeg, mpga, m4a, wav, webm)
+        language: 언어 코드 (선택사항, 예: 'ko', 'en')
+        
+    Returns:
+        {"text": "변환된 텍스트", "language": "언어코드"}
+    """
+    try:
+        result = await whisper_service.transcribe_audio(file)
+        return {"result": result}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"음성 변환 API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="음성 변환 중 오류가 발생했습니다."
+        )
+
+@app.post("/ai/reviewers/recommend")
+async def recommend_pr_reviewers(pr_data: PRData):
+    """
+    RAG를 활용해서 PR 리뷰어를 추천합니다.
+    
+    Args:
+        pr_data: PRData 객체 (PR 정보)
+        
+    Returns:
+        {"result": [{"github_username": "사용자명", "github_email": "이메일"}]}
+    """
+    try:
+        recommendations = await recommend_reviewers(pr_data, limit=5)
+        return {"result": recommendations}
+        
+    except Exception as e:
+        logger.error(f"리뷰어 추천 API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="리뷰어 추천 중 오류가 발생했습니다."
         )
 
 
