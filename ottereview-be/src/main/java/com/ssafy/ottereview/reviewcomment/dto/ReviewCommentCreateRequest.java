@@ -24,6 +24,8 @@ public class ReviewCommentCreateRequest {
 
         private String body;
 
+        private String position;
+
         /** 한 줄 코멘트의 라인 번호 */
         private Integer line;
 
