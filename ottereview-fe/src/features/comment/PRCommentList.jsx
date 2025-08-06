@@ -5,7 +5,7 @@ const PRCommentList = ({ prId }) => {
   const comments = useCommentStore((state) => state.prComments[prId] || [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {comments.map((comment) => (
         <Box key={comment.id} shadow className="space-y-2">
           <div className="flex items-center gap-3">
