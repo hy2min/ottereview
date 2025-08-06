@@ -3,12 +3,11 @@ package com.ssafy.ottereview.githubapp.util;
 import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
-import com.ssafy.ottereview.account.service.AccountService;
+import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
 import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
-import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
@@ -20,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHAppInstallation;
 import org.kohsuke.github.GHOrganization;
-import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
 import org.springframework.stereotype.Service;
@@ -35,7 +33,7 @@ public class GithubInstallationFacade {
     private final AuthService authService;
     private final UserRepository userRepository;
     private final GithubApiClient githubApiClient;
-    private final AccountService accountService;
+    private final UserAccountService userAccountService;
     private final UserAccountRepository userAccountRepository;
     private final GithubAppUtil githubAppUtil;
     private final RepoService repoService;
@@ -51,7 +49,7 @@ public class GithubInstallationFacade {
 
         // 2. Account 생성/조회
         GithubAccountResponse githubAccountResponse = githubApiClient.getAccount(installationId);
-        Account newAccount = accountService.createAccount(githubAccountResponse);
+        Account newAccount = userAccountService.createAccount(githubAccountResponse);
 
         if(githubAccountResponse.getType().equals("Organization")){
             GHAppInstallation githubAppUtilInstallation = githubAppUtil.getInstallation(installationId);

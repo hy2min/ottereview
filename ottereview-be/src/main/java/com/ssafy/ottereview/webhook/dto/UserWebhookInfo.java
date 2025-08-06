@@ -17,6 +17,12 @@ public class UserWebhookInfo {
     
     @JsonProperty("id")
     private Long id;
+
+    @JsonProperty("email")
+    private String email;
+
+    @JsonProperty("type")
+    private String type;
     
     @JsonProperty("avatar_url")
     private String avatarUrl;
