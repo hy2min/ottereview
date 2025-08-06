@@ -15,11 +15,13 @@ import java.util.Optional;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHBranchProtection;
 import org.kohsuke.github.GHRepository;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BranchServiceImpl implements BranchService{
@@ -103,11 +105,13 @@ public class BranchServiceImpl implements BranchService{
      * @return
      */
     @Override
+    @Transactional
     public List<Branch> getBranchesByRepoId(Long repoId) {
-        return branchRepository.findAllById(repoId);
+        return branchRepository.findAllByRepo_Id(repoId);
     }
 
     @Override
+    @Transactional
     public void saveAllBranchList(List<Branch> branches) {
         if(!branches.isEmpty()){
             branchRepository.saveAll(branches);
@@ -116,9 +120,18 @@ public class BranchServiceImpl implements BranchService{
 
     @Override
     @Transactional
-    public void updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest) {
-        Branch branch = branchRepository.getReferenceById(branchRoleCreateRequest.getId());
-        branch.settingMinApproveCnt(branchRoleCreateRequest.getMinApproved());
+    public Branch updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest) {
+        Branch branch = branchRepository.findById(branchRoleCreateRequest.getId()).orElseThrow();
+        Branch newBranch = Branch.builder()
+                .id(branch.getId())
+                .minApproveCnt(branchRoleCreateRequest.getMinApproved())
+                .name(branch.getName())
+                .repo(branch.getRepo())
+                .build();
+
+        branchRepository.save(newBranch);
+        log.info(branchRepository.getReferenceById(branchRoleCreateRequest.getId()).getMinApproveCnt()+"");
+        return newBranch;
     }
 
 
