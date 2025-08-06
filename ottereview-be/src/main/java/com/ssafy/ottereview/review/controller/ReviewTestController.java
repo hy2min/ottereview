@@ -16,12 +16,13 @@ import org.kohsuke.github.GHPullRequestReviewComment;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.kohsuke.github.GitHub;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @RequestMapping("/api/{account-id}/{repo-id}/{pr-id}")
@@ -32,6 +33,87 @@ public class ReviewTestController {
     private final GithubAppUtil githubAppUtil;
     private final RepoRepository repoRepository;
     private final AccountRepository accountRepository;
+
+    /**
+     * 리뷰 생성 (REST API 직접 호출)
+     */
+    @PostMapping("/reviews/test")
+    public ResponseEntity<?> createReviewTest(
+            @PathVariable("account-id") Long accountId,
+            @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long prId,
+            @AuthenticationPrincipal CustomUserDetail userDetail) {
+
+        try {
+            if (userDetail == null || userDetail.getUser() == null) {
+                throw new RuntimeException("로그인 유저 정보를 찾을 수 없습니다.");
+            }
+
+            String githubUsername = userDetail.getUser().getGithubUsername();
+
+            // installationId로 GitHub App 토큰 발급
+            Long installationId = accountRepository.findById(accountId)
+                    .orElseThrow(() -> new RuntimeException("Account not found"))
+                    .getInstallationId();
+            String token = githubAppUtil.getInstallationToken(installationId);
+
+            // 레포지토리 전체 이름 조회
+            String repoFullName = repoRepository.findById(repoId)
+                    .orElseThrow(() -> new RuntimeException("Repository not found"))
+                    .getFullName();
+
+            // 3. REST API URL
+            String url = String.format("https://api.github.com/repos/%s/pulls/%d/reviews", repoFullName, prId);
+
+            // 4. 요청 바디 (테스트용 하드코딩)
+            Map<String, Object> requestBody = Map.of(
+                    "body", """
+                ### ✏️ **Reviewer: @%s**
+                
+                > %s
+                """.formatted(githubUsername, "이거슨 최종입니다"),
+                    "event", "APPROVE",
+                    "comments", List.of(
+                            Map.of(
+                                    "path", "test.txt",
+                                    "position", 7,
+                                    "body", """
+                                ** 👀Reviewer: @%s**
+                                멀라멀라용
+                                """.formatted(githubUsername)
+                            )
+                    )
+            );
+
+
+            // 5. HTTP 헤더 설정
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(token);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            // 요청 전송
+            RestTemplate restTemplate = new RestTemplate();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+            // 생성 후 PR 리뷰 정보 반환
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repository = github.getRepository(repoFullName);
+            GHPullRequest pullRequest = repository.getPullRequest(prId.intValue());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("prInfo", getPullRequestInfo(pullRequest));
+            result.put("reviews", getReviewsInfo(pullRequest));
+            result.put("reviewComments", getReviewCommentsInfo(pullRequest));
+            result.put("requestedReviewers", getRequestedReviewersInfo(pullRequest));
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            log.error("리뷰 생성 실패", e);
+            return ResponseEntity.internalServerError().body("리뷰 생성 실패: " + e.getMessage());
+        }
+    }
 
     @GetMapping("/review-info")
     public ResponseEntity<Map<String, Object>> getReviewInfo(

@@ -39,6 +39,9 @@ public class Review extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "github_id")
+    private Long githubId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pull_request_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -74,4 +77,7 @@ public class Review extends BaseEntity {
         this.reviewComments.addAll(reviewComments);
     }
 
+    public void updateGithubId(Long githubId) {
+        this.githubId = githubId;
+    }
 }

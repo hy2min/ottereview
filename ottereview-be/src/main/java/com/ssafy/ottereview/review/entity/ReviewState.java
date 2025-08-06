@@ -16,11 +16,11 @@ public enum ReviewState {
     }
 
     public static ReviewState fromValue(String value) {
-        for (ReviewState state : ReviewState.values()) {
-            if (state.value.equals(value)) {
-                return state;
-            }
-        }
-        throw new IllegalArgumentException("Unknown review state: " + value);
+        return switch (value) {
+            case "comment" -> COMMENT;
+            case "approve" -> APPROVE;
+            case "changes_requested" -> REQUEST_CHANGES;
+            default -> throw new IllegalArgumentException("Unknown ReviewState value: " + value);
+        };
     }
 }

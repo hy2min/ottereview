@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
     private final TokenService tokenService;
     private final UserRepository userRepository;
     private final UserService userService;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Override
     @Transactional
@@ -53,7 +53,7 @@ public class AuthServiceImpl implements AuthService {
         // GitHub 사용자 정보 요청
         GithubUserDto githubUser = requestGithubUser(githubAccessToken);
         // DB 사용자 조회 or 회원가입
-        User user = userRepository.findByGithubEmail(githubUser.getEmail())
+        User user = userRepository.findByGithubId(githubUser.getId())
                 .orElseGet(() -> registerUser(githubUser));
         // JWT 발급 및 Refresh Token 저장
         String accessToken = jwtUtil.createAccessToken(user);
@@ -65,7 +65,9 @@ public class AuthServiceImpl implements AuthService {
     private User registerUser(GithubUserDto githubUser) {
         User user = User.builder()
                 .githubUsername(githubUser.getLogin())
+                .githubId(githubUser.getId())
                 .githubEmail(githubUser.getEmail())
+                .type(githubUser.getType())
                 .profileImageUrl(githubUser.getAvatarUrl())
                 .rewardPoints(0)
                 .userGrade("BASIC")
@@ -86,6 +88,8 @@ public class AuthServiceImpl implements AuthService {
 
             String login = myself.getLogin();
             String email = myself.getEmail();
+            Long githubId = myself.getId();
+            String type = myself.getType();
 
             // 이메일이 없거나 private일 경우, 추가로 primary 이메일을 찾아야 함
             if (email == null || email.isEmpty()) {
@@ -98,7 +102,7 @@ public class AuthServiceImpl implements AuthService {
 
             String avatarUrl = myself.getAvatarUrl();
 
-            return new GithubUserDto(login, email, avatarUrl);
+            return new GithubUserDto(login, githubId, email, type, avatarUrl);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to request GitHub user via hub4j", e);
