@@ -20,12 +20,12 @@ def convert_review_to_soft_tone(review_data):
     리뷰어가 작성한 리뷰를 사용자가 상처받지 않도록 부드러운 어조로 변환합니다.
     
     Args:
-        review_data (dict): {"content": "리뷰 내용"} 형식의 데이터
-    
+        review_data (str): 리뷰 내용
+
     Returns:
         dict: {"softened_content": "부드럽게 변환된 리뷰 내용"} 형식의 결과
     """
-    original_content = review_data.get("content")
+    original_content = review_data
     
     # 부드러운 어조 변환을 위한 프롬프트
     system_prompt = """코드 리뷰를 건설적이고 간결한 어조로 변환해주세요.
@@ -50,9 +50,9 @@ def convert_review_to_soft_tone(review_data):
         ])
         
         softened_content = response.content if hasattr(response, 'content') else str(response)
-        
-        return {"content": softened_content}
-        
+
+        return {"result": softened_content}
+
     except Exception as e:
        raise e
     
