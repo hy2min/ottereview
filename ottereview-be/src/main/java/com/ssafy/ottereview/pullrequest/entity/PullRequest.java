@@ -7,6 +7,8 @@ import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -39,6 +41,9 @@ public class PullRequest extends BaseEntity {
     @Column
     private Integer githubPrNumber;
 
+    @Column
+    private Long githubId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
@@ -50,8 +55,9 @@ public class PullRequest extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String body;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String state;
+    private PrState state;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -142,7 +148,7 @@ public class PullRequest extends BaseEntity {
         // 기본 PR 정보 업데이트
         this.githubPrNumber = githubPr.getGithubPrNumber();
         this.title = githubPr.getTitle();
-        this.state = githubPr.getState();
+        this.state = PrState.fromGithubState(githubPr.getState(), githubPr.getMerged());
         this.body = githubPr.getBody();
         this.merged = githubPr.getMerged();
         this.base = githubPr.getBase();
@@ -166,12 +172,17 @@ public class PullRequest extends BaseEntity {
         this.diffUrl = githubPr.getDiffUrl();
     }
 
+    public void updateState(PrState state){
+        this.state = state;
+    }
+
     public static PullRequest toEntity(PullRequestDetailResponse resp, Repo repo, User author) {
         return PullRequest.builder()
+                .githubId(resp.getGithubId())
                 .githubPrNumber(resp.getGithubPrNumber())
                 .title(resp.getTitle())
                 .body(resp.getBody())
-                .state(resp.getState())
+                .state(PrState.fromGithubState(resp.getState(), resp.getMerged()))
                 .author(author)
                 .merged(resp.getMerged())
                 .base(resp.getBase())

@@ -19,32 +19,30 @@ import lombok.NoArgsConstructor;
 @Builder
 @Table(name = "users")
 public class User {
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-    
+
+    @Column(name = "github_id", nullable = false, unique = true)
+    private Long githubId;
+
     @Column(name = "github_username", nullable = false)
     private String githubUsername;
-    
-    @Column(name = "github_email", nullable = false)
+
+    @Column(name = "github_email")
     private String githubEmail;
-    
+
+    @Column(name = "type", nullable = false)
+    private String type;
+
     @Column(name = "profile_image_url")
     private String profileImageUrl;
 
     @Column(name = "reward_points")
     private int rewardPoints;
-    
+
     @Column(name = "user_grade")
     private String userGrade;
-    
-    public User(String githubUsername, String githubEmail, String profileImageUrl, int rewardPoints, String userGrade) {
-        this.githubUsername = githubUsername;
-        this.githubEmail = githubEmail;
-        this.profileImageUrl = profileImageUrl;
-        this.rewardPoints = rewardPoints;
-        this.userGrade = userGrade;
-    }
 }

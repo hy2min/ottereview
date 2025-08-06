@@ -1,9 +1,9 @@
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
-import { protectedRoutes } from '../../app/routes'
-import { useAuthStore } from '../../features/auth/authStore'
-import { useUserStore } from '../../store/userStore'
-import Button from '../Button'
+import { protectedRoutes } from '@/app/routes'
+import Button from '@/components/Button'
+import { useAuthStore } from '@/features/auth/authStore'
+import { useUserStore } from '@/store/userStore'
 
 const Header = () => {
   const navigate = useNavigate()
@@ -22,9 +22,9 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-transparent py-4">
+    <header className="bg-transparent pb-1">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-3 bg-white border-2 border-black shadow-pixel p-4 rounded-4xl">
+        <div className="grid grid-cols-3 bg-danger-300 border-2 border-black shadow-pixel p-4 rounded-4xl">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-xl justify-self-start cursor-pointer"

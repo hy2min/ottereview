@@ -2,12 +2,12 @@ import { Plus } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Box from '../../components/Box'
-import Button from '../../components/Button'
-import { fetchPRList } from '../../features/pullRequest/prApi'
-import PRCardDetail from '../../features/pullRequest/PRCardDetail'
-import { usePRStore } from '../../features/pullRequest/stores/prStore'
-import { useRepoStore } from '../../features/repository/repoStore'
+import Box from '@/components/Box'
+import Button from '@/components/Button'
+import { fetchPRList } from '@/features/pullRequest/prApi'
+import PRCardDetail from '@/features/pullRequest/PRCardDetail'
+import { usePRStore } from '@/features/pullRequest/stores/prStore'
+import { useRepoStore } from '@/features/repository/stores/repoStore'
 
 const RepositoryDetail = () => {
   const { repoId } = useParams()
@@ -26,6 +26,7 @@ const RepositoryDetail = () => {
     const load = async () => {
       try {
         const data = await fetchPRList(repoId)
+        console.log(data)
         setRepoPRs(data)
       } catch (err) {
         console.error('❌ PR 목록 불러오기 실패:', err)

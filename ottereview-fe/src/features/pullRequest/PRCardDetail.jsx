@@ -1,6 +1,7 @@
 import { Clock, Eye, GitBranch, GitMerge, MessageCircle, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
+import Badge from '../../components/Badge'
 import Box from '../../components/Box'
 import Button from '../../components/Button'
 
@@ -14,9 +15,12 @@ const PRCardDetail = ({ pr }) => {
   const commentCount = pr.commentCnt || 0
   const repoId = pr.repo?.id
   const prId = pr.id
+  const mergeable = pr.mergeable
+  const state = pr.state
 
   return (
     <Box shadow>
+      {/* 헤더 */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-500 border-2 border-black rounded-lg flex items-center justify-center">
@@ -27,9 +31,14 @@ const PRCardDetail = ({ pr }) => {
             <p className="text-sm text-stone-600 line-clamp-2">{description}</p>
           </div>
         </div>
+
+        <Badge variant={state === 'OPEN' ? 'info' : state === 'CLOSED' ? 'danger' : 'default'}>
+          {state}
+        </Badge>
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      {/* 메타 정보 + 버튼 */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 text-sm text-stone-500">
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4 mb-[3px]" />
@@ -58,6 +67,7 @@ const PRCardDetail = ({ pr }) => {
             onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
             variant="primary"
             size="sm"
+            disabled={!mergeable || state === 'CLOSED'}
           >
             <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
             머지

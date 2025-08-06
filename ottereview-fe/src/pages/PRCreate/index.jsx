@@ -1,15 +1,15 @@
 import { useMemo, useState } from 'react' // useMemo 임포트
 import { useNavigate } from 'react-router-dom'
 
-import Box from '../../components/Box'
-import Button from '../../components/Button'
-import StepIndicator from '../../components/StepIndicator'
-import { submitPR } from '../../features/pullRequest/prApi'
-import PRCreateStep1 from '../../features/pullRequest/PRCreateStep1'
-import PRCreateStep2 from '../../features/pullRequest/PRCreateStep2'
-import PRCreateStep3 from '../../features/pullRequest/PRCreateStep3'
-import PRCreateStep4 from '../../features/pullRequest/PRCreateStep4'
-import { usePRCreateStore } from '../../features/pullRequest/stores/prCreateStore'
+import Box from '@/components/Box'
+import Button from '@/components/Button'
+import StepIndicator from '@/components/StepIndicator'
+import { submitPR } from '@/features/pullRequest/prApi'
+import PRCreateStep1 from '@/features/pullRequest/PRCreateStep1'
+import PRCreateStep2 from '@/features/pullRequest/PRCreateStep2'
+import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
+import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
+import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
 
 const PRCreate = () => {
   const [step, setStep] = useState(1)

@@ -1,6 +1,7 @@
 from utils.cushion_convert import convert_review_to_soft_tone
 from utils.vector_db import vector_db, PRData
 from utils.pull_request import recommand_pull_request_title, summary_pull_request, recommend_reviewers
+from utils.recommand_priority import recommend_priority
 from utils.whisper import whisper_service
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
@@ -52,7 +53,7 @@ async def convert_review(review_data: reviewRequest):
         if not review_data.content.strip():
             raise HTTPException(status_code=400, detail="리뷰 내용이 비어있습니다.")
         
-        result = convert_review_to_soft_tone({"content": review_data.content})
+        result = convert_review_to_soft_tone(review_data.content)
         
         return result
         
@@ -120,7 +121,7 @@ async def store_pr_to_vector_db(pr_request: PRData):
     """
     try:
         # 벡터 DB에 저장
-        success = await vector_db.store_pr_data(pr_request.pr_id, pr_request.pr_data)
+        success = await vector_db.store_pr_data(pr_request.pr_id, pr_request)
         
         if success:
             return {
@@ -173,7 +174,7 @@ async def recommend_pr_reviewers(pr_data: PRData):
         pr_data: PRData 객체 (PR 정보)
         
     Returns:
-        {"result": [{"github_username": "사용자명", "github_email": "이메일"}]}
+        {"result": [{"github_username": "사용자명", "github_email": "이메일", "reason": "추천 이유"}]}
     """
     try:
         recommendations = await recommend_reviewers(pr_data, limit=5)
@@ -184,6 +185,38 @@ async def recommend_pr_reviewers(pr_data: PRData):
         raise HTTPException(
             status_code=500,
             detail="리뷰어 추천 중 오류가 발생했습니다."
+        )
+
+@app.post("/ai/priority/recommend")
+async def recommend_pr_priority(pr_data: PRData):
+    """
+    RAG를 활용해서 PR의 리뷰 우선순위를 3가지 후보로 추천합니다.
+    
+    Args:
+        pr_data: PRData 객체 (PR 정보)
+        
+    Returns:
+        {"result": {
+            "candidates": [
+                {
+                    "title": "간결한 제목",
+                    "priority_level": "CRITICAL|HIGH|MEDIUM|LOW",
+                    "reason": "우선순위 선택 이유"
+                },
+                ...
+            ],
+        }
+    }
+    """
+    try:
+        priority_candidates = await recommend_priority(pr_data)
+        return {"result": priority_candidates}
+        
+    except Exception as e:
+        logger.error(f"우선순위 추천 API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="우선순위 추천 중 오류가 발생했습니다."
         )
 
 

@@ -13,7 +13,9 @@ import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHAppInstallation;
@@ -57,31 +59,40 @@ public class GithubInstallationFacade {
             GitHub gitHub = githubAppUtil.getGitHub(installationId);
             GHOrganization organization = gitHub.getOrganization(orgName);
             List<GHUser> orgMembers = organization.listMembers().toList();
+            List<User> dbUsers = userRepository.findAll();
+            Map<Long, User> userMap = new HashMap<>();
+            for (User u : dbUsers) {
+                userMap.put(u.getGithubId(), u);
+            }
+
             log.info("Organization {} has {} members", orgName, orgMembers.size());
             for(GHUser user : orgMembers){
-                if(user.getLogin().equals(loginUser.getGithubUsername())) continue;
-                User u = User.builder()
-                        .githubUsername(user.getLogin())
-                        .githubEmail(user.getEmail())
-                        .profileImageUrl(user.getAvatarUrl())
-                        .userGrade("BASIC")
-                        .rewardPoints(0)
-                        .build();
-                userRepository.save(u);
-                userAccountRepository.save(UserAccount.builder()
-                                .account(newAccount)
-                                .user(u)
-                                .build());
+                if(userMap.containsKey(user.getId())){
+                    User users = userMap.get(user.getId());
+                    userAccountRepository.save(UserAccount.builder()
+                            .account(newAccount)
+                            .user(users)
+                            .build());
+                }
+                else {
+                    User u = User.builder()
+                            .githubUsername(user.getLogin())
+                            .githubId(user.getId())
+                            .githubEmail(user.getEmail())
+                            .type(user.getType())
+                            .profileImageUrl(user.getAvatarUrl())
+                            .userGrade("BASIC")
+                            .rewardPoints(0)
+                            .build();
+                    userRepository.save(u);
+                    userAccountRepository.save(UserAccount.builder()
+                            .account(newAccount)
+                            .user(u)
+                            .build());
+                }
             }
         }
 
-        // 3. 사용자-계정 매핑 생성
-        UserAccount userAccount = UserAccount.builder()
-                .user(loginUser)
-                .account(newAccount)
-                .build();
-
-        userAccountRepository.save(userAccount);
 
         //5. repo리스트 db에 저장하는 메소드 (이미 저장된 것은 넘긴다)
         repoService.processSyncRepo(newAccount, installationId);

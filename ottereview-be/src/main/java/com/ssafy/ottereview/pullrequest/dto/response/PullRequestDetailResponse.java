@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 public class PullRequestDetailResponse {
 
     private Long id;
+    private Long githubId;
     private Integer githubPrNumber;
     private String title;
     private String body;
