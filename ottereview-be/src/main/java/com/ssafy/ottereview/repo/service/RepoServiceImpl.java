@@ -199,7 +199,7 @@ public class RepoServiceImpl implements RepoService {
     @Override
     public List<UserAccount> getUserListByRepoId(Long repoId) {
         // repoId 기반으로 같은 Account를 가져옵니다.
-        Repo repo = repoRepository.findByRepoId(repoId).orElseThrow();
+        Repo repo = repoRepository.findById(repoId).orElseThrow();
         return userAccountRepository.findAllByAccount(repo.getAccount());
     }
 
