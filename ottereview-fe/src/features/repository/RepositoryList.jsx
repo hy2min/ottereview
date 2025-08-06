@@ -1,58 +1,12 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
-import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
-import { usePRStore } from '@/features/pullRequest/stores/prStore'
-import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryCard from '@/features/repository/RepositoryCard'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
-import { useUserStore } from '@/store/userStore'
 
 const RepositoryList = () => {
   const navigate = useNavigate()
-  const user = useUserStore((state) => state.user)
-  const { repos, setRepos } = useRepoStore()
-  const setAuthoredPRs = usePRStore((state) => state.setAuthoredPRs)
-  const setReviewerPRs = usePRStore((state) => state.setReviewerPRs)
-
-  useEffect(() => {
-    if (!user?.id) {
-      console.warn('user.id 없음, 데이터 요청하지 않음')
-      return
-    }
-
-    const fetchData = async () => {
-      try {
-        // 🔹 1. 레포 목록
-        const fetchedRepos = await fetchRepoList(user.id)
-        console.log('📦 fetchedRepos:', fetchedRepos)
-        setRepos(fetchedRepos)
-
-        // 🔹 2. 내가 작성한 PR
-        try {
-          const authoredPRs = await fetchAuthoredPRs()
-          console.log('✍️ authoredPRs:', authoredPRs)
-          setAuthoredPRs(authoredPRs)
-        } catch (err) {
-          console.error('❌ authored PR fetch 실패:', err)
-        }
-
-        // 🔹 3. 내가 리뷰어인 PR
-        try {
-          const reviewerPRs = await fetchReviewerPRs()
-          console.log('🧑‍💻 reviewerPRs:', reviewerPRs)
-          setReviewerPRs(reviewerPRs)
-        } catch (err) {
-          console.error('❌ reviewer PR fetch 실패:', err)
-        }
-      } catch (err) {
-        console.error('❌ 전체 fetch 실패:', err)
-      }
-    }
-
-    fetchData()
-  }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
+  const repos = useRepoStore((state) => state.repos)
 
   const handleImport = () => {
     const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'

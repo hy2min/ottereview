@@ -8,7 +8,10 @@ import { useUserStore } from '@/store/userStore'
 const Header = () => {
   const navigate = useNavigate()
   const location = useLocation()
+
   const logout = useUserStore((state) => state.logout)
+  const clearUser = useUserStore((state) => state.clearUser)
+  const clearTokens = useAuthStore((state) => state.clearTokens)
 
   const matches = matchRoutes(protectedRoutes, location)
   const matchedRoute = matches?.[0]?.route
@@ -16,9 +19,9 @@ const Header = () => {
 
   const handleLogout = async () => {
     await logout()
-    useUserStore.getState().clearUser()
-    useAuthStore.getState().clearTokens()
-    navigate('/') // 로그인 페이지로 이동
+    clearUser()
+    clearTokens()
+    navigate('/')
   }
 
   return (

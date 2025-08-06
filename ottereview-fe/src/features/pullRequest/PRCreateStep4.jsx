@@ -1,17 +1,57 @@
+import Box from '../../components/Box'
+import Button from '../../components/Button'
 import { usePRCreateStore } from './stores/prCreateStore'
 
+const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
+
 const PRCreateStep4 = () => {
-  const formData = usePRCreateStore((state) => state.formData)
+  const { formData, setFormData } = usePRCreateStore()
+
+  const handleSelect = (name) => {
+    if (!formData.reviewers.includes(name)) {
+      setFormData({ reviewers: [...formData.reviewers, name] })
+    }
+  }
+
+  const handleDeselect = (name) => {
+    setFormData({
+      reviewers: formData.reviewers.filter((r) => r !== name),
+    })
+  }
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <p>PR 제목: {formData.title || '(없음)'}</p>
-        <p>설명: {formData.description || '(없음)'}</p>
-        <p>타겟 브랜치: {formData.targetBranch || '(미지정)'}</p>
-        <p>
-          선택된 리뷰어: {formData.reviewers.length > 0 ? formData.reviewers.join(', ') : '(없음)'}
-        </p>
+      <div className="flex gap-8">
+        <Box shadow className="w-1/2">
+          <h3 className="mb-2">리뷰어 목록</h3>
+          {mockReviewers
+            .filter((name) => !formData.reviewers.includes(name))
+            .map((name) => (
+              <div key={name} className="flex justify-between my-4">
+                <span>{name}</span>
+                <Button
+                  onClick={() => handleSelect(name)}
+                  disabled={formData.reviewers.includes(name)}
+                  variant=""
+                  size="sm"
+                >
+                  추가
+                </Button>
+              </div>
+            ))}
+        </Box>
+
+        <Box shadow className="w-1/2">
+          <h3 className="mb-2">선택된 리뷰어</h3>
+          {formData.reviewers.map((name) => (
+            <div key={name} className="flex justify-between my-4">
+              <span>{name}</span>
+              <Button onClick={() => handleDeselect(name)} variant="" size="sm">
+                제거
+              </Button>
+            </div>
+          ))}
+        </Box>
       </div>
     </div>
   )

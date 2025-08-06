@@ -9,6 +9,8 @@ const OAuthCallbackPage = () => {
   const navigate = useNavigate()
   const setUser = useUserStore((state) => state.setUser)
   const setAccessToken = useAuthStore((state) => state.setAccessToken)
+  const clearUser = useUserStore((state) => state.clearUser)
+  const clearTokens = useAuthStore((state) => state.clearTokens)
 
   useEffect(() => {
     const code = new URL(window.location.href).searchParams.get('code')
@@ -30,7 +32,7 @@ const OAuthCallbackPage = () => {
           return navigate('/')
         }
 
-        setAccessToken(accessToken) // interceptor가 자동으로 토큰 붙임
+        setAccessToken(accessToken)
         await Promise.resolve()
         const userRes = await api.get('/api/users/me')
         setUser(userRes.data)
@@ -39,6 +41,8 @@ const OAuthCallbackPage = () => {
       })
       .catch((err) => {
         console.error('[OAuth] 로그인 실패:', err)
+        clearTokens()
+        clearUser()
         alert('로그인 실패')
         navigate('/')
       })
