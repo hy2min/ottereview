@@ -1,6 +1,6 @@
 import { FolderCode } from 'lucide-react'
 
-import Box from '../../components/Box'
+import Box from '@/components/Box'
 
 const RepositoryCard = ({ repo, onClick }) => {
   return (
