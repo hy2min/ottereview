@@ -17,7 +17,7 @@ public class PullRequestResponse {
     // 식별자
     private Long id;
     private Integer githubPrNumber;
-
+    private Long githubId;
     // Pull Request 관련 정보
     private String title;
     private String body;

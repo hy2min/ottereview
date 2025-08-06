@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.account.service.AccountService;
+import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.description.entity.Description;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
@@ -16,6 +17,7 @@ import com.ssafy.ottereview.pullrequest.dto.preparation.UserInfo;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRedisRepository;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
@@ -56,6 +58,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final AccountService accountService;
     private final PriorityRepository priorityRepository;
     private final DescriptionRepository descriptionRepository;
+    private final AuthService authService;
 
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
@@ -101,8 +104,10 @@ public class PullRequestServiceImpl implements PullRequestService {
 
     @Override
     public List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail) {
-        User loginUser = userRepository.findById(customUserDetail.getUser().getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser().getId()));
+        User loginUser = userRepository.findById(customUserDetail.getUser()
+                        .getId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser()
+                        .getId()));
 
         List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser);
 
@@ -243,22 +248,36 @@ public class PullRequestServiceImpl implements PullRequestService {
                 List<PullRequest> newPullRequests = new ArrayList<>();
                 List<Reviewer> newReviewers = new ArrayList<>();
                 for (GithubPrResponse githubPr : githubPrResponses) {
+
+                    log.info("github title: {}", githubPr.getTitle());
+
                     log.info("github id: {} ", githubPr.getAuthor()
                             .getId());
                     log.info("github name: {}", githubPr.getAuthor()
                             .getName());
-                    log.info("github title: {}", githubPr.getTitle());
-                    User author = userRepository.findByGithubEmail(githubPr.getAuthor()
-                                    .getEmail())
-                            .orElseThrow(() -> new IllegalArgumentException(
-                                    "User not found with email: " + githubPr.getAuthor()));
+                    log.info("github email: {}", githubPr.getAuthor()
+                            .getEmail());
+                    log.info("github Login: {}", githubPr.getAuthor()
+                            .getLogin());
+                    log.info("github type: {}", githubPr.getAuthor()
+                            .getType());
+
+
+                    User author = userRepository.findByGithubId(githubPr.getAuthor()
+                                    .getId())
+                            .orElseGet(() -> registerUser(githubPr.getAuthor()));
+
                     PullRequest pullRequest = convertToEntity(githubPr, author, targetRepo);
+
                     List<GHUser> users = githubPr.getRequestedReviewers();
                     for (GHUser user : users) {
-                        User reviewer = userRepository.findByGithubEmail(user.getEmail())
-                                .orElseThrow();
+                        User reviewer = userRepository.findByGithubId(user
+                                        .getId())
+                                .orElseGet(() -> registerUser(user));
+
                         log.info("reviewer 추가 로직, 이름: " + user.getName() + "pullrequest Id: "
                                 + pullRequest.getId());
+
                         newReviewers.add(
                                 Reviewer.builder()
                                         .pullRequest(pullRequest)
@@ -280,6 +299,27 @@ public class PullRequestServiceImpl implements PullRequestService {
                     e);
         }
 
+    }
+
+    private User registerUser(GHUser ghUser) {
+        try {
+            User user = User.builder()
+                    .githubId(ghUser.getId())
+                    .githubUsername(ghUser.getLogin())
+                    .githubEmail(ghUser.getEmail() != null ? ghUser.getEmail() : null)
+                    .type(ghUser.getType())
+                    .profileImageUrl(ghUser.getAvatarUrl() != null ? ghUser.getAvatarUrl()
+                            .toString() : null)
+                    .rewardPoints(0)
+                    .userGrade("BASIC")
+                    .build();
+
+            log.info("New user registered: {}", user.getGithubUsername());
+            return userRepository.save(user);
+        } catch (Exception e) {
+            log.error("Failed to register user: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to register user from GitHub", e);
+        }
     }
 
     private User getUserFromUserInfo(UserInfo userInfo) {
@@ -337,7 +377,7 @@ public class PullRequestServiceImpl implements PullRequestService {
             }
         }
 
-        // 7. 데이터베이스에 없는 PR들을 삭제 처리한다.
+        // 7. 깃허브에 없는 PR들을 삭제 처리한다.
         List<PullRequest> prsToMarkAsDeleted = existingPullRequests.stream()
                 .filter(pr -> !githubPrNumbers.contains(pr.getGithubPrNumber()))
                 .toList();
@@ -360,7 +400,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .body(pr.getBody())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .state(pr.getState())
+                .state(pr.getState().toString())
                 .merged(pr.getMerged())
                 .mergeable(pr.isMergeable())
                 .head(pr.getHead())
@@ -381,12 +421,13 @@ public class PullRequestServiceImpl implements PullRequestService {
     private PullRequest convertToEntity(GithubPrResponse githubPrResponse, User author, Repo repo) {
 
         return PullRequest.builder()
+                .githubId(githubPrResponse.getGithubId())
                 .githubPrNumber(githubPrResponse.getGithubPrNumber())
                 .author(author)
                 .repo(repo)
                 .title(githubPrResponse.getTitle())
                 .body(githubPrResponse.getBody())
-                .state(githubPrResponse.getState())
+                .state(PrState.fromGithubState(githubPrResponse.getState(), githubPrResponse.getMerged()))
                 .merged(githubPrResponse.getMerged())
                 .base(githubPrResponse.getBase())
                 .head(githubPrResponse.getHead())
@@ -408,12 +449,13 @@ public class PullRequestServiceImpl implements PullRequestService {
     private PullRequestResponse convertToResponse(PullRequest pr) {
         return PullRequestResponse.builder()
                 .id(pr.getId())
+                .githubId(pr.getGithubId())
                 .githubPrNumber(pr.getGithubPrNumber())
                 .title(pr.getTitle())
                 .body(pr.getBody())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .state(pr.getState())
+                .state(pr.getState().toString())
                 .merged(pr.getMerged())
                 .mergeable(pr.isMergeable())
                 .head(pr.getHead())
@@ -430,13 +472,15 @@ public class PullRequestServiceImpl implements PullRequestService {
     }
 
     private UserResponseDto convertToUserResponse(User user) {
-        return new UserResponseDto(
-                user.getId(),
-                user.getGithubUsername(),
-                user.getGithubEmail(),
-                user.getProfileImageUrl(),
-                user.getRewardPoints(),
-                user.getUserGrade()
-        );
+        return UserResponseDto.builder()
+                .id(user.getId())
+                .githubId(user.getGithubId())
+                .githubUsername(user.getGithubUsername())
+                .githubEmail(user.getGithubEmail())
+                .type(user.getType())
+                .profileImageUrl(user.getProfileImageUrl())
+                .rewardPoints(user.getRewardPoints())
+                .userGrade(user.getUserGrade())
+                .build();
     }
 }

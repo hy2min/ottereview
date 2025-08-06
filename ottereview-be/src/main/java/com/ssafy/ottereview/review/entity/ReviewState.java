@@ -15,4 +15,12 @@ public enum ReviewState {
         return value;
     }
 
+    public static ReviewState fromValue(String value) {
+        return switch (value) {
+            case "comment" -> COMMENT;
+            case "approve" -> APPROVE;
+            case "changes_requested" -> REQUEST_CHANGES;
+            default -> throw new IllegalArgumentException("Unknown ReviewState value: " + value);
+        };
+    }
 }
