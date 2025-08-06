@@ -30,7 +30,17 @@ public class MergeController {
     private final RepoService repoService;
     private final PullRequestService pullRequestService;
 
-    @GetMapping("/is-conflict")
+    @GetMapping("/doing")
+    public ResponseEntity<?> doMerge(@AuthenticationPrincipal CustomUserDetail customUserDetail,@RequestParam Long repoId, @RequestParam Long prId){
+        Repo repo = repoService.getById(repoId).orElseThrow();
+        User user = customUserDetail.getUser();
+        PullRequestDetailResponse pullRequestDetailResponse= pullRequestService.getPullRequestById(customUserDetail,repoId , prId);
+        PullRequest pullRequest = PullRequest.toEntity(pullRequestDetailResponse,repo,user);
+        return ResponseEntity.ok(mergeService.doMerge(repo,pullRequest));
+    }
+
+
+    @GetMapping()
     public ResponseEntity<?> getMergeAble(@PathVariable (name = "pr-id") Long pullRequestId, @PathVariable (name = "repo-id") Long repoId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
