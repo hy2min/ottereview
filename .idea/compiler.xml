@@ -7,12 +7,20 @@
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.38/57f8f5e02e92a30fd21b80cbd426a4172b5f8e29/lombok-1.18.38.jar" />
         </processorPath>
-        <module name="ottereview.main" />
+        <module name="com.ssafy.ottereview.main" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="ottereview" target="17" />
+      <module name="ottereview.main" target="17" />
+      <module name="ottereview.test" target="17" />
+    </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="com.ssafy.ottereview" options="-parameters" />
+      <module name="com.ssafy.ottereview.main" options="-parameters" />
+      <module name="com.ssafy.ottereview.test" options="-parameters" />
       <module name="ottereview" options="-parameters" />
       <module name="ottereview.main" options="-parameters" />
       <module name="ottereview.test" options="-parameters" />

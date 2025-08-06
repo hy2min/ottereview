@@ -20,6 +20,7 @@ const App = () => {
   }
 
   const isLoggedIn = !!user // null이 아니면 로그인된 상태
+  // const isLoggedIn = true // null이 아니면 로그인된 상태
 
   if (!isLoggedIn) {
     // 로그인 안 된 경우: Landing, OAuthCallback만 허용
@@ -38,7 +39,7 @@ const App = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="max-w-7xl mx-auto px-8 sm:px-10 lg:px-12">
+      <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12">
         <Routes>
           {protectedRoutes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
