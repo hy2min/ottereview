@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/account/{account-id}/repositories/{repo-id}/branches")
+@RequestMapping("/api/accounts/{account-id}/repositories/{repo-id}/branches")
 public class BranchController {
 
     private final BranchServiceImpl branchServiceImpl;
@@ -21,7 +21,16 @@ public class BranchController {
     @GetMapping()
     public ResponseEntity<?> getBranchList(@PathVariable(name ="repo-id") Long repoId){
         List<Branch> branches = branchServiceImpl.getBranchesByRepoId(repoId);
-        return ResponseEntity.ok(branches);
+        List<BranchResponse> responseList = branches.stream()
+                .map(branch -> BranchResponse.builder()
+                        .id(branch.getId())
+                        .name(branch.getName())
+                        .minApproveCnt(branch.getMinApproveCnt())
+                        .repo_id(branch.getRepo().getRepoId())
+                        .build()
+                )
+                .toList();
+        return ResponseEntity.ok(responseList);
     }
 
     @GetMapping("/{branch-id}")
@@ -29,15 +38,16 @@ public class BranchController {
         Branch branch = branchServiceImpl.getBranchById(branchId);
         BranchResponse branchResponse = BranchResponse.builder()
                 .id(branch.getId())
+                .name(branch.getName())
                 .minApproveCnt(branch.getMinApproveCnt())
                 .repo_id(branch.getRepo().getId())
                 .build();
         return ResponseEntity.ok(branchResponse);
     }
 
-    @PatchMapping("/{branch-id}/role")
+    @PatchMapping("/role")
     public ResponseEntity<?> updateBranchRole(@RequestBody BranchRoleCreateRequest branchRoleCreateRequest){
-        branchServiceImpl.updateBranchRole(branchRoleCreateRequest);
-        return ResponseEntity.ok(branchRoleCreateRequest);
+        return ResponseEntity.ok(branchServiceImpl.updateBranchRole(branchRoleCreateRequest));
+
     }
 }
