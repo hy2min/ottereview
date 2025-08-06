@@ -5,10 +5,11 @@ import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
-import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.util.List;
@@ -20,30 +21,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 @Transactional
-public class AccountServiceImpl implements AccountService {
+public class UserAccountServiceImpl implements UserAccountService {
     
-    private final GithubApiClient githubApiClient;
     private final AccountRepository accountRepository;
     private final UserAccountRepository userAccountRepository;
     private final UserRepository userRepository;
     private final RepoRepository repoRepository;
     
     @Override
-    public AccountResponse getGithubAccount() {
-        GithubAccountResponse githubAccountResponse = githubApiClient.getAccount(77362016L);
-        
-        Account account = Account.builder()
-                .installationId(githubAccountResponse.getInstallationId())
-                .type(githubAccountResponse.getType())
-                .name(githubAccountResponse.getName())
-                .build();
-        
-        return convertToAccountResponse(account);
-    }
-    
-    @Override
-    public List<AccountResponse> getAccountsByUser(User user) {
-        List<UserAccount> userAccounts = userAccountRepository.findAllByUser(user);
+    public List<AccountResponse> getAccountsByUser(CustomUserDetail customUserDetail) {
+        List<UserAccount> userAccounts = userAccountRepository.findAllByUser(customUserDetail.getUser());
         return userAccounts.stream()
                 .map(UserAccount::getAccount)
                 .map(this::convertToAccountResponse)
@@ -60,17 +47,6 @@ public class AccountServiceImpl implements AccountService {
                 .build();
         
         return accountRepository.save(account);
-    }
-    
-    @Override
-    public void createUserAccount(User user, Account account) {
-        
-        UserAccount userAccount = UserAccount.builder()
-                .account(account)
-                .user(user)
-                .build();
-        
-        userAccountRepository.save(userAccount);
     }
     
     @Override
@@ -94,20 +70,20 @@ public class AccountServiceImpl implements AccountService {
         
         return repo;
     }
-
+    
     @Override
-    public List<User> getUserListByAccount(Account account) {
+    public List<UserResponseDto> getUsersByAccount(Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with id: " + accountId));
+        
         List<UserAccount> userAccountList = userAccountRepository.findAllByAccount(account);
-        List<User> userList = userAccountList.stream().map(UserAccount::getUser).toList();
-        return userList;
+        
+        return userAccountList.stream()
+                .map(UserAccount::getUser)
+                .map(UserResponseDto::fromEntity)
+                .toList();
     }
-
-    @Override
-    public Account getAccountByAccountId(Long accountId) {
-        Account account = accountRepository.findById(accountId).orElseThrow();
-        return account;
-    }
-
+    
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),

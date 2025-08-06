@@ -1,11 +1,10 @@
 package com.ssafy.ottereview.webhook.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.webhook.service.InstallationEventService;
 import com.ssafy.ottereview.webhook.service.PullRequestEventService;
 import com.ssafy.ottereview.webhook.service.PushEventService;
-import com.ssafy.ottereview.webhook.service.ReviewCommentService;
+import com.ssafy.ottereview.webhook.service.ReviewCommentEventService;
 import com.ssafy.ottereview.webhook.service.ReviewEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +25,7 @@ public class GithubWebhookController {
     private final InstallationEventService installationEventService;
     private final PullRequestEventService pullRequestEventService;
     private final ReviewEventService reviewEventService;
-    private final ReviewCommentService reviewCommentService;
+    private final ReviewCommentEventService reviewCommentEventService;
     private final ObjectMapper objectMapper;
     
     
@@ -36,17 +35,8 @@ public class GithubWebhookController {
             @RequestHeader("X-GitHub-Event") String event,
             @RequestHeader("X-GitHub-Delivery") String delivery,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature) {
-        
-        log.info("[DEBUG] 깃헙 웹훅 이벤트 - Event: {}, Delivery: {}", event, delivery);
-        try {
-            JsonNode json = objectMapper.readTree(payload);
-            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(json);
-            
-            log.debug("전체 페이로드 출력:\n{}", formattedPayload);
-        } catch (Exception e) {
-            log.error("Error parsing payload: {}", e.getMessage());
-        }
+
+        log.info("[웹훅 이벤트 수신] 이벤트: {}, delivery: {}", event, delivery);
         
         // 이벤트별 처리
         switch (event) {
@@ -66,13 +56,19 @@ public class GithubWebhookController {
             
             case "pull_request_review_comment":
                 log.info("Handling pull request review event");
-                reviewCommentService.processReviewCommentEvent(payload);
+                reviewCommentEventService.processReviewCommentEvent(payload);
                 break;
             
             case "installation":
                 log.info("Handling installation event");
                 installationEventService.processInstallationEvent(payload);
                 break;
+                
+            case "installation_repositories":
+                log.info("Handling installation repositories event");
+                installationEventService.processInstallationRepositoriesEvent(payload);
+                break;
+                
             default:
                 log.info("Unhandled event type: {}", event);
         }
