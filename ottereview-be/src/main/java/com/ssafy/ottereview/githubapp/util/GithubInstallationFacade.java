@@ -89,6 +89,13 @@ public class GithubInstallationFacade {
                             .build());
                 }
             }
+        } else {
+            if(!userAccountRepository.existsByUserAndAccount(loginUser, newAccount)) {
+                userAccountRepository.save(UserAccount.builder()
+                        .account(newAccount)
+                        .user(loginUser)
+                        .build());
+            }
         }
 
 
