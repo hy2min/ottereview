@@ -53,8 +53,29 @@ public class ReviewComment extends BaseEntity {
     @Column(name = "record_key")
     private String recordKey;
 
+    /** GitHub start_line (멀티 라인 코멘트 시작점) */
+    @Column(name = "start_line")
+    private Integer startLine;
+
+    /** GitHub start_side */
+    @Column(name = "start_side")
+    private String startSide;
+
+    /** GitHub line: 실제 라인 번호 */
+    @Column
+    private Integer line;
+
+    /** GitHub side: 'LEFT' or 'RIGHT' */
+    @Column
+    private String side;
+
+    /** GitHub의 position (diff 상에서의 라인 위치) */
     @Column
     private Integer position;
+
+    /** GitHub diff_hunk: diff 코드 스니펫 */
+    @Column(name = "diff_hunk", columnDefinition = "TEXT")
+    private String diffHunk;
 
     @Column(name = "github_created_at")
     private LocalDateTime githubCreatedAt;
