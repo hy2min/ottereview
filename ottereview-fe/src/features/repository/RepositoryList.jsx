@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Box from '../../components/Box'
-import { useUserStore } from '../../store/userStore'
-import { fetchAuthoredPRs, fetchReviewerPRs } from '../pullRequest/prApi'
-import { usePRStore } from '../pullRequest/stores/prStore'
-import { fetchRepoList } from './repoApi'
-import RepositoryCard from './RepositoryCard'
-import { useRepoStore } from './stores/repoStore'
+import Box from '@/components/Box'
+import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
+import { usePRStore } from '@/features/pullRequest/stores/prStore'
+import { fetchRepoList } from '@/features/repository/repoApi'
+import RepositoryCard from '@/features/repository/RepositoryCard'
+import { useRepoStore } from '@/features/repository/stores/repoStore'
+import { useUserStore } from '@/store/userStore'
 
 const RepositoryList = () => {
   const navigate = useNavigate()
@@ -55,7 +55,7 @@ const RepositoryList = () => {
   }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/Ottereviews/installations/new'
+    const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'
     window.location.href = importUrl
   }
 

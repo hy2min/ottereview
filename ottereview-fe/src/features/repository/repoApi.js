@@ -1,4 +1,4 @@
-import { api } from '../../lib/api'
+import { api } from '@/lib/api'
 // AccountId = user.id
 export const fetchRepoList = async (accountId) => {
   const res = await api.get(`/api/accounts/${accountId}/repositories`)

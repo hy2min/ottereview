@@ -1,10 +1,10 @@
-import Whiteboard from '../features/chat/Whiteboard'
-import ChatRoom from '../pages/ChatRoom'
-import Conflict from '../pages/Conflict'
-import Dashboard from '../pages/Dashboard'
-import PRCreate from '../pages/PRCreate'
-import PRreview from '../pages/PRReview'
-import RepositoryDetail from '../pages/RepositoryDetail'
+import Whiteboard from '@/features/chat/Whiteboard'
+import ChatRoom from '@/pages/ChatRoom'
+import Conflict from '@/pages/Conflict'
+import Dashboard from '@/pages/Dashboard'
+import PRCreate from '@/pages/PRCreate'
+import PRreview from '@/pages/PRReview'
+import RepositoryDetail from '@/pages/RepositoryDetail'
 
 export const protectedRoutes = [
   { path: '/dashboard', element: <Dashboard />, title: '대시보드' },
