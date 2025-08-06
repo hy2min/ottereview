@@ -2,7 +2,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import Header from '../components/Header'
 import OAuthCallbackPage from '../features/auth/OAuthCallbackPage'
-import AudioChatRoom from '../features/chat/AudioChatRoom'
+import AudioChatRoom from '../features/webrtc/AudioChatRoom'
 import ChatRoom from '../pages/ChatRoom'
 import Landing from '../pages/Landing'
 import { useUserStore } from '../store/userStore'

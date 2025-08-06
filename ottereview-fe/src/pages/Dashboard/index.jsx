@@ -15,7 +15,7 @@ const Dashboard = () => {
   const handleTest = async () => {
     try {
       const accountId = user.id
-      const res = await api.get(`/api/repositories/2/pull-requests/me`)
+      const res = await api.get('/api/accounts/3/repositories/1032881314/users')
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
@@ -50,14 +50,6 @@ const Dashboard = () => {
             className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
           >
             오디오 테스트
-          </button>
-
-          {/* ✅ 화이트보드 테스트 버튼 추가 */}
-          <button
-            onClick={() => navigate('/whiteboard')}
-            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
-          >
-            화이트보드 테스트
           </button>
         </div>
       </div>
