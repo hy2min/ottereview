@@ -33,9 +33,6 @@ public class ReviewCommentCreateRequest {
         /** 멀티 라인 코멘트 시작 라인 */
         private Integer startLine;
 
-        /** diff 코드 스니펫 (GitHub API의 diff_hunk 그대로) */
-        private String diffHunk;
-
         /** 멀티 라인 코멘트 시작 side */
         private String startSide;
 
