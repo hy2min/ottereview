@@ -40,6 +40,7 @@ public class ReviewCommentEventDto {
         private String originalCommitId;
         
         private UserWebhookInfo user;
+
         private String body;
         
         @JsonProperty("created_at")
