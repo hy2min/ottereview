@@ -7,7 +7,7 @@ import Button from '../../components/Button'
 import { fetchPRList } from '../../features/pullRequest/prApi'
 import PRCardDetail from '../../features/pullRequest/PRCardDetail'
 import { usePRStore } from '../../features/pullRequest/stores/prStore'
-import { useRepoStore } from '../../features/repository/repoStore'
+import { useRepoStore } from '../../features/repository/stores/repoStore'
 
 const RepositoryDetail = () => {
   const { repoId } = useParams()

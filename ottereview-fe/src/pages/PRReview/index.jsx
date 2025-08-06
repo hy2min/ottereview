@@ -17,12 +17,14 @@ import CodeDiff from '../../components/CodeDiff'
 import CommentForm from '../../features/comment/CommentForm'
 import { useCommentStore } from '../../features/comment/commentStore'
 import PRCommentList from '../../features/comment/PRCommentList'
+import CommitList from '../../features/pullRequest/CommitList'
 import { fetchPRDetail } from '../../features/pullRequest/prApi'
 import { useUserStore } from '../../store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
   const [files, setFiles] = useState([])
+  const [commits, setCommits] = useState([])
   const [expandedFile, setExpandedFile] = useState(null)
   const [activeTab, setActiveTab] = useState('files')
   const [comment, setComment] = useState('')
@@ -65,9 +67,11 @@ const PRReview = () => {
           })
         )
         setFiles(filesArr)
+        setCommits(pr.commits || [])
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
         setFiles([])
+        setCommits([])
       }
     }
 
@@ -164,7 +168,7 @@ const PRReview = () => {
           </div>
         )}
 
-        {activeTab === 'commits' && <div>{/* 커밋 영역 구현 예정 */}</div>}
+        {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
 
       <CommentForm
