@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.pullrequest.service.PullRequestPreparationService;
-import com.ssafy.ottereview.webhook.dto.PushEventInfo;
+import com.ssafy.ottereview.webhook.dto.PushEventDto;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,14 +30,14 @@ public class PushEventService {
 //            log.debug("전체 페이로드 출력:\n{}", formattedPayload);
             
             // Push 이벤트 기본 정보 추출
-            PushEventInfo pushInfo = extractPushEventInfo(json);
+            PushEventDto pushInfo = extractPushEventInfo(json);
             
         } catch (Exception e) {
             log.error("Error processing push event", e);
         }
     }
     
-    private PushEventInfo extractPushEventInfo(JsonNode json) {
+    private PushEventDto extractPushEventInfo(JsonNode json) {
         String ref = json.path("ref")
                 .asText();
         String branchName = ref.replace("refs/heads/", "");
@@ -49,7 +49,7 @@ public class PushEventService {
                     .asText());
         }
         
-        return PushEventInfo.builder()
+        return PushEventDto.builder()
                 .ref(ref)
                 .branchName(branchName)
                 .repoFullName(json.path("repository")

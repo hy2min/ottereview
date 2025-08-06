@@ -8,6 +8,8 @@ import lombok.Getter;
 public class GithubUserDto {
     
     private String login;
+    private Long id;
     private String email;
+    private String type;
     private String avatarUrl;
 }

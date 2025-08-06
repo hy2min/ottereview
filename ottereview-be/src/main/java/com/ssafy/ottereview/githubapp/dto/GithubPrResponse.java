@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.kohsuke.github.GHPullRequest;
@@ -14,8 +15,10 @@ import org.kohsuke.github.GHUser;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
+@Builder
 public class GithubPrResponse {
 
+    private Long githubId;
     private Integer githubPrNumber;
     private String title;
     private String body;
@@ -42,29 +45,30 @@ public class GithubPrResponse {
 
     public static GithubPrResponse from(GHPullRequest ghPullRequest) {
         try {
-            return new GithubPrResponse(
-                    ghPullRequest.getNumber(),
-                    ghPullRequest.getTitle(),
-                    ghPullRequest.getBody(),
-                    ghPullRequest.getState().name(),
-                    ghPullRequest.getUser(),
-                    ghPullRequest.getAssignees(),
-                    ghPullRequest.getRequestedReviewers(),
-                    ghPullRequest.isMerged(),
-                    ghPullRequest.getBase().getRef(),
-                    ghPullRequest.getHead().getRef(),
-                    ghPullRequest.getMergeable(),
-                    convertToLocalDateTime(ghPullRequest.getCreatedAt()),
-                    convertToLocalDateTime(ghPullRequest.getUpdatedAt()),
-                    ghPullRequest.getCommits(),
-                    ghPullRequest.getChangedFiles(),
-                    ghPullRequest.getCommentsCount(),
-                    ghPullRequest.getReviewComments(),
-                    ghPullRequest.getHtmlUrl(),
-                    ghPullRequest.getPatchUrl(),
-                    ghPullRequest.getIssueUrl(),
-                    ghPullRequest.getDiffUrl()
-            );
+            return GithubPrResponse.builder()
+                    .githubId(ghPullRequest.getId())
+                    .githubPrNumber(ghPullRequest.getNumber())
+                    .title(ghPullRequest.getTitle())
+                    .body(ghPullRequest.getBody())
+                    .state(ghPullRequest.getState().name())
+                    .author(ghPullRequest.getUser())
+                    .assignees(ghPullRequest.getAssignees())
+                    .requestedReviewers(ghPullRequest.getRequestedReviewers())
+                    .merged(ghPullRequest.isMerged())
+                    .base(ghPullRequest.getBase().getRef())
+                    .head(ghPullRequest.getHead().getRef())
+                    .mergeable(ghPullRequest.getMergeable())
+                    .githubCreatedAt(convertToLocalDateTime(ghPullRequest.getCreatedAt()))
+                    .githubUpdatedAt(convertToLocalDateTime(ghPullRequest.getUpdatedAt()))
+                    .commitCnt(ghPullRequest.getCommits())
+                    .changedFilesCnt(ghPullRequest.getChangedFiles())
+                    .commentCnt(ghPullRequest.getCommentsCount())
+                    .reviewCommentCnt(ghPullRequest.getReviewComments())
+                    .htmlUrl(ghPullRequest.getHtmlUrl())
+                    .patchUrl(ghPullRequest.getPatchUrl())
+                    .issueUrl(ghPullRequest.getIssueUrl())
+                    .diffUrl(ghPullRequest.getDiffUrl())
+                    .build();
         } catch (IOException e) {
             throw new RuntimeException("GitHub API 호출 중 오류가 발생했습니다: " + e.getMessage(), e);
         }
