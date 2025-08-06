@@ -120,7 +120,7 @@ async def store_pr_to_vector_db(pr_request: PRData):
     """
     try:
         # 벡터 DB에 저장
-        success = await vector_db.store_pr_data(pr_request.pr_id, pr_request.pr_data)
+        success = await vector_db.store_pr_data(pr_request.pr_id, pr_request)
         
         if success:
             return {
@@ -173,7 +173,7 @@ async def recommend_pr_reviewers(pr_data: PRData):
         pr_data: PRData 객체 (PR 정보)
         
     Returns:
-        {"result": [{"github_username": "사용자명", "github_email": "이메일"}]}
+        {"result": [{"github_username": "사용자명", "github_email": "이메일", "reason": "추천 이유"}]}
     """
     try:
         recommendations = await recommend_reviewers(pr_data, limit=5)
