@@ -11,15 +11,15 @@ import {
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import Box from '../../components/Box'
-import Button from '../../components/Button'
-import CodeDiff from '../../components/CodeDiff'
-import CommentForm from '../../features/comment/CommentForm'
-import { useCommentStore } from '../../features/comment/commentStore'
-import PRCommentList from '../../features/comment/PRCommentList'
-import CommitList from '../../features/pullRequest/CommitList'
-import { fetchPRDetail } from '../../features/pullRequest/prApi'
-import { useUserStore } from '../../store/userStore'
+import Box from '@/components/Box'
+import Button from '@/components/Button'
+import CodeDiff from '@/components/CodeDiff'
+import CommentForm from '@/features/comment/CommentForm'
+import { useCommentStore } from '@/features/comment/commentStore'
+import PRCommentList from '@/features/comment/PRCommentList'
+import CommitList from '@/features/pullRequest/CommitList'
+import { fetchPRDetail } from '@/features/pullRequest/prApi'
+import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()

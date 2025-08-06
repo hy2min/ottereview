@@ -1,7 +1,7 @@
-// features/pullRequest/CommitList.jsx
 import { GitCommit } from 'lucide-react'
 
 import Box from '../../components/Box'
+import { formatRelativeTime } from '../../lib/utils'
 
 const CommitList = ({ commits = [] }) => {
   return (
@@ -14,7 +14,7 @@ const CommitList = ({ commits = [] }) => {
               <p>{commit.commitTitle || commit.message}</p>
               <div className="text-sm text-gray-500 flex gap-2">
                 <span>{commit.authorName}</span>
-                <span>{formatDate(commit.authorDate)}</span>
+                <span>{formatRelativeTime(commit.authorDate)}</span>
               </div>
             </div>
           </div>
@@ -23,20 +23,6 @@ const CommitList = ({ commits = [] }) => {
       ))}
     </div>
   )
-}
-
-// 날짜 "2025-08-05T02:59:04" → "2일 전" 형식으로 바꾸는 함수
-function formatDate(isoString) {
-  const now = new Date()
-  const then = new Date(isoString)
-  const diff = Math.floor((now - then) / 1000)
-
-  const day = 60 * 60 * 24
-  const hour = 60 * 60
-
-  if (diff < hour) return `${Math.floor(diff / 60)}분 전`
-  if (diff < day) return `${Math.floor(diff / hour)}시간 전`
-  return `${Math.floor(diff / day)}일 전`
 }
 
 export default CommitList
