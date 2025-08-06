@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface BranchRepository extends JpaRepository<Branch, Long> {
     // repoId로 해당 레포의 브렌치 가져오기
-    List<Branch> findAllById(Long repoId);
+    List<Branch> findAllByRepo_Id(Long repoId);
 
     // branch id로 branch 정보 가져오기
     Optional<Branch> findById(Long id);
