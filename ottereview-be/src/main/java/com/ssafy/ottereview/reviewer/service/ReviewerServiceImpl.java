@@ -67,7 +67,7 @@ public class ReviewerServiceImpl implements ReviewerService {
                 .body(pr.getBody())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .state(pr.getState())
+                .state(pr.getState().toString())
                 .merged(pr.getMerged())
                 .mergeable(pr.isMergeable())
                 .head(pr.getHead())
@@ -84,13 +84,14 @@ public class ReviewerServiceImpl implements ReviewerService {
     }
 
     private UserResponseDto convertToUserResponse(User user) {
-        return new UserResponseDto(
-                user.getId(),
-                user.getGithubUsername(),
-                user.getGithubEmail(),
-                user.getProfileImageUrl(),
-                user.getRewardPoints(),
-                user.getUserGrade()
-        );
+        return UserResponseDto.builder()
+                .id(user.getId())
+                .githubUsername(user.getGithubUsername())
+                .githubId(user.getGithubId())
+                .githubEmail(user.getGithubEmail())
+                .profileImageUrl(user.getProfileImageUrl())
+                .userGrade(user.getUserGrade())
+                .rewardPoints(user.getRewardPoints())
+                .build();
     }
 }

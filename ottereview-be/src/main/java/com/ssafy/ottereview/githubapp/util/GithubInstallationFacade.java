@@ -62,7 +62,9 @@ public class GithubInstallationFacade {
                 if(user.getLogin().equals(loginUser.getGithubUsername())) continue;
                 User u = User.builder()
                         .githubUsername(user.getLogin())
+                        .githubId(user.getId())
                         .githubEmail(user.getEmail())
+                        .type(user.getType())
                         .profileImageUrl(user.getAvatarUrl())
                         .userGrade("BASIC")
                         .rewardPoints(0)

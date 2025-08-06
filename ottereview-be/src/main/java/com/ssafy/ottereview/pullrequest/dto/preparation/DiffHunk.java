@@ -11,15 +11,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class DiffHunk {
-    
+
     private int oldStart;
     private int oldLines;
     private int newStart;
     private int newLines;
     private String context;
-    private List<String> lines;
-    
-    public void addLine(String line) {
+    private List<DiffLine> lines;  // String에서 DiffLine으로 변경
+
+    public void addLine(DiffLine line) {
         lines.add(line);
     }
 }
