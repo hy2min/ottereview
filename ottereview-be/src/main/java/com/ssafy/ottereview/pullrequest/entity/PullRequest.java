@@ -2,6 +2,7 @@ package com.ssafy.ottereview.pullrequest.entity;
 
 import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.Column;
@@ -35,7 +36,7 @@ public class PullRequest extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column
     private Integer githubPrNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -163,5 +164,32 @@ public class PullRequest extends BaseEntity {
         this.patchUrl = githubPr.getPatchUrl();
         this.issueUrl = githubPr.getIssueUrl();
         this.diffUrl = githubPr.getDiffUrl();
+    }
+
+    public static PullRequest toEntity(PullRequestDetailResponse resp, Repo repo, User author) {
+        return PullRequest.builder()
+                .githubPrNumber(resp.getGithubPrNumber())
+                .title(resp.getTitle())
+                .body(resp.getBody())
+                .state(resp.getState())
+                .author(author)
+                .merged(resp.getMerged())
+                .base(resp.getBase())
+                .head(resp.getHead())
+                .mergeable(resp.isMergeable())
+                .githubCreatedAt(resp.getGithubCreatedAt())
+                .githubUpdatedAt(resp.getGithubUpdatedAt())
+                .commitCnt(resp.getCommitCnt())
+                .changedFilesCnt(resp.getChangedFilesCnt())
+                .commentCnt(resp.getCommentCnt())
+                .reviewCommentCnt(resp.getReviewCommentCnt())
+                .htmlUrl(resp.getHtmlUrl())
+                .patchUrl(resp.getPatchUrl())
+                .issueUrl(resp.getIssueUrl())
+                .diffUrl(resp.getDiffUrl())
+                .summary(resp.getSummary())
+                .approveCnt(resp.getApproveCnt())
+                .repo(repo)
+                .build();
     }
 }

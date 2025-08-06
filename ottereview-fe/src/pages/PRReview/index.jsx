@@ -17,14 +17,22 @@ import CodeDiff from '../../components/CodeDiff'
 import CommentForm from '../../features/comment/CommentForm'
 import { useCommentStore } from '../../features/comment/commentStore'
 import PRCommentList from '../../features/comment/PRCommentList'
-import { fetchPR } from '../../features/pullRequest/prApi'
+import { fetchPRDetail } from '../../features/pullRequest/prApi'
+import { useUserStore } from '../../store/userStore'
 
 const PRReview = () => {
-  const { prId } = useParams()
+  const { repoId, prId } = useParams()
   const [files, setFiles] = useState([])
   const [expandedFile, setExpandedFile] = useState(null)
   const [activeTab, setActiveTab] = useState('files')
   const [comment, setComment] = useState('')
+  const user = useUserStore((state) => state.user)
+
+  const tabs = [
+    { id: 'files', label: '파일', icon: FileText },
+    { id: 'comments', label: '댓글', icon: MessageCircle },
+    { id: 'commits', label: '커밋', icon: GitCommit },
+  ]
 
   const loadPRComments = useCommentStore((state) => state.loadPRComments)
   const submitPRComment = useCommentStore((state) => state.submitPRComment)
@@ -38,31 +46,40 @@ const PRReview = () => {
 
   useEffect(() => {
     const load = async () => {
-      const prList = await fetchPR()
-      const pr = prList.find((p) => String(p.id) === prId)
-      if (!pr || !pr.files) {
+      if (!repoId || !prId) return
+
+      try {
+        const pr = await fetchPRDetail({ repoId, prId })
+        console.log(pr)
+        if (!pr || !pr.files) {
+          setFiles([])
+          return
+        }
+
+        const filesArr = Object.entries(pr.files).map(
+          ([filename, { additions, deletions, patch }]) => ({
+            filename,
+            additions,
+            deletions,
+            patch,
+          })
+        )
+        setFiles(filesArr)
+      } catch (err) {
+        console.error('❌ PR 상세 정보 로딩 실패:', err)
         setFiles([])
-        return
       }
-      const filesArr = Object.entries(pr.files).map(
-        ([filename, { additions, deletions, patch }]) => ({
-          filename,
-          additions,
-          deletions,
-          patch,
-        })
-      )
-      setFiles(filesArr)
     }
+
     load()
-  }, [prId])
+  }, [repoId, prId])
 
   const toggle = (filename) => setExpandedFile(expandedFile === filename ? null : filename)
 
   const handleSubmit = async () => {
     if (!comment.trim()) return
     await submitPRComment(prId, {
-      author: '김개발',
+      author: user.githubUsername,
       content: comment,
     })
     setComment('')
@@ -70,10 +87,16 @@ const PRReview = () => {
 
   return (
     <div className="space-y-4 py-4">
-      {/* 헤더 영역 */}
       <div className="flex items-start justify-between">
-        {/* 오른쪽: 승인 진행률 + 머지 버튼 */}
         <div className="flex items-stretch gap-4">
+          <Box shadow className="flex">
+            <strong className="w-24">AI요약 : </strong>
+            <p className="text-sm">
+              JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
+              보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
+              변경사항입니다.
+            </p>
+          </Box>
           <Box shadow className="w-100">
             <div className="flex justify-between mb-1">
               <p className="text-sm">승인 진행률</p>
@@ -83,29 +106,30 @@ const PRReview = () => {
               <div className="minecraft-progress-fill" />
             </div>
           </Box>
-          <Box shadow className="flex">
-            <strong className="w-24">AI요약 : </strong>
-            <p className="text-sm">
-              JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
-              보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
-              변경사항입니다.
-            </p>
-          </Box>
         </div>
       </div>
-      {/* AI 요약 */}
 
       <Box shadow>
-        <div className="flex gap-4 pb-4">
-          <Button variant="" size="sm" onClick={() => setActiveTab('files')}>
-            파일
-          </Button>
-          <Button variant="" size="sm" onClick={() => setActiveTab('comments')}>
-            댓글
-          </Button>
-          <Button variant="" size="sm" onClick={() => setActiveTab('commits')}>
-            커밋
-          </Button>
+        <div className="flex gap-3 pb-4">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <Button
+                key={tab.id}
+                variant=""
+                size="sm"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-1 px-4 py-2 rounded-md transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-primary-500 text-white'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </Button>
+            )
+          })}
         </div>
 
         {activeTab === 'files' && (
@@ -118,7 +142,10 @@ const PRReview = () => {
                     className="flex justify-between items-center cursor-pointer p-2 bg-gray-50"
                     onClick={() => toggle(f.filename)}
                   >
-                    <span>{f.filename}</span>
+                    <div className="flex space-x-3">
+                      <FileText className="w-4 h-4 text-stone-600" />
+                      <span>{f.filename}</span>
+                    </div>
                     <div className="space-x-2">
                       <span className="text-green-600">+{f.additions}</span>
                       <span className="text-red-600">-{f.deletions}</span>
@@ -137,8 +164,9 @@ const PRReview = () => {
           </div>
         )}
 
-        {activeTab === 'commits' && <div>{/* 커밋 영역 구현 */}</div>}
+        {activeTab === 'commits' && <div>{/* 커밋 영역 구현 예정 */}</div>}
       </Box>
+
       <CommentForm
         value={comment}
         onChange={(e) => setComment(e.target.value)}

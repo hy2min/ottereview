@@ -58,6 +58,8 @@ dependencies {
 	// email
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+	// Jgit
+	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
 }
 
 tasks.named('test') {
