@@ -3,8 +3,29 @@ from dotenv import load_dotenv
 from langchain.chat_models import init_chat_model
 from typing import List, Dict, Any
 import logging
+import json
+import re
 from collections import defaultdict, Counter
 from .vector_db import vector_db, PRData
+
+# === 설정 상수들 ===
+class ReviewerRecommendationConfig:
+    """리뷰어 추천 관련 설정 상수들"""
+    # 벡터 DB 검색 관련
+    VECTOR_DB_SEARCH_LIMIT = 15  # 벡터 DB에서 검색할 패턴 수
+    FALLBACK_SEARCH_LIMIT = 10   # 폴백에서 검색할 패턴 수
+    
+    # 컨텍스트 생성 관련
+    MAX_CONTEXT_REVIEWERS = 8    # 컨텍스트에 포함할 최대 리뷰어 수
+    MAX_FILE_TYPES_DISPLAY = 3   # 표시할 최대 파일 타입 수
+    
+    # LLM 프롬프트 관련
+    MAX_FILES_IN_SUMMARY = 30     # 요약에 포함할 최대 파일 수
+    MAX_COMMITS_IN_SUMMARY = 10   # 요약에 포함할 최대 커밋 수
+    
+    # 기본값
+    DEFAULT_RECOMMENDATION_LIMIT = 3  # 기본 추천 리뷰어 수
+    DEFAULT_REASON = "전문성을 보유하고 있습니다"  # 기본 추천 이유
 
 # .env 파일에서 환경변수 로드
 load_dotenv()
@@ -126,7 +147,7 @@ async def summary_pull_request(pr_data):
     except Exception as e:
         raise e
 
-async def recommend_reviewers(pr_data: PRData, limit: int = 3) -> List[Dict[str, Any]]:
+async def recommend_reviewers(pr_data: PRData, limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
     """
     RAG를 활용한 리뷰어 추천 로직
     
@@ -139,7 +160,7 @@ async def recommend_reviewers(pr_data: PRData, limit: int = 3) -> List[Dict[str,
     """
     try:
         # 1. 벡터 DB에서 유사한 PR 패턴 검색 (RAG의 Retrieval 단계)
-        similar_patterns = await vector_db.get_similar_reviewer_patterns(pr_data, limit=15)
+        similar_patterns = await vector_db.get_similar_reviewer_patterns(pr_data, limit=ReviewerRecommendationConfig.VECTOR_DB_SEARCH_LIMIT)
         
         if not similar_patterns:
             logger.warning("유사한 리뷰어 패턴을 찾을 수 없습니다")
@@ -149,7 +170,7 @@ async def recommend_reviewers(pr_data: PRData, limit: int = 3) -> List[Dict[str,
         context = _build_context_from_patterns(similar_patterns, pr_data)
         
         # 3. LLM에게 컨텍스트와 함께 추천 요청 (RAG의 Generation 단계)
-        recommendations = await _generate_recommendations_with_llm(context, pr_data, limit)
+        recommendations = await _generate_recommendations_with_llm(context, pr_data, similar_patterns, limit)
         
         return recommendations
         
@@ -189,18 +210,18 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PRD
         if pattern['review_provided']:
             reviewer_data[reviewer]['review_count'] += 1
     
-    # 상위 8명만 컨텍스트에 포함
+    # 상위 N명만 컨텍스트에 포함
     sorted_reviewers = sorted(
         reviewer_data.items(),
         key=lambda x: x[1]['total_similarity'],
         reverse=True
-    )[:8]
+    )[:ReviewerRecommendationConfig.MAX_CONTEXT_REVIEWERS]
     
     context_parts.append("=== 과거 유사한 PR들의 리뷰어 패턴 ===")
     
     for i, (reviewer, data) in enumerate(sorted_reviewers, 1):
         avg_similarity = data['total_similarity'] / len(data['patterns'])
-        file_types = ', '.join(list(data['file_categories'])[:3])
+        file_types = ', '.join(list(data['file_categories'])[:ReviewerRecommendationConfig.MAX_FILE_TYPES_DISPLAY])
         similarity_score = f"{avg_similarity:.3f}"
         
         context_parts.append(f"""
@@ -213,21 +234,22 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PRD
     
     return "\n".join(context_parts)
 
-async def _generate_recommendations_with_llm(context: str, pr_data: PRData, limit: int=3) -> List[Dict[str, Any]]:
+async def _generate_recommendations_with_llm(context: str, pr_data: PRData, similar_patterns: List[Dict[str, Any]], limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
     """
     LLM을 활용해 컨텍스트 기반 리뷰어 추천
     
     Args:
         context: 벡터 검색으로 구성된 컨텍스트
         pr_data: 현재 PR 데이터
+        similar_patterns: 벡터 DB에서 검색된 유사 패턴들 (폴백용)
         limit: 추천할 리뷰어 수
         
     Returns:
         List[Dict]: LLM이 추천한 리뷰어 목록
     """
     # 현재 PR 정보 요약
-    files_summary = ', '.join([f.filename for f in pr_data.files[:5]])
-    commits_summary = ' | '.join([c.message for c in pr_data.commits[:3]])
+    files_summary = ', '.join([f.filename for f in pr_data.files[:ReviewerRecommendationConfig.MAX_FILES_IN_SUMMARY]])
+    commits_summary = ' | '.join([c.message for c in pr_data.commits[:ReviewerRecommendationConfig.MAX_COMMITS_IN_SUMMARY]])
     
     system_prompt = """당신은 코드 리뷰어 추천 전문가입니다.
 과거 유사한 PR 패턴을 분석하여 가장 적합한 리뷰어를 추천해주세요.
@@ -237,12 +259,15 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, limi
 2. 해당 파일 타입에 대한 전문성  
 3. 과거 리뷰 제공 이력
 4. 유사도 점수
+5. reason을 작성할때는 평균유사도와 같은 수치를 정확히 이야기 하지 마세요.
+6. 한글로만 작성하도록 하세요.
 
-응답은 반드시 다음 JSON 형식으로만 추천 해주세요:
+응답은 반드시 다음 JSON 형식으로만 추천 해주세요. 다른 텍스트는 포함하지 마세요:
 [
   {
     "github_username": "사용자명",
-    "github_email": "이메일"
+    "github_email": "이메일",
+    "reason": "추천 이유"
   }
 ]"""
 
@@ -268,12 +293,12 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, limi
         
     except Exception as e:
         logger.error(f"LLM 추천 생성 중 오류: {str(e)}")
-        # 폴백: 간단한 유사도 기반 추천
-        return _fallback_simple_recommendation(pr_data, limit)
+        # 폴백: 간단한 유사도 기반 추천 (이미 검색된 패턴 재사용)
+        return _fallback_simple_recommendation(similar_patterns, limit)
 
 def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
     """
-    LLM 응답을 파싱해서 리뷰어 목록으로 변환
+    LLM 응답을 파싱해서 리뷰어 목록으로 변환 (개선된 파싱 로직)
     
     Args:
         response_text: LLM 응답 텍스트
@@ -283,45 +308,94 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
         List[Dict]: 파싱된 리뷰어 목록
     """
     try:
-        import json
-        import re
+        # 1단계: 텍스트 정리
+        cleaned_text = response_text.strip()
         
-        # JSON 부분만 추출
-        json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
-        if not json_match:
-            raise ValueError("JSON 형식을 찾을 수 없습니다")
+        # 2단계: 여러 방법으로 JSON 추출 시도
+        json_candidates = []
         
-        json_str = json_match.group(0)
-        recommendations = json.loads(json_str)
+        # 방법 1: 전체 텍스트가 JSON인지 확인
+        try:
+            parsed = json.loads(cleaned_text)
+            if isinstance(parsed, list):
+                json_candidates.append(parsed)
+        except:
+            pass
         
-        # 검증 및 정리
+        # 방법 2: 대괄호로 감싸진 JSON 찾기 (기존 방법)
+        json_matches = re.findall(r'\[.*?\]', cleaned_text, re.DOTALL)
+        for match in json_matches:
+            try:
+                parsed = json.loads(match)
+                if isinstance(parsed, list):
+                    json_candidates.append(parsed)
+            except:
+                continue
+        
+        # 방법 3: 코드 블록 안의 JSON 찾기
+        code_block_matches = re.findall(r'```(?:json)?\s*(\[.*?\])\s*```', cleaned_text, re.DOTALL)
+        for match in code_block_matches:
+            try:
+                parsed = json.loads(match)
+                if isinstance(parsed, list):
+                    json_candidates.append(parsed)
+            except:
+                continue
+        
+        # 3단계: 가장 적합한 JSON 선택
+        best_candidate = None
+        for candidate in json_candidates:
+            if candidate and isinstance(candidate, list):
+                # 첫 번째 요소가 올바른 구조인지 확인
+                if (len(candidate) > 0 and 
+                    isinstance(candidate[0], dict) and 
+                    'github_username' in candidate[0]):
+                    best_candidate = candidate
+                    break
+        
+        if not best_candidate:
+            raise ValueError("유효한 JSON 형식을 찾을 수 없습니다")
+        
+        # 4단계: 검증 및 정리
         valid_recommendations = []
-        for rec in recommendations[:limit]:
+        for rec in best_candidate[:limit]:
             if isinstance(rec, dict) and 'github_username' in rec:
+                # 필수 필드 검증
+                username = rec.get('github_username', '').strip()
+                if not username:
+                    continue
+                    
                 valid_recommendations.append({
-                    'github_username': rec.get('github_username', ''),
-                    'github_email': rec.get('github_email', ''),
+                    'github_username': username,
+                    'github_email': rec.get('github_email', '').strip(),
+                    'reason': rec.get('reason', ReviewerRecommendationConfig.DEFAULT_REASON).strip()
                 })
+        
+        if not valid_recommendations:
+            raise ValueError("유효한 리뷰어 정보가 없습니다")
         
         return valid_recommendations
         
     except Exception as e:
         logger.error(f"LLM 응답 파싱 실패: {str(e)}")
+        logger.debug(f"파싱 실패한 응답 내용: {response_text[:500]}...")
         return []
 
-async def _fallback_simple_recommendation(pr_data: PRData, limit: int) -> List[Dict[str, Any]]:
+def _fallback_simple_recommendation(similar_patterns: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
     """
-    LLM 실패 시 사용할 간단한 폴백 추천
+    LLM 실패 시 사용할 간단한 폴백 추천 (이미 검색된 패턴 재사용)
     
     Args:
-        pr_data: PR 데이터
+        similar_patterns: 이미 검색된 유사 패턴들
         limit: 추천할 리뷰어 수
         
     Returns:
         List[Dict]: 간단한 추천 결과
     """
     try:
-        similar_patterns = await vector_db.get_similar_reviewer_patterns(pr_data, limit=10)
+        if not similar_patterns:
+            logger.warning("폴백 추천을 위한 패턴이 없습니다")
+            return []
         
         reviewer_scores = {}
         for pattern in similar_patterns:
@@ -344,6 +418,7 @@ async def _fallback_simple_recommendation(pr_data: PRData, limit: int) -> List[D
                 'reason': '유사한 작업 경험을 보유하고 있습니다'
             })
         
+        logger.info(f"폴백 로직으로 {len(recommendations)}명의 리뷰어를 추천했습니다")
         return recommendations
         
     except Exception as e:
