@@ -25,7 +25,7 @@ public class User {
     @Column(name = "id", nullable = false)
     private Long id;
 
-    @Column(name = "github_id", nullable = false)
+    @Column(name = "github_id", nullable = false, unique = true)
     private Long githubId;
 
     @Column(name = "github_username", nullable = false)
