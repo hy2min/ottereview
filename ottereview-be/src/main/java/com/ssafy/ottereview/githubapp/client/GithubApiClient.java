@@ -42,10 +42,12 @@ public class GithubApiClient {
             GitHub appGitHub = githubAppUtil.getGitHubAsApp();
             GHAppInstallation installation = appGitHub.getApp()
                     .getInstallationById(installationId);
-
+            
             return new GithubAccountResponse(installation.getId(), installation.getAccount()
                     .getLogin(), installation.getAccount()
-                    .getType());
+                    .getType(),
+                    installation.getAccount().getId()
+            );
 
         } catch (IOException e) {
             e.printStackTrace();

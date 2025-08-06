@@ -12,6 +12,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -30,6 +32,7 @@ public class UserAccount extends BaseEntity {
     
     @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Account account;
     
 }

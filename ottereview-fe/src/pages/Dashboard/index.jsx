@@ -9,13 +9,13 @@ import { useUserStore } from '../../store/userStore'
 
 const Dashboard = () => {
   const navigate = useNavigate()
-  const user = useUserStore.getState().user
-  const repos = useRepoStore((state) => state.repos)
+  const user = useUserStore((state) => state.user)
   console.log(user)
+  const repos = useRepoStore((state) => state.repos)
   const handleTest = async () => {
     try {
       const accountId = user.id
-      const res = await api.get(`/api/repositories/4/pull-requests`)
+      const res = await api.get(`/api/repositories/2/pull-requests/me`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
@@ -32,14 +32,14 @@ const Dashboard = () => {
         <div className="flex gap-2">
           <button
             onClick={handleTest}
-            className="border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
+            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
           >
             응답 테스트
           </button>
           {/* 기존 채팅 테스트 */}
           <button
             onClick={() => navigate('/chatroom/test')}
-            className="border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
+            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
           >
             채팅 테스트
           </button>
@@ -47,7 +47,7 @@ const Dashboard = () => {
           {/* ✅ 오디오 테스트 버튼 추가 */}
           <button
             onClick={() => navigate('/audiotest')}
-            className="border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
+            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
           >
             오디오 테스트
           </button>

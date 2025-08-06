@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom'
 
 import Box from '../../components/Box'
 import { useUserStore } from '../../store/userStore'
-import { fetchRepoListByAccountId } from './repoApi'
+import { fetchAuthoredPRs, fetchReviewerPRs } from '../pullRequest/prApi'
+import { usePRStore } from '../pullRequest/stores/prStore'
+import { fetchRepoList } from './repoApi'
 import RepositoryCard from './RepositoryCard'
 import { useRepoStore } from './repoStore'
 
@@ -11,23 +13,51 @@ const RepositoryList = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const { repos, setRepos } = useRepoStore()
+  const setAuthoredPRs = usePRStore((state) => state.setAuthoredPRs)
+  const setReviewerPRs = usePRStore((state) => state.setReviewerPRs)
+
+  useEffect(() => {
+    if (!user?.id) {
+      console.warn('user.id 없음, 데이터 요청하지 않음')
+      return
+    }
+
+    const fetchData = async () => {
+      try {
+        // 🔹 1. 레포 목록
+        const fetchedRepos = await fetchRepoList(user.id)
+        console.log('📦 fetchedRepos:', fetchedRepos)
+        setRepos(fetchedRepos)
+
+        // 🔹 2. 내가 작성한 PR
+        try {
+          const authoredPRs = await fetchAuthoredPRs()
+          console.log('✍️ authoredPRs:', authoredPRs)
+          setAuthoredPRs(authoredPRs)
+        } catch (err) {
+          console.error('❌ authored PR fetch 실패:', err)
+        }
+
+        // 🔹 3. 내가 리뷰어인 PR
+        try {
+          const reviewerPRs = await fetchReviewerPRs()
+          console.log('🧑‍💻 reviewerPRs:', reviewerPRs)
+          setReviewerPRs(reviewerPRs)
+        } catch (err) {
+          console.error('❌ reviewer PR fetch 실패:', err)
+        }
+      } catch (err) {
+        console.error('❌ 전체 fetch 실패:', err)
+      }
+    }
+
+    fetchData()
+  }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
 
   const handleImport = () => {
     const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'
     window.location.href = importUrl
   }
-
-  useEffect(() => {
-    if (!user?.id) return
-
-    const fetchData = async () => {
-      const data = await fetchRepoListByAccountId(user.id)
-      console.log('📥 받은 데이터:', data)
-      setRepos(data)
-    }
-
-    fetchData()
-  }, [user?.id])
 
   const handleRepoClick = (repoId) => {
     navigate(`/${repoId}`)
@@ -36,14 +66,20 @@ const RepositoryList = () => {
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col">
       <div className="flex justify-between">
-        <h2 className="text-xl mb-2">레포지토리 목록</h2>
+        <h2 className="text-xl mb-2">레포지토리</h2>
         <button onClick={handleImport}>연결</button>
       </div>
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
-        {repos.map((repo) =>
-          repo.id ? (
-            <RepositoryCard key={repo.id} repo={repo} onClick={() => handleRepoClick(repo.id)} />
-          ) : null
+        {repos.length === 0 ? (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-sm text-gray-500">연결된 레포지토리가 없습니다.</p>
+          </div>
+        ) : (
+          repos.map((repo) =>
+            repo.id ? (
+              <RepositoryCard key={repo.id} repo={repo} onClick={() => handleRepoClick(repo.id)} />
+            ) : null
+          )
         )}
       </div>
     </Box>
