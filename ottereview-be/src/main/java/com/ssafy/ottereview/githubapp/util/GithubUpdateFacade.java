@@ -22,6 +22,7 @@ public class GithubUpdateFacade {
     // process update 로직 추가
     public void processUpdateWithOAuth(Long installationId) {
 
+
         Account account = accountService.getAccountByInstallationId(installationId);
         repoService.processSyncRepo(account, installationId);
     }
