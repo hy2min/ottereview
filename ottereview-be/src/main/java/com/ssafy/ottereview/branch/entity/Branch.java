@@ -33,7 +33,7 @@ public class Branch {
     @Column(name = "min_approve_cnt")
     private int minApproveCnt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "repo_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Repo repo;
