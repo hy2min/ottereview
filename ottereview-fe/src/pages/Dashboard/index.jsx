@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 
-import Box from '../../components/Box'
-import ChatRoomList from '../../features/chat/ChatRoomList'
-import PRList from '../../features/pullRequest/PRList'
-import RepositoryList from '../../features/repository/RepositoryList'
-import { useRepoStore } from '../../features/repository/stores/repoStore'
-import { api } from '../../lib/api'
-import { useUserStore } from '../../store/userStore'
+import Box from '@/components/Box'
+import ChatRoomList from '@/features/chat/ChatRoomList'
+import PRList from '@/features/pullRequest/PRList'
+import RepositoryList from '@/features/repository/RepositoryList'
+import { useRepoStore } from '@/features/repository/stores/repoStore'
+import { api } from '@/lib/api'
+import { useUserStore } from '@/store/userStore'
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -67,7 +67,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row justify-center gap-4 max-w-md sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row mb-4 justify-center gap-4 max-w-md sm:max-w-2xl md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto">
         <RepositoryList />
         <PRList />
       </div>

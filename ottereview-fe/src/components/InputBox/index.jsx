@@ -1,6 +1,6 @@
 import { twMerge } from 'tailwind-merge'
 
-import CustomSelect from './CustomSelect'
+import CustomSelect from '@/components/InputBox/CustomSelect'
 
 const InputBox = ({
   label,

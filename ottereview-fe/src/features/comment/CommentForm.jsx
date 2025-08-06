@@ -1,6 +1,6 @@
-import Box from '../../components/Box'
-import Button from '../../components/Button'
-import InputBox from '../../components/InputBox'
+import Box from '@/components/Box'
+import Button from '@/components/Button'
+import InputBox from '@/components/InputBox'
 
 const CommentForm = ({ value, onChange, onSubmit, disabled = false }) => {
   return (

@@ -1,5 +1,5 @@
-import Box from '../../components/Box'
-import { useCommentStore } from './commentStore'
+import Box from '@/components/Box'
+import { useCommentStore } from '@/features/comment/commentStore'
 
 const PRCommentList = ({ prId }) => {
   const comments = useCommentStore((state) => state.prComments[prId] || [])

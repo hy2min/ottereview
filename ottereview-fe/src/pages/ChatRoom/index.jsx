@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-import Chat from '../../features/chat/Chat'
-import CodeEditor from '../../features/chat/CodeEditor'
-import Whiteboard from '../../features/chat/Whiteboard'
+import Chat from '@/features/chat/Chat'
+import CodeEditor from '@/features/chat/CodeEditor'
+import Whiteboard from '@/features/chat/Whiteboard'
 
 const ChatRoom = () => {
   const [roomIdInput, setRoomIdInput] = useState('')

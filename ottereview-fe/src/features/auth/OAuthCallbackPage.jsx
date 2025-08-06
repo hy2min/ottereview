@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import { api } from '../../lib/api'
-import { useUserStore } from '../../store/userStore'
-import { useAuthStore } from '../auth/authStore'
+import { useAuthStore } from '@/features/auth/authStore'
+import { api } from '@/lib/api'
+import { useUserStore } from '@/store/userStore'
 
 const OAuthCallbackPage = () => {
   const navigate = useNavigate()

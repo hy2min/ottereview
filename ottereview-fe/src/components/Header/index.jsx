@@ -1,9 +1,9 @@
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
-import { protectedRoutes } from '../../app/routes'
-import { useAuthStore } from '../../features/auth/authStore'
-import { useUserStore } from '../../store/userStore'
-import Button from '../Button'
+import { protectedRoutes } from '@/app/routes'
+import Button from '@/components/Button'
+import { useAuthStore } from '@/features/auth/authStore'
+import { useUserStore } from '@/store/userStore'
 
 const Header = () => {
   const navigate = useNavigate()

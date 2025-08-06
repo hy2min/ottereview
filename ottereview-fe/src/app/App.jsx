@@ -1,12 +1,12 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import Header from '../components/Header'
-import OAuthCallbackPage from '../features/auth/OAuthCallbackPage'
-import AudioChatRoom from '../features/chat/AudioChatRoom'
-import ChatRoom from '../pages/ChatRoom'
-import Landing from '../pages/Landing'
-import { useUserStore } from '../store/userStore'
-import { protectedRoutes } from './routes'
+import { protectedRoutes } from '@/app/routes'
+import Header from '@/components/Header'
+import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
+import AudioChatRoom from '@/features/chat/AudioChatRoom'
+import ChatRoom from '@/pages/ChatRoom'
+import Landing from '@/pages/Landing'
+import { useUserStore } from '@/store/userStore'
 
 const App = () => {
   const user = useUserStore((state) => state.user) // user로 로그인 여부 판단
