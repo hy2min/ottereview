@@ -46,7 +46,7 @@ export const useCommentStore = create(
       },
     }),
     {
-      name: 'comment-store',
+      name: 'comment-storage',
       partialize: (state) => ({
         prComments: state.prComments,
         codeComments: state.codeComments,

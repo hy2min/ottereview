@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react' // useMemo 임포트
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
@@ -9,6 +9,7 @@ import PRCreateStep1 from '@/features/pullRequest/PRCreateStep1'
 import PRCreateStep2 from '@/features/pullRequest/PRCreateStep2'
 import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
+import PRCreateStep5 from '@/features/pullRequest/PRCreateStep5'
 import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
 
 const PRCreate = () => {
@@ -17,8 +18,10 @@ const PRCreate = () => {
 
   const formData = usePRCreateStore((state) => state.formData)
 
+  const steps = ['컨벤션 확인', '브랜치 선택', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
+
   const isNextButtonDisabled = useMemo(() => {
-    if (step === 1) {
+    if (step === 2) {
       return (
         !formData.sourceBranch ||
         !formData.targetBranch ||
@@ -52,6 +55,8 @@ const PRCreate = () => {
         return <PRCreateStep3 goToStep={goToStep} />
       case 4:
         return <PRCreateStep4 goToStep={goToStep} />
+      case 5:
+        return <PRCreateStep5 goToStep={goToStep} />
       default:
         return <PRCreateStep1 goToStep={goToStep} />
     }
@@ -59,7 +64,7 @@ const PRCreate = () => {
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 py-4">
-      <StepIndicator currentStep={step} />
+      <StepIndicator currentStep={step} steps={steps} />
       <Box shadow>{renderStepComponent()}</Box>
 
       <div className="flex justify-between items-center mt-4">
@@ -79,7 +84,7 @@ const PRCreate = () => {
         <Button
           onClick={() => {
             if (!isNextButtonDisabled) {
-              if (step < 4) {
+              if (step < 5) {
                 setStep((prev) => prev + 1)
               } else {
                 handleSubmit()
@@ -89,7 +94,7 @@ const PRCreate = () => {
           variant="primary"
           disabled={isNextButtonDisabled}
         >
-          {step === 4 ? '제출' : '다음'}
+          {step === 5 ? '제출' : '다음'}
         </Button>
       </div>
     </div>

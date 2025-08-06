@@ -4,28 +4,51 @@ import { usePRCreateStore } from './stores/prCreateStore'
 const PRCreateStep2 = () => {
   const { formData, setFormData } = usePRCreateStore()
 
+  const branchOptions = [
+    { label: '브랜치를 선택하세요', value: '' },
+    { label: 'main', value: 'main' },
+    { label: 'develop', value: 'develop' },
+    { label: 'feature/new-feature', value: 'feature/new-feature' },
+    { label: 'bugfix/issue-123', value: 'bugfix/issue-123' },
+  ]
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        {/* PR 제목 (기본 input type="text") */}
         <InputBox
-          label="PR 제목"
-          value={formData.title || ''}
-          onChange={(e) => setFormData({ title: e.target.value })}
+          label="소스 브랜치"
+          as="select"
+          options={branchOptions}
+          value={formData.sourceBranch || ''}
+          onChange={(e) => setFormData({ sourceBranch: e.target.value })}
+          placeholder="소스 브랜치를 선택하세요"
         />
 
-        {/* PR 설명 (textarea) */}
         <InputBox
-          className="h-50"
-          label="PR 설명"
-          as="textarea"
-          value={formData.description || ''}
-          onChange={(e) => setFormData({ description: e.target.value })}
+          label="타겟 브랜치"
+          as="select"
+          options={branchOptions}
+          value={formData.targetBranch || ''}
+          onChange={(e) => setFormData({ targetBranch: e.target.value })}
+          placeholder="타겟 브랜치를 선택하세요"
         />
       </div>
-      <div className="bg-white border-2 border-black p-4 rounded-[8px]">
-        파일별 코드 미리보기 박스 (mock)
-      </div>
+      {/* 추가 UI */}
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch !== formData.targetBranch && (
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800">
+            <strong>{formData.sourceBranch}</strong> 에서 <strong>{formData.targetBranch}</strong>{' '}
+            로의 변경을 생성합니다.
+          </div>
+        )}
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch === formData.targetBranch && (
+          <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800">
+            소스 브랜치와 타겟 브랜치가 동일합니다.
+          </div>
+        )}
     </div>
   )
 }
