@@ -1,13 +1,4 @@
-import {
-  Code,
-  FileText,
-  GitCommit,
-  GitMerge,
-  MessageCircle,
-  Mic,
-  ThumbsDown,
-  ThumbsUp,
-} from 'lucide-react'
+import { FileText, GitCommit, MessageCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -19,14 +10,11 @@ import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import { fetchPRDetail } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import { usePRStore } from '@/features/pullRequest/stores/prStore'
 import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
-  const [files, setFiles] = useState([])
-  const [commits, setCommits] = useState([])
-  const [activeTab, setActiveTab] = useState('files')
-  const [comment, setComment] = useState('')
   const user = useUserStore((state) => state.user)
 
   const tabs = [
@@ -34,6 +22,12 @@ const PRReview = () => {
     { id: 'comments', label: '댓글', icon: MessageCircle },
     { id: 'commits', label: '커밋', icon: GitCommit },
   ]
+
+  const [activeTab, setActiveTab] = useState('files')
+  const [comment, setComment] = useState('')
+
+  const prDetail = usePRStore((state) => state.prDetails[prId])
+  const setPRDetail = usePRStore((state) => state.setPRDetail)
 
   const loadPRComments = useCommentStore((state) => state.loadPRComments)
   const submitPRComment = useCommentStore((state) => state.submitPRComment)
@@ -51,31 +45,15 @@ const PRReview = () => {
 
       try {
         const pr = await fetchPRDetail({ repoId, prId })
-        console.log(pr)
-        if (!pr || !pr.files) {
-          setFiles([])
-          return
-        }
-
-        const filesArr = Object.entries(pr.files).map(
-          ([filename, { additions, deletions, patch }]) => ({
-            filename,
-            additions,
-            deletions,
-            patch,
-          })
-        )
-        setFiles(filesArr)
-        setCommits(pr.commits || [])
+        console.log('pr:', pr)
+        setPRDetail(prId, pr)
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
-        setFiles([])
-        setCommits([])
       }
     }
 
     load()
-  }, [repoId, prId])
+  }, [repoId, prId, prDetail, setPRDetail])
 
   const handleSubmit = async () => {
     if (!comment.trim()) return
@@ -85,6 +63,16 @@ const PRReview = () => {
     })
     setComment('')
   }
+
+  const files =
+    prDetail?.files?.map(({ filename, additions, deletions, patch }) => ({
+      filename,
+      additions,
+      deletions,
+      patch,
+    })) ?? []
+
+  const commits = prDetail?.commits ?? []
 
   return (
     <div className="space-y-4 py-4">
@@ -134,9 +122,7 @@ const PRReview = () => {
         </div>
 
         {activeTab === 'files' && <PRFileList files={files} />}
-
         {activeTab === 'comments' && <PRCommentList prId={prId} />}
-
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
 
