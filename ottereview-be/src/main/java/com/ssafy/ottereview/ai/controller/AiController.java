@@ -80,7 +80,7 @@ public class AiController {
 
         return PriorityResponse.builder()
                 .result(PriorityResponse.PriorityResult.builder()
-                        .priority(java.util.List.of(defaultItem))
+                        .candidates(java.util.List.of(defaultItem))
                         .build())
                 .build();
     }
