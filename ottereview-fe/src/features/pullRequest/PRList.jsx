@@ -6,16 +6,16 @@ import PRCardCompact from './PRCardCompact'
 import { usePRStore } from './stores/prStore'
 
 const PRList = () => {
-  const authored = usePRStore((state) => state.authoredPRs)
-  const reviewed = usePRStore((state) => state.reviewerPRs)
-  const [selectedType, setSelectedType] = useState('all') // all | authored | reviewed
+  const authoredPRs = usePRStore((state) => state.authoredPRs)
+  const reviewerPRs = usePRStore((state) => state.reviewerPRs)
+  const [selectedType, setSelectedType] = useState('all')
 
   const filteredPRs =
     selectedType === 'authored'
-      ? authored
+      ? authoredPRs
       : selectedType === 'reviewed'
-        ? reviewed
-        : [...authored, ...reviewed]
+        ? reviewerPRs
+        : [...authoredPRs, ...reviewerPRs]
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col pl-4 pr-2">

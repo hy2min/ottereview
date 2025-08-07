@@ -3,6 +3,7 @@ package com.ssafy.ottereview.reviewcomment.repository;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -16,7 +17,11 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
 
     List<ReviewComment> findAllByUserId(Long userId);
 
+    Optional<ReviewComment> findByGithubId(Long githubId);
+
     List<ReviewComment> findAllByReviewAndPath(Review review, String path);
+    
+    void deleteByGithubId(Long githubId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReviewComment rc SET rc.githubId = :githubId WHERE rc.id = :id")
