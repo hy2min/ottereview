@@ -2,7 +2,7 @@ import { api } from '../../lib/api'
 
 // 내가 작성한 PR 목록
 export const fetchAuthoredPRs = async () => {
-  const res = await api.get(`/api/repositories/1/pull-requests/me`)
+  const res = await api.get(`/api/repositories/1/pull-requests/api/repositories/pull-requests/me`)
   return res.data
 }
 

@@ -4,26 +4,21 @@ import com.ssafy.ottereview.account.dto.AccountResponse;
 import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 
 
-public interface AccountService {
+public interface UserAccountService {
     
-    AccountResponse getGithubAccount();
-    
-    List<AccountResponse> getAccountsByUser(User user);
+    List<AccountResponse> getAccountsByUser(CustomUserDetail customUserDetail);
     
     Account createAccount(GithubAccountResponse githubAccountResponse);
-    
-    void createUserAccount(User user, Account account);
 
     Account getAccountByInstallationId(Long installationId);
     
     Repo validateUserPermission(Long userId, Long repoId);
 
-    List<User> getUserListByAccount(Account account);
-
-    Account getAccountByAccountId(Long accountId);
+    List<UserResponseDto> getUsersByAccount(Long accountId);
  }

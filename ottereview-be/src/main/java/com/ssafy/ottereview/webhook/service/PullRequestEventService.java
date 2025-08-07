@@ -32,17 +32,17 @@ public class PullRequestEventService {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
-            log.debug("DTO로 받은 PullRequestEventService event: {}", formattedPayload);
+//            log.debug("DTO로 받은 PullRequestEventService event: {}", formattedPayload);
             
             switch (event.getAction()) {
                 case "opened":
                     log.debug("PullRequest opened event received");
-                    createPullRequestFromWebhook(event);
+                    handlePullRequestOpened(event);
                     break;
                 
                 case "closed":
                     log.debug("PullRequest closed event received");
-                    closePullRequest(event.getPullRequest()
+                    handlePullRequestClosed(event.getPullRequest()
                             .getId());
                     break;
                 
@@ -66,21 +66,41 @@ public class PullRequestEventService {
         }
     }
     
-    private void createPullRequestFromWebhook(PullRequestEventDto event) {
+    private void handlePullRequestOpened(PullRequestEventDto event) {
+
+        pullRequestRepository.findByGithubId(event.getPullRequest().getId())
+                .ifPresentOrElse(
+                        existingPullRequest -> log.debug("이미 존재하는 PR 입니다."), // 이미 존재하는 PR이므로 아무 작업도 하지 않음,
+                        () -> registerPullRequest(event)
+                );
+    }
+    
+    private void handlePullRequestClosed(Long githubPrId) {
         
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubPrId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubPrId));
+        
+        // PR 상태를 CLOSED로 변경
+        pullRequest.updateState(PrState.CLOSED);
+
+        log.info("Pull Request with GitHub PR number {} has been closed.", githubPrId);
+    }
+
+    private void registerPullRequest(PullRequestEventDto event){
         PullRequestWebhookInfo pullRequest = event.getPullRequest();
         RepositoryInfo repo = event.getRepository();
-        
+
         Repo targetRepo = repoRepository.findByRepoId(repo.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "해당 repository ID에 해당하는 Repo가 존재하지 않습니다.: " + repo.getId()));
-        
+
         User author = userRepository.findByGithubId(pullRequest.getUser()
                         .getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "해당 사용자 ID에 해당하는 User가 존재하지 않습니다.: " + pullRequest.getUser()
                                 .getId()));
-        
+
         PullRequest newPullRequest = PullRequest.builder()
                 .githubId(pullRequest.getId())
                 .githubPrNumber(event.getNumber())
@@ -107,20 +127,7 @@ public class PullRequestEventService {
                 .repo(targetRepo)
                 .approveCnt(0)
                 .build();
-        
+
         pullRequestRepository.save(newPullRequest);
-    }
-    
-    private void closePullRequest(Long githubPrId) {
-        
-        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubPrId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubPrId));
-        
-        // PR 상태를 CLOSED로 변경
-        pullRequest.updateState(PrState.CLOSED);
-        pullRequestRepository.save(pullRequest);
-        
-        log.info("Pull Request with GitHub PR number {} has been closed.", githubPrId);
     }
 }

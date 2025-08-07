@@ -1,29 +1,53 @@
+import { useEffect, useRef } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
+import { useAuthStore } from '@/features/auth/authStore'
 import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
+<<<<<<< HEAD
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
+=======
+import AudioChatRoom from '@/features/chat/AudioChatRoom'
+import { api } from '@/lib/api'
+>>>>>>> 0c6cbf64194a07a9a9a2eae2b3cd6c8ebec05947
 import ChatRoom from '@/pages/ChatRoom'
 import Landing from '@/pages/Landing'
 import { useUserStore } from '@/store/userStore'
 
 const App = () => {
-  const user = useUserStore((state) => state.user) // user로 로그인 여부 판단
+  const user = useUserStore((state) => state.user)
+  const setUser = useUserStore((state) => state.setUser)
+  const clearUser = useUserStore((state) => state.clearUser)
+  const clearTokens = useAuthStore((state) => state.clearTokens)
+  const accessToken = useAuthStore((state) => state.accessToken)
   const { pathname } = useLocation()
+  const attemptedFetch = useRef(false)
 
-  // 예외 라우팅: 테스트용 채팅방은 라우팅 바깥에서 직접 렌더링
-  if (pathname === '/chatroom/test') {
-    return <ChatRoom />
-  } else if (pathname === '/audiotest') {
-    return <AudioChatRoom />
-  }
+  // user 복원 로직
+  useEffect(() => {
+    if (!user && accessToken && !attemptedFetch.current) {
+      attemptedFetch.current = true
+      api
+        .get('/api/users/me')
+        .then((res) => {
+          setUser(res.data)
+        })
+        .catch((err) => {
+          console.error('🧨 유저 복원 실패:', err)
+          clearUser()
+          clearTokens()
+          window.location.href = '/'
+        })
+    }
+  }, [user, accessToken, setUser, clearUser, clearTokens])
 
-  const isLoggedIn = !!user // null이 아니면 로그인된 상태
-  // const isLoggedIn = true // null이 아니면 로그인된 상태
+  if (pathname === '/chatroom/test') return <ChatRoom />
+  if (pathname === '/audiotest') return <AudioChatRoom />
+
+  const isLoggedIn = !!user
 
   if (!isLoggedIn) {
-    // 로그인 안 된 경우: Landing, OAuthCallback만 허용
     return (
       <main>
         <Routes>
@@ -35,7 +59,6 @@ const App = () => {
     )
   }
 
-  // 로그인 된 경우: Header + 보호된 경로
   return (
     <div className="min-h-screen">
       <Header />

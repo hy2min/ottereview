@@ -9,7 +9,7 @@ const CommitList = ({ commits = [] }) => {
       {commits.map((commit) => (
         <Box key={commit.sha} shadow className="flex items-center justify-between px-4 py-3">
           <div className="flex items-start gap-3">
-            <GitCommit className="w-4 h-4 mt-1 text-stone-500" />
+            <GitCommit className="w-4 h-4 text-stone-500 my-auto" />
             <div>
               <p>{commit.commitTitle || commit.message}</p>
               <div className="text-sm text-gray-500 flex gap-2">

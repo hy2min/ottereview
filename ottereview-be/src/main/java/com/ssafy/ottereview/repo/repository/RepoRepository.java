@@ -27,5 +27,7 @@ public interface RepoRepository extends JpaRepository<Repo, Long> {
     List<Repo> findAllByAccount_Id(Long accountId);
 
     List<Repo> findAllByAccount(Account account);
+    
+    void deleteByRepoId(Long repoId);
 
 }

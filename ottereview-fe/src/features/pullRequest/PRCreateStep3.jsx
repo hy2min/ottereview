@@ -1,57 +1,30 @@
-import Box from '../../components/Box'
-import Button from '../../components/Button'
+import InputBox from '../../components/InputBox'
 import { usePRCreateStore } from './stores/prCreateStore'
-
-const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
 
 const PRCreateStep3 = () => {
   const { formData, setFormData } = usePRCreateStore()
 
-  const handleSelect = (name) => {
-    if (!formData.reviewers.includes(name)) {
-      setFormData({ reviewers: [...formData.reviewers, name] })
-    }
-  }
-
-  const handleDeselect = (name) => {
-    setFormData({
-      reviewers: formData.reviewers.filter((r) => r !== name),
-    })
-  }
-
   return (
     <div className="space-y-4">
-      <div className="flex gap-8">
-        <Box shadow className="w-1/2">
-          <h3 className="mb-2">리뷰어 목록</h3>
-          {mockReviewers
-            .filter((name) => !formData.reviewers.includes(name))
-            .map((name) => (
-              <div key={name} className="flex justify-between my-4">
-                <span>{name}</span>
-                <Button
-                  onClick={() => handleSelect(name)}
-                  disabled={formData.reviewers.includes(name)}
-                  variant=""
-                  size="sm"
-                >
-                  추가
-                </Button>
-              </div>
-            ))}
-        </Box>
+      <div className="space-y-2">
+        {/* PR 제목 (기본 input type="text") */}
+        <InputBox
+          label="PR 제목"
+          value={formData.title || ''}
+          onChange={(e) => setFormData({ title: e.target.value })}
+        />
 
-        <Box shadow className="w-1/2">
-          <h3 className="mb-2">선택된 리뷰어</h3>
-          {formData.reviewers.map((name) => (
-            <div key={name} className="flex justify-between my-4">
-              <span>{name}</span>
-              <Button onClick={() => handleDeselect(name)} variant="" size="sm">
-                제거
-              </Button>
-            </div>
-          ))}
-        </Box>
+        {/* PR 설명 (textarea) */}
+        <InputBox
+          className="h-50"
+          label="PR 설명"
+          as="textarea"
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ description: e.target.value })}
+        />
+      </div>
+      <div className="bg-white border-2 border-black p-4 rounded-[8px]">
+        파일별 코드 미리보기 박스 (mock)
       </div>
     </div>
   )

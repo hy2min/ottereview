@@ -13,19 +13,18 @@ import { useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import CodeDiff from '@/components/CodeDiff'
 import CommentForm from '@/features/comment/CommentForm'
 import { useCommentStore } from '@/features/comment/commentStore'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import { fetchPRDetail } from '@/features/pullRequest/prApi'
+import PRFileList from '@/features/pullRequest/PRFileList'
 import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
   const [files, setFiles] = useState([])
   const [commits, setCommits] = useState([])
-  const [expandedFile, setExpandedFile] = useState(null)
   const [activeTab, setActiveTab] = useState('files')
   const [comment, setComment] = useState('')
   const user = useUserStore((state) => state.user)
@@ -78,8 +77,6 @@ const PRReview = () => {
     load()
   }, [repoId, prId])
 
-  const toggle = (filename) => setExpandedFile(expandedFile === filename ? null : filename)
-
   const handleSubmit = async () => {
     if (!comment.trim()) return
     await submitPRComment(prId, {
@@ -129,44 +126,16 @@ const PRReview = () => {
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 mb-[2px]" />
                 <span>{tab.label}</span>
               </Button>
             )
           })}
         </div>
 
-        {activeTab === 'files' && (
-          <div>
-            <ul className="space-y-2 text-sm">
-              {files.map((f) => (
-                <li key={f.filename}>
-                  <Box
-                    shadow
-                    className="flex justify-between items-center cursor-pointer p-2 bg-gray-50"
-                    onClick={() => toggle(f.filename)}
-                  >
-                    <div className="flex space-x-3">
-                      <FileText className="w-4 h-4 text-stone-600" />
-                      <span>{f.filename}</span>
-                    </div>
-                    <div className="space-x-2">
-                      <span className="text-green-600">+{f.additions}</span>
-                      <span className="text-red-600">-{f.deletions}</span>
-                    </div>
-                  </Box>
-                  {expandedFile === f.filename && <CodeDiff patch={f.patch} />}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {activeTab === 'files' && <PRFileList files={files} />}
 
-        {activeTab === 'comments' && (
-          <div className="space-y-4">
-            <PRCommentList prId={prId} />
-          </div>
-        )}
+        {activeTab === 'comments' && <PRCommentList prId={prId} />}
 
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>

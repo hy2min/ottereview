@@ -32,5 +32,5 @@ public interface BranchService {
 
     void saveAllBranchList(List<Branch> branches);
 
-    void updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest);
+    Branch updateBranchRole(BranchRoleCreateRequest branchRoleCreateRequest);
 }

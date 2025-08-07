@@ -6,8 +6,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
-
+    
     Account findByInstallationId(Long installationId);
+    
     Account findByGithubId(Long githubId);
+    
     void deleteByGithubId(Long githubId);
 }
