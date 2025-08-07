@@ -9,7 +9,7 @@ const RepositoryList = () => {
   const repos = useRepoStore((state) => state.repos)
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/ottereviewhuizoo/installations/new'
+    const importUrl = 'https://github.com/apps/hy2min/installations/new'
     window.location.href = importUrl
   }
 

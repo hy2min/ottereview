@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-import Box from '@/components/Box'
-import Button from '@/components/Button'
-import { useChatStore } from '@/features/chat/chatStore'
+import Box from '../../components/Box'
+import Button from '../../components/Button'
+import { useChatStore } from '../../features/chat/chatStore'
 
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
 

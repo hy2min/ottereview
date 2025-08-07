@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
-@RequestMapping("/api/accounts/{account-id}/repositories/{repo-id}/pull-requests/{pr-id}/merges")
+@RequestMapping("/api/repositories/{repo-id}/pull-requests/{pr-id}/merges")
 public class MergeController {
 
     private static final Logger log = LoggerFactory.getLogger(MergeController.class);
@@ -30,7 +30,17 @@ public class MergeController {
     private final RepoService repoService;
     private final PullRequestService pullRequestService;
 
-    @GetMapping("/is-conflict")
+    @GetMapping("/doing")
+    public ResponseEntity<?> doMerge(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable(name = "repo-id") Long repoId, @PathVariable(name = "pr-id") Long prId){
+        Repo repo = repoService.getById(repoId).orElseThrow();
+        User user = customUserDetail.getUser();
+        PullRequestDetailResponse pullRequestDetailResponse= pullRequestService.getPullRequestById(customUserDetail,repoId , prId);
+        PullRequest pullRequest = PullRequest.toEntity(pullRequestDetailResponse,repo,user);
+        return ResponseEntity.ok(mergeService.doMerge(repo,pullRequest));
+    }
+
+
+    @GetMapping()
     public ResponseEntity<?> getMergeAble(@PathVariable (name = "pr-id") Long pullRequestId, @PathVariable (name = "repo-id") Long repoId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
