@@ -32,7 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             "/api/auth/login",
             "/api/auth/refresh",
             "/api/auth/github/callback",
-            "/github-app/installation/callback",
+            "/api/github-app/installation/callback",
             "/swagger-ui",
             "/v3/api-docs",
             "/error"
@@ -45,12 +45,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 1. 화이트리스트는 필터 통과
         if (isWhitelisted(uri)) {
+
+            log.debug("화이티리스트!!");
             filterChain.doFilter(request, response);
             return;
         }
 
         // 2. 토큰 추출
         String accessToken = extractToken(request);
+        log.debug("accessToken: {}", accessToken);
 
         // 3. 유효한 토큰이면 인증 설정
         if (accessToken != null && jwtUtil.validateToken(accessToken)) {
