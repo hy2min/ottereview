@@ -37,16 +37,20 @@ public class SecurityConfig {
             // CORS 설정
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // 접근 제어
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/**").permitAll() // 모든 요청 허용 (CORS 설정을 위해)
-                    // 인증 필요 없는 경로
-                    .requestMatchers("/api/auth/**").permitAll()
-                    // 나머지 API는 전부 JWT 인증 필요
-                    .requestMatchers("/api/auth/logout").authenticated()
-                    .anyRequest().authenticated()
-            )
+                .authorizeHttpRequests(auth -> auth
+                        // 🔓 인증 없이 접근 가능한 경로
+                        .requestMatchers(
+                                "/",
+                                "/api/auth/**", // 로그인, 리프레시, 깃허브 콜백
+                                "/api/github-app/installation/callback",
+                                "/swagger-ui/**",
+                                "/error"
+                        ).permitAll()
+                        // 🔒 그 외는 모두 인증 필요
+                        .anyRequest().authenticated()
+                )
             // JWT 인증 필터 등록
-            .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -28,31 +28,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
     private final CustomUserDetailServiceImpl customUserDetailService;
 
-    private static final List<String> WHITELIST = List.of(
-            "/api/auth/login",
-            "/api/auth/refresh",
-            "/api/auth/github/callback",
-            "/github-app/installation/callback",
-            "/swagger-ui",
-            "/v3/api-docs",
-            "/error"
-    );
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
-        String uri = request.getRequestURI();
-
-        // 1. 화이트리스트는 필터 통과
-        if (isWhitelisted(uri)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 2. 토큰 추출
         String accessToken = extractToken(request);
 
-        // 3. 유효한 토큰이면 인증 설정
         if (accessToken != null && jwtUtil.validateToken(accessToken)) {
             try {
                 Claims claims = jwtUtil.getClaims(accessToken);
@@ -60,17 +40,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 setAuthentication(userId, request);
             } catch (Exception e) {
                 log.warn("인증 정보 설정 중 오류: {}", e.getMessage());
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid authentication");
-                return;
             }
-        } else {
-            // 4. 유효하지 않거나 없는 토큰이면 401
-            log.info("401 Unauthorized: accessToken 누락 또는 유효하지 않음. URI: {}", uri);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid token");
-            return;
         }
-
-        // 5. 필터 체인 계속 진행
         filterChain.doFilter(request, response);
     }
 
@@ -90,9 +61,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
-
-    private boolean isWhitelisted(String uri) {
-        return WHITELIST.stream().anyMatch(uri::startsWith);
-    }
-
 }
