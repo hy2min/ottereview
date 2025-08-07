@@ -3,6 +3,7 @@ package com.ssafy.ottereview.merge.service;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.dto.MergeResponse;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
@@ -255,8 +256,8 @@ public class MergeService {
 
                 log.info("Merge PR #" + pullRequest.getGithubPrNumber() + " "+ pullRequest.getHead()+" -> "+ pullRequest.getBase() );
 
-                // 머지가 성공한 후에는 pullRequest 삭제 로직 추가
-                pullRequestRepository.delete(pullRequest);
+                // pullRequest 속성값 업데이트해서 merged로 바꾸기
+                pullRequest.updateState(PrState.MERGED);
                 return true;
 
             }catch(Exception e){

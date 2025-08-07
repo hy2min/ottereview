@@ -60,7 +60,7 @@ public interface RepoService {
 
     public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account);
 
-    public List<UserAccount> getUserListByRepoId(Long userId);
+    public List<User> getUserListByRepoId(Long repoId);
 
     public List<RepoResponse> getReposByUserId(User user);
 }
