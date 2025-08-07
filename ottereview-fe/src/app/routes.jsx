@@ -11,7 +11,7 @@ export const protectedRoutes = [
   { path: '/:repoId', element: <RepositoryDetail />, title: '레포지토리 상세' },
   { path: '/:repoId/pr/:prId/review', element: <PRreview />, title: 'PR 리뷰' },
   { path: '/:repoId/pr/:prId/conflict', element: <Conflict />, title: '충돌 해결' },
-  // { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
+  { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
   { path: '/chatroom/test', element: <ChatRoom />, title: '채팅 테스트' },
   { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
