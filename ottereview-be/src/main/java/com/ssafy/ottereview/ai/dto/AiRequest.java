@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.ai.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 @Getter
 public class AiRequest {
 
+    @JsonProperty("repo_id")
     private Long repoId;
     private String source;
     private String target;

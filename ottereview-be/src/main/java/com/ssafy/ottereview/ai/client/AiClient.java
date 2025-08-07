@@ -188,7 +188,7 @@ public class AiClient {
 
         return PriorityResponse.builder()
                 .result(PriorityResponse.PriorityResult.builder()
-                        .priority(List.of(defaultItem))
+                        .candidates(List.of(defaultItem))
                         .build())
                 .build();
     }
