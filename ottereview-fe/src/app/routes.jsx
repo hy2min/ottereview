@@ -1,4 +1,4 @@
-import Whiteboard from '@/features/chat/Whiteboard'
+import Whiteboard from '@/features/webrtc/Whiteboard'
 import ChatRoom from '@/pages/ChatRoom'
 import Conflict from '@/pages/Conflict'
 import Dashboard from '@/pages/Dashboard'

@@ -16,7 +16,7 @@ const Dashboard = () => {
   const handleTest = async () => {
     try {
       const accountId = user.id
-      const res = await api.get('/api/accounts/3/repositories/1032881314/users')
+      const res = await api.get('/api/repositories/1/pull-requests4')
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)

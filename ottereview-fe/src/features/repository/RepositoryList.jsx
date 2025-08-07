@@ -55,7 +55,7 @@ const RepositoryList = () => {
   }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/kangbeomApp/installations/new'
+    const importUrl = 'https://github.com/apps/hy2min/installations/new'
     window.location.href = importUrl
   }
 
