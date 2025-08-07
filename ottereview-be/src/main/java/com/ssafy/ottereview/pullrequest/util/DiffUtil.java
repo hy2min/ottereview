@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 public class DiffUtil {
-
     public List<DiffHunk> parseDiffHunks(String patch) {
         if (patch == null || patch.isEmpty()) {
             return Collections.emptyList();
@@ -127,7 +126,6 @@ public class DiffUtil {
         // @@ -1,3 +1,4 @@ 형식 파싱
         Pattern pattern = Pattern.compile("@@\\s+-([0-9]+),?([0-9]*)\\s+\\+([0-9]+),?([0-9]*)\\s+@@(.*)");
         Matcher matcher = pattern.matcher(header);
-
         if (matcher.find()) {
             int oldStart = Integer.parseInt(matcher.group(1));
             int oldLines = matcher.group(2)
@@ -137,7 +135,6 @@ public class DiffUtil {
                     .isEmpty() ? 1 : Integer.parseInt(matcher.group(4));
             String context = matcher.group(5)
                     .trim();
-
             return DiffHunk.builder()
                     .oldStart(oldStart)
                     .oldLines(oldLines)
@@ -147,7 +144,6 @@ public class DiffUtil {
                     .lines(new ArrayList<>())
                     .build();
         }
-
         return DiffHunk.builder()
                 .lines(new ArrayList<>())
                 .build();
