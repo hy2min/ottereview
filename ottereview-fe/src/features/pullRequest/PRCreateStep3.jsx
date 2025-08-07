@@ -1,3 +1,5 @@
+import Box from '@/components/Box'
+
 import InputBox from '../../components/InputBox'
 import { usePRCreateStore } from './stores/prCreateStore'
 
@@ -6,7 +8,7 @@ const PRCreateStep3 = () => {
   const setFormData = usePRCreateStore((state) => state.setFormData)
 
   return (
-    <div className="space-y-4">
+    <Box shadow className="space-y-4">
       <div className="space-y-2">
         {/* PR 제목 (기본 input type="text") */}
         <InputBox
@@ -27,7 +29,7 @@ const PRCreateStep3 = () => {
       <div className="bg-white border-2 border-black p-4 rounded-[8px]">
         파일별 코드 미리보기 박스 (mock)
       </div>
-    </div>
+    </Box>
   )
 }
 

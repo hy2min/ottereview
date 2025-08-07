@@ -1,20 +1,85 @@
+import axios from 'axios'
+import { useEffect } from 'react'
+
+import Box from '@/components/Box'
+import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
+import { useBranchStore } from '@/features/repository/stores/branchStore'
+import { api } from '@/lib/api'
+
 import InputBox from '../../components/InputBox'
 import { usePRCreateStore } from './stores/prCreateStore'
 
-const PRCreateStep2 = () => {
+const PRCreateStep2 = ({ repoId, accountId, setNextDisabled }) => {
   const formData = usePRCreateStore((state) => state.formData)
   const setFormData = usePRCreateStore((state) => state.setFormData)
 
+  const branches = useBranchStore((state) => state.branchesByRepo[repoId] || [])
+  const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
+
+  const validateBranches = async (source, target, cancelToken) => {
+    try {
+      const res = await api.post(
+        `/api/repositories/${repoId}/pull-requests/preparation/validation`,
+        { source, target },
+        { cancelToken }
+      )
+      console.log('브랜치 검증 응답:', res.data)
+      const result = res.data?.ok ?? false
+      setNextDisabled(!result)
+    } catch (err) {
+      if (axios.isCancel(err)) {
+        console.log('브랜치 검증 요청 취소됨')
+      } else {
+        console.error('브랜치 검증 실패:', err)
+        setNextDisabled(true)
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (
+      !formData.sourceBranch ||
+      !formData.targetBranch ||
+      formData.sourceBranch === formData.targetBranch
+    ) {
+      setNextDisabled(true)
+      return
+    }
+
+    const cancelTokenSource = axios.CancelToken.source()
+    const timer = setTimeout(() => {
+      validateBranches(formData.sourceBranch, formData.targetBranch, cancelTokenSource.token)
+    }, 500)
+
+    return () => {
+      cancelTokenSource.cancel()
+      clearTimeout(timer)
+    }
+  }, [formData.sourceBranch, formData.targetBranch])
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const fetched = await fetchBrancheListByRepoId({ repoId, accountId })
+        setBranchesForRepo(repoId, fetched)
+      } catch (err) {
+        console.error('브랜치 목록 불러오기 실패:', err)
+      }
+    }
+
+    loadBranches()
+  }, [repoId, accountId])
+
   const branchOptions = [
     { label: '브랜치를 선택하세요', value: '' },
-    { label: 'main', value: 'main' },
-    { label: 'develop', value: 'develop' },
-    { label: 'feature/new-feature', value: 'feature/new-feature' },
-    { label: 'bugfix/issue-123', value: 'bugfix/issue-123' },
+    ...branches.map((b) => ({
+      label: b.name,
+      value: b.name,
+    })),
   ]
 
   return (
-    <div className="space-y-4">
+    <Box shadow className="space-y-4">
       <div className="space-y-2">
         <InputBox
           label="소스 브랜치"
@@ -34,7 +99,7 @@ const PRCreateStep2 = () => {
           placeholder="타겟 브랜치를 선택하세요"
         />
       </div>
-      {/* 추가 UI */}
+
       {formData.sourceBranch &&
         formData.targetBranch &&
         formData.sourceBranch !== formData.targetBranch && (
@@ -43,6 +108,7 @@ const PRCreateStep2 = () => {
             로의 변경을 생성합니다.
           </div>
         )}
+
       {formData.sourceBranch &&
         formData.targetBranch &&
         formData.sourceBranch === formData.targetBranch && (
@@ -50,7 +116,7 @@ const PRCreateStep2 = () => {
             소스 브랜치와 타겟 브랜치가 동일합니다.
           </div>
         )}
-    </div>
+    </Box>
   )
 }
 
