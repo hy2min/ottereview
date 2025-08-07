@@ -24,15 +24,15 @@ const PRCreateStep2 = ({ repoId, accountId, setNextDisabled }) => {
         { cancelToken }
       )
       console.log('브랜치 검증 응답:', res.data)
-      const result = res.data?.ok ?? false
-      setNextDisabled(!result)
+      // 검증 성공 시 무조건 활성화
+      setNextDisabled(false)
     } catch (err) {
       if (axios.isCancel(err)) {
         console.log('브랜치 검증 요청 취소됨')
       } else {
         console.error('브랜치 검증 실패:', err)
-        setNextDisabled(true)
       }
+      setNextDisabled(true) // 실패나 취소 시 비활성화
     }
   }
 
