@@ -71,6 +71,8 @@ const Dashboard = () => {
           <p className="text-stone-600">오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!</p>
         </Box>
 
+        <ChatRoomList />
+
         <div className="flex gap-2">
           <button
             onClick={handleTest}
