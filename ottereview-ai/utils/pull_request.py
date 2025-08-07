@@ -164,10 +164,11 @@ async def recommend_reviewers(pr_data: PRData, limit: int = ReviewerRecommendati
         
         if not similar_patterns:
             logger.warning("유사한 리뷰어 패턴을 찾을 수 없습니다")
-            return []
+            context = "과거 유사한 PR 패턴이 없습니다. 현재 정보만을 바탕으로 추천해주세요."
+        else:
         
-        # 2. 검색된 패턴들을 LLM용 컨텍스트로 변환
-        context = _build_context_from_patterns(similar_patterns, pr_data)
+            # 2. 검색된 패턴들을 LLM용 컨텍스트로 변환
+            context = _build_context_from_patterns(similar_patterns, pr_data)
         
         # 3. LLM에게 컨텍스트와 함께 추천 요청 (RAG의 Generation 단계)
         recommendations = await _generate_recommendations_with_llm(context, pr_data, similar_patterns, limit)
@@ -261,6 +262,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
 4. 유사도 점수
 5. reason을 작성할때는 평균유사도와 같은 수치를 정확히 이야기 하지 마세요.
 6. 한글로만 작성하도록 하세요.
+7. 반드시 유저가 제공하는 실제 리뷰어 정보를 기반으로 추천해주세요.
 
 응답은 반드시 다음 JSON 형식으로만 추천 해주세요. 다른 텍스트는 포함하지 마세요:
 [
@@ -269,7 +271,9 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
     "github_email": "이메일",
     "reason": "추천 이유"
   }
-]"""
+]
+8. 리뷰어가 없는경우 []를 반환해주세요.
+"""
 
     user_prompt = f"""{context}
 
@@ -278,6 +282,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
 - 파일들: {files_summary}
 - 커밋 메시지: {commits_summary}
 - 브랜치: {pr_data.source} -> {pr_data.target}
+- 리뷰어: {pr_data.reviewers}
 
 위 정보를 종합하여 가장 적합한 리뷰어 {limit}명을 추천해주세요."""
 

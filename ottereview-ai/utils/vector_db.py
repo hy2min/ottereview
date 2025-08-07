@@ -42,10 +42,10 @@ class FileInfo(BaseModel):
     additions: int
     deletions: int
     changes: int
-    patch: str
+    patch: Optional[str] = None
     rawUrl: str
     blobUrl: str
-    diffHunks: List[DiffHunk]
+    diffHunks: Optional[List[DiffHunk]] = None
 
 class CommitInfo(BaseModel):
     """커밋 정보"""
@@ -77,7 +77,7 @@ class RepositoryInfo(BaseModel):
 class PRData(BaseModel):
     """Pull Request 전체 데이터"""
     # PR 기본 정보
-    pr_id: int
+    pr_id: Optional[int] = None
     source: str
     target: str
     url: str
