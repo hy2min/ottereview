@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -11,25 +11,19 @@ import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
 import PRCreateStep5 from '@/features/pullRequest/PRCreateStep5'
 import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
+import { useRepoStore } from '@/features/repository/stores/repoStore'
 
 const PRCreate = () => {
+  const { repoId } = useParams()
   const [step, setStep] = useState(1)
+  const [isNextButtonDisabled, setIsNextButtonDisabled] = useState(false)
   const navigate = useNavigate()
+  const repo = useRepoStore((state) => state.repos.find((r) => String(r.repoId) === String(repoId)))
+  const accountId = repo?.accountId
 
   const formData = usePRCreateStore((state) => state.formData)
 
   const steps = ['컨벤션 확인', '브랜치 선택', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
-
-  const isNextButtonDisabled = useMemo(() => {
-    if (step === 2) {
-      return (
-        !formData.sourceBranch ||
-        !formData.targetBranch ||
-        formData.sourceBranch === formData.targetBranch
-      )
-    }
-    return false
-  }, [step, formData.sourceBranch, formData.targetBranch])
 
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
@@ -46,30 +40,32 @@ const PRCreate = () => {
   }
 
   const renderStepComponent = () => {
+    const stepProps = { goToStep, repoId, accountId }
+
     switch (step) {
       case 1:
-        return <PRCreateStep1 goToStep={goToStep} />
+        return <PRCreateStep1 {...stepProps} />
       case 2:
-        return <PRCreateStep2 goToStep={goToStep} />
+        return <PRCreateStep2 {...stepProps} setNextDisabled={setIsNextButtonDisabled} />
       case 3:
-        return <PRCreateStep3 goToStep={goToStep} />
+        return <PRCreateStep3 {...stepProps} />
       case 4:
-        return <PRCreateStep4 goToStep={goToStep} />
+        return <PRCreateStep4 {...stepProps} />
       case 5:
-        return <PRCreateStep5 goToStep={goToStep} />
+        return <PRCreateStep5 {...stepProps} />
       default:
-        return <PRCreateStep1 goToStep={goToStep} />
+        return <PRCreateStep1 {...stepProps} />
     }
   }
 
   return (
     <div className="relative min-h-screen pb-[100px]">
-      <div className="max-w-2xl mx-auto space-y-4 py-4">
+      <div className="max-w-6xl mx-auto space-y-4 py-4">
         <StepIndicator currentStep={step} steps={steps} />
-        <Box shadow>{renderStepComponent()}</Box>
+        <div shadow>{renderStepComponent()}</div>
 
-        <div className="fixed bottom-0 left-0 w-full z-10">
-          <div className="max-w-4xl mx-auto py-4 px-4 flex justify-between items-center">
+        <div className="w-full z-10">
+          <div className="mx-auto flex justify-between items-center">
             <Button
               onClick={() => {
                 if (step > 1) {
@@ -85,16 +81,14 @@ const PRCreate = () => {
 
             <Button
               onClick={() => {
-                if (!isNextButtonDisabled) {
-                  if (step < 5) {
-                    setStep((prev) => prev + 1)
-                  } else {
-                    handleSubmit()
-                  }
+                if (step < 5) {
+                  setStep((prev) => prev + 1)
+                } else {
+                  handleSubmit()
                 }
               }}
               variant="primary"
-              disabled={isNextButtonDisabled}
+              disabled={false}
             >
               {step === 5 ? '제출' : '다음'}
             </Button>
