@@ -36,9 +36,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtUtil.getClaims(accessToken);
                 Long userId = Long.valueOf(claims.getSubject());
                 setAuthentication(userId, request);
+            }else {
+                // 토큰이 없거나 유효하지 않을 경우 401 응답
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing JWT token");
+                return;
             }
         } catch (Exception e) {
             log.error("JWT 인증 중 오류 발생: {}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT authentication error");
+            return;
         }
         filterChain.doFilter(request, response);
     }
