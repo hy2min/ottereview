@@ -5,12 +5,8 @@ import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/features/auth/authStore'
 import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
-<<<<<<< HEAD
-import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
-=======
 import AudioChatRoom from '@/features/chat/AudioChatRoom'
 import { api } from '@/lib/api'
->>>>>>> 0c6cbf64194a07a9a9a2eae2b3cd6c8ebec05947
 import ChatRoom from '@/pages/ChatRoom'
 import Landing from '@/pages/Landing'
 import { useUserStore } from '@/store/userStore'
