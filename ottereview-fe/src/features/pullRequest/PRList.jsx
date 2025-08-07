@@ -12,13 +12,16 @@ const PRList = () => {
 
   const filteredPRs =
     selectedType === 'authored'
-      ? authoredPRs
+      ? authoredPRs.map((pr) => ({ ...pr, type: 'authored' }))
       : selectedType === 'reviewed'
-        ? reviewerPRs
-        : [...authoredPRs, ...reviewerPRs]
+        ? reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' }))
+        : [
+            ...authoredPRs.map((pr) => ({ ...pr, type: 'authored' })),
+            ...reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' })),
+          ]
 
   return (
-    <Box shadow className="w-full h-[70vh] flex flex-col pl-4 pr-2">
+    <Box shadow className="w-full h-[70vh] flex flex-col">
       <div className="flex mb-2 space-x-4">
         <h2 className="text-xl mr-8">진행중인 PR</h2>
 
@@ -43,7 +46,7 @@ const PRList = () => {
             <p className="text-2xl text-gray-500">작성된 PR이 없습니다.</p>
           </div>
         ) : (
-          filteredPRs.map((pr) => <PRCardCompact key={pr.id} pr={pr} />)
+          filteredPRs.map((pr) => <PRCardCompact key={pr.id} pr={pr} type={pr.type} />)
         )}
       </div>
     </Box>
