@@ -11,25 +11,44 @@ import com.ssafy.ottereview.repo.entity.Repo;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand;
 import org.eclipse.jgit.api.MergeResult;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.kohsuke.github.GHAppInstallation;
+import org.kohsuke.github.GHAppInstallationToken;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
+import org.kohsuke.github.GitHubBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +58,8 @@ public class MergeService {
     private static final Logger log = LoggerFactory.getLogger(MergeService.class);
     private final GithubAppUtil githubAppUtil;
     private final PullRequestRepository pullRequestRepository;
+    @Value("${github.app.authentication-jwt-expm}")
+    private Long jwtTExpirationMillis;
 
     public MergeCheckResponse checkMergeConflict(Repo repo , PullRequest pullRequest){
         MergeCheckResponse result = null;
@@ -94,16 +115,56 @@ public class MergeService {
         return jobTempDir;
     }
 
-    public Git cloneRepository(String repoUrl, String localPath) throws GitAPIException, GitAPIException {
+    public GHAppInstallationToken getToken(Long installationId) throws Exception {
+        String jwtToken = githubAppUtil.generateJwt(jwtTExpirationMillis);
+
+        // 2. Github 인증
+        GitHub gitHubApp = new GitHubBuilder()
+                .withJwtToken(jwtToken)
+                .build();
+
+        // 3. installation_token 발급
+        GHAppInstallation installation = gitHubApp.getApp()
+                .getInstallationById(installationId);
+        GHAppInstallationToken installationToken = installation.createToken()
+                .create();
+        return installationToken;
+    }
+
+    public Git cloneRepository(String repoUrl, String localPath, Long installationId)
+            throws Exception {
+        GHAppInstallationToken installationToken = getToken(installationId);
+        var creds = new UsernamePasswordCredentialsProvider("x-access-token", installationToken.getToken());
         return Git.cloneRepository()
                 .setURI(repoUrl)
                 .setDirectory(new File(localPath))
-                .call();
+                .setCredentialsProvider(creds)
+                // HTTP 전송 객체에도 creds 적용
+                .setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    public void configure(Transport transport) {
+                        if (transport instanceof TransportHttp) {
+                            ((TransportHttp) transport).setCredentialsProvider(creds);
+                        }
+                    }
+                }).call();
     }
 
-    public MergeResult tryMerge(Git git, String baseBranch, String compareBranch) throws Exception {
+    public MergeResult tryMerge(Git git, String baseBranch, String compareBranch, Long installationId) throws Exception {
+        GHAppInstallationToken installationToken = getToken(installationId);
+        var creds = new UsernamePasswordCredentialsProvider("x-access-token", installationToken.getToken());
+
         // 1. 원격 최신 가져오기
-        git.fetch().setRemote("origin").call();
+        git.fetch().setRemote("origin").setCredentialsProvider(creds)
+                // HTTP 전송 객체에도 creds 적용
+                .setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    public void configure(Transport transport) {
+                        if (transport instanceof TransportHttp) {
+                            ((TransportHttp) transport).setCredentialsProvider(creds);
+                        }
+                    }
+                }).call();
 
         // 2. baseBranch 체크아웃 (없으면 origin/{baseBranch} 기반으로 생성)
         checkoutOrCreateBranch(git, baseBranch);
@@ -196,38 +257,122 @@ public class MergeService {
         return conflicts;
     }
 
-    public MergeResponse simulateMergeAndDetectConflicts(String repoUrl, String baseBranch, String compareBranch) throws Exception {
+    public MergeResponse simulateMergeAndDetectConflicts(
+            String repoUrl,
+            String baseBranch,
+            String compareBranch,
+            Long installationId
+    ) throws Exception {
         Path tempPath = createServiceTempDirectory();
-        log.info("여기에 설치되었습니다! "+tempPath);
+        log.info("임시 디렉터리 생성: {}", tempPath);
         try {
             // 1. clone repo
-            Git git = cloneRepository(repoUrl, tempPath.toString());
+            Git git = cloneRepository(repoUrl, tempPath.toString(),installationId);
 
-            // 2. 병합 시도
-            MergeResult mergeResult= tryMerge(git, baseBranch, compareBranch);
-            MergeResponse mergeResponse;
-            List<String> conflictFilesContent = new ArrayList<>();
-            Set<String> conflictFiles = mergeResult.getConflicts().keySet();
-            // 3. 충돌 발생 시 파일 이름과 충돌 마커 출력
-            if (mergeResult.getMergeStatus().equals(MergeResult.MergeStatus.CONFLICTING)) {
-                for (String conflictFile : mergeResult.getConflicts().keySet()) {
-                    StringBuilder allConflictBlocks = new StringBuilder();
-                    String conflictFilePath = tempPath + "/" + conflictFile;
-                    System.out.println("Conflict in file: " + conflictFile);
-                    List<String> conflictBlocks = extractConflictBlocks(conflictFilePath);
-                    for (String block : conflictBlocks) {
-                        allConflictBlocks.append("Conflict in file: ").append(conflictFile).append("\n");
-                        allConflictBlocks.append(block).append("\n");
+            GHAppInstallationToken installationToken = getToken(installationId);
+            var creds = new UsernamePasswordCredentialsProvider("x-access-token", installationToken.getToken());
+            // 2. 원격 브랜치 정보 fetch (한 번만)
+            git.fetch()
+                    .setRemote("origin")
+                    .setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"))
+                    .setCredentialsProvider(creds)
+                    // HTTP 전송 객체에도 creds 적용
+                    .setTransportConfigCallback(new TransportConfigCallback() {
+                        @Override
+                        public void configure(Transport transport) {
+                            if (transport instanceof TransportHttp) {
+                                ((TransportHttp) transport).setCredentialsProvider(creds);
+                            }
+                        }
+                    }).call();
+
+            // 3. 병합 시도
+            MergeResult mergeResult = tryMerge(git, baseBranch, compareBranch,installationId);
+            if (mergeResult.getMergeStatus() == MergeResult.MergeStatus.CONFLICTING) {
+                Set<String> conflictFiles = mergeResult.getConflicts().keySet();
+
+                List<String> conflictBlocksList      = new ArrayList<>();
+                Map<String, String> baseFileContents = new HashMap<>();
+                Map<String, String> headFileContents = new HashMap<>();
+
+                for (String filePath : conflictFiles) {
+                    // --- base 브랜치 원본 내용 ---
+                    String baseContent = getFileContentFromBranch(git, baseBranch, filePath, installationId);
+                    baseFileContents.put(filePath, baseContent);
+
+                    // --- compareBranch(head) 원본 내용 ---
+                    String headContent = getFileContentFromBranch(git, compareBranch, filePath,installationId);
+                    headFileContents.put(filePath, headContent);
+
+                    // --- 워킹 디렉터리에 남은 충돌 마커 블록 ---
+                    StringBuilder blocks = new StringBuilder();
+                    for (String block : extractConflictBlocks(tempPath + "/" + filePath)) {
+                        blocks.append("<<<<<<< CONFLICT in ").append(filePath).append("\n")
+                                .append(block)
+                                .append(">>>>>>> END CONFLICT\n\n");
                     }
-                    conflictFilesContent.add(allConflictBlocks.toString());
+                    conflictBlocksList.add(blocks.toString());
                 }
-                mergeResponse = MergeResponse.builder().conflictFilesContents(conflictFilesContent).files(conflictFiles).build();
-                return mergeResponse;// 충돌 블록을 모두 합친 하나의 문자열 반환
+
+                return MergeResponse.builder()
+                        .files(conflictFiles)
+                        .conflictFilesContents(conflictBlocksList)
+                        .baseFileContents(baseFileContents)
+                        .headFileContents(headFileContents)
+                        .build();
             }
-        }finally{
+        } finally {
             deleteDirectoryRecursively(tempPath.toFile());
         }
         return null;
+    }
+
+    private String getFileContentFromBranch(Git git, String branch, String path, Long installationId) throws Exception {
+        Repository repo = git.getRepository();
+        GHAppInstallationToken installationToken = getToken(installationId);
+        var creds = new UsernamePasswordCredentialsProvider("x-access-token", installationToken.getToken());
+        // 1) 먼저 fetch
+        git.fetch()
+                .setRemote("origin")
+                .setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"))
+                .setCredentialsProvider(creds)
+                // HTTP 전송 객체에도 creds 적용
+                .setTransportConfigCallback(new TransportConfigCallback() {
+                    @Override
+                    public void configure(Transport transport) {
+                        if (transport instanceof TransportHttp) {
+                            ((TransportHttp) transport).setCredentialsProvider(creds);
+                        }
+                    }
+                }).call();
+
+        // 2) 커밋 ID resolve with fallback
+        ObjectId commitId = repo.resolve(branch + "^{commit}");
+        if (commitId == null) {
+            commitId = repo.resolve("refs/heads/" + branch + "^{commit}");
+        }
+        if (commitId == null) {
+            commitId = repo.resolve("refs/remotes/origin/" + branch + "^{commit}");
+        }
+        if (commitId == null) {
+            throw new IllegalArgumentException("브랜치를 찾을 수 없습니다: " + branch);
+        }
+
+        // 3) RevWalk + TreeWalk 로 파일 읽기
+        try (RevWalk revWalk = new RevWalk(repo)) {
+            RevCommit commit = revWalk.parseCommit(commitId);
+            RevTree tree = commit.getTree();
+
+            try (TreeWalk tw = TreeWalk.forPath(repo, path, tree)) {
+                if (tw == null) {
+                    return "";
+                }
+                ObjectId blobId = tw.getObjectId(0);
+                ObjectLoader loader = repo.open(blobId);
+                byte[] bytes = loader.getBytes();
+                return new String(bytes, StandardCharsets.UTF_8);
+            }
+        }
     }
 
     public static void deleteDirectoryRecursively(File dir) throws IOException {
