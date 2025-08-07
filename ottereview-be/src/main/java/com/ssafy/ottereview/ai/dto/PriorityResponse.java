@@ -25,7 +25,7 @@ public class PriorityResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PriorityResult {
 
-        private List<PriorityItem> priority;
+        private List<PriorityItem> candidates;
     }
 
     @Builder

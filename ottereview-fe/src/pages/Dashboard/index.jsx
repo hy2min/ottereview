@@ -67,7 +67,7 @@ const Dashboard = () => {
     <div className="pt-2 space-y-3">
       <div className="flex justify-between items-center">
         <Box shadow className="p-4">
-          <h1 className="text-2xl mb-1">안녕하세요, 김개발자님! 👋</h1>
+          <h1 className="text-2xl mb-1">안녕하세요, {user?.githubUsername}님! 👋</h1>
           <p className="text-stone-600">오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!</p>
         </Box>
 
@@ -94,8 +94,12 @@ const Dashboard = () => {
       </div>
 
       <div className="flex flex-col md:flex-row mb-4 justify-center gap-4 max-w-7xl mx-auto">
-        <RepositoryList />
-        <PRList />
+        <div className="w-full md:w-1/2 min-w-0">
+          <RepositoryList />
+        </div>
+        <div className="w-full md:w-1/2 min-w-0">
+          <PRList />
+        </div>
       </div>
     </div>
   )
