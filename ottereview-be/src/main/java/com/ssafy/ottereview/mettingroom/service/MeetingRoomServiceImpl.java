@@ -174,12 +174,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new IllegalArgumentException("Room not found"));
 
-//        // 내가 속한 레포의 방인지 확인
-//        boolean isMember = meetingParticipantRepository.existsByMeetingRoomIdAndUserId(roomId,
-//                user.getId());
-//        if (!isMember) {
-//            throw new AccessDeniedException("User does not belong to this repository");
-//        }
+        // 내가 속한 레포의 방인지 확인
+        boolean isMember = meetingParticipantRepository.existsByMeetingRoomIdAndUserId(roomId,
+                user.getId());
+        if (!isMember) {
+            throw new AccessDeniedException("User does not belong to this repository");
+        }
 
         // Redis에서 세션 ID 가져오기
         String key = SESSION_KEY_PREFIX + roomId;
