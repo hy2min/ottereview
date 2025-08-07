@@ -25,7 +25,7 @@ const Dashboard = () => {
 
     const fetchData = async () => {
       try {
-        const fetchedRepos = await fetchRepoList(user.id)
+        const fetchedRepos = await fetchRepoList()
         console.log('📦 레포 응답:', fetchedRepos)
 
         if (Array.isArray(fetchedRepos)) {
