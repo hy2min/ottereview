@@ -1,7 +1,7 @@
 import { api } from '@/lib/api'
 
 export const fetchRepoList = async () => {
-  const res = await api.get(`/api/accounts/1/repositories/users`)
+  const res = await api.get(`/api/users/repositories`)
   return res.data
 }
 
