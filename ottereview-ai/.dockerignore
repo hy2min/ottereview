@@ -13,7 +13,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
+
 .venv/
 pip-log.txt
 pip-delete-this-directory.txt
@@ -28,7 +28,6 @@ coverage.xml
 .mypy_cache
 .pytest_cache
 .hypothesis
-
 
 
 # IDE
