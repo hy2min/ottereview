@@ -63,4 +63,5 @@ services:
 networks:
   springboot-mysql-net:
     driver: bridge
+    external: true
 
