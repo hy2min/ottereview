@@ -38,4 +38,19 @@ public class Description {
     @JoinColumn(name = "pr_id")
     private PullRequest pullRequest;
 
+    @Column(name = "start_line")
+    private Integer startLine;
+
+    @Column(name = "start_side")
+    private String startSide;
+
+    @Column
+    private Integer line;
+
+    @Column
+    private String side;
+
+    @Column(name = "diff_hunk", columnDefinition = "TEXT")
+    private String diffHunk;
+
 }
