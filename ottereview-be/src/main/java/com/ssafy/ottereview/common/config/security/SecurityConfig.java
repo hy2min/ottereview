@@ -38,15 +38,15 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             // 접근 제어
                 .authorizeHttpRequests(auth -> auth
-                        // 🔓 인증 없이 접근 가능한 경로
+                        // 인증 없이 접근 가능한 경로
                         .requestMatchers(
                                 "/",
-                                "/api/auth/**", // 로그인, 리프레시, 깃허브 콜백
+                                "/api/auth/**",
                                 "/api/github-app/installation/callback",
                                 "/swagger-ui/**",
                                 "/error"
                         ).permitAll()
-                        // 🔒 그 외는 모두 인증 필요
+                        // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
                 )
             // JWT 인증 필터 등록
