@@ -10,10 +10,10 @@ public interface ReviewService {
     ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
             ReviewRequest reviewRequest, MultipartFile[] files, Long userId);
 
-    ReviewResponse updateReview(Long accountId, Long repoId, Long prId, Long reviewId,
-            ReviewRequest reviewRequest, Long userId);
-
-    void deleteReview(Long accountId, Long repoId, Long prId, Long reviewId, Long userId);
+//    ReviewResponse updateReview(Long accountId, Long repoId, Long prId, Long reviewId,
+//            ReviewRequest reviewRequest, Long userId);
+//
+//    void deleteReview(Long accountId, Long repoId, Long prId, Long reviewId, Long userId);
 
     List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId);
 

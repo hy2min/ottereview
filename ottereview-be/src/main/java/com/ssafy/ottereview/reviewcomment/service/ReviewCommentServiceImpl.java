@@ -1,7 +1,6 @@
 package com.ssafy.ottereview.reviewcomment.service;
 
 import com.ssafy.ottereview.account.repository.AccountRepository;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.review.service.ReviewGithubService;
@@ -13,20 +12,22 @@ import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
-@Transactional
 public class ReviewCommentServiceImpl implements ReviewCommentService {
 
     private final ReviewCommentRepository reviewCommentRepository;
@@ -37,9 +38,10 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     private final S3ServiceImpl s3Service;
 
     @Override
+    @Transactional
     public List<ReviewCommentResponse> createComments(Long reviewId,
-            ReviewCommentCreateRequest reviewCommentCreateRequest, MultipartFile[] files,
-            Long userId) {
+                                                      ReviewCommentCreateRequest reviewCommentCreateRequest, MultipartFile[] files,
+                                                      Long userId) {
 
         List<String> uploadedFileKeys = new ArrayList<>(); // 보상 트랜잭션을 위한 업로드된 파일 키 추적
 
@@ -104,6 +106,10 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                         .body(finalBody)
                         .recordKey(recordKey)
                         .position(commentItem.getPosition())
+                        .line(commentItem.getLine())
+                        .startLine(commentItem.getStartLine())
+                        .startSide(commentItem.getStartSide())
+                        .side(commentItem.getSide())
                         .githubCreatedAt(LocalDateTime.now())
                         .githubUpdatedAt(LocalDateTime.now())
                         .build();
@@ -141,8 +147,9 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
 
     @Override
+    @Transactional
     public ReviewCommentResponse updateComment(Long commentId,
-            ReviewCommentUpdateRequest commentUpdateRequest, Long userId, MultipartFile file) {
+                                               ReviewCommentUpdateRequest commentUpdateRequest, Long userId, MultipartFile file) {
         ReviewComment existingComment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
 
@@ -175,7 +182,12 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                         .githubId(existingComment.getGithubId())
                         .review(existingComment.getReview())
                         .path(existingComment.getPath())
+                        .side(existingComment.getSide())
+                        .diffHunk(existingComment.getDiffHunk())
                         .body(newBody)
+                        .line(existingComment.getLine())
+                        .startLine(existingComment.getStartLine())
+                        .startLine(existingComment.getStartLine())
                         .recordKey(newRecordKey)
                         .position(existingComment.getPosition())
                         .githubCreatedAt(existingComment.getGithubCreatedAt())
@@ -244,6 +256,11 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     .body(newBody)
                     .recordKey(newRecordKey) // 기존 recordKey 유지
                     .position(existingComment.getPosition())
+                    .startLine(existingComment.getStartLine())
+                    .line(existingComment.getLine())
+                    .side(existingComment.getSide())
+                    .startSide(existingComment.getStartSide())
+                    .diffHunk(existingComment.getDiffHunk())
                     .githubCreatedAt(existingComment.getGithubCreatedAt())
                     .githubUpdatedAt(LocalDateTime.now())
                     .build();
@@ -261,16 +278,8 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
     private void githubUpdateComment(ReviewComment comment, String newBody) {
         try {
-            String repoFullName = comment.getReview()
-                    .getPullRequest()
-                    .getRepo()
-                    .getFullName();
-
-            Long accountId = comment.getReview()
-                    .getPullRequest()
-                    .getRepo()
-                    .getAccount()
-                    .getId();
+            String repoFullName = comment.getReview().getPullRequest().getRepo().getFullName();
+            Long accountId = comment.getReview().getPullRequest().getRepo().getAccount().getId();
 
             Long installationId = accountRepository.findById(accountId)
                     .orElseThrow(() -> new RuntimeException("Account not found"))
@@ -289,6 +298,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     }
 
     @Override
+    @Transactional
     public void deleteComment(Long commentId, Long userId) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
@@ -298,42 +308,49 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
             throw new IllegalArgumentException("본인이 작성한 댓글만 삭제할 수 있습니다.");
         }
 
+        // 외부 리소스 정보는 미리 저장
         String recordKey = comment.getRecordKey();
+        Long githubId = comment.getGithubId();
+        String repoFullName = comment.getReview().getPullRequest().getRepo().getFullName();
+        Long accountId = comment.getReview().getPullRequest().getRepo().getAccount().getId();
 
-        // 1단계: S3 파일 먼저 삭제 (외부 리소스 우선 정리)
-        if (recordKey != null && !recordKey.isEmpty()) {
-            try {
-                s3Service.deleteFile(recordKey);
-                log.info("S3 파일 삭제 완료 - CommentId: {}, RecordKey: {}", commentId, recordKey);
-            } catch (Exception s3Exception) {
-                log.error("S3 파일 삭제 실패 - CommentId: {}, RecordKey: {}, 오류: {}",
-                        commentId, recordKey, s3Exception.getMessage());
+        // DB 삭제 (트랜잭션 안에서)
+        reviewCommentRepository.deleteById(commentId);
+        log.info("댓글 DB 삭제 완료 - CommentId: {}", commentId);
 
-                // S3 파일 삭제 실패 시 DB 삭제를 중단하여 데이터 정합성 유지
-                // 추후 배치 작업으로 재시도할 수 있도록 DB 레코드 보존
-                throw new RuntimeException(
-                        "파일 삭제에 실패했습니다. 관리자에게 문의하세요: " + s3Exception.getMessage(), s3Exception);
-            }
-        }
+        // 트랜잭션 커밋 이후 외부 리소스 삭제
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    // 1. S3 삭제
+                    if (recordKey != null && !recordKey.isEmpty()) {
+                        try {
+                            s3Service.deleteFile(recordKey);
+                            log.info("S3 파일 삭제 완료 - CommentId: {}, RecordKey: {}", commentId, recordKey);
+                        } catch (Exception e) {
+                            log.error("S3 파일 삭제 실패 - CommentId: {}, RecordKey: {}", commentId, recordKey, e);
+                        }
+                    }
 
-        // 2단계: S3 파일 삭제가 성공한 후 DB 레코드 삭제
-        try {
-            reviewCommentRepository.deleteById(commentId);
-            log.info("댓글 삭제 완료 - CommentId: {}", commentId);
-        } catch (Exception dbException) {
-            log.error("DB 댓글 삭제 실패 - CommentId: {}, 오류: {}", commentId, dbException.getMessage());
+                    // 2. GitHub 삭제
+                    try {
+                        Long installationId = accountRepository.findById(accountId)
+                                .orElseThrow(() -> new RuntimeException("Account not found"))
+                                .getInstallationId();
 
-            // DB 삭제 실패 시 이미 삭제된 S3 파일은 복구할 수 없으므로
-            // 관리자가 확인할 수 있도록 상세한 로그 남김
-            log.error("주의: S3 파일은 이미 삭제되었지만 DB 레코드 삭제 실패 - CommentId: {}, RecordKey: {}",
-                    commentId, recordKey);
-
-            throw new RuntimeException("댓글 DB 삭제에 실패했습니다: " + dbException.getMessage(),
-                    dbException);
+                        reviewGithubService.deleteReviewCommentOnGithub(installationId, repoFullName, githubId);
+                        log.info("GitHub 리뷰 코멘트 삭제 완료 - CommentId: {}, GithubId: {}", commentId, githubId);
+                    } catch (Exception e) {
+                        log.error("GitHub 리뷰 코멘트 삭제 실패 - GithubId: {}", githubId, e);
+                    }
+                }
+            });
         }
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewCommentResponse> getCommentsByReviewId(Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
@@ -345,6 +362,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ReviewCommentResponse getCommentById(Long commentId) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
@@ -352,6 +370,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewCommentResponse> getCommentsByUserId(Long userId) {
         List<ReviewComment> comments = reviewCommentRepository.findAllByUserId(userId);
         return comments.stream()
@@ -360,6 +379,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ReviewCommentResponse> getCommentsByReviewIdAndPath(Long reviewId, String path) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
