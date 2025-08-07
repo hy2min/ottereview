@@ -63,39 +63,43 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 py-4">
-      <StepIndicator currentStep={step} steps={steps} />
-      <Box shadow>{renderStepComponent()}</Box>
+    <div className="relative min-h-screen pb-[100px]">
+      <div className="max-w-2xl mx-auto space-y-4 py-4">
+        <StepIndicator currentStep={step} steps={steps} />
+        <Box shadow>{renderStepComponent()}</Box>
 
-      <div className="flex justify-between items-center mt-4">
-        <Button
-          onClick={() => {
-            if (step > 1) {
-              setStep((prevStep) => prevStep - 1)
-            } else {
-              navigate('/dashboard')
-            }
-          }}
-          variant="secondary"
-        >
-          이전
-        </Button>
+        <div className="fixed bottom-0 left-0 w-full z-10">
+          <div className="max-w-4xl mx-auto py-4 px-4 flex justify-between items-center">
+            <Button
+              onClick={() => {
+                if (step > 1) {
+                  setStep((prevStep) => prevStep - 1)
+                } else {
+                  navigate('/dashboard')
+                }
+              }}
+              variant="secondary"
+            >
+              이전
+            </Button>
 
-        <Button
-          onClick={() => {
-            if (!isNextButtonDisabled) {
-              if (step < 5) {
-                setStep((prev) => prev + 1)
-              } else {
-                handleSubmit()
-              }
-            }
-          }}
-          variant="primary"
-          disabled={isNextButtonDisabled}
-        >
-          {step === 5 ? '제출' : '다음'}
-        </Button>
+            <Button
+              onClick={() => {
+                if (!isNextButtonDisabled) {
+                  if (step < 5) {
+                    setStep((prev) => prev + 1)
+                  } else {
+                    handleSubmit()
+                  }
+                }
+              }}
+              variant="primary"
+              disabled={isNextButtonDisabled}
+            >
+              {step === 5 ? '제출' : '다음'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

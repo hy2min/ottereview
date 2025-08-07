@@ -5,7 +5,8 @@ import { usePRCreateStore } from './stores/prCreateStore'
 const mockReviewers = ['heejoo', 'alice', 'bob', 'charlie']
 
 const PRCreateStep4 = () => {
-  const { formData, setFormData } = usePRCreateStore()
+  const formData = usePRCreateStore((state) => state.formData)
+  const setFormData = usePRCreateStore((state) => state.setFormData)
 
   const handleSelect = (name) => {
     if (!formData.reviewers.includes(name)) {
