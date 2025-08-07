@@ -22,17 +22,17 @@ const Conflict = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const members = await fetchMemberList({ accountId, repoId })
+        const members = await fetchMemberList({ repoId })
         setMembers(members)
       } catch (err) {
         console.error('Failed to fetch members:', err)
       }
     }
 
-    if (accountId && repoId) {
+    if (repoId) {
       fetchMembers()
     }
-  }, [accountId, repoId])
+  }, [repoId])
 
   useEffect(() => {
     const fetchFiles = async () => {
