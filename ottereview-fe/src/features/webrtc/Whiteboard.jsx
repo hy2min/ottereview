@@ -24,7 +24,7 @@ const Whiteboard = ({ roomId }) => {
   // STOMP 웹소켓 연결을 설정
   useEffect(() => {
     const token = useAuthStore.getState().accessToken
-    const socket = new SockJS('http://localhost:8080/ws')
+    const socket = new SockJS('http://i13c108.p.ssafy.io:8080/ws')
     const stomp = Stomp.over(socket)
     stomp.debug = () => {} // 디버그 로그 비활성화
 
