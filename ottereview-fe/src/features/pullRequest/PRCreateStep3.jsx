@@ -2,7 +2,8 @@ import InputBox from '../../components/InputBox'
 import { usePRCreateStore } from './stores/prCreateStore'
 
 const PRCreateStep3 = () => {
-  const { formData, setFormData } = usePRCreateStore()
+  const formData = usePRCreateStore((state) => state.formData)
+  const setFormData = usePRCreateStore((state) => state.setFormData)
 
   return (
     <div className="space-y-4">
