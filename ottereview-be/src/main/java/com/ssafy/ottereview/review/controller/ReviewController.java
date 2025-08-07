@@ -50,42 +50,42 @@ public class ReviewController {
         }
     }
 
-    @PutMapping("/{review-id}")
-    public ResponseEntity<ReviewResponse> updateReview(
-            @PathVariable("account-id") Long accountId,
-            @PathVariable("repo-id") Long repoId,
-            @PathVariable("pr-id") Long prId,
-            @PathVariable("review-id") Long reviewId,
-            @Valid @RequestBody ReviewRequest reviewRequest,
-            @AuthenticationPrincipal CustomUserDetail userDetail) {
-
-        try {
-            ReviewResponse response = reviewService.updateReview(
-                    accountId, repoId, prId, reviewId, reviewRequest, userDetail.getUser().getId());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Failed to update review {} for PR #{}", reviewId, prId, e);
-            throw new RuntimeException("Failed to update review: " + e.getMessage());
-        }
-    }
-
-    @DeleteMapping("/{review-id}")
-    public ResponseEntity<Void> deleteReview(
-            @PathVariable("account-id") Long accountId,
-            @PathVariable("repo-id") Long repoId,
-            @PathVariable("pr-id") Long prId,
-            @PathVariable("review-id") Long reviewId,
-            @AuthenticationPrincipal CustomUserDetail userDetail) {
-
-        try {
-            reviewService.deleteReview(accountId, repoId, prId, reviewId,
-                    userDetail.getUser().getId());
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            log.error("Failed to delete review {} for PR #{}", reviewId, prId, e);
-            throw new RuntimeException("Failed to delete review: " + e.getMessage());
-        }
-    }
+//    @PutMapping("/{review-id}")
+//    public ResponseEntity<ReviewResponse> updateReview(
+//            @PathVariable("account-id") Long accountId,
+//            @PathVariable("repo-id") Long repoId,
+//            @PathVariable("pr-id") Long prId,
+//            @PathVariable("review-id") Long reviewId,
+//            @Valid @RequestBody ReviewRequest reviewRequest,
+//            @AuthenticationPrincipal CustomUserDetail userDetail) {
+//
+//        try {
+//            ReviewResponse response = reviewService.updateReview(
+//                    accountId, repoId, prId, reviewId, reviewRequest, userDetail.getUser().getId());
+//            return ResponseEntity.ok(response);
+//        } catch (Exception e) {
+//            log.error("Failed to update review {} for PR #{}", reviewId, prId, e);
+//            throw new RuntimeException("Failed to update review: " + e.getMessage());
+//        }
+//    }
+//
+//    @DeleteMapping("/{review-id}")
+//    public ResponseEntity<Void> deleteReview(
+//            @PathVariable("account-id") Long accountId,
+//            @PathVariable("repo-id") Long repoId,
+//            @PathVariable("pr-id") Long prId,
+//            @PathVariable("review-id") Long reviewId,
+//            @AuthenticationPrincipal CustomUserDetail userDetail) {
+//
+//        try {
+//            reviewService.deleteReview(accountId, repoId, prId, reviewId,
+//                    userDetail.getUser().getId());
+//            return ResponseEntity.noContent().build();
+//        } catch (Exception e) {
+//            log.error("Failed to delete review {} for PR #{}", reviewId, prId, e);
+//            throw new RuntimeException("Failed to delete review: " + e.getMessage());
+//        }
+//    }
 
     @GetMapping
     public ResponseEntity<List<ReviewResponse>> getReviewsByPullRequest(

@@ -67,10 +67,10 @@ const PRCardDetail = ({ pr }) => {
             onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
             variant="primary"
             size="sm"
-            disabled={!mergeable || state === 'CLOSED'}
+            disabled={mergeable || !state === 'OPEN'}
           >
             <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-            머지
+            충돌해결
           </Button>
         </div>
       </div>

@@ -18,66 +18,98 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
+class DiffHunkLine(BaseModel):
+    """diff hunk의 각 라인 정보"""
+    oldLine: Optional[int] = None
+    newLine: Optional[int] = None
+    type: str  # context, addition, deletion
+    content: str
+    position: int
+
+class DiffHunk(BaseModel):
+    """diff hunk 정보"""
+    oldStart: int
+    oldLines: int
+    newStart: int
+    newLines: int
+    context: str
+    lines: List[DiffHunkLine]
+
 class FileInfo(BaseModel):
     """파일 변경 정보"""
     filename: str
     status: str  # modified, added, deleted
     additions: int
     deletions: int
-    patch: str
+    changes: int
+    patch: Optional[str] = None
+    rawUrl: str
+    blobUrl: str
+    diffHunks: Optional[List[DiffHunk]] = None
 
 class CommitInfo(BaseModel):
     """커밋 정보"""
     sha: str
     message: str
-    author_name: str = Field(alias="authorName")
-    author_email: str = Field(alias="authorEmail")
+    authorName: str
+    authorEmail: str
+    authorDate: str
+    committerName: str
+    committerEmail: str
+    committerDate: str
+    url: str
+    htmlUrl: str
     additions: int
     deletions: int
+    totalChanges: int
 
-class ReviewCommentInfo(BaseModel):
-    """리뷰 코멘트 정보"""
-    user_name: str = Field(alias="userName")
-    path: str
-    body: str
-    position: Optional[int] = None
-    
-class ReviewerInfo(BaseModel):
-    """리뷰어 정보"""
+class AuthorInfo(BaseModel):
+    """작성자 정보"""
+    id: int
     githubUsername: str
     githubEmail: str
-    
-class ReviewInfo(BaseModel):
-    """리뷰 정보"""
-    user_github_username: str = Field(alias="userGithubUsername")
-    state: str  # APPROVED, REQUEST_CHANGES, COMMENTED
-    body: str
-    commit_sha: str = Field(alias="commitSha")
-    review_comments: List[ReviewCommentInfo] = Field(default_factory=list, alias="reviewComments")
 
-class DescriptionInfo(BaseModel):
-    """Pull Request 설명"""
-    user_name: str = Field(alias="userName")
-    path: str
-    body: str
-    position: Optional[int] = None
+class RepositoryInfo(BaseModel):
+    """저장소 정보"""
+    id: int
+    fullName: str
 
 class PRData(BaseModel):
     """Pull Request 전체 데이터"""
     # PR 기본 정보
-    pr_id: int
+    pr_id: Optional[int] = None
     source: str
     target: str
-    title: str
-    body: str = None
-
-    # 변경 사항
-    files: List[FileInfo]
+    url: str
+    htmlUrl: str
+    permalinkUrl: str
+    diffUrl: str
+    patchUrl: str
+    status: str
+    aheadBy: int
+    behindBy: int
+    totalCommits: int
+    
+    # 커밋 정보
+    baseCommit: CommitInfo
+    mergeBaseCommit: CommitInfo
     commits: List[CommitInfo]
-    descriptions: Optional[List[DescriptionInfo]] = None
-    # 리뷰 정보
-    reviewers: List[ReviewerInfo] = Field(default_factory=list)  # 리뷰어 정보 목록
-    reviews: Optional[List[ReviewInfo]] = None
+    
+    # 파일 변경 정보
+    files: List[FileInfo]
+    
+    # 기타 정보 (null일 수 있음)
+    summary: Optional[str] = None
+    reviewers: Optional[List] = None  # JSON에서는 null
+    reviews: Optional[List] = None  # JSON에서는 null
+    descriptions: Optional[List] = None  # JSON에서는 null
+    priorities: Optional[List] = None  # JSON에서는 null
+    title: Optional[str] = None  # JSON에서는 null
+    body: Optional[str] = None  # JSON에서는 null
+    
+    # 작성자 및 저장소 정보
+    author: AuthorInfo
+    repository: RepositoryInfo
 
 
 class PineconeVectorDB:
@@ -207,6 +239,8 @@ class PineconeVectorDB:
             
             metadata = {
                 "pr_id": str(pr_id),
+                "repository_id": str(pr_data.repository.id),
+                "repository_name": pr_data.repository.fullName,
                 "reviewer": reviewer_info.githubUsername,
                 "reviewer_email": reviewer_info.githubEmail,
                 "file_categories": ",".join(file_categories.keys()),
@@ -244,7 +278,9 @@ class PineconeVectorDB:
             context_vector = await self.embeddings.aembed_query(context)
             
             metadata = {
-                "pr_id": pr_id,
+                "pr_id": str(pr_id),
+                "repository_id": str(pr_data.repository.id),
+                "repository_name": pr_data.repository.fullName,
                 "functional_category": group['category'],
                 "related_files": ",".join(group['files'])[:500],
                 "change_scale": group['change_scale'],
@@ -390,14 +426,14 @@ class PineconeVectorDB:
             ]
             
             query = " ".join(query_parts)
-            return await self.search_reviewer_patterns(query, limit)
+            return await self.search_reviewer_patterns(query, pr_data.repository.id, limit)
             
         except Exception as e:
             logger.error(f"유사한 리뷰어 패턴 검색 중 오류: {str(e)}")
             return []
 
     
-    async def search_reviewer_patterns(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
+    async def search_reviewer_patterns(self, query: str, repository_id: int, limit: int = 20) -> List[Dict[str, Any]]:
         """유사한 리뷰어 패턴 검색 (리뷰어 추천용)"""
         try:
             query_vector = await self.embeddings.aembed_query(query)
@@ -405,7 +441,8 @@ class PineconeVectorDB:
             results = self.reviewer_patterns_index.query(
                 vector=query_vector,
                 top_k=limit,
-                include_metadata=True
+                include_metadata=True,
+                filter={"repository_id": str(repository_id)}
             )
             
             patterns = []
@@ -413,6 +450,8 @@ class PineconeVectorDB:
                 metadata = match.metadata
                 patterns.append({
                     "pr_id": metadata.get("pr_id"),
+                    "repository_id": metadata.get("repository_id"),
+                    "repository_name": metadata.get("repository_name"),
                     "reviewer": metadata.get("reviewer"),
                     "reviewer_email": metadata.get("reviewer_email"),
                     "file_categories": metadata.get("file_categories", "").split(",") if metadata.get("file_categories") else [],
@@ -457,13 +496,13 @@ class PineconeVectorDB:
             ]
             
             query = " ".join(query_parts)
-            return await self.search_priority_patterns(query, limit)
+            return await self.search_priority_patterns(query, pr_data.repository.id, limit)
             
         except Exception as e:
             logger.error(f"유사한 우선순위 패턴 검색 중 오류: {str(e)}")
             return []
         
-    async def search_priority_patterns(self, query: str, limit: int = 20) -> List[Dict[str, Any]]:
+    async def search_priority_patterns(self, query: str, repository_id: int, limit: int = 20) -> List[Dict[str, Any]]:
         """유사한 우선순위 패턴 검색 (우선순위 추천용)"""
         try:
             query_vector = await self.embeddings.aembed_query(query)
@@ -471,7 +510,8 @@ class PineconeVectorDB:
             results = self.priority_patterns_index.query(
                 vector=query_vector,
                 top_k=limit,
-                include_metadata=True
+                include_metadata=True,
+                filter={"repository_id": str(repository_id)}
             )
             
             patterns = []
@@ -479,6 +519,8 @@ class PineconeVectorDB:
                 metadata = match.metadata
                 patterns.append({
                     "pr_id": metadata.get("pr_id"),
+                    "repository_id": metadata.get("repository_id"),
+                    "repository_name": metadata.get("repository_name"),
                     "functional_category": metadata.get("functional_category"),
                     "related_files": metadata.get("related_files", "").split(",") if metadata.get("related_files") else [],
                     "change_scale": metadata.get("change_scale"),

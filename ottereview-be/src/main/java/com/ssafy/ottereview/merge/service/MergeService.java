@@ -3,7 +3,10 @@ package com.ssafy.ottereview.merge.service;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.dto.MergeResponse;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.repo.entity.Repo;
 
 import java.io.File;
@@ -28,12 +31,14 @@ import org.kohsuke.github.GitHub;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 public class MergeService {
     private static final Logger log = LoggerFactory.getLogger(MergeService.class);
     private final GithubAppUtil githubAppUtil;
+    private final PullRequestRepository pullRequestRepository;
 
     public MergeCheckResponse checkMergeConflict(Repo repo , PullRequest pullRequest){
         MergeCheckResponse result = null;
@@ -235,6 +240,31 @@ public class MergeService {
             }
         }
         dir.delete();
+    }
+
+    @Transactional
+    public boolean doMerge(Repo repo, PullRequest pullRequest){
+        if(pullRequest.isMergeable()){
+            try {
+                // Db에 저장된 정보를 가지고 PR 객체를 가져온다!
+                GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount().getInstallationId());
+                GHRepository repository = gitHub.getRepository(repo.getFullName());
+                GHPullRequest ghPullRequest = repository.getPullRequest(pullRequest.getGithubPrNumber());
+
+                // github에서 가져온 pullRequest 객체로 삭제한다.
+                ghPullRequest.merge("Merge PR #" + pullRequest.getGithubPrNumber() + " "+ pullRequest.getHead()+" -> "+ pullRequest.getBase() );
+
+                log.info("Merge PR #" + pullRequest.getGithubPrNumber() + " "+ pullRequest.getHead()+" -> "+ pullRequest.getBase() );
+
+                // pullRequest 속성값 업데이트해서 merged로 바꾸기
+                pullRequest.updateState(PrState.MERGED);
+                return true;
+
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
+        return false;
     }
 
 

@@ -4,7 +4,7 @@ import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.review.dto.GithubReviewResult;
+import com.ssafy.ottereview.review.dto.GithubReviewResponse;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.entity.Review;
@@ -17,17 +17,19 @@ import com.ssafy.ottereview.s3.service.S3Service;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Slf4j
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewCommentRepository reviewCommentRepository;
@@ -39,6 +41,11 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewGithubService reviewGithubService;
     private final AccountRepository accountRepository;
     private final S3Service s3Service;
+
+    private static final String COMMENT_TEMPLATE = """
+            **👀 Reviewer: @%s**
+            %s
+            """;
 
 
     @Override
@@ -87,7 +94,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Account not found"))
                 .getInstallationId();
 
-        GithubReviewResult githubResult = reviewGithubService.createReviewOnGithub(
+        GithubReviewResponse githubResult = reviewGithubService.createReviewOnGithub(
                 installationId,
                 repoFullName,
                 pullRequest.getGithubPrNumber(),
@@ -100,14 +107,32 @@ public class ReviewServiceImpl implements ReviewService {
         // 깃허브 아이디 재설정
         savedReview.updateGithubId(githubResult.getReviewId());
 
-        // 리뷰 코멘트 githubId 업데이트 (순서 매칭)
-        List<Long> commentIds = githubResult.getCommentIds();
-        for (int i = 0; i < commentIds.size(); i++) {
-            reviewCommentRepository.updateGithubId(createdComments.get(i).getId(), commentIds.get(i));
+        // body 기반으로 githubCommentId를 가져오기 위한 맵
+        Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
+        Map<Long, String> commentDiffs = githubResult.getCommentDiffs();
+        Map<Long, Integer> commentPositions = githubResult.getCommentPositions();
+
+        for (ReviewCommentResponse localComment : createdComments) {
+            // 우리가 보낼 때 사용한 포맷과 동일하게 포맷팅
+            String formattedBody = COMMENT_TEMPLATE.formatted(user.getGithubUsername(), localComment.getBody());
+
+            Long githubCommentId = bodyToGithubCommentId.get(formattedBody);
+            if (githubCommentId != null) {
+                reviewCommentRepository.updateGithubId(localComment.getId(), githubCommentId);
+                reviewCommentRepository.updateDiffHunk(localComment.getId(), commentDiffs.get(githubCommentId));
+                reviewCommentRepository.updatePosition(localComment.getId(), commentPositions.get(githubCommentId));
+            } else {
+                log.warn("No matching GitHub comment for localCommentId={}, formattedBody={}", localComment.getId(), formattedBody);
+            }
         }
-        
+
+        // 코멘트 response dto로 변경
+        List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId()).stream()
+                .map(ReviewCommentResponse::from)
+                .toList();
+
         // ReviewResponse를 직접 생성 (DB 재조회 없이)
-        return new com.ssafy.ottereview.review.dto.ReviewResponse(
+        return new ReviewResponse(
                 savedReview.getId(),
                 savedReview.getPullRequest().getId(),
                 savedReview.getPullRequest().getGithubPrNumber(),
@@ -115,54 +140,55 @@ public class ReviewServiceImpl implements ReviewService {
                 savedReview.getState(),
                 savedReview.getBody(),
                 savedReview.getCommitSha(),
-                createdComments,
+                updatedComments,
                 savedReview.getGithubCreatedAt(),
                 savedReview.getCreatedAt(),
-                savedReview.getCreatedAt()
+                savedReview.getModifiedAt()
         );
     }
 
-    @Override
-    @Transactional
-    public ReviewResponse updateReview(Long accountId, Long repoId, Long prId, Long reviewId,
-                                       ReviewRequest reviewRequest, Long userId) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
-
-        if (!review.getUser().getId().equals(userId)) {
-            throw new RuntimeException("You can only update your own reviews");
-        }
-
-        Review updatedReview = Review.builder()
-                .id(review.getId())
-                .pullRequest(review.getPullRequest())
-                .user(review.getUser())
-                .state(reviewRequest.getState())
-                .body(reviewRequest.getBody())
-                .commitSha(reviewRequest.getCommitSha() != null ? reviewRequest.getCommitSha()
-                        : review.getCommitSha())
-                .reviewComments(review.getReviewComments())
-                .githubCreatedAt(review.getGithubCreatedAt())
-                .build();
-
-        Review savedReview = reviewRepository.save(updatedReview);
-
-        return ReviewResponse.from(savedReview);
-    }
-
-    @Override
-    @Transactional
-    public void deleteReview(Long accountId, Long repoId, Long prId, Long reviewId, Long userId) {
-        Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
-
-        if (!review.getUser().getId().equals(userId)) {
-            throw new RuntimeException("You can only delete your own reviews");
-        }
-
-        reviewRepository.delete(review);
-        s3Service.deleteFiles(reviewId);
-    }
+//    @Override
+//    @Transactional
+//    public ReviewResponse updateReview(Long accountId, Long repoId, Long prId, Long reviewId,
+//                                       ReviewRequest reviewRequest, Long userId) {
+//        Review review = reviewRepository.findById(reviewId)
+//                .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
+//
+//        if (!review.getUser().getId().equals(userId)) {
+//            throw new RuntimeException("You can only update your own reviews");
+//        }
+//
+//        Review updatedReview = Review.builder()
+//                .id(review.getId())
+//                .pullRequest(review.getPullRequest())
+//                .user(review.getUser())
+//                .state(reviewRequest.getState())
+//                .body(reviewRequest.getBody())
+//                .commitSha(reviewRequest.getCommitSha() != null ? reviewRequest.getCommitSha()
+//                        : review.getCommitSha())
+//                .reviewComments(review.getReviewComments())
+//                .githubCreatedAt(review.getGithubCreatedAt())
+//                .build();
+//
+//        Review savedReview = reviewRepository.save(updatedReview);
+//
+//        return ReviewResponse.from(savedReview);
+//    }
+//
+//    @Override
+//    @Transactional
+//    public void deleteReview(Long accountId, Long repoId, Long prId, Long reviewId, Long userId) {
+//        Review review = reviewRepository.findById(reviewId)
+//                .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
+//
+//        if (!review.getUser().getId().equals(userId)) {
+//            throw new RuntimeException("You can only delete your own reviews");
+//        }
+//
+//        reviewRepository.delete(review);
+//        s3Service.deleteFiles(reviewId);
+//
+//    }
 
     @Override
     public List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId) {

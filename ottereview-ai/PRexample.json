@@ -1,180 +1,89 @@
 {
-    "pr_id":1,
-    "source": "pr-pr",
+    "pr_id": 123,
+    "source": "feature/user-management",
     "target": "main",
-    "url": "https://api.github.com/repos/kangboom/Algorithm/compare/main...pr-pr",
-    "htmlUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr",
-    "permalinkUrl": "https://github.com/kangboom/Algorithm/compare/kangboom:8848741...kangboom:b98bec2",
-    "diffUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr.diff",
-    "patchUrl": "https://github.com/kangboom/Algorithm/compare/main...pr-pr.patch",
-    "status": "ahead",
-    "aheadBy": 6,
-    "behindBy": 0,
-    "totalCommits": 6,
-    "baseCommit": {
-        "sha": "88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "message": "Merge pull request #4 from kangboom/test555\n\ntest555",
-        "authorName": "LimKangBeom",
-        "authorEmail": "jkl6147@naver.com",
-        "authorDate": "2025-07-28T07:24:55Z",
-        "committerName": "GitHub",
-        "committerEmail": "noreply@github.com",
-        "committerDate": "2025-07-28T07:24:55Z",
-        "url": "https://api.github.com/repos/kangboom/Algorithm/commits/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "htmlUrl": "https://github.com/kangboom/Algorithm/commit/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "additions": 3,
-        "deletions": 1,
-        "totalChanges": 4
-    },
-    "mergeBaseCommit": {
-        "sha": "88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "message": "Merge pull request #4 from kangboom/test555\n\ntest555",
-        "authorName": "LimKangBeom",
-        "authorEmail": "jkl6147@naver.com",
-        "authorDate": "2025-07-28T07:24:55Z",
-        "committerName": "GitHub",
-        "committerEmail": "noreply@github.com",
-        "committerDate": "2025-07-28T07:24:55Z",
-        "url": "https://api.github.com/repos/kangboom/Algorithm/commits/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "htmlUrl": "https://github.com/kangboom/Algorithm/commit/88487419c19dfb33c2946dd536b4a9cbc2b1327e",
-        "additions": 3,
-        "deletions": 1,
-        "totalChanges": 4
-    },
-    "commits": [
-        {
-            "sha": "69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
-            "message": "222",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T06:39:50Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T06:39:50Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/69fac5d6b2a2d934fb8c9fddcd6992ac99988b31",
-            "additions": 2,
-            "deletions": 1,
-            "totalChanges": 3
-        },
-        {
-            "sha": "ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
-            "message": "11111",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T07:00:47Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T07:00:47Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/ba4fb2f18e7d177c9e73c78f03532cc97dd1edb1",
-            "additions": 2,
-            "deletions": 1,
-            "totalChanges": 3
-        },
-        {
-            "sha": "9080d043ff77c365dc587288f03a64c16aa39861",
-            "message": "44444",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T07:00:54Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T07:00:54Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/9080d043ff77c365dc587288f03a64c16aa39861",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/9080d043ff77c365dc587288f03a64c16aa39861",
-            "additions": 2,
-            "deletions": 1,
-            "totalChanges": 3
-        },
-        {
-            "sha": "14daa1146b37449a3d16843df7c48bdc88197c2e",
-            "message": "1234",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T15:16:04Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T15:16:04Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/14daa1146b37449a3d16843df7c48bdc88197c2e",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/14daa1146b37449a3d16843df7c48bdc88197c2e",
-            "additions": 3,
-            "deletions": 1,
-            "totalChanges": 4
-        },
-        {
-            "sha": "a98a755ae36f5f955fca475baf2b755fcd46ada2",
-            "message": "testtest",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T15:20:13Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T15:20:13Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/a98a755ae36f5f955fca475baf2b755fcd46ada2",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/a98a755ae36f5f955fca475baf2b755fcd46ada2",
-            "additions": 4,
-            "deletions": 1,
-            "totalChanges": 5
-        },
-        {
-            "sha": "b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
-            "message": "as",
-            "authorName": "Kangboom",
-            "authorEmail": "jkl6147@naver.com",
-            "authorDate": "2025-07-31T15:29:33Z",
-            "committerName": "Kangboom",
-            "committerEmail": "jkl6147@naver.com",
-            "committerDate": "2025-07-31T15:29:33Z",
-            "url": "https://api.github.com/repos/kangboom/Algorithm/commits/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
-            "htmlUrl": "https://github.com/kangboom/Algorithm/commit/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f",
-            "additions": 1,
-            "deletions": 9,
-            "totalChanges": 10
-        }
-    ],
+    "title": "Add user management feature",
+    "body": "사용자 관리 기능 추가 - 코딩 컨벤션 테스트용 PR입니다.",
     "files": [
         {
-            "filename": "test/a.txt",
-            "status": "modified",
-            "additions": 1,
-            "deletions": 1,
-            "changes": 2,
-            "patch": "@@ -1,3 +1,3 @@\n PR 테스트를 위한 파일 생성\n \n-aaaaa\n\\ No newline at end of file\n+gdd\n\\ No newline at end of file",
-            "rawUrl": "https://github.com/kangboom/Algorithm/raw/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f/test%2Fa.txt",
-            "blobUrl": "https://github.com/kangboom/Algorithm/blob/b98bec276f7dda9c9f9106e86b3cb5b9b48fb31f/test%2Fa.txt",
-            "diffHunks": [
+            "filename": "UserService.js",
+            "status": "added",
+            "additions": 25,
+            "deletions": 0,
+            "patch": "class userManager {  // camelCase 클래스명 (PascalCase 필요)\n    constructor() {\n        this.user_data = {};  // snake_case 변수명 (camelCase 필요)\n        this.USER_COUNT = 0;  // 상수\n    }\n\n    get_user_info(user_id) {  // snake_case 메서드명 (camelCase 필요)\n        const USER_NAME = 'test';  // 상수\n        let current_user = null;  // snake_case 변수명 (camelCase 필요)\n        return current_user;\n    }\n\n    calculateUserScore() {  // 올바른 camelCase\n        return 100;\n    }\n}"
+        },
+        {
+            "filename": "user-helper.py", 
+            "status": "added",
+            "additions": 20,
+            "deletions": 0,
+            "patch": "class UserProfile:  # 올바른 PascalCase\n    def __init__(self):\n        self.user_name = 'test'  # 올바른 snake_case\n        self.USER_ID = 123  # 올바른 CONSTANT_CASE\n\ndef getUserData():  # camelCase 함수명 (snake_case 필요)\n    userName = 'test'  # camelCase 변수명 (snake_case 필요)\n    return userName\n\ndef calculate_score():  # 올바른 snake_case\n    CONSTANT_VALUE = 100  # 올바른 상수\n    return CONSTANT_VALUE\n\nclass user_service:  # snake_case 클래스명 (PascalCase 필요)\n    pass"
+        },
+        {
+            "filename": "UserDAO.java",
+            "status": "modified", 
+            "additions": 15,
+            "deletions": 5,
+            "patch": "public class UserDAO {  // 올바른 PascalCase\n    private static final String DB_URL = \"jdbc:mysql://localhost\";  // 올바른 CONSTANT_CASE\n    private String user_name;  // snake_case 변수명 (camelCase 필요)\n    \n    public void Get_User_Data(int userId) {  // Pascal_Snake_Case 메서드명 (camelCase 필요)\n        String current_user = null;  // snake_case 변수명 (camelCase 필요)\n        return;\n    }\n    \n    public String getUserName() {  // 올바른 camelCase\n        return this.userName;\n    }\n    \n    private void setUserData(String userName) {  // 올바른 camelCase\n        this.userName = userName;\n    }\n}"
+        },
+        {
+            "filename": "api_helper.ts",
+            "status": "added",
+            "additions": 18,
+            "deletions": 0,
+            "patch": "interface UserData {  // 올바른 PascalCase\n    user_id: number;  // snake_case 속성명 (camelCase 필요)\n    user_name: string;  // snake_case 속성명 (camelCase 필요)\n}\n\nclass ApiHelper {  // 올바른 PascalCase\n    private API_BASE_URL = 'https://api.example.com';  // 올바른 상수\n    \n    async fetch_user_data(userId: number): Promise<UserData> {  // snake_case 메서드명 (camelCase 필요)\n        const response_data = await fetch(`${this.API_BASE_URL}/users/${userId}`);  // snake_case 변수명 (camelCase 필요)\n        return response_data.json();\n    }\n    \n    validateUserInput(userData: UserData): boolean {  // 올바른 camelCase\n        return userData.user_id > 0;\n    }\n}"
+        }
+    ],
+    "commits": [
+        {
+            "sha": "abc123def456",
+            "message": "feat: Add user management classes",
+            "authorName": "Developer",
+            "authorEmail": "dev@example.com", 
+            "additions": 78,
+            "deletions": 5
+        },
+        {
+            "sha": "def789ghi012",
+            "message": "fix: Update naming conventions",
+            "authorName": "Developer",
+            "authorEmail": "dev@example.com",
+            "additions": 12,
+            "deletions": 8
+        }
+    ],
+    "reviewers": [
+        {
+            "githubUsername": "reviewer1",
+            "githubEmail": "reviewer1@example.com"
+        },
+        {
+            "githubUsername": "reviewer2", 
+            "githubEmail": "reviewer2@example.com"
+        }
+    ],
+    "reviews": [
+        {
+            "userGithubUsername": "reviewer1",
+            "state": "REQUEST_CHANGES",
+            "body": "네이밍 컨벤션을 맞춰주세요",
+            "commitSha": "abc123def456",
+            "reviewComments": [
                 {
-                    "oldStart": 1,
-                    "oldLines": 3,
-                    "newStart": 1,
-                    "newLines": 3,
-                    "context": "",
-                    "lines": [
-                        " PR 테스트를 위한 파일 생성",
-                        " ",
-                        "-aaaaa",
-                        "\\ No newline at end of file",
-                        "+gdd",
-                        "\\ No newline at end of file"
-                    ]
+                    "userName": "reviewer1",
+                    "path": "UserService.js",
+                    "body": "클래스명은 PascalCase를 사용해주세요",
+                    "position": 1
                 }
             ]
         }
     ],
-    "summary": null,
-    "reviewers": [
+    "descriptions": [
         {
-            "id": 1,
-            "githubUsername": "kangboom",
-            "githubEmail": "jkl6147@naver.com",
-            "profileImageUrl": null,
-            "rewardPoints": 0,
-            "userGrade": "BASIC"
+            "userName": "developer1",
+            "path": "UserService.js", 
+            "body": "사용자 관리를 위한 서비스 클래스입니다.",
+            "position": null
         }
-    ],
-    "reviews": null,
-    "descriptions": null,
-    "title": "PR 생성 테스트",
-    "body": "PR 생성 테스트 Body"
+    ]
 }
