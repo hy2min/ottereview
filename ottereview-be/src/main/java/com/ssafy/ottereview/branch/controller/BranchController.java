@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/accounts/{account-id}/repositories/{repo-id}/branches")
+@RequestMapping("/api/repositories/{repo-id}/branches")
 public class BranchController {
 
     private final BranchServiceImpl branchServiceImpl;
@@ -45,7 +45,7 @@ public class BranchController {
         return ResponseEntity.ok(branchResponse);
     }
 
-    @PatchMapping("/role")
+    @PatchMapping("/roles")
     public ResponseEntity<?> updateBranchRole(@RequestBody BranchRoleCreateRequest branchRoleCreateRequest){
         return ResponseEntity.ok(branchServiceImpl.updateBranchRole(branchRoleCreateRequest));
 
