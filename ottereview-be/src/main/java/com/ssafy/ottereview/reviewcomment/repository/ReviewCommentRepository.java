@@ -26,4 +26,14 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ReviewComment rc SET rc.githubId = :githubId WHERE rc.id = :id")
     void updateGithubId(@Param("id") Long id, @Param("githubId") Long githubId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ReviewComment c SET c.diffHunk = :diffHunk WHERE c.id = :id")
+    void updateDiffHunk(@Param("id") Long id, @Param("diffHunk") String diffHunk);
+
+    List<ReviewComment> findAllByReviewId(Long id);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE ReviewComment c SET c.position = :position WHERE c.id = :id")
+    void updatePosition(@Param("id") Long id, @Param("position") Integer position);
 }
