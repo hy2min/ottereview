@@ -25,7 +25,7 @@ const Header = () => {
   }
 
   return (
-    <header className="bg-transparent pb-1">
+    <header className="bg-transparent pb-1 pt-2">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-3 bg-danger-300 border-2 border-black shadow-pixel p-4 rounded-4xl">
           <button

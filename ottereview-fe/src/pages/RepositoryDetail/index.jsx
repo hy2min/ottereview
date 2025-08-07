@@ -33,10 +33,7 @@ const RepositoryDetail = () => {
         setRepoPRs(repoData)
 
         if (repo?.accountId && repoId) {
-          const branchData = await fetchBrancheListByRepoId({
-            accountId: repo.accountId,
-            repoId,
-          })
+          const branchData = await fetchBrancheListByRepoId(repoId)
           console.log('branchdata : ', branchData)
           setBranchesForRepo(Number(repoId), branchData)
         }
