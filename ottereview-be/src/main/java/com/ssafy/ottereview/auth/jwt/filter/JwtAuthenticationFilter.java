@@ -9,6 +9,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,7 +26,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final TokenService tokenService;
     private final CustomUserDetailServiceImpl customUserDetailService;
 
     @Override
@@ -36,14 +37,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 Claims claims = jwtUtil.getClaims(accessToken);
                 Long userId = Long.valueOf(claims.getSubject());
                 setAuthentication(userId, request);
-            }else {
-                // 토큰이 없거나 유효하지 않을 경우 401 응답
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing JWT token");
-                return;
             }
         } catch (Exception e) {
             log.error("JWT 인증 중 오류 발생: {}", e.getMessage());
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT authentication error");
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or missing JWT token");
             return;
         }
         filterChain.doFilter(request, response);
@@ -65,4 +62,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         return null;
     }
+
 }
