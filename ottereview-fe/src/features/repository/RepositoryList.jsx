@@ -28,7 +28,7 @@ const RepositoryList = () => {
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {repos.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-gray-500">연결된 레포지토리가 없습니다.</p>
+            <p className="text-2xl text-gray-500">연결된 레포지토리가 없습니다.</p>
           </div>
         ) : (
           repos.map((repo) =>
