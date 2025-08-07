@@ -3,7 +3,11 @@ version: '3.8'
 services:
   # FastAPI + Pinecone 서비스
   ai-service:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ottereview-ai:latest
+    container_name: ottereview-ai
     ports:
       - "8000:8000"
     environment:
