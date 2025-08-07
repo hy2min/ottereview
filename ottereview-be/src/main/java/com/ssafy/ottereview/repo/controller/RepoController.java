@@ -5,6 +5,7 @@ import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.service.RepoServiceImpl;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
+import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/accounts/{account-id}/repositories")
+@RequestMapping("/api")
 public class RepoController {
 
     private final RepoServiceImpl repoService;
@@ -29,7 +30,7 @@ public class RepoController {
      * @param accountId
      * @return
      */
-    @GetMapping()
+    @GetMapping("/accounts/{account-id}/repositories")
     public ResponseEntity<List<RepoResponse>> getRepoListByAccountId(
             @PathVariable(name = "account-id") Long accountId) {
         return ResponseEntity.ok(repoService.syncReposForAccount(accountId));
@@ -43,8 +44,8 @@ public class RepoController {
      * @return RepoResponse
      */
 
-    @GetMapping("/{id}")
-    public ResponseEntity<RepoResponse> getRepoById(@PathVariable(name = "id") Long id) {
+    @GetMapping("/accounts/repositories/{repo-id}")
+    public ResponseEntity<RepoResponse> getRepoById(@PathVariable(name = "repo-id") Long id) {
         Optional<Repo> repo = repoService.getById(id);
         if (repo.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -58,7 +59,7 @@ public class RepoController {
      *
      * @return List<RepoResponse>
      */
-    @GetMapping("/users")
+    @GetMapping("/users/repositories")
     public ResponseEntity<List<RepoResponse>> getReposByUserId(@AuthenticationPrincipal
     CustomUserDetail userDetail) {
         List<RepoResponse> body = repoService.getReposByUserId(userDetail.getUser());
@@ -73,8 +74,8 @@ public class RepoController {
      * @param id
      * @return isCushion -> boolean
      */
-    @GetMapping("/{id}/cushion")
-    public ResponseEntity<?> getCushion(@PathVariable(name = "id") Long id) {
+    @GetMapping("/accounts/repositories/{repo-id}/cushion")
+    public ResponseEntity<?> getCushion(@PathVariable(name = "repo-id") Long id) {
         Optional<Repo> repoOptional = repoService.getById(id);
         // repo가 실제로 존재하는지 여부 체크
         if (repoOptional.isEmpty()) {
@@ -92,8 +93,8 @@ public class RepoController {
      * @param id
      * @return repoUpdateRequest 객체 반환
      */
-    @PatchMapping("/{id}/cushion")
-    public ResponseEntity<?> updateCushion(@PathVariable(name = "id") Long id) {
+    @PatchMapping("/accounts/repositories/{repo-id}/cushion")
+    public ResponseEntity<?> updateCushion(@PathVariable(name = "repo-id") Long id) {
         Optional<Repo> repoOptional = repoService.getById(id);
         // repo가 실제로 존재하는지 여부 체크
         if (repoOptional.isEmpty()) {
@@ -103,16 +104,16 @@ public class RepoController {
         Repo repo = repoOptional.get();
         // isCushion 값 false -> true || true -> false로 변환
         repo.cushionToggle(!repo.isCushion());
-        // 바뀐값을 db에 반영하기 위해서 repoUpdateRequest 객체를 생성후 updateRepo 메소드 호출\
-        RepoUpdateRequest repoUpdateRequest = RepoUpdateRequest.builder().repoId(repo.getId())
+        // 바뀐값을 db에 반영하기 위해서 repoUpdateRequest 객체를 생성후 updateRepo 메소드 호출
+        RepoUpdateRequest repoUpdateRequest = RepoUpdateRequest.builder().repoId(repo.getId()).account(repo.getAccount())
                 .isCushion(repo.isCushion()).isPrivate(repo.isPrivate()).build();
         repoService.updateRepo(repoUpdateRequest);
         RepoResponse repoResponse = RepoResponse.of(repo);
         return ResponseEntity.ok(repoResponse);
     }
 
-    @GetMapping("/{id}/users")
-    public ResponseEntity<?> getUserListByRepoId(@PathVariable(name = "id") Long repoId) {
+    @GetMapping("/accounts/repositories/{repo-id}/users")
+    public ResponseEntity<?> getUserListByRepoId(@PathVariable(name = "repo-id") Long repoId) {
         return ResponseEntity.ok(repoService.getUserListByRepoId(repoId));
     }
 
