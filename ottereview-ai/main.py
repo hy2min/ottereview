@@ -3,6 +3,7 @@ from utils.vector_db import vector_db, PRData
 from utils.pull_request import recommand_pull_request_title, summary_pull_request, recommend_reviewers
 from utils.recommand_priority import recommend_priority
 from utils.whisper import whisper_service
+from utils.ai_await import check_pr_conventions,ConventionRule
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import openai
@@ -219,6 +220,35 @@ async def recommend_pr_priority(pr_data: PRData):
             detail="우선순위 추천 중 오류가 발생했습니다."
         )
 
+class ConventionRequest(BaseModel):
+    """코딩 컨벤션 체크 요청 모델"""
+    pr_data: PRData
+    rules: ConventionRule
+
+@app.post("/ai/coding-convention/check")
+async def check_coding_conventions(request: ConventionRequest):
+    """
+    PR의 파일들에 대해 비동기 방식으로 코딩 컨벤션을 체크합니다.
+    
+    Args:
+        request: PR 데이터와 체크할 컨벤션 규칙
+        
+    Returns:
+        {
+            "result": "자연어로 작성된 컨벤션 분석 결과"
+        }
+    """
+    try:
+        analysis_result = await check_pr_conventions(request.pr_data, request.rules)
+        
+        return {"result": analysis_result}
+        
+    except Exception as e:
+        logger.error(f"코딩 컨벤션 체크 API 호출 중 오류: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="코딩 컨벤션 체크 중 오류가 발생했습니다."
+        )
 
 if __name__ == "__main__":
     import uvicorn
