@@ -1,0 +1,155 @@
+import os
+import asyncio
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel
+from enum import Enum
+import logging
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import SystemMessage, HumanMessage
+
+# .env 파일에서 환경변수 로드
+load_dotenv()
+
+logger = logging.getLogger(__name__)
+
+# OpenAI API KEY 확인
+openai_api_key = os.getenv("OPENAI_API_KEY")
+if not openai_api_key:
+    raise ValueError("OPENAI_API_KEY가 환경변수에 설정되지 않았습니다. .env 파일을 확인해주세요.")
+
+# 중요! langchain의 BASE_URL을 GMS로 설정합니다. 
+os.environ["OPENAI_API_BASE"] = "https://gms.ssafy.io/gmsapi/api.openai.com/v1"
+
+model = ChatOpenAI(model="gpt-4o-mini", api_key=openai_api_key)
+
+class ConventionType(str, Enum):
+    """지원되는 네이밍 컨벤션 타입"""
+    CAMEL_CASE = "camelCase"
+    PASCAL_CASE = "PascalCase"
+    SNAKE_CASE = "snake_case"
+    KEBAB_CASE = "kebab-case"
+    CONSTANT_CASE = "CONSTANT_CASE"
+
+class ConventionRule(BaseModel):
+    """코딩 컨벤션 규칙"""
+    file_names: Optional[ConventionType] = None
+    function_names: Optional[ConventionType] = None
+    variable_names: Optional[ConventionType] = None
+    class_names: Optional[ConventionType] = None
+    constant_names: Optional[ConventionType] = None
+
+    def to_prompt_string(self) -> str:
+        """규칙 객체를 프롬프트에 사용될 문자열로 변환"""
+        rules_text = []
+        if self.file_names:
+            rules_text.append(f"- 파일명: {self.file_names.value}")
+        if self.function_names:
+            rules_text.append(f"- 함수명: {self.function_names.value}")
+        if self.variable_names:
+            rules_text.append(f"- 변수명: {self.variable_names.value}")
+        if self.class_names:
+            rules_text.append(f"- 클래스명: {self.class_names.value}")
+        if self.constant_names:
+            rules_text.append(f"- 상수명: {self.constant_names.value}")
+        return "\n".join(rules_text)
+
+def detect_language_from_filename(filename: str) -> str:
+    """파일명에서 언어 감지"""
+    ext = filename.split('.')[-1].lower() if '.' in filename else ''
+    language_map = {
+        'py': 'Python',
+        'js': 'JavaScript',
+        'ts': 'TypeScript',
+        'java': 'Java'
+    }
+    return language_map.get(ext, '코드')
+
+async def check_single_file_convention(filename: str, patch: str, rules_str: str) -> Optional[str]:
+    """
+    단일 파일에 대한 코딩 컨벤션 검사를 수행하고 결과를 반환합니다.
+    """
+    system_prompt = """당신은 코딩 컨벤션 검사 전문가입니다.
+    주어진 코드에서 네이밍 컨벤션 위반사항을 찾아내고, 자연스러운 한국어로 설명해주세요.
+    어떤 요소(파일명, 함수명, 변수명, 클래스명, 상수명)가 문제인지 명시하고, 현재 이름과 권장하는 이름을 제시해야 합니다.
+
+
+    출력 형식은 다음과 같이 **단 한 가지**로 통일합니다.
+    - 파일명은 각 파일의 맨 처음에 한 번만 표시합니다.
+    - `위반사항이 있는 경우:`와 같은 서두를 사용하지 않고, 위반 내역을 바로 나열합니다.
+    - 위반 내역은 다음과 같은 형식으로 작성합니다:
+        - [요소명] '[현재 이름]'은/는 [규칙명] 규칙을 준수하지 않습니다. '[권장 이름]'으로 수정해야 합니다.
+    - 위반사항이 여러 개일 경우, 위 양식을 반복해서 작성합니다.
+    - 위반사항이 없는 경우:
+        - "코딩 컨벤션을 잘 준수하고 있습니다."라고만 응답합니다.
+    """
+
+    user_prompt = f"""다음 코드에서 네이밍 컨벤션 위반사항을 찾아주세요.
+
+    적용할 네이밍 컨벤션 규칙:
+    {rules_str}
+
+    컨벤션 설명:
+    - camelCase: myVariableName
+    - PascalCase: MyClassName
+    - snake_case: my_variable_name
+    - kebab-case: my-file-name
+    - CONSTANT_CASE: MY_CONSTANT_VALUE
+
+    분석할 코드:
+    ---
+    # 파일: {filename}
+    ```{patch}
+    ```
+    """
+
+    try:
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt)
+        ]
+        response = await model.ainvoke(messages)
+        response_text = response.content if hasattr(response, 'content') else str(response)
+
+        # 위반사항이 없는 경우, None을 반환하여 최종 결과에서 제외
+        if "코딩 컨벤션을 잘 준수하고 있습니다." in response_text:
+            return None
+            
+        return f"- 파일: {filename}\n  {response_text.strip()}"
+            
+    except Exception as e:
+        logger.error(f"파일 '{filename}' LLM 호출 중 오류: {str(e)}")
+        return f"- 파일: {filename}\n  분석 중 오류 발생: {str(e)}"
+
+async def check_pr_conventions(pr_data: Any, rules: ConventionRule) -> str:
+    """
+    PR의 모든 파일을 병렬로 분석하여 코딩 컨벤션 위반사항을 검사합니다.
+    """
+    rules_str = rules.to_prompt_string() if isinstance(rules, ConventionRule) else rules
+    tasks = []
+
+    try:
+        files = getattr(pr_data, 'files', [])
+        for file_info in files:
+            filename = getattr(file_info, 'filename', '')
+            patch = getattr(file_info, 'patch', '')
+            if filename and patch:
+                tasks.append(check_single_file_convention(filename, patch, rules_str))
+    except Exception as e:
+        logger.error(f"PR 데이터 처리 중 오류: {str(e)}")
+        return "PR 데이터 처리 중 오류가 발생했습니다."
+
+    if not tasks:
+        return "분석할 파일이 없습니다."
+
+    # 모든 비동기 작업을 병렬로 실행하고 결과를 기다립니다.
+    results = await asyncio.gather(*tasks)
+
+    # 유효한(None이 아닌) 결과만 필터링합니다.
+    final_result_parts = [result for result in results if result]
+
+    if not final_result_parts:
+        return "모든 파일이 코딩 컨벤션을 잘 준수하고 있습니다."
+    
+    return "\n\n".join(final_result_parts)
