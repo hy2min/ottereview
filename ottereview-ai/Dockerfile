@@ -18,9 +18,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # .dockerignore에 의해 불필요한 파일은 제외됨
 COPY . .
 
-# 필요한 디렉토리 생성
-RUN mkdir -p /app/models /app/chroma_db /app/backup_data
-
 # 포트 8000 노출
 EXPOSE 8000
 
