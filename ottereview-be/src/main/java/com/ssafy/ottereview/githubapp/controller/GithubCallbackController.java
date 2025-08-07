@@ -49,7 +49,7 @@ public class GithubCallbackController {
             }
             // 🎯 리디렉션할 프론트엔드 URI
             log.debug("리다이렉트 URL 생성");
-            URI redirectUri = URI.create("http://localhost:5173/dashboard"); // 또는 환경 변수로 관리
+            URI redirectUri = URI.create("https://i13c108.p.ssafy.io/dashboard"); // 또는 환경 변수로 관리
 
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(redirectUri)
