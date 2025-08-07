@@ -1,26 +1,29 @@
-import React from 'react'
+import React, { useState } from 'react'
 
-const TeamMemberList = ({ members, selectedMembers, toggleMember }) => {
-  if (!members || members.length === 0) {
-    return <p>참여 중인 팀원이 없습니다.</p>
+import Box from '@/components/Box'
+
+const TeamMemberList = ({ usernames }) => {
+  const [selected, setSelected] = useState([])
+
+  const toggleReviewer = (name) => {
+    setSelected((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]))
   }
 
   return (
-    <div className="flex gap-4 flex-wrap">
-      {members.map((member) => (
-        <label
-          key={member.id}
-          className="flex items-center gap-2 border px-3 py-1 cursor-pointer rounded-md"
-        >
-          <input
-            type="checkbox"
-            checked={selectedMembers.includes(member.name)}
-            onChange={() => toggleMember(member.name)}
-          />
-          <span>{member.name}</span>
-        </label>
-      ))}
-    </div>
+    <Box shadow>
+      <div className="flex gap-4 flex-wrap">
+        {usernames.map((name) => (
+          <label key={name} className="flex items-center gap-2 border px-3 py-1 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={selected.includes(name)}
+              onChange={() => toggleReviewer(name)}
+            />
+            <span>{name}</span>
+          </label>
+        ))}
+      </div>
+    </Box>
   )
 }
 
