@@ -9,7 +9,7 @@ const RepositoryList = () => {
   const repos = useRepoStore((state) => state.repos)
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/hy2min/installations/new'
+    const importUrl = import.meta.env.VITE_GITHUB_IMPORT_URL
     window.location.href = importUrl
   }
 
