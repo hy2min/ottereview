@@ -282,7 +282,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
 - 파일들: {files_summary}
 - 커밋 메시지: {commits_summary}
 - 브랜치: {pr_data.source} -> {pr_data.target}
-- 리뷰어: {pr_data.reviewers}
+- 리뷰어: {pr_data.pre_reviewers}
 
 위 정보를 종합하여 가장 적합한 리뷰어 {limit}명을 추천해주세요."""
 
