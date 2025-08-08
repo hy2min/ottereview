@@ -45,7 +45,8 @@ public class SecurityConfig {
                                 "/api/github-app/installation/callback",
                                 "/swagger-ui/**",
                                 "/error",
-                                "/webhook"
+                                "/webhook",
+                                "/api/ai/**"
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
