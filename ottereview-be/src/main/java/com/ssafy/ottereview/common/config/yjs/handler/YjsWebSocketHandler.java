@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.common.config.yjs.handler;
 
+import java.nio.ByteBuffer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.BinaryMessage;
@@ -19,6 +20,8 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
      * 방(roomId) 별 WebSocket 세션 그룹 관리
      */
     private final Map<String, Set<WebSocketSession>> roomSessions = new ConcurrentHashMap<>();
+    private static final String ATTR_ROOM_ID = "roomId";
+    private static final String ATTR_SEND_LOCK = "__send_lock";
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session){
@@ -27,34 +30,52 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
 
         // 해당 방에 세션 추가
         roomSessions.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
-        session.getAttributes().put("roomId", roomId);
+        session.getAttributes().put(ATTR_ROOM_ID, roomId);
+        // 세션별 전송 락 객체
+        session.getAttributes().putIfAbsent(ATTR_SEND_LOCK, new Object());
     }
 
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message){
-        String roomId = (String) session.getAttributes().get("roomId");
+        String roomId = (String) session.getAttributes().get(ATTR_ROOM_ID);
 
         if (roomId == null) {
             log.warn("roomId가 없어서 메시지 브로드캐스트 불가 - sessionId: {}", session.getId());
-            throw new IllegalStateException("WebSocket 세션에 roomId가 없습니다.");
+            return;
         }
 
         Set<WebSocketSession> sessions = roomSessions.get(roomId);
         if (sessions == null || sessions.isEmpty()) {
             log.error("방 [{}]에 활성화된 세션이 없습니다 - sessionId: {}", roomId, session.getId());
-            throw new IllegalStateException("활성 클라이언트가 없는 방: " + roomId);
+            return;
         }
 
-        sessions.parallelStream()
-                .filter(s -> !s.equals(session) && s.isOpen())
-                .forEach(s -> {
-                    try {
-                        s.sendMessage(message);
-                    } catch (IOException e) {
-                        log.error("메시지 전송 실패 - sessionId: {}", s.getId(), e);
-                        sessions.remove(s);
-                    }
-                });
+        // 원본 payload는 한 번만 읽고, 각 수신자에 대해 read-only buffer 새로 생성
+        ByteBuffer payload = message.getPayload();
+        for (WebSocketSession s : sessions) {
+            if (s == session || !s.isOpen()) continue;
+            try {
+                // 세션 단일 전송 보장
+                Object lock = s.getAttributes().get(ATTR_SEND_LOCK);
+                if (lock == null) {
+                    lock = new Object();
+                    s.getAttributes().put(ATTR_SEND_LOCK, lock);
+                }
+                ByteBuffer dup = payload.asReadOnlyBuffer();
+                BinaryMessage copy = new BinaryMessage(dup);
+
+                synchronized (lock) {
+                    s.sendMessage(copy);
+                }
+            } catch (IOException e) {
+                log.error("메시지 전송 실패 - roomId: {}, toSessionId: {}", roomId, s.getId(), e);
+                safeClose(s, CloseStatus.SERVER_ERROR);
+                sessions.remove(s);
+            } catch (IllegalStateException ise) {
+                // concurrent send 등
+                log.warn("세션 전송 상태 오류 - toSessionId: {}, msg: {}", s.getId(), ise.getMessage());
+            }
+        }
     }
 
     @Override
@@ -78,9 +99,19 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         log.error("YJS WebSocket 전송 오류 - sessionId: {}", session.getId(), exception);
-        if (session.isOpen()) {
-            session.close(CloseStatus.SERVER_ERROR);
+        safeClose(session, CloseStatus.SERVER_ERROR);
+        // 세션 정리
+        String roomId = (String) session.getAttributes().get(ATTR_ROOM_ID);
+        if (roomId != null) {
+            Set<WebSocketSession> sessions = roomSessions.get(roomId);
+            if (sessions != null) sessions.remove(session);
         }
+    }
+
+    private void safeClose(WebSocketSession s, CloseStatus status) {
+        try {
+            if (s.isOpen()) s.close(status);
+        } catch (IOException ignore) {}
     }
 
     /**
@@ -92,10 +123,12 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
             throw new IllegalArgumentException("WebSocket URI path is null");
         }
         String[] segments = path.split("/");
-        if (segments.length < 3 || segments[2].isEmpty()) {
-            throw new IllegalArgumentException("Invalid WebSocket path: roomId is missing");
+        for (int i = segments.length - 1; i >= 0; i--) {
+            if (!segments[i].isEmpty()) {
+                return segments[i];
+            }
         }
-        return segments[2];
+        throw new IllegalArgumentException("Invalid WebSocket path: roomId is missing");
     }
 
 }
