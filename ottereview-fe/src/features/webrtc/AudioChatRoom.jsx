@@ -2,7 +2,7 @@ import { OpenVidu } from 'openvidu-browser'
 import React, { useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '@/features/auth/authStore'
 
-const BACKEND_URL = 'http://localhost:8080' // Spring 백엔드 주소
+const BACKEND_URL = 'http://i13c108.p.ssafy.io:8080' // Spring 백엔드 주소
 
 const AudioChatRoom = ({ roomId }) => {
   // roomId는 이제 방 이름 생성에만 사용됩니다.

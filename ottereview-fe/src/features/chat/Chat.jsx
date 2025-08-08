@@ -1,7 +1,7 @@
 import { Stomp } from '@stomp/stompjs'
 import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
-import { useAuthStore } from '@/features/auth/authStore'
+
 const Chat = ({ roomId }) => {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -12,7 +12,7 @@ const Chat = ({ roomId }) => {
     const socket = new SockJS('http://i13c108.p.ssafy.io:8080/ws')
     const stompClient = Stomp.over(socket)
 
-    const token = useAuthStore.getState().accessToken
+    const token = localStorage.getItem('accessToken')
 
     stompClient.connect(
       {
