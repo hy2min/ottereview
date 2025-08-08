@@ -1,6 +1,7 @@
-package com.ssafy.ottereview.ai.dto;
+package com.ssafy.ottereview.ai.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ReviewerResponse {
+public class AiReviewerResponse {
 
-    private String result;
+    private List<String> result;
 }

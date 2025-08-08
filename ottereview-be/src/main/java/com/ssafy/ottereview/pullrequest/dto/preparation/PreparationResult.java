@@ -1,6 +1,5 @@
 package com.ssafy.ottereview.pullrequest.dto.preparation;
 
-import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,7 +11,7 @@ import org.kohsuke.github.GHCompare.Status;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PreparationData {
+public class PreparationResult {
 
     private String source;
     private String target;
