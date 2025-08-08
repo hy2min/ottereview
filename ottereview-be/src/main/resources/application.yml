@@ -58,9 +58,9 @@ github:
 
 app:
   front:
-    url: http://i13c108.p.ssafy.io:8082
+    url: https://i13c108.p.ssafy.io
   ai:
-    url: http://i13c108.p.ssafy.io:8080
+    url: http://i13c108.p.ssafy.io:8000
 
   jwt:
     secret: ${APP_JWT_SECRET}
@@ -125,7 +125,7 @@ spring:
 
 app:
   front:
-    url: http://i13c108.p.ssafy.io:8082
+    url: https://i13c108.p.ssafy.io
   ai:
     url: http://i13c108.p.ssafy.io:8000
 
