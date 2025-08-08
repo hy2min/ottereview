@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
-import Box from '@/components/Box'
 import Button from '@/components/Button'
 import StepIndicator from '@/components/StepIndicator'
 import { submitPR } from '@/features/pullRequest/prApi'
@@ -16,14 +15,14 @@ import { useRepoStore } from '@/features/repository/stores/repoStore'
 const PRCreate = () => {
   const { repoId } = useParams()
   const [step, setStep] = useState(1)
-  const [isNextButtonDisabled, setIsNextButtonDisabled] = useState(false)
   const navigate = useNavigate()
   const repo = useRepoStore((state) => state.repos.find((r) => String(r.repoId) === String(repoId)))
   const accountId = repo?.accountId
+  const validationResult = usePRCreateStore((state) => state.validationResult)
 
   const formData = usePRCreateStore((state) => state.formData)
 
-  const steps = ['컨벤션 확인', '브랜치 선택', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
+  const steps = ['브랜치 선택', '컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
@@ -46,7 +45,7 @@ const PRCreate = () => {
       case 1:
         return <PRCreateStep1 {...stepProps} />
       case 2:
-        return <PRCreateStep2 {...stepProps} setNextDisabled={setIsNextButtonDisabled} />
+        return <PRCreateStep2 {...stepProps} />
       case 3:
         return <PRCreateStep3 {...stepProps} />
       case 4:
@@ -60,11 +59,11 @@ const PRCreate = () => {
 
   return (
     <div className="relative min-h-screen pb-[100px]">
-      <div className="max-w-6xl mx-auto space-y-4 py-4">
+      <div className="max-w-3xl mx-auto space-y-4 py-4">
         <StepIndicator currentStep={step} steps={steps} />
         <div shadow>{renderStepComponent()}</div>
 
-        <div className="w-full z-10">
+        <div className="w-1/5 mx-auto z-10">
           <div className="mx-auto flex justify-between items-center">
             <Button
               onClick={() => {
@@ -88,7 +87,7 @@ const PRCreate = () => {
                 }
               }}
               variant="primary"
-              disabled={false}
+              disabled={step === 1 && !validationResult.isValid}
             >
               {step === 5 ? '제출' : '다음'}
             </Button>

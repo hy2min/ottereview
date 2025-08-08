@@ -1,64 +1,107 @@
+import { useEffect } from 'react'
+
 import Box from '@/components/Box'
+import Button from '@/components/Button'
+import InputBox from '@/components/InputBox'
+import { validateBranches } from '@/features/pullRequest/prApi'
+import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
+import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
+import { useBranchStore } from '@/features/repository/stores/branchStore'
 
-import InputBox from '../../components/InputBox'
-import { usePRCreateStore } from './stores/prCreateStore'
-
-const conventionOptions = [
-  { label: '선택 안 함', value: '' },
-  { label: 'camelCase', value: 'camelCase' },
-  { label: 'PascalCase', value: 'PascalCase' },
-  { label: 'snake_case', value: 'snake_case' },
-  { label: 'kebab-case', value: 'kebab-case' },
-  { label: 'CONSTANT_CASE', value: 'CONSTANT_CASE' },
-]
-
-const PRCreateStep1 = () => {
+const PRCreateStep1 = ({ repoId, accountId }) => {
   const formData = usePRCreateStore((state) => state.formData)
   const setFormData = usePRCreateStore((state) => state.setFormData)
 
+  const branches = useBranchStore((state) => state.branchesByRepo[repoId] || [])
+  const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
+  const setValidationResult = usePRCreateStore((state) => state.setValidationResult)
+
+  const handleValidate = async () => {
+    try {
+      const result = await validateBranches({
+        repoId,
+        source: formData.sourceBranch,
+        target: formData.targetBranch,
+      })
+      setValidationResult(result)
+      console.log(result)
+    } catch (err) {
+      console.error('브랜치 검증 실패:', err)
+    }
+  }
+
+  useEffect(() => {
+    const loadBranches = async () => {
+      try {
+        const fetched = await fetchBrancheListByRepoId(repoId)
+        setBranchesForRepo(repoId, fetched)
+      } catch (err) {
+        console.error('브랜치 목록 불러오기 실패:', err)
+      }
+    }
+
+    loadBranches()
+  }, [repoId, accountId, setBranchesForRepo])
+
+  const branchOptions = [
+    { label: '브랜치를 선택하세요', value: '' },
+    ...branches.map((b) => ({
+      label: b.name,
+      value: b.name,
+    })),
+  ]
+
   return (
-    <div className="flex space-x-4 w-full">
-      <Box shadow className="w-2/3">
-        AI 피드백
-      </Box>
-      <Box shadow className="w-1/3 space-y-4">
+    <Box shadow className="space-y-4 w-2/3 mx-auto">
+      <div className="space-y-2">
         <InputBox
-          label="파일명 규칙"
+          label="소스 브랜치"
           as="select"
-          options={conventionOptions}
-          value={formData.file_names || ''}
-          onChange={(e) => setFormData({ file_names: e.target.value })}
+          options={branchOptions}
+          value={formData.sourceBranch || ''}
+          onChange={(e) => setFormData({ sourceBranch: e.target.value })}
+          placeholder="소스 브랜치를 선택하세요"
         />
+
         <InputBox
-          label="함수명 규칙"
+          label="타겟 브랜치"
           as="select"
-          options={conventionOptions}
-          value={formData.function_names || ''}
-          onChange={(e) => setFormData({ function_names: e.target.value })}
+          options={branchOptions}
+          value={formData.targetBranch || ''}
+          onChange={(e) => setFormData({ targetBranch: e.target.value })}
+          placeholder="타겟 브랜치를 선택하세요"
         />
-        <InputBox
-          label="변수명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.variable_names || ''}
-          onChange={(e) => setFormData({ variable_names: e.target.value })}
-        />
-        <InputBox
-          label="클래스명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.class_names || ''}
-          onChange={(e) => setFormData({ class_names: e.target.value })}
-        />
-        <InputBox
-          label="상수명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.constant_names || ''}
-          onChange={(e) => setFormData({ constant_names: e.target.value })}
-        />
-      </Box>
-    </div>
+      </div>
+
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch !== formData.targetBranch && (
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800">
+            <strong>{formData.sourceBranch}</strong> 에서 <strong>{formData.targetBranch}</strong>{' '}
+            로의 변경을 생성합니다.
+          </div>
+        )}
+
+      {formData.sourceBranch &&
+        formData.targetBranch &&
+        formData.sourceBranch === formData.targetBranch && (
+          <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800">
+            소스 브랜치와 타겟 브랜치가 동일합니다.
+          </div>
+        )}
+
+      <Button
+        variant="primary"
+        onClick={handleValidate}
+        disabled={
+          !formData.sourceBranch ||
+          !formData.targetBranch ||
+          formData.sourceBranch === formData.targetBranch
+        }
+      >
+        브랜치 검증
+      </Button>
+    </Box>
   )
 }
 
