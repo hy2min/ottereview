@@ -45,7 +45,7 @@ const ChatRoom = () => {
               <Chat roomId={roomId} />
             </div>
             <div style={{ flex: 2 }}>
-              <CodeEditor roomId={roomId} />
+              <CodeEditor roomName={roomId} />
             </div>
           </div>
 
