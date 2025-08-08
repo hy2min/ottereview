@@ -44,13 +44,14 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/github-app/installation/callback",
                                 "/swagger-ui/**",
-                                "/error"
+                                "/error",
+                                "/webhook"
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
                 )
             // JWT 인증 필터 등록
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
