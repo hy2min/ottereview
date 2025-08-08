@@ -11,10 +11,20 @@ public class RepositoryEventDto {
     
     @JsonProperty("action")
     private String action;
-    
+
+    @JsonProperty("installation")
+    private Installation installation;
+
     @JsonProperty("repositories_removed")
     private List<RepositoryInfo> repositoriesRemoved;
-    
+
+
+    @Data
+    public static class  Installation{
+        @JsonProperty("id")
+        Long id;
+    }
+
     @Data
     @NoArgsConstructor
     public static class RepositoryInfo {
