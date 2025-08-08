@@ -240,7 +240,7 @@ public class AiClient {
                 .contentType(MediaType.MULTIPART_FORM_DATA);
 
         return aiWebClient.post()
-                .uri("/upload")
+                .uri("/ai/speech/transcribe")
                 .body(BodyInserters.fromMultipartData(builder.build()))
                 .retrieve()
                 .bodyToMono(AiConventionResponse.class) // 응답을 AiResponse 객체로 받음
