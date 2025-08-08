@@ -43,7 +43,7 @@ public class AiController {
                 });
     }
 
-    @PostMapping("/recommendation/priority")  // GET → POST 변경
+    @PostMapping("/recommendation/priorities")  // GET → POST 변경
     public Mono<ResponseEntity<AiPriorityResponse>> getPriorityRecommendation(@RequestBody AiRequest request) {
 
         log.info("AI 우선순위 추천 요청 - repoId: {}", request.getRepoId());
