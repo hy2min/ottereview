@@ -1,14 +1,12 @@
 package com.ssafy.ottereview.repo.service;
 
 import com.ssafy.ottereview.account.entity.Account;
-import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.repo.dto.RepoCreateRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.kohsuke.github.GHRepository;
@@ -55,12 +53,13 @@ public interface RepoService {
      */
     public void processSyncRepo(Account account, Long installationId);
 
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
-            Map<Long, GHRepository> repoMap, Account account);
+    public void createRepoList(List<GHRepository> repositories ,Account account);
 
     public void deleteRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet, Account account);
 
     public List<User> getUserListByRepoId(Long repoId);
 
     public List<RepoResponse> getReposByUserId(User user);
+
+    public void updateRepoList(List<GHRepository> repoMap, Account account);
 }

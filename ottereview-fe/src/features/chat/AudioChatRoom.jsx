@@ -1,7 +1,7 @@
 import { OpenVidu } from 'openvidu-browser'
 import React, { useEffect, useRef, useState } from 'react'
 
-const BACKEND_URL = 'http://i13c108.p.ssafy.io:8080' // Spring 백엔드 주소
+const BACKEND_URL = 'https://i13c108.p.ssafy.io' // Spring 백엔드 주소
 
 const AudioChatRoom = () => {
   const [mySessionId, setMySessionId] = useState('TestRoom')

@@ -41,7 +41,7 @@
   };
 
   const token = localStorage.getItem('accessToken'); // JWT 토큰 가져오기
-  const socket = new SockJS('http://i13c108.p.ssafy.io:8080/ws'); // WebSocket 연결
+  const socket = new SockJS('https://i13c108.p.ssafy.io/api/ws'); // WebSocket 연결
   const stompClient = Stomp.over(socket);
 
   let currentRoom = null;
