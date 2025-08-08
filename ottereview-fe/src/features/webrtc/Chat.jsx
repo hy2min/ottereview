@@ -1,7 +1,9 @@
 import { Stomp } from '@stomp/stompjs'
 import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
+
 import { useAuthStore } from '@/features/auth/authStore'
+
 const Chat = ({ roomId }) => {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
