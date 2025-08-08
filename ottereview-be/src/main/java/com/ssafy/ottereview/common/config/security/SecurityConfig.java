@@ -48,13 +48,14 @@ public class SecurityConfig {
                                 "/error",
                                 "/webhook",
                                 "/api/yjs/**",
-                                "/api/ws/**"
+                                "/api/ws/**",
+                                "/api/ai/**"
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
                 )
             // JWT 인증 필터 등록
-            .addFilterAfter(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,8 +64,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOriginPatterns(List.of("*"));
-//        configuration.setAllowedOriginPatterns(List.of(frontUrl, aiUrl)); // 프론트 AI 도메인 허용
+        configuration.setAllowedOriginPatterns(List.of(frontUrl, aiUrl)); // 프론트 AI 도메인 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
