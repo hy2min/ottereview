@@ -61,7 +61,7 @@ const PRCreate = () => {
     <div className="relative min-h-screen pb-[100px]">
       <div className="max-w-3xl mx-auto space-y-4 py-4">
         <StepIndicator currentStep={step} steps={steps} />
-        <div shadow>{renderStepComponent()}</div>
+        <div>{renderStepComponent()}</div>
 
         <div className="w-1/5 mx-auto z-10">
           <div className="mx-auto flex justify-between items-center">
