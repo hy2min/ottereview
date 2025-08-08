@@ -16,6 +16,7 @@ const PRCreateStep1 = ({ repoId, accountId }) => {
   const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
   const setValidationResult = usePRCreateStore((state) => state.setValidationResult)
 
+
   const handleValidate = async () => {
     try {
       const result = await validateBranches({
@@ -23,6 +24,7 @@ const PRCreateStep1 = ({ repoId, accountId }) => {
         source: formData.sourceBranch,
         target: formData.targetBranch,
       })
+
       setValidationResult(result)
       console.log(result)
     } catch (err) {
