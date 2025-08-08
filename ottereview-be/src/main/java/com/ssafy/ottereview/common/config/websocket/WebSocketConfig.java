@@ -27,7 +27,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws") // WebSocket 연결 엔드포인트 등록
+        registry.addEndpoint("/api/ws") // WebSocket 연결 엔드포인트 등록
                 .setAllowedOriginPatterns("*")  // 크로스 도메인 허용
                 .withSockJS();                  // WebSocket 미지원 브라우저 호환성을 위해 SockJS 활성화
     }
