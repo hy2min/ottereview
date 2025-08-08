@@ -5,7 +5,7 @@ import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.pullrequest.dto.preparation.CommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
 import com.ssafy.ottereview.pullrequest.dto.preparation.FileChangeInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
 import com.ssafy.ottereview.pullrequest.dto.preparation.RepoInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.UserInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.AdditionalInfoRequest;
@@ -42,21 +42,21 @@ public class PullRequestPreparationService {
     private final UserAccountService userAccountService;
     private final PullRequestRedisRepository pullRequestRedisService;
     
-    public PreparationData getPreparePullRequestInfo(CustomUserDetail userDetail, Long repoId, String source, String target) {
+    public PreparationResult getPreparePullRequestInfo(CustomUserDetail userDetail, Long repoId, String source, String target) {
         
         userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
         
-        PreparationData preparationData = pullRequestRedisService.getPrepareInfo(repoId, source, target);
+        PreparationResult preparationResult = pullRequestRedisService.getPrepareInfo(repoId, source, target);
         
-        if (preparationData == null) {
+        if (preparationResult == null) {
             throw new IllegalArgumentException("준비된 Pull Request 정보가 없습니다.");
         }
         
-        return preparationData;
+        return preparationResult;
     }
     
-    public PreparationData validatePullRequest(CustomUserDetail userDetail, Long repoId, PreparationValidationRequest request) {
+    public PreparationResult validatePullRequest(CustomUserDetail userDetail, Long repoId, PreparationValidationRequest request) {
         
         // 1. 유저 권한 검증
         Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
@@ -67,11 +67,11 @@ public class PullRequestPreparationService {
         GHCompare compare = githubApiClient.getCompare(repo.getAccount()
                 .getInstallationId(), repo.getFullName(), request.getTarget(), request.getSource());
         
-        PreparationData preparationData = convertToPreparePullRequestResponse(author, repo, compare, request);
+        PreparationResult preparationResult = convertToPreparePullRequestResponse(author, repo, compare, request);
         
-        pullRequestRedisService.savePrepareInfo(repoId, preparationData);
+        pullRequestRedisService.savePrepareInfo(repoId, preparationResult);
         
-        return preparationData;
+        return preparationResult;
     }
     
     public void enrollAdditionalInfo(CustomUserDetail userDetail, Long repoId, AdditionalInfoRequest request) {
@@ -80,7 +80,7 @@ public class PullRequestPreparationService {
                     .getId(), repoId);
             
             // 1. 기존 데이터 조회
-            PreparationData prepareInfo = pullRequestRedisService.getPrepareInfo(repoId, request.getSource(), request.getTarget());
+            PreparationResult prepareInfo = pullRequestRedisService.getPrepareInfo(repoId, request.getSource(), request.getTarget());
             
             // 2. 선택적 필드들 업데이트
             if (request.getTitle() != null) {
@@ -144,8 +144,8 @@ public class PullRequestPreparationService {
                 .build();
     }
     
-    private PreparationData convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request) {
-        return PreparationData.builder()
+    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request) {
+        return PreparationResult.builder()
                 .source(request.getSource())
                 .target(request.getTarget())
                 .url(compare.getUrl()
@@ -256,5 +256,24 @@ public class PullRequestPreparationService {
                 .map(this::convertToCommitInfo)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+    }
+    
+    private boolean canCreatePR(PreparationResult preparationResult) {
+        // 1. 브랜치 상태 확인
+        if (!"ahead".equals(preparationResult.getStatus())) {
+            return false; // "identical", "behind", "diverged" 상태에서는 PR 불가
+        }
+        
+        // 2. 커밋 차이 확인
+        if (preparationResult.getAheadBy() <= 0) {
+            return false; // target보다 앞선 커밋이 없으면 PR 불가
+        }
+        
+        // 3. 변경된 파일 확인
+        if (preparationResult.getFiles() == null || preparationResult.getFiles().isEmpty()) {
+            return false; // 변경된 파일이 없으면 PR 불가
+        }
+        
+        return true;
     }
 }
