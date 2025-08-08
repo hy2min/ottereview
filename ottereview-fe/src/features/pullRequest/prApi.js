@@ -36,3 +36,26 @@ export const validateBranches = async ({ repoId, source, target }) => {
   })
   return res.data // 이걸 그대로 validationResult에 세팅 가능
 }
+
+// AI 컨벤션 요청
+export const requestAIConvention = async ({ repoId, source, target, rules }) => {
+  const payload = {
+    repo_id: repoId,
+    source,
+    target,
+    rules,
+  }
+  const res = await api.post('/api/ai/conventions/check', payload)
+  return res.data
+}
+
+export const requestAIOthers = async ({ repoId, source, target, rules }) => {
+  const payload = {
+    repo_id: repoId,
+    source,
+    target,
+    rules,
+  }
+  const res = await api.post('/api/ai/all', payload)
+  return res.data
+}
