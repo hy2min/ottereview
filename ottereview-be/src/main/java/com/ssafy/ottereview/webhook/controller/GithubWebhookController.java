@@ -6,6 +6,7 @@ import com.ssafy.ottereview.webhook.service.PullRequestEventService;
 import com.ssafy.ottereview.webhook.service.PushEventService;
 import com.ssafy.ottereview.webhook.service.ReviewCommentEventService;
 import com.ssafy.ottereview.webhook.service.ReviewEventService;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,8 @@ public class GithubWebhookController {
     private final ReviewEventService reviewEventService;
     private final ReviewCommentEventService reviewCommentEventService;
     private final ObjectMapper objectMapper;
-    
-    
+
+    @Hidden
     @PostMapping
     public ResponseEntity<String> handleWebhook(
             @RequestBody String payload,
