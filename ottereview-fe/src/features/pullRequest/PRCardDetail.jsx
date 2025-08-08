@@ -46,13 +46,13 @@ const PRCardDetail = ({ pr }) => {
   return (
     <Box shadow>
       {/* 헤더 */}
-      <div className='space-y-2'>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-primary-500 border-2 border-black rounded-lg flex items-center justify-center">
+      <div className="space-y-2">
+        <div className="flex justify-between items-start space-x-2">
+          <div className="flex items-center space-x-3 min-w-0 flex-1">
+            <div className="min-w-10 min-h-10 bg-primary-500 border-2 border-black rounded-lg flex items-center justify-center">
               <GitPullRequest className="w-5 h-5 text-white" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h3 className="font-semibold text-stone-900 mb-1">
                 {title} <span className="text-stone-400 text-sm">{prNumber}</span>
               </h3>
@@ -60,7 +60,9 @@ const PRCardDetail = ({ pr }) => {
             </div>
           </div>
 
-          <Badge variant={stateBadge}>{state}</Badge>
+          <Badge variant={stateBadge} className="shrink-0">
+            {state}
+          </Badge>
         </div>
 
         <div className="text-stone-600">
