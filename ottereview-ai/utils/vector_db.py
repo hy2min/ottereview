@@ -74,6 +74,18 @@ class RepositoryInfo(BaseModel):
     id: int
     fullName: str
 
+class PreReviewers(BaseModel):
+    """PR 리뷰어 정보"""
+    id: int
+    githubUsername: str
+    githubEmail: str
+
+class Reviewers(BaseModel):
+    """PR 리뷰어 정보"""
+    id: int
+    githubUsername: str
+    githubEmail: str
+    
 class PRData(BaseModel):
     """Pull Request 전체 데이터"""
     # PR 기본 정보
@@ -100,7 +112,8 @@ class PRData(BaseModel):
     
     # 기타 정보 (null일 수 있음)
     summary: Optional[str] = None
-    reviewers: Optional[List] = None  # JSON에서는 null
+    pre_reviewers: Optional[List[PreReviewers]] = None
+    reviewers: Optional[List[Reviewers]] = None  # JSON에서는 null
     reviews: Optional[List] = None  # JSON에서는 null
     descriptions: Optional[List] = None  # JSON에서는 null
     priorities: Optional[List] = None  # JSON에서는 null
