@@ -61,17 +61,17 @@ const Conflict = () => {
     setSelectedUsernames((prev) =>
       prev.includes(member.username)
         ? prev.filter((n) => n !== member.username)
-        : [...prev, member.username],
+        : [...prev, member.username]
     )
 
     setSelectedUserIds((prev) =>
-      prev.includes(member.id) ? prev.filter((id) => id !== member.id) : [...prev, member.id],
+      prev.includes(member.id) ? prev.filter((id) => id !== member.id) : [...prev, member.id]
     )
   }
 
   const toggleFile = (filename) => {
     setSelectedFiles((prev) =>
-      prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename],
+      prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
     )
   }
 
