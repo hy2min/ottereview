@@ -57,6 +57,6 @@ public class MergeController {
         PullRequest pullRequest1 = PullRequest.toEntity(pullRequest, repo, user);
         String url = mergeService.getHttpsUrl(repo);
         log.info(pullRequest1.getHead() +", " + pullRequest1.getBase());
-        return ResponseEntity.ok(mergeService.simulateMergeAndDetectConflicts(url, pullRequest1.getBase(), pullRequest1.getHead()));
+        return ResponseEntity.ok(mergeService.simulateMergeAndDetectConflicts(url, pullRequest1.getBase(), pullRequest1.getHead(),repo.getAccount().getInstallationId()));
     }
 }

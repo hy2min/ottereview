@@ -30,7 +30,7 @@ public class GithubCallbackController {
      * @param installationId 앱이 설치된 특정 GitHub 계정/조직/레포지토리를 식별하는 고유 ID.
      * @return 설치 완료 메시지 또는 리디렉션.
      */
-    @GetMapping("/github-app/installation/callback") // <-- GET 요청 처리를 위한 별도의 핸들러
+    @GetMapping("/api/github-app/installation/callback") // <-- GET 요청 처리를 위한 별도의 핸들러
     public ResponseEntity<Void> githubAppInstallationCallbackGet(
             @RequestParam(value = "installation_id", required = false) Long installationId, // GET 요청 시 필수 파라미터
             @RequestParam("code") String code,
