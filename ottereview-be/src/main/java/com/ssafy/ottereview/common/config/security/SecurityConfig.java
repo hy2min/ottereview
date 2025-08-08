@@ -44,8 +44,11 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/github-app/installation/callback",
                                 "/swagger-ui/**",
+                                "/v3/api-docs/**",
                                 "/error",
-                                "/webhook"
+                                "/webhook",
+                                "/api/yjs/**",
+                                "/api/ws/**"
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
@@ -60,7 +63,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowCredentials(true);
-        configuration.setAllowedOriginPatterns(List.of(frontUrl, aiUrl)); // 프론트 AI 도메인 허용
+        configuration.setAllowedOriginPatterns(List.of("*"));
+//        configuration.setAllowedOriginPatterns(List.of(frontUrl, aiUrl)); // 프론트 AI 도메인 허용
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Set-Cookie"));
