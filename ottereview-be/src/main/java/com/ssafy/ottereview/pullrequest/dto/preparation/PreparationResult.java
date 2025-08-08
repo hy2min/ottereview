@@ -30,6 +30,7 @@ public class PreparationResult {
     private List<FileChangeInfo> files;
     private String summary;
     private List<UserInfo> preReviewers;
+    private List<UserInfo> reviewers;
     private List<DescriptionInfo> descriptions;
     private List<PriorityInfo> priorities;
     private UserInfo author;
