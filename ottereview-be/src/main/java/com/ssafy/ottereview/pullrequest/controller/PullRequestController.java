@@ -83,15 +83,6 @@ public class PullRequestController {
         return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
     }
 
-    @GetMapping("/api/repositories/pull-requests/me")
-    @Operation(
-            summary = "내 Pull Request 목록 조회",
-            description = "로그인한 사용자가 작성한 Pull Request 목록을 조회합니다."
-    )
-    public ResponseEntity<List<PullRequestResponse>> getMyPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId) {
-        return ResponseEntity.ok(pullRequestService.getMyPullRequests(userDetail));
-    }
-
     @GetMapping("/{pr-id}")
     @Operation(
             summary = "Pull Request 상세 조회",

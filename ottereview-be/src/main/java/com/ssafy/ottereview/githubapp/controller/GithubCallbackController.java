@@ -45,7 +45,7 @@ public class GithubCallbackController {
                 githubInstallationFacade.processInstallationWithOAuth(installationId, code);
             } else if (setupAction.equals("update")) {
                 log.debug(setupAction);
-                githubUpdateFacade.processUpdateWithOAuth(installationId);
+//                githubUpdateFacade.processUpdateWithOAuth(installationId);
             }
             //🎯 리디렉션할 프론트엔드 URI
            log.debug("리다이렉트 URL 생성");

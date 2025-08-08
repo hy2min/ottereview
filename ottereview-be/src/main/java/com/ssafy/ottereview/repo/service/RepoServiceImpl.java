@@ -14,15 +14,14 @@ import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.User;
+import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
@@ -127,61 +126,106 @@ public class RepoServiceImpl implements RepoService {
                     repo.getId(), repo.getFullName(), repo.isPrivate());
         }
 
-        Map<Long, GHRepository> repoMap = repositories.stream()
-                .collect(Collectors.toMap(
-                        GHRepository::getId,      // 키: GitHub이 부여한 고유 ID
-                        Function.identity()       // 값: GHRepository 객체 자체
-                ));
-        Set<Long> remoteSet = repoMap.keySet();
+//        Map<Long, GHRepository> repoMap = repositories.stream()
+//                .collect(Collectors.toMap(
+//                        GHRepository::getId,      // 키: GitHub이 부여한 고유 ID
+//                        Function.identity()       // 값: GHRepository 객체 자체
+//                ));
+//        Set<Long> remoteSet = repoMap.keySet();
 
-        // accountId를 가지고 repoId List 가져오기
-        List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
-        Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
+//        // accountId를 가지고 repoId List 가져오기
+//        List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
+//        Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
 
         // 삭제하는 로직 (github 리스트안에 없는건 삭제해야하기 때문에)
         // 삭제를 먼저하는 이유는 삭제를 하고나면 branch까지 싹다 없어지기 때문에 관리하기가 훨씬 편하다.
         // cashcade 때문에 사라질 것이다.
-        deleteRepoList(remoteSet, dbRepoSet, account);
+//        deleteRepoList(remoteSet, dbRepoSet, account);
 
         log.info("createRepo List 시작 지점1");
         // github에서 가져온 레포지토리 리스트 우리 db에 저장하는 로직
-        createRepoList(remoteSet, dbRepoSet, repoMap, account);
+        createRepoList(repositories, account);
 
 
+    }
+
+    @Transactional
+    @Override
+    public void createRepoList(List<GHRepository> repoMap, Account account) {
+        // Version 2 -> 처음 App에 install할때
+        List<Branch> branchesToSave = new ArrayList<>();
+        List<Repo> repoList = repoMap.stream().map(r -> {
+             Repo repo = Repo.builder().repoId(r.getId()).fullName(r.getFullName()).isPrivate(r.isPrivate()).account(account).build();
+            branchesToSave.addAll(branchService.createBranchList(r, repo));
+            return repo;
+        }).toList();
+
+        // repoList 저장
+        repoRepository.saveAll(repoList);
+        // branchList 저장
+        branchService.saveAllBranchList(branchesToSave);
+        // pullRequestList 저장
+        pullRequestService.createPullRequestFromGithub(repoMap);
+
+
+//        List<Branch> branchesToSave = new ArrayList<>();
+//        List<GHRepository> ghRepositoriesToCreate = new ArrayList<>(); // 추가
+//        log.info("createRepo List 시작 지점2");
+//        List<Repo> toCreate = remoteSet.stream()
+//                .filter(id -> !dbRepoSet.contains(id))
+//                .map(id -> {
+//                    GHRepository gh = repoMap.get(id);
+//                    ghRepositoriesToCreate.add(gh);
+//                    Repo repo = Repo.builder()
+//                            .repoId(id)
+//                            .fullName(gh.getFullName())
+//                            .isPrivate(gh.isPrivate())
+//                            .account(account)
+//                            .build();
+//                    log.info("branch 설치 시작!!");
+//                    branchesToSave.addAll(branchService.createBranchList(gh, repo));
+//                    log.info("branch 설치 끝!!");
+//                    return repo;
+//                })
+//                .toList();
+//
+//        if (!toCreate.isEmpty()) {
+//            // 1) DB에 저장
+//            repoRepository.saveAll(toCreate);
+//            // 2) 영속성 컨텍스트 → 즉시 커밋된 것처럼 플러시하고 초기화
+//            entityManager.flush();
+//            entityManager.clear();
+//            // 3) 새로운 영속성 컨텍스트에서 Pull Request 생성 로직 실행
+//            pullRequestService.createPullRequestFromGithub(ghRepositoriesToCreate);
+//        }
+//        // branch에 branchList 한번에 저장하는 로직
+//        branchService.saveAllBranchList(branchesToSave);
     }
 
     @Override
     @Transactional
-    public void createRepoList(Set<Long> remoteSet, Set<Long> dbRepoSet,
-            Map<Long, GHRepository> repoMap, Account account) {
+    public void updateRepoList(List<GHRepository> repoMap, Account account){
         List<Branch> branchesToSave = new ArrayList<>();
-        List<GHRepository> ghRepositoriesToCreate = new ArrayList<>(); // 추가
-        log.info("createRepo List 시작 지점2");
-        List<Repo> toCreate = remoteSet.stream()
-                .filter(id -> !dbRepoSet.contains(id))
-                .map(id -> {
-                    GHRepository gh = repoMap.get(id);
-                    ghRepositoriesToCreate.add(gh);
-                    Repo repo = Repo.builder()
-                            .repoId(id)
-                            .fullName(gh.getFullName())
-                            .isPrivate(gh.isPrivate())
-                            .account(account)
-                            .build();
-                    log.info("branch 설치 시작!!");
-                    branchesToSave.addAll(branchService.createBranchList(gh, repo));
-                    log.info("branch 설치 끝!!");
-                    return repo;
-                })
-                .toList();
-
-        if (!toCreate.isEmpty()) {
-            repoRepository.saveAll(toCreate);
-            pullRequestService.createPullRequestFromGithub(ghRepositoriesToCreate);
-        }
-        // branch에 branchList 한번에 저장하는 로직
+        // repoId를 accountId를 토대로 List를 가져온다.
+        List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
+        Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
+        // 추가할때 원래 있던 레포지토리가 있으면 제외하고 List에 담는다.
+        List<Repo> repoList = repoMap.stream()
+            .filter(id -> !dbRepoSet.contains(id.getId()))
+            .map(r -> {
+            Repo repo = Repo.builder().repoId(r.getId()).fullName(r.getFullName()).isPrivate(r.isPrivate()).account(account).build();
+            branchesToSave.addAll(branchService.createBranchList(r, repo));
+            return repo;
+        }).toList();
+        // repoList 저장
+        repoRepository.saveAll(repoList);
+        // branchList 저장
         branchService.saveAllBranchList(branchesToSave);
+        // pullRequestList 저장
+        pullRequestService.createPullRequestFromGithub(repoMap);
+
     }
+
 
     @Override
     @Transactional
