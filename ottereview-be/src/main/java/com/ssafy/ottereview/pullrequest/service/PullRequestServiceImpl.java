@@ -1,7 +1,6 @@
 package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
-import com.ssafy.ottereview.auth.service.AuthService;
 import com.ssafy.ottereview.description.entity.Description;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
@@ -11,7 +10,7 @@ import com.ssafy.ottereview.priority.repository.PriorityRepository;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
 import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
 import com.ssafy.ottereview.pullrequest.dto.preparation.DescriptionInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
 import com.ssafy.ottereview.pullrequest.dto.preparation.PriorityInfo;
 import com.ssafy.ottereview.pullrequest.dto.preparation.UserInfo;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
@@ -147,33 +146,26 @@ public class PullRequestServiceImpl implements PullRequestService {
 
     @Override
     public void createPullRequest(CustomUserDetail customUserDetail, Long repoId,
-            PullRequestCreateRequest pullRequestCreateRequest) {
+            PullRequestCreateRequest request) {
 
         Repo repo = userAccountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
 
-        // redis에 저장된 정보 불러오기
-        PreparationData prepareInfo = pullRequestRedisRepository.getPrepareInfo(repoId, pullRequestCreateRequest.getSource(), pullRequestCreateRequest.getTarget());
-
-        if (prepareInfo == null) {
-            throw new IllegalArgumentException("Preparation data not found for repoId: " + repoId);
-        }
-
         // PR 생성 검증
-        validatePullRequestCreation(prepareInfo, repo);
+        validatePullRequestCreation(request, repo);
 
         // PR 생성
         GithubPrResponse prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
-                .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), prepareInfo.getSource(), prepareInfo.getTarget())
+                .getInstallationId(), repo.getFullName(), request.getTitle(), request.getBody(), request.getSource(), request.getTarget())
         );
 
         // PR 저장
         PullRequest pullRequest = convertToEntity(prResponse, customUserDetail.getUser(), repo);
-        pullRequest.enrollSummary(prepareInfo.getSummary());
+        pullRequest.enrollSummary(request.getSummary());
         PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
 
         // 리뷰어 저장
-        List<UserInfo> reviewers = prepareInfo.getReviewers();
+        List<UserInfo> reviewers = request.getReviewers();
 
         List<User> userList = reviewers.stream()
                 .map(this::getUserFromUserInfo)
@@ -190,7 +182,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
 
         // 우선 순위 저장
-        List<PriorityInfo> priorities = prepareInfo.getPriorities();
+        List<PriorityInfo> priorities = request.getPriorities();
         List<Priority> priorityList = priorities.stream()
                 .map((priorityInfo) -> Priority.builder()
                         .pullRequest(savePullRequest)
@@ -204,7 +196,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
 
         // 작성자 설명 저장
-        List<DescriptionInfo> descriptions = prepareInfo.getDescriptions();
+        List<DescriptionInfo> descriptions = request.getDescriptions();
         List<Description> descriptionList = descriptions.stream()
                 .map(descriptionInfo ->
                         Description.builder()
@@ -330,8 +322,8 @@ public class PullRequestServiceImpl implements PullRequestService {
     /**
      * pullRequest 생성 시 필요한 정보가 모두 있는지 검증하는 메서드
      */
-    private void validatePullRequestCreation(PreparationData prepareInfo, Repo repo) {
-        if (prepareInfo.getSource() == null || prepareInfo.getTarget() == null || prepareInfo.getTitle() == null || repo.getFullName() == null) {
+    private void validatePullRequestCreation(PullRequestCreateRequest pullRequestCreateRequest, Repo repo) {
+        if (pullRequestCreateRequest.getSource() == null || pullRequestCreateRequest.getTarget() == null || pullRequestCreateRequest.getTitle() == null || repo.getFullName() == null) {
             throw new IllegalArgumentException("Source or target branch is null");
         }
     }

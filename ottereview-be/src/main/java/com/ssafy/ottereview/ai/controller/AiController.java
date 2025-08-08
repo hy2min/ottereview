@@ -1,14 +1,19 @@
 package com.ssafy.ottereview.ai.controller;
 
 import com.ssafy.ottereview.ai.client.AiClient;
-import com.ssafy.ottereview.ai.dto.AiRequest;
-import com.ssafy.ottereview.ai.dto.PriorityResponse;
-import com.ssafy.ottereview.ai.dto.SummaryResponse;
-import com.ssafy.ottereview.ai.dto.TitleResponse;
+import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
+import com.ssafy.ottereview.ai.dto.request.AiRequest;
+import com.ssafy.ottereview.ai.dto.response.AiResult;
+import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
+import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
+import com.ssafy.ottereview.ai.dto.response.AiSummaryResponse;
+import com.ssafy.ottereview.ai.dto.response.AiTitleResponse;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,14 +29,14 @@ public class AiController {
     private final AiClient aiClient;
 
     @PostMapping("/recommendation/title")
-    public Mono<ResponseEntity<TitleResponse>> getTitleRecommendation(@RequestBody AiRequest request) {
+    public Mono<ResponseEntity<AiTitleResponse>> getTitleRecommendation(@RequestBody AiRequest request) {
         return aiClient.recommendTitle(request)
                 .map(ResponseEntity::ok)
                 .doOnSuccess(response -> log.info("AI 제목 추천 완료"))
                 .doOnError(error -> log.error("AI 제목 추천 실패", error))
                 .onErrorResume(error -> {
                     // 에러 발생 시 기본 응답
-                    TitleResponse defaultResponse = new TitleResponse("제목을 입력해주세요");
+                    AiTitleResponse defaultResponse = new AiTitleResponse("제목 추천 실패");
 
                     return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                             .body(defaultResponse));
@@ -39,7 +44,7 @@ public class AiController {
     }
 
     @PostMapping("/recommendation/priority")  // GET → POST 변경
-    public Mono<ResponseEntity<PriorityResponse>> getPriorityRecommendation(@RequestBody AiRequest request) {
+    public Mono<ResponseEntity<AiPriorityResponse>> getPriorityRecommendation(@RequestBody AiRequest request) {
 
         log.info("AI 우선순위 추천 요청 - repoId: {}", request.getRepoId());
 
@@ -49,7 +54,7 @@ public class AiController {
                 .doOnError(error -> log.error("AI 우선순위 추천 실패", error))
                 .onErrorResume(error -> {
                     // 에러 발생 시 기본 우선순위 응답
-                    PriorityResponse defaultResponse = createDefaultPriorityResponse();
+                    AiPriorityResponse defaultResponse = AiPriorityResponse.createDefaultPriorityResponse();
 
                     return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                             .body(defaultResponse));
@@ -57,31 +62,62 @@ public class AiController {
     }
 
     @PostMapping("/summary")
-    public Mono<ResponseEntity<SummaryResponse>> getSummary(@RequestBody AiRequest request) {
+    public Mono<ResponseEntity<AiSummaryResponse>> getSummary(@RequestBody AiRequest request) {
         return aiClient.getSummary(request)
                 .map(ResponseEntity::ok)
                 .doOnSuccess(response -> log.info("AI 요약 생성 완료"))
                 .doOnError(error -> log.error("AI 요약 생성 실패", error))
                 .onErrorResume(error -> {
                     // 에러 발생 시 기본 요약 응답
-                    SummaryResponse defaultResponse = new SummaryResponse("요약을 입력해주세요");
+                    AiSummaryResponse defaultResponse = new AiSummaryResponse("요약 실패");
 
                     return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                             .body(defaultResponse));
                 });
     }
+    
+    @PostMapping("/recommendation/reviewers")
+    public Mono<ResponseEntity<AiReviewerResponse>> getReviewersRecommendation(@RequestBody AiRequest request) {
+        return aiClient.recommendReviewers(request)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(response -> log.info("리뷰어 추천 완료"))
+                .doOnError(error -> log.error("리뷰어 추천 실패", error))
+                .onErrorResume(error -> {
+                    // 에러 발생 시 기본 요약 응답
+                    AiReviewerResponse defaultResponse = new AiReviewerResponse();
+                    
+                    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body(defaultResponse));
+                });
+    }
+    
+    @PostMapping("/conventions/check")
+    public Mono<ResponseEntity<AiConventionResponse>> checkCodingConvention(@RequestBody AiRequest request) {
+        return aiClient.checkCodingConvention(request)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(response -> log.info("컨벤션 체크 완료"))
+                .doOnError(error -> log.error("컨벤션 체크 실패", error))
+                .onErrorResume(error -> {
+                    // 에러 발생 시 기본 요약 응답
+                    AiConventionResponse defaultResponse = new AiConventionResponse("컨벤션 체크 실패");
+                    
+                    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body(defaultResponse));
+                });
+    }
+    
+    @PostMapping("/all")
+    public Mono<ResponseEntity<AiResult>> getAllAi(@AuthenticationPrincipal CustomUserDetail customUserDetail, @RequestBody AiRequest request) {
+        return aiClient.analyzeAll(customUserDetail, request)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(response -> log.info("전체 api 요청 완료"))
+                .doOnError(error -> log.error("전체 api 요청 실패", error))
+                .onErrorResume(error -> {
+                    // 에러 발생 시 기본 요약 응답
+                    AiResult defaultResponse = new AiResult();
 
-    private PriorityResponse createDefaultPriorityResponse() {
-        PriorityResponse.PriorityItem defaultItem = PriorityResponse.PriorityItem.builder()
-                .title("일반적인 코드 리뷰")
-                .priorityLevel("MEDIUM")
-                .reason("우선순위를 수동으로 설정해주세요")
-                .build();
-
-        return PriorityResponse.builder()
-                .result(PriorityResponse.PriorityResult.builder()
-                        .candidates(java.util.List.of(defaultItem))
-                        .build())
-                .build();
+                    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body(defaultResponse));
+                });
     }
 }

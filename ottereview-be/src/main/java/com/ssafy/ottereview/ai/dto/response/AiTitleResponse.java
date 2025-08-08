@@ -1,18 +1,15 @@
-package com.ssafy.ottereview.ai.dto;
+package com.ssafy.ottereview.ai.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-@Getter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConventionResponse {
+public class AiTitleResponse {
 
     private String result;
-
 }
