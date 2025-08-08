@@ -47,7 +47,7 @@ const PRCardCompact = ({ pr, type }) => {
       </div>
 
       <div className="flex items-center justify-between text-sm text-stone-600">
-        <div className="flex space-x-4">
+        <div className="flex space-x-4 flex-wrap">
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4 mb-[2px]" />
             <span>{author}</span>
@@ -58,12 +58,14 @@ const PRCardCompact = ({ pr, type }) => {
           </div>
         </div>
 
-        <div className="flex gap-1 flex-wrap">
+        <div className="flex justify-end gap-1 flex-wrap">
           <Badge variant={isMergeable ? 'primary' : 'danger'}>
             {isMergeable ? '병합 가능' : '병합 불가'}
           </Badge>
-          <Badge variant="emerald">승인 {approveCnt}</Badge>
-          <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
+          <div className="flex justify-end flex-wrap gap-1">
+            <Badge variant="emerald">승인 {approveCnt}</Badge>
+            <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
+          </div>
         </div>
       </div>
     </Box>
