@@ -47,9 +47,9 @@ public class GithubCallbackController {
                 log.debug(setupAction);
                 githubUpdateFacade.processUpdateWithOAuth(installationId);
             }
-            // 🎯 리디렉션할 프론트엔드 URI
-            log.debug("리다이렉트 URL 생성");
-            URI redirectUri = URI.create("http://localhost:5173/dashboard"); // 또는 환경 변수로 관리
+            //🎯 리디렉션할 프론트엔드 URI
+           log.debug("리다이렉트 URL 생성");
+          URI redirectUri = URI.create("http://localhost:5173/dashboard"); // 또는 환경 변수로 관리
 
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(redirectUri)
