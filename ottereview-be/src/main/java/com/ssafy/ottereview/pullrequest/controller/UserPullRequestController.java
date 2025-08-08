@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,7 +22,8 @@ public class UserPullRequestController {
             summary = "내 Pull Request 목록 조회",
             description = "로그인한 사용자가 작성한 Pull Request 목록을 조회합니다."
     )
-    public ResponseEntity<List<PullRequestResponse>> getMyPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId) {
+    public ResponseEntity<List<PullRequestResponse>> getMyPullRequests(
+            @AuthenticationPrincipal CustomUserDetail userDetail) {
         return ResponseEntity.ok(pullRequestService.getMyPullRequests(userDetail));
     }
 
