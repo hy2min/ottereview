@@ -1,6 +1,6 @@
 package com.ssafy.ottereview.pullrequest.controller;
 
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.AdditionalInfoRequest;
 import com.ssafy.ottereview.pullrequest.dto.preparation.request.PreparationValidationRequest;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
@@ -35,7 +35,7 @@ public class PullRequestController {
             summary = "Pull Request 생성 검증",
             description = "Pull Request 생성 가능 여부를 검증하고 필요한 준비 정보를 반환합니다."
     )
-    public ResponseEntity<PreparationData> validatePullRequest(
+    public ResponseEntity<PreparationResult> validatePullRequest(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
             @RequestBody PreparationValidationRequest request) {
@@ -49,7 +49,7 @@ public class PullRequestController {
             summary = "Pull Request 준비 정보 조회",
             description = "소스 브랜치와 타겟 브랜치 간의 Pull Request 생성을 위한 준비 정보를 조회합니다."
     )
-    public ResponseEntity<PreparationData> getPreparationInfo(
+    public ResponseEntity<PreparationResult> getPreparationInfo(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
             @RequestParam("source") String source,
