@@ -23,7 +23,7 @@ const PRCreate = () => {
 
   const formData = usePRCreateStore((state) => state.formData)
 
-  const steps = ['컨벤션 확인', '브랜치 선택', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
+  const steps = ['브랜치 선택', '컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
   const goToStep = (stepNumber) => {
     setStep(stepNumber)
@@ -44,9 +44,9 @@ const PRCreate = () => {
 
     switch (step) {
       case 1:
-        return <PRCreateStep1 {...stepProps} />
+        return <PRCreateStep1 {...stepProps} setNextDisabled={setIsNextButtonDisabled} />
       case 2:
-        return <PRCreateStep2 {...stepProps} setNextDisabled={setIsNextButtonDisabled} />
+        return <PRCreateStep2 {...stepProps} />
       case 3:
         return <PRCreateStep3 {...stepProps} />
       case 4:

@@ -49,9 +49,9 @@ const RepositoryDetail = () => {
   return (
     <div className="pt-2 space-y-3">
       <div className="flex justify-between items-center">
-        <Box shadow className="p-4">
+        <Box shadow className="min-h-24 flex-row space-y-1">
           <div className="flex items-center space-x-1">
-            <FolderCode className="w-8 h-8 mb-[4px]" />
+            <FolderCode className="min-w-8 min-h-8" />
             <h1 className="text-2xl">{name}</h1>
           </div>
           <p className="text-stone-600">{prs.length}개의 Pull Request</p>

@@ -75,27 +75,28 @@ const PRReview = () => {
   const commits = prDetail?.commits ?? []
 
   return (
-    <div className="space-y-4 py-4">
-      <div className="flex items-start justify-between">
-        <div className="flex items-stretch gap-4">
-          <Box shadow className="flex">
-            <strong className="w-24">AI요약 : </strong>
-            <p className="text-sm">
-              JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
-              보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
-              변경사항입니다.
-            </p>
-          </Box>
-          <Box shadow className="w-100">
-            <div className="flex justify-between mb-1">
+    <div className="pt-2 space-y-3">
+      <div className="flex flex-col md:flex-row items-stretch gap-4">
+        <Box shadow className="min-h-24 flex-row space-y-1 flex items-center">
+          <strong className="w-24">AI요약 : </strong>
+          <p className="text-sm">
+            JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
+            보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
+            변경사항입니다.
+          </p>
+        </Box>
+
+        <Box shadow className="min-h-24 flex items-center px-4 w-full md:max-w-sm space-y-0">
+          <div className="w-full space-y-1">
+            <div className="flex justify-between">
               <p className="text-sm">승인 진행률</p>
               <span className="text-xs text-gray-600">2/2</span>
             </div>
             <div className="minecraft-progress">
               <div className="minecraft-progress-fill" />
             </div>
-          </Box>
-        </div>
+          </div>
+        </Box>
       </div>
 
       <Box shadow>
