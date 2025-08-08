@@ -1,7 +1,7 @@
 package com.ssafy.ottereview.pullrequest.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationData;
+import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +22,7 @@ public class PullRequestRedisRepository {
     /**
      * PR 준비 정보를 Redis에 저장
      */
-    public void savePrepareInfo(Long repoId, PreparationData prepareInfo) {
+    public void savePrepareInfo(Long repoId, PreparationResult prepareInfo) {
         try {
             String mainKey = generateMainKey(repoId, prepareInfo.getSource(), prepareInfo.getTarget());
             
@@ -42,14 +42,14 @@ public class PullRequestRedisRepository {
     /**
      * PR 준비 정보 조회
      */
-    public PreparationData getPrepareInfo(Long repoId,
+    public PreparationResult getPrepareInfo(Long repoId,
             String source, String target) {
         try {
             String key = generateMainKey(repoId, source, target);
             String jsonData = redisTemplate.opsForValue()
                     .get(key);
             
-            return objectMapper.readValue(jsonData, PreparationData.class);
+            return objectMapper.readValue(jsonData, PreparationResult.class);
             
         } catch (Exception e) {
             log.error("PR 준비 정보 조회 실패", e);
@@ -60,7 +60,7 @@ public class PullRequestRedisRepository {
     /**
      * PR 준비 정보 업데이트(리뷰어 추가)
      */
-    public void updatePrepareInfo(Long repoId, PreparationData updatedPrepareInfo) {
+    public void updatePrepareInfo(Long repoId, PreparationResult updatedPrepareInfo) {
         try {
             String mainKey = generateMainKey(repoId, updatedPrepareInfo.getSource(), updatedPrepareInfo.getTarget());
             
