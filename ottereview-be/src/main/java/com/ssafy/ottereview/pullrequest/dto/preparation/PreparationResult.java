@@ -29,20 +29,21 @@ public class PreparationResult {
     private List<CommitInfo> commits;
     private List<FileChangeInfo> files;
     private String summary;
-    private List<UserInfo> reviewers;
+    private List<UserInfo> preReviewers;
     private List<DescriptionInfo> descriptions;
     private List<PriorityInfo> priorities;
     private UserInfo author;
     private RepoInfo repository;
     private String title;
     private String body;
+    private Boolean isPossible;
 
     public void enrollSummary(String summary) {
         this.summary = summary;
     }
 
-    public void enrollReviewers(List<UserInfo> reviewer) {
-        this.reviewers = reviewer;
+    public void enrollReviewers(List<UserInfo> preReviewers) {
+        this.preReviewers = preReviewers;
     }
 
     public void enrollDescriptions(List<DescriptionInfo> description) {
