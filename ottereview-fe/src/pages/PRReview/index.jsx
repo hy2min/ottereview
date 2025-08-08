@@ -100,7 +100,7 @@ const PRReview = () => {
       </div>
 
       <Box shadow>
-        <div className="flex gap-3 pb-4">
+        <div className="flex gap-3 pb-4 flex-wrap">
           {tabs.map((tab) => {
             const Icon = tab.icon
             return (

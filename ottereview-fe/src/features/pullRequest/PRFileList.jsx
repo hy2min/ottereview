@@ -14,7 +14,7 @@ const PRFileList = ({ files }) => {
         <div key={f.filename}>
           <Box
             shadow
-            className="flex justify-between items-center cursor-pointer p-2 bg-gray-50"
+            className="flex justify-between items-center cursor-pointer p-2 bg-gray-50 flex-wrap"
             onClick={() => toggle(f.filename)}
           >
             <div className="flex space-x-3">

@@ -17,7 +17,7 @@ const PRCreateStep2 = () => {
   const setFormData = usePRCreateStore((state) => state.setFormData)
 
   return (
-    <div className="flex space-x-4 w-full">
+    <div className="flex w-full mx-auto space-x-4 ">
       <Box shadow className="w-2/3">
         AI 피드백
       </Box>
