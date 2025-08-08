@@ -10,9 +10,14 @@ const CollaborativeEditor = ({ roomName }) => {
   const clientRef = useRef(null)
 
   useEffect(() => {
+    if (!roomName) return
+
+    let view
+    let client
+
     const initialize = async () => {
       // 1. Yorkie 클라이언트 생성 및 활성화
-      const client = new yorkie.Client({
+      client = new yorkie.Client({
         rpcAddr: import.meta.env.VITE_YORKIE_API_ADDR,
         apiKey: import.meta.env.VITE_YORKIE_API_KEY,
       })
@@ -36,12 +41,12 @@ const CollaborativeEditor = ({ roomName }) => {
       // 3. 문서 변경 이벤트 감지 및 반영
       const syncText = () => {
         const yText = doc.getRoot().content
-        const view = viewRef.current
-        if (view && yText) {
-          view.dispatch({
+        const currentView = viewRef.current
+        if (currentView && yText) {
+          currentView.dispatch({
             changes: {
               from: 0,
-              to: view.state.doc.length,
+              to: currentView.state.doc.length,
               insert: yText.toString(),
             },
             annotations: [Transaction.remote.of(true)],
@@ -79,7 +84,7 @@ const CollaborativeEditor = ({ roomName }) => {
         }
       })
 
-      const view = new EditorView({
+      view = new EditorView({
         doc: '',
         extensions: [basicSetup, updateListener],
         parent: editorRef.current,
@@ -90,11 +95,11 @@ const CollaborativeEditor = ({ roomName }) => {
     }
 
     const handleOperations = (operations) => {
-      const view = viewRef.current
-      if (!view) return
+      const currentView = viewRef.current
+      if (!currentView) return
       for (const op of operations) {
         if (op.type === 'edit') {
-          view.dispatch({
+          currentView.dispatch({
             changes: {
               from: Math.max(0, op.from),
               to: Math.max(0, op.to),
@@ -109,10 +114,10 @@ const CollaborativeEditor = ({ roomName }) => {
     initialize()
 
     return () => {
-      if (clientRef.current) clientRef.current.deactivate()
-      if (viewRef.current) viewRef.current.destroy()
+      if (client) client.deactivate()
+      if (view) view.destroy()
     }
-  }, [])
+  }, [roomName])
 
   return <div id="editor" ref={editorRef} style={{ height: '400px' }} />
 }
