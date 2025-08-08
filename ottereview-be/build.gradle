@@ -60,6 +60,10 @@ dependencies {
 
 	// Jgit
 	implementation 'org.eclipse.jgit:org.eclipse.jgit:6.6.0.202305301015-r'
+
+	// WebClient
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
 }
 
 tasks.named('test') {

@@ -9,7 +9,7 @@ const RepositoryList = () => {
   const repos = useRepoStore((state) => state.repos)
 
   const handleImport = () => {
-    const importUrl = 'https://github.com/apps/hy2min/installations/new'
+    const importUrl = import.meta.env.VITE_GITHUB_IMPORT_URL
     window.location.href = importUrl
   }
 
@@ -19,8 +19,8 @@ const RepositoryList = () => {
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col">
-      <div className="flex justify-between">
-        <h2 className="text-xl mb-2">레포지토리</h2>
+      <div className="flex justify-between mb-2">
+        <h2 className="text-xl">레포지토리</h2>
         <button className="border-2 border-black px-4" onClick={handleImport}>
           연결
         </button>

@@ -1,14 +1,16 @@
 import 'tldraw/tldraw.css'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Stomp } from '@stomp/stompjs'
 import randomColor from 'randomcolor'
-import { names, uniqueNamesGenerator } from 'unique-names-generator'
-import * as Y from 'yjs'
-import { WebsocketProvider } from 'y-websocket'
-import { createTLStore, createYjsStore, defaultShapeUtils, Tldraw } from '@tldraw/tldraw'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import SockJS from 'sockjs-client'
+import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
 
+import { useAuthStore } from '@/features/auth/authStore'
+
 const Whiteboard = ({ roomId }) => {
+  const [store] = useState(() => createTLStore({ shapeUtils: defaultShapeUtils }))
   const [loading, setLoading] = useState(true)
 
   // 사용자의 고유 ID, 색상, 이름을 생성
@@ -17,22 +19,59 @@ const Whiteboard = ({ roomId }) => {
   const [name] = useState(() => uniqueNamesGenerator({ dictionaries: [names] }))
 
   const editorRef = useRef(null)
+  const stompClientRef = useRef(null)
 
-const { store } = useMemo(() => {
-    const doc = new Y.Doc()
-    const provider = new WebsocketProvider('wss://demos.yjs.dev', roomId, doc)
+  // STOMP 웹소켓 연결을 설정
+  useEffect(() => {
+    const token = useAuthStore.getState().accessToken
+    const socket = new SockJS('http://localhost:8080/ws')
+    const stomp = Stomp.over(socket)
+    stomp.debug = () => {} // 디버그 로그 비활성화
 
-    // 커서, 사용자 이름, 색상 등 공유
-    provider.awareness.setLocalStateField('user', { name, color })
+    stomp.connect(
+      { Authorization: `Bearer ${token}` },
+      () => {
+        console.log('[STOMP] connected')
+        // 화이트보드 토픽을 구독
+        stomp.subscribe(`/topic/meetings/${roomId}/whiteboard`, (msg) => {
+          const editor = editorRef.current
+          if (!editor) return
 
-    const baseStore = createTLStore({ shapeUtils: defaultShapeUtils })
+          const data = JSON.parse(msg.body)
 
-    return createYjsStore({
-      store: baseStore,
-      doc,
-      awareness: provider.awareness,
-    })
-  }, [roomId, name, color])
+          // 자신이 보낸 메시지는 무시
+          if (data.senderName === name) {
+            return
+          }
+
+          const { type, content } = data
+          const shape = content ? JSON.parse(content) : null
+
+          try {
+            if (type === 'DRAW') {
+              // 다른 사용자로부터 받은 도형 정보를 스토어에 추가/업데이트
+              editor.store.put([shape], 'remote')
+            } else if (type === 'ERASE') {
+              // 다른 사용자로부터 받은 삭제 정보를 반영
+              editor.deleteShapes([shape.id])
+            } else if (type === 'CLEAR') {
+              // 캔버스를 초기화합니다. (필요시)
+              // editor.store.loadSnapshot({ store: {} })
+            }
+          } catch (error) {
+            console.error('Failed to apply remote change:', error)
+          }
+        })
+
+        stompClientRef.current = stomp
+      },
+      (err) => console.error('[STOMP] connection failed', err)
+    )
+
+    return () => {
+      stompClientRef.current?.disconnect()
+    }
+  }, [roomId, name])
 
   // Tldraw 에디터가 마운트될 때 호출
   const onMount = useCallback(
