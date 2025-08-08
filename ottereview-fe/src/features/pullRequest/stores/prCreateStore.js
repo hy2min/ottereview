@@ -8,10 +8,17 @@ export const usePRCreateStore = create((set) => ({
     description: '',
     reviewers: [],
   },
-  validationResult: {},
+  validationResult: null,
+  aiConvention: null,
+  aiOthers: null,
+
   setFormData: (partial) =>
     set((state) => ({
       formData: { ...state.formData, ...partial },
     })),
   setValidationResult: (result) => set({ validationResult: result }),
+
+  // AI 결과 저장
+  setAIConvention: (data) => set({ aiConvention: data }),
+  setAIOthers: (data) => set({ aiOthers: data }),
 }))

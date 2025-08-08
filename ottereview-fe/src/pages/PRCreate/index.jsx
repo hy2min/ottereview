@@ -87,7 +87,11 @@ const PRCreate = () => {
                 }
               }}
               variant="primary"
-              disabled={step === 1 && !validationResult.isValid}
+              // disabled={
+              //   step === 1
+              //     ? !validationResult?.isPossible // Step1에서만 isPossible 체크
+              //     : false // 다른 스텝에서는 별도 조건
+              // }
             >
               {step === 5 ? '제출' : '다음'}
             </Button>
