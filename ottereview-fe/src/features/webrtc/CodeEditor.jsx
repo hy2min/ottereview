@@ -3,7 +3,7 @@ import * as yorkie from '@yorkie-js/sdk'
 import { basicSetup, EditorView } from 'codemirror'
 import { useEffect, useRef } from 'react'
 
-const CollaborativeEditor = ({ roomId }) => {
+const CollaborativeEditor = ({ roomName }) => {
   const editorRef = useRef(null)
   const viewRef = useRef(null)
   const docRef = useRef(null)
@@ -20,7 +20,7 @@ const CollaborativeEditor = ({ roomId }) => {
       clientRef.current = client
 
       // 2. 문서 생성 및 연결
-      const doc = new yorkie.Document(`chatroom-${roomId}`, {
+      const doc = new yorkie.Document(roomName, {
         enableDevtools: true,
       })
       await client.attach(doc)
