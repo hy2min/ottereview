@@ -87,7 +87,7 @@ const PRCreate = () => {
                 }
               }}
               variant="primary"
-              disabled={step === 1 && !validationResult.isValid}
+              // disabled={step === 1 && !validationResult.isValid}
             >
               {step === 5 ? '제출' : '다음'}
             </Button>
