@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.reviewcomment.service;
 
 import com.ssafy.ottereview.account.repository.AccountRepository;
+import com.ssafy.ottereview.ai.client.AiClient;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.review.service.ReviewGithubService;
@@ -36,7 +37,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     private final ReviewGithubService reviewGithubService;
     private final AccountRepository accountRepository;
     private final S3ServiceImpl s3Service;
-
+    private final AiClient AiClient;
     @Override
     @Transactional
     public List<ReviewCommentResponse> createComments(Long reviewId,
@@ -77,7 +78,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                                     commentItem.getPath(), file.getOriginalFilename());
 
                             // AI 음성 처리 (각 파일별로 개별 처리)
-                            finalBody = "ai음성 처리 완료";
+                            finalBody = AiClient.processAudioFile(file).block();
 
                             // S3 파일 업로드 (각 댓글별 고유 키)
                             recordKey = s3Service.uploadFile(file, reviewId);
@@ -170,7 +171,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                         commentId, file.getOriginalFilename());
 
                 newRecordKey = s3Service.uploadFile(file, commentId);
-                newBody = "ai번역 로직 수행 완료";  // aiService.convertWithWhisper(file);
+                newBody = AiClient.processAudioFile(file).block();  // aiService.convertWithWhisper(file);
 
                 log.info("댓글 수정 - 새 파일 업로드 완료: CommentId: {}, NewRecordKey: {}",
                         commentId, newRecordKey);
