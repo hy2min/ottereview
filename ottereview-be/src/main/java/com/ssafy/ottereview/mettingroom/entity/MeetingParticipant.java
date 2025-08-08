@@ -3,6 +3,8 @@ package com.ssafy.ottereview.mettingroom.entity;
 import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @Entity
 @Table(name = "meeting_participant")
@@ -21,6 +23,7 @@ public class MeetingParticipant {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "room_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private MeetingRoom meetingRoom;
 
     @Column(nullable = false)
