@@ -19,6 +19,7 @@ const Conflict = () => {
   const [members, setMembers] = useState([])
   const [conflictFiles, setConflictFiles] = useState([])
   const [selectedFiles, setSelectedFiles] = useState([])
+  const [roomName, setRoomName] = useState('')
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -60,23 +61,26 @@ const Conflict = () => {
     setSelectedUsernames((prev) =>
       prev.includes(member.username)
         ? prev.filter((n) => n !== member.username)
-        : [...prev, member.username]
+        : [...prev, member.username],
     )
 
     setSelectedUserIds((prev) =>
-      prev.includes(member.id) ? prev.filter((id) => id !== member.id) : [...prev, member.id]
+      prev.includes(member.id) ? prev.filter((id) => id !== member.id) : [...prev, member.id],
     )
   }
 
   const toggleFile = (filename) => {
     setSelectedFiles((prev) =>
-      prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename]
+      prev.includes(filename) ? prev.filter((f) => f !== filename) : [...prev, filename],
     )
   }
 
   const handleCreateChat = async () => {
     try {
-      const roomName = `chat-${Date.now()}`
+      if (!roomName.trim()) {
+        alert('채팅방 이름을 입력해주세요.')
+        return
+      }
 
       const result = await createChat({
         prId,
@@ -85,6 +89,8 @@ const Conflict = () => {
       })
 
       useChatStore.getState().addRoom({
+        id: result.meetingroomId,
+        roomName,
         members: selectedUsernames,
         conflictFiles: selectedFiles,
       })
@@ -97,6 +103,16 @@ const Conflict = () => {
 
   return (
     <div className="space-y-4 py-4">
+      <Box shadow>
+        <input
+          type="text"
+          value={roomName}
+          onChange={(e) => setRoomName(e.target.value)}
+          placeholder="채팅방 이름을 입력하세요"
+          className="border px-3 py-2 w-full"
+        />
+      </Box>
+
       <Box shadow>
         <div className="flex gap-4 flex-wrap">
           {members.map((member) => (
