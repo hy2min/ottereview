@@ -32,7 +32,7 @@ public class ReviewComment extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "github_id", unique = true, nullable = false)
+    @Column(name = "github_id", unique = true)
     private Long githubId;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY,
