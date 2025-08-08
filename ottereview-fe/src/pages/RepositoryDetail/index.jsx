@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { FolderCode, Plus } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -18,7 +18,8 @@ const RepositoryDetail = () => {
 
   const repos = useRepoStore((state) => state.repos)
   const repo = repos.find((r) => r.id === Number(repoId))
-  const repoName = repo?.fullName || '(알 수 없는 레포지토리)'
+
+  const [account, name] = repo.fullName.split('/')
 
   const repoPRs = usePRStore((state) => state.repoPRs)
   const setRepoPRs = usePRStore((state) => state.setRepoPRs)
@@ -46,13 +47,14 @@ const RepositoryDetail = () => {
   }, [repoId, setRepoPRs])
 
   return (
-    <div className="pt-2">
+    <div className="pt-2 space-y-3">
       <div className="flex justify-between items-center">
-        <Box shadow className="p-4">
-          <div>
-            <h1 className="text-2xl mb-1">{repoName}</h1>
-            <p className="text-stone-600">{prs.length}개의 Pull Request</p>
+        <Box shadow className="min-h-24 flex-row space-y-1">
+          <div className="flex items-center space-x-1">
+            <FolderCode className="min-w-8 min-h-8" />
+            <h1 className="text-2xl">{name}</h1>
           </div>
+          <p className="text-stone-600">{prs.length}개의 Pull Request</p>
         </Box>
 
         <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
@@ -60,7 +62,7 @@ const RepositoryDetail = () => {
         </Button>
       </div>
 
-      <div className="space-y-4 py-4">
+      <div className="space-y-3">
         {prs.length === 0 ? (
           <p>PR이 없습니다.</p>
         ) : (

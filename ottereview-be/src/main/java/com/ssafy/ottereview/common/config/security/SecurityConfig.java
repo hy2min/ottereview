@@ -47,7 +47,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/error",
                                 "/webhook",
-                                "/ws/**"
+                                "/api/yjs/**",
+                                "/api/ws/**",
+                                "/api/ai/**"
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()

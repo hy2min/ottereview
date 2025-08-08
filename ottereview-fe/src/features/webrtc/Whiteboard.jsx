@@ -1,129 +1,87 @@
 import 'tldraw/tldraw.css'
 
-import { Stomp } from '@stomp/stompjs'
 import randomColor from 'randomcolor'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import SockJS from 'sockjs-client'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
-
-import { useAuthStore } from '@/features/auth/authStore'
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
 
 const Whiteboard = ({ roomId }) => {
-  const [store] = useState(() => createTLStore({ shapeUtils: defaultShapeUtils }))
   const [loading, setLoading] = useState(true)
 
-  // 사용자의 고유 ID, 색상, 이름을 생성
+  // 사용자 임의 식별자, 이름, 색상 생성 (인증 없이 구분용)
   const [userId] = useState(() => `instance:${crypto.randomUUID()}`)
   const [color] = useState(() => randomColor())
   const [name] = useState(() => uniqueNamesGenerator({ dictionaries: [names] }))
 
   const editorRef = useRef(null)
-  const stompClientRef = useRef(null)
 
-  // STOMP 웹소켓 연결을 설정
-  useEffect(() => {
-    const token = useAuthStore.getState().accessToken
-    const socket = new SockJS('http://localhost:8080/ws')
-    const stomp = Stomp.over(socket)
-    stomp.debug = () => {} // 디버그 로그 비활성화
+  // Yjs Doc, WebsocketProvider, Tldraw store 생성 및 동기화
+  const store = useMemo(() => {
+    const doc = new Y.Doc()
+    console.log('roomId:', roomId);
+    // JWT 토큰 없이 WebSocket URL, roomId만 경로에 포함
+    const wsUrl = `ws://localhost:8080/api/yjs`
+    const provider = new WebsocketProvider(wsUrl, roomId, doc)
+  
+    // 로컬 사용자 상태 설정 (임의 이름과 색상)
+    provider.awareness.setLocalStateField('user', { name, color })
 
-    stomp.connect(
-      { Authorization: `Bearer ${token}` },
-      () => {
-        console.log('[STOMP] connected')
-        // 화이트보드 토픽을 구독
-        stomp.subscribe(`/topic/meetings/${roomId}/whiteboard`, (msg) => {
-          const editor = editorRef.current
-          if (!editor) return
-
-          const data = JSON.parse(msg.body)
-
-          // 자신이 보낸 메시지는 무시
-          if (data.senderName === name) {
-            return
-          }
-
-          const { type, content } = data
-          const shape = content ? JSON.parse(content) : null
-
-          try {
-            if (type === 'DRAW') {
-              // 다른 사용자로부터 받은 도형 정보를 스토어에 추가/업데이트
-              editor.store.put([shape], 'remote')
-            } else if (type === 'ERASE') {
-              // 다른 사용자로부터 받은 삭제 정보를 반영
-              editor.deleteShapes([shape.id])
-            } else if (type === 'CLEAR') {
-              // 캔버스를 초기화합니다. (필요시)
-              // editor.store.loadSnapshot({ store: {} })
-            }
-          } catch (error) {
-            console.error('Failed to apply remote change:', error)
-          }
-        })
-
-        stompClientRef.current = stomp
-      },
-      (err) => console.error('[STOMP] connection failed', err)
-    )
-
-    return () => {
-      stompClientRef.current?.disconnect()
-    }
-  }, [roomId, name])
-
-  // Tldraw 에디터가 마운트될 때 호출
-  const onMount = useCallback(
-    (editor) => {
-      editorRef.current = editor
-      editor.updateInstanceState({ id: userId, meta: { name, color } })
-      setLoading(false)
-
-      // 스토어 변경 리스너를 설정
-      const handleChange = (change) => {
-        if (change.source !== 'user') return
-
-        const stomp = stompClientRef.current
-        if (!stomp?.connected) return
-
-        // 추가된 도형 처리
-        for (const record of Object.values(change.changes.added)) {
-          if (record.typeName !== 'shape') continue
-          const payload = {
-            type: 'DRAW',
-            color: record.props.color || color,
-            content: JSON.stringify(record),
-          }
-          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
-        }
-
-        // 업데이트된 도형 처리
-        for (const [from, to] of Object.values(change.changes.updated)) {
-          if (to.typeName !== 'shape') continue
-          const payload = {
-            type: 'DRAW',
-            color: to.props.color || color,
-            content: JSON.stringify(to),
-          }
-          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
-        }
-
-        // 삭제된 도형 처리
-        for (const record of Object.values(change.changes.removed)) {
-          if (record.typeName !== 'shape') continue
-          const payload = {
-            type: 'ERASE',
-            content: JSON.stringify({ id: record.id }), // ID 정보만 전송
-          }
-          stomp.send(`/app/meetings/${roomId}/whiteboard`, {}, JSON.stringify(payload))
-        }
+    provider.on('status', event => {
+      if (event.status === 'connected') {
+        console.log('화이트보드 WebSocket 연결 성공');
+      } else if (event.status === 'disconnected') {
+        console.log('화이트보드 WebSocket 연결 끊김');
       }
+    });
 
-      editor.store.listen(handleChange, { source: 'user', scope: 'document' })
-    },
-    [userId, name, color, roomId]
-  )
+    const store = createTLStore({ shapeUtils: defaultShapeUtils })
+
+    const shapesMap = doc.getMap('shapes')
+
+    // Yjs에서 store로 동기화
+    shapesMap.observe(event => {
+      event.changes.keys.forEach((change, key) => {
+        if (change.action === 'add' || change.action === 'update') {
+          const shape = shapesMap.get(key)
+          if (shape) store.put([shape])
+        } else if (change.action === 'delete') {
+          store.remove([key])
+        }
+      })
+    })
+
+    // store에서 Yjs로 동기화
+    store.listen(change => {
+      if (change.source !== 'user') return
+
+      Object.values(change.changes.added).forEach(record => {
+        if (record.typeName === 'shape') {
+          shapesMap.set(record.id, record)
+        }
+      })
+      Object.values(change.changes.updated).forEach(([_, to]) => {
+        if (to.typeName === 'shape') {
+          shapesMap.set(to.id, to)
+        }
+      })
+      Object.values(change.changes.removed).forEach(record => {
+        if (record.typeName === 'shape') {
+          shapesMap.delete(record.id)
+        }
+      })
+    }, { source: 'user', scope: 'document' })
+
+    return store
+  }, [roomId, name, color])
+
+  // 에디터 마운트 시 사용자 정보 업데이트 및 로딩 완료 처리
+  const onMount = useCallback(editor => {
+    editorRef.current = editor
+    editor.updateInstanceState({ id: userId, meta: { name, color } })
+    setLoading(false)
+  }, [userId, name, color])
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
