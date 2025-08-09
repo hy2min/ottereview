@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Dynamic WebSocket Chat & Whiteboard Test</title>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<h3>WebSocket Chat & Whiteboard Test (Dynamic Rooms)</h3>
+
+<!-- Room 구독 -->
+<div>
+  <input id="roomIdInput" type="text" placeholder="Meeting Room ID 입력 (예: 1)">
+  <button onclick="subscribeRoom()">채팅 구독</button>
+  <button onclick="subscribeWhiteboard()">화이트보드 구독</button>
+</div>
+
+<!-- 채팅 메시지 -->
+<div style="margin-top: 10px;">
+  <input id="messageInput" type="text" placeholder="채팅 메시지 입력">
+  <button onclick="sendMessage()">채팅 전송</button>
+</div>
+
+<!-- 화이트보드 이벤트 -->
+<div style="margin-top: 10px;">
+  <button onclick="sendWhiteboardDraw()">화이트보드 DRAW 전송</button>
+  <button onclick="sendWhiteboardErase()">화이트보드 ERASE 전송</button>
+  <button onclick="sendWhiteboardClear()">화이트보드 CLEAR 전송</button>
+</div>
+
+<!-- 로그 출력 -->
+<div id="log" style="margin-top: 20px; border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: auto;"></div>
+
+<script>
+  const log = (msg) => {
+    const div = document.getElementById('log');
+    div.innerHTML += `<p>${msg}</p>`;
+    div.scrollTop = div.scrollHeight; // 자동 스크롤
+    console.log(msg);
+  };
+
+  const token = localStorage.getItem('accessToken'); // JWT 토큰 가져오기
+  const socket = new SockJS('http://localhost:8080/ws'); // WebSocket 연결
+  const stompClient = Stomp.over(socket);
+
+  let currentRoom = null;
+
+  // 서버 연결 (STOMP 헤더에 JWT 포함)
+  stompClient.connect(
+          { Authorization: `Bearer ${token}` },
+          () => {
+            log('Connected to WebSocket');
+          }
+  );
+
+  // 채팅 구독
+  function subscribeRoom() {
+    const roomId = document.getElementById('roomIdInput').value;
+    if (!roomId) {
+      alert('Room ID를 입력하세요');
+      return;
+    }
+    currentRoom = roomId;
+
+    stompClient.subscribe(`/topic/meetings/${roomId}/chat`, (message) => {
+      const data = JSON.parse(message.body);
+      log(`[CHAT] ${data.timestamp || ''} ${data.senderName}: ${data.message}`);
+    });
+
+    log(`Subscribed to chat in meeting room ${roomId}`);
+  }
+
+  // 화이트보드 구독
+  function subscribeWhiteboard() {
+    const roomId = document.getElementById('roomIdInput').value;
+    if (!roomId) {
+      alert('Room ID를 입력하세요');
+      return;
+    }
+    currentRoom = roomId;
+
+    stompClient.subscribe(`/topic/meetings/${roomId}/whiteboard`, (message) => {
+      const data = JSON.parse(message.body);
+      log(`[WHITEBOARD] ${data.type} ${data.content || ''} (by ${data.senderName})`);
+    });
+
+    log(`Subscribed to whiteboard in meeting room ${roomId}`);
+  }
+
+  // 채팅 메시지 전송
+  function sendMessage() {
+    if (!currentRoom) {
+      alert('먼저 방을 구독하세요');
+      return;
+    }
+    const msg = document.getElementById('messageInput').value;
+
+    stompClient.send(`/app/meetings/${currentRoom}/chat`, {}, JSON.stringify({
+      type: "TALK",
+      message: msg
+    }));
+
+    document.getElementById('messageInput').value = ''; // 입력창 초기화
+  }
+
+  // 화이트보드 DRAW 전송
+  function sendWhiteboardDraw() {
+    if (!currentRoom) {
+      alert('먼저 방을 구독하세요');
+      return;
+    }
+
+    stompClient.send(`/app/meetings/${currentRoom}/whiteboard`, {}, JSON.stringify({
+      type: "DRAW",
+      color: "#FF0000",                 // 빨간색 예시
+      content: JSON.stringify({ x: 10, y: 20, width: 50, height: 50 }) // 좌표 정보
+    }));
+
+    log('Whiteboard DRAW message sent');
+  }
+
+  // 화이트보드 ERASE 전송
+  function sendWhiteboardErase() {
+    if (!currentRoom) {
+      alert('먼저 방을 구독하세요');
+      return;
+    }
+
+    stompClient.send(`/app/meetings/${currentRoom}/whiteboard`, {}, JSON.stringify({
+      type: "ERASE",
+      content: JSON.stringify({ x: 15, y: 25, width: 20, height: 20 })
+    }));
+
+    log('Whiteboard ERASE message sent');
+  }
+
+  // 화이트보드 CLEAR 전송
+  function sendWhiteboardClear() {
+    if (!currentRoom) {
+      alert('먼저 방을 구독하세요');
+      return;
+    }
+
+    stompClient.send(`/app/meetings/${currentRoom}/whiteboard`, {}, JSON.stringify({
+      type: "CLEAR"
+    }));
+
+    log('Whiteboard CLEAR message sent');
+  }
+</script>
+</body>
+</html>

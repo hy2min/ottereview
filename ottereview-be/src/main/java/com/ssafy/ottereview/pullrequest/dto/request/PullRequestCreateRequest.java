@@ -10,7 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PullRequestCreateRequest {
-    
     private String source;
     private String target;
 }

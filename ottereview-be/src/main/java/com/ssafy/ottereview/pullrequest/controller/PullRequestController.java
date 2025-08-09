@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/repositories/{repo-id}/pull-requests")
@@ -67,17 +69,18 @@ public class PullRequestController {
         return ResponseEntity.ok(pullRequestService.getPullRequests(userDetail, repoId));
     }
 
-    @PostMapping()
+    @PostMapping(value = "", consumes = "multipart/form-data")
     @Operation(
-            summary = "Pull Request 생성",
-            description = "새로운 Pull Request를 생성합니다."
+            summary = "미디어 파일과 함께 Pull Request 생성",
+            description = "음성/이미지 등의 미디어 파일과 함께 새로운 Pull Request를 생성합니다."
     )
-    public ResponseEntity<Void> createPullRequest(
+    public ResponseEntity<Void> createPullRequestWithMediaFiles(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
-            @RequestBody PullRequestCreateRequest request) {
-        
-        pullRequestService.createPullRequest(userDetail, repoId, request);
+            @RequestPart("pullRequest") PullRequestCreateRequest request,
+            @RequestPart(value = "mediaFiles", required = false) MultipartFile[] mediaFiles) {
+
+        pullRequestService.createPullRequestWithMediaFiles(userDetail, repoId, request, mediaFiles);
         return ResponseEntity.ok()
                 .build();
     }
