@@ -1,7 +1,7 @@
 import 'tldraw/tldraw.css'
 
 import randomColor from 'randomcolor'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
 import * as Y from 'yjs'
@@ -82,6 +82,17 @@ const Whiteboard = ({ roomId }) => {
     editor.updateInstanceState({ id: userId, meta: { name, color } })
     setLoading(false)
   }, [userId, name, color])
+
+  useEffect(() => {
+    const provider = store.provider
+    if (!provider) return
+
+    const interval = setInterval(() => {
+      provider.awareness.setLocalStateField('heartbeat', Date.now())
+    }, 30_000) // 30초마다 하트비트
+
+    return () => clearInterval(interval)
+  }, [store])
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>
