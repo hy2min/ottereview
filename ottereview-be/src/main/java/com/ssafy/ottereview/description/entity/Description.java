@@ -37,7 +37,6 @@ public class Description extends BaseEntity {
     private PullRequest pullRequest;
 
     @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
     @Column(nullable = false)

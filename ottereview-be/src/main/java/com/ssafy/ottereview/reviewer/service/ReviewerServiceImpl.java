@@ -69,7 +69,7 @@ public class ReviewerServiceImpl implements ReviewerService {
                 .approveCnt(pr.getApproveCnt())
                 .state(pr.getState().toString())
                 .merged(pr.getMerged())
-                .mergeable(pr.isMergeable())
+                .mergeable(pr.getMergeable() != null && pr.getMergeable())
                 .head(pr.getHead())
                 .base(pr.getBase())
                 .commitCnt(pr.getCommitCnt())
