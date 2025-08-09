@@ -1,13 +1,17 @@
 package com.ssafy.ottereview.common.config.security;
 
 import com.ssafy.ottereview.auth.jwt.filter.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -53,6 +57,17 @@ public class SecurityConfig {
                         ).permitAll()
                         // 그 외는 모두 인증 필요
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .accessDeniedHandler((req, res, ex) -> {
+                            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                            if (auth == null) {
+                                res.sendError(HttpServletResponse.SC_UNAUTHORIZED); // 토큰 없음 → 401
+                            } else {
+                                res.sendError(HttpServletResponse.SC_FORBIDDEN);     // 권한 부족 → 403
+                            }
+                        })
                 )
             // JWT 인증 필터 등록
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
