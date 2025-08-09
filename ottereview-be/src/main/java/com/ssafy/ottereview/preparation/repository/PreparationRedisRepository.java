@@ -1,7 +1,7 @@
-package com.ssafy.ottereview.pullrequest.repository;
+package com.ssafy.ottereview.preparation.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
+import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Service
 @Slf4j
-public class PullRequestRedisRepository {
+public class PreparationRedisRepository {
     
-    private static final Duration CACHE_TTL = Duration.ofMinutes(30);
+    private static final Duration CACHE_TTL = Duration.ofHours(6);
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
     

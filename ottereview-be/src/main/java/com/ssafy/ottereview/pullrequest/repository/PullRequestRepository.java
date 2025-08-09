@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.pullrequest.repository;
 
+import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
@@ -10,10 +11,12 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PullRequestRepository extends JpaRepository<PullRequest, Long> {
-
+    
     List<PullRequest> findAllByRepo(Repo repo);
-
+    
     List<PullRequest> findAllByAuthor(User author);
-
+    
     Optional<PullRequest> findByGithubId(Long githubId);
+    
+    Optional<PullRequest> findByRepoAndBaseAndHeadAndState(Repo repo, String base, String head, PrState state);
 }

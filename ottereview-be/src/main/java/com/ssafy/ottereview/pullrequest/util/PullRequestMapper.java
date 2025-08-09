@@ -1,0 +1,117 @@
+package com.ssafy.ottereview.pullrequest.util;
+
+import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.repo.dto.RepoResponse;
+import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
+import com.ssafy.ottereview.user.entity.User;
+import org.springframework.stereotype.Component;
+import java.util.List;
+
+@Component
+public class PullRequestMapper {
+    
+    public PullRequestDetailResponse PullRequestToDetailResponse(PullRequest pr,
+            List<PullRequestFileInfo> pullRequestFileChanges,
+            List<PullRequestCommitInfo> pullRequestCommitInfos) {
+        return PullRequestDetailResponse.builder()
+                .id(pr.getId())
+                .githubId(pr.getGithubId())
+                .githubPrNumber(pr.getGithubPrNumber())
+                .title(pr.getTitle())
+                .body(pr.getBody())
+                .state(pr.getState().toString())
+                .merged(pr.getMerged())
+                .head(pr.getHead())
+                .base(pr.getBase())
+                .mergeable(pr.isMergeable())
+                .githubCreatedAt(pr.getGithubCreatedAt())
+                .githubUpdatedAt(pr.getGithubUpdatedAt())
+                .commitCnt(pr.getCommitCnt())
+                .changedFilesCnt(pr.getChangedFilesCnt())
+                .commentCnt(pr.getCommentCnt())
+                .reviewCommentCnt(pr.getReviewCommentCnt())
+                .htmlUrl(pr.getHtmlUrl())
+                .patchUrl(pr.getPatchUrl())
+                .issueUrl(pr.getIssueUrl())
+                .diffUrl(pr.getDiffUrl())
+                .summary(pr.getSummary())
+                .approveCnt(pr.getApproveCnt())
+                .author(convertToUserResponse(pr.getAuthor()))
+                .repo(RepoResponse.of(pr.getRepo()))
+                .files(pullRequestFileChanges)
+                .commits(pullRequestCommitInfos)
+                .build();
+    }
+    
+    public PullRequest githubPrResponseToEntity(GithubPrResponse githubPrResponse, User author, Repo repo) {
+        return PullRequest.builder()
+                .githubId(githubPrResponse.getGithubId())
+                .githubPrNumber(githubPrResponse.getGithubPrNumber())
+                .author(author)
+                .repo(repo)
+                .title(githubPrResponse.getTitle())
+                .body(githubPrResponse.getBody())
+                .state(PrState.fromGithubState(githubPrResponse.getState(), githubPrResponse.getMerged()))
+                .merged(githubPrResponse.getMerged())
+                .base(githubPrResponse.getBase())
+                .head(githubPrResponse.getHead())
+                .mergeable(githubPrResponse.getMergeable() == null ? false : githubPrResponse.getMergeable())
+                .githubCreatedAt(githubPrResponse.getGithubCreatedAt())
+                .githubUpdatedAt(githubPrResponse.getGithubUpdatedAt())
+                .commitCnt(githubPrResponse.getCommitCnt())
+                .changedFilesCnt(githubPrResponse.getChangedFilesCnt())
+                .commentCnt(githubPrResponse.getCommentCnt())
+                .reviewCommentCnt(githubPrResponse.getReviewCommentCnt())
+                .htmlUrl(githubPrResponse.getHtmlUrl())
+                .patchUrl(githubPrResponse.getPatchUrl())
+                .issueUrl(githubPrResponse.getIssueUrl())
+                .diffUrl(githubPrResponse.getDiffUrl())
+                .approveCnt(0) // 초기값 - 나중에 리뷰 분석으로 계산
+                .build();
+    }
+    
+    public PullRequestResponse PullRequestToResponse(PullRequest pr) {
+        return PullRequestResponse.builder()
+                .id(pr.getId())
+                .githubId(pr.getGithubId())
+                .githubPrNumber(pr.getGithubPrNumber())
+                .title(pr.getTitle())
+                .body(pr.getBody())
+                .summary(pr.getSummary())
+                .approveCnt(pr.getApproveCnt())
+                .state(pr.getState().toString())
+                .merged(pr.getMerged())
+                .mergeable(pr.isMergeable())
+                .head(pr.getHead())
+                .base(pr.getBase())
+                .commitCnt(pr.getCommitCnt())
+                .changedFilesCnt(pr.getChangedFilesCnt())
+                .commentCnt(pr.getCommentCnt())
+                .reviewCommentCnt(pr.getReviewCommentCnt())
+                .githubCreatedAt(pr.getGithubCreatedAt())
+                .githubUpdatedAt(pr.getGithubUpdatedAt())
+                .repo(RepoResponse.of(pr.getRepo()))
+                .author(convertToUserResponse(pr.getAuthor()))
+                .build();
+    }
+    
+    private UserResponseDto convertToUserResponse(User user) {
+        return UserResponseDto.builder()
+                .id(user.getId())
+                .githubId(user.getGithubId())
+                .githubUsername(user.getGithubUsername())
+                .githubEmail(user.getGithubEmail())
+                .type(user.getType())
+                .profileImageUrl(user.getProfileImageUrl())
+                .rewardPoints(user.getRewardPoints())
+                .userGrade(user.getUserGrade())
+                .build();
+    }
+}

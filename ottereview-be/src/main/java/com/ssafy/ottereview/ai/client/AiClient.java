@@ -9,6 +9,8 @@ import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
 import com.ssafy.ottereview.ai.dto.response.AiSummaryResponse;
 import com.ssafy.ottereview.ai.dto.response.AiTitleResponse;
 import com.ssafy.ottereview.ai.repository.AiRedisRepository;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -35,6 +37,7 @@ public class AiClient {
     private final WebClient aiWebClient;
     private final UserAccountService userAccountService;
     private final AiRedisRepository aiRedisRepository;
+    private final PullRequestService pullRequestService;
     
     /**
      * PR 제목 생성
@@ -233,12 +236,12 @@ public class AiClient {
                                 })
                 );
     }
-
+    
     public Mono<String> processAudioFile(MultipartFile audioFile) {
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
         builder.part("file", audioFile.getResource())
                 .contentType(MediaType.MULTIPART_FORM_DATA);
-
+        
         return aiWebClient.post()
                 .uri("/ai/speech/transcribe")
                 .body(BodyInserters.fromMultipartData(builder.build()))
@@ -250,10 +253,28 @@ public class AiClient {
                     return Mono.just("AI 음성 처리 실패");
                 });
     }
-
+    
+    public Mono<Void> saveVectorDb(CustomUserDetail customUserDetail, Long repoId, Long prId) {
+        
+        PullRequestDetailResponse pullRequestDetail = pullRequestService.getPullRequestById(customUserDetail, repoId, prId);
+        
+        return aiWebClient.post()
+                .uri("/ai/vector-db/store")
+                .bodyValue(pullRequestDetail)
+                .retrieve()
+                .bodyToMono(Void.class)
+                .timeout(Duration.ofMinutes(2))
+                .doOnSuccess(result -> log.info("Vector DB 저장 완료 - PR ID: {}", pullRequestDetail.getId()))
+                .doOnError(error -> log.error("Vector DB 저장 실패 - PR ID: {}", pullRequestDetail.getId(), error))
+                .onErrorResume(error -> {
+                    log.warn("Vector DB 저장 실패하였지만 계속 진행 - PR ID: {}", pullRequestDetail.getId());
+                    return Mono.empty();
+                });
+    }
+    
     private Mono<Void> validateUserPermissionAsync(Long userId, Long repoId) {
         return Mono.fromCallable(() -> {
-//                    userAccountService.validateUserPermission(userId, repoId);
+                    userAccountService.validateUserPermission(userId, repoId);
                     return null;
                 })
                 .subscribeOn(Schedulers.boundedElastic())
