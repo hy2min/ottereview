@@ -130,11 +130,6 @@ public class PreparationService {
                 prepareInfo.enrollDescriptions(request.getDescription());
             }
 
-            if (request.getDescription() != null && !request.getDescription()
-                    .isEmpty()) {
-                prepareInfo.enrollDescriptions(request.getDescription());
-            }
-
             if (request.getPriorities() != null && !request.getPriorities()
                     .isEmpty()) {
                 prepareInfo.enrollPriorities(request.getPriorities());
