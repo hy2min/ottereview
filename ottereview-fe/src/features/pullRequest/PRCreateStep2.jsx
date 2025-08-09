@@ -96,11 +96,17 @@ const PRCreateStep2 = () => {
   return (
     <div className="flex w-full mx-auto space-x-4">
       <Box shadow className="w-2/3 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="font-semibold">AI 피드백</div>
-          <Button onClick={handleRequestAI}>{aiLoading ? '분석 중...' : '피드백 받기'}</Button>
+      <div>
+        <div className="flex items-center justify-between mt-2">
+          <div className="font-medium">AI 피드백</div>
+          <div className="-mt-[16px]">
+            <Button size="sm" onClick={handleRequestAI}>
+              {aiLoading ? '분석 중...' : '피드백 받기'}
+            </Button>
+          </div>
         </div>
-        <div className="space-y-2">{renderAIConvention(aiConvention?.result)}</div> {' '}
+        <div className="space-y-2">{renderAIConvention(aiConvention?.result)}</div>
+        </div>
       </Box>
       <Box shadow className="w-1/3 space-y-4">
         <InputBox
