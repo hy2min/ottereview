@@ -1,6 +1,6 @@
 package com.ssafy.ottereview.description.service;
 
-import com.ssafy.ottereview.ai.client.AiClient;
+import com.ssafy.ottereview.ai.service.AiAudioProcessingService;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
@@ -36,7 +36,7 @@ public class DescriptionServiceImpl implements DescriptionService {
     private final UserRepository userRepository;
     private final PullRequestRepository pullRequestRepository;
     private final S3ServiceImpl s3Service;
-    private final AiClient aiClient;
+    private final AiAudioProcessingService aiAudioProcessingService;
 
     @Override
     @Transactional
@@ -52,7 +52,7 @@ public class DescriptionServiceImpl implements DescriptionService {
 
         if (file != null && !file.isEmpty()) {
             // AI 처리와 S3 업로드를 병렬로 수행
-            Mono<String> aiProcessing = aiClient.processAudioFile(file);
+            Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
             Mono<String> s3Upload = Mono.fromCallable(() -> 
                 s3Service.uploadFile(file, request.getPullRequestId())
             ).subscribeOn(Schedulers.boundedElastic());
@@ -126,7 +126,7 @@ public class DescriptionServiceImpl implements DescriptionService {
                             MultipartFile file = files[descriptionItem.getFileIndex()];
                             if (file != null && !file.isEmpty()) {
                                 // AI 처리와 S3 업로드를 병렬로
-                                Mono<String> aiProcessing = aiClient.processAudioFile(file);
+                                Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
                                 Mono<String> s3Upload = Mono.fromCallable(() -> {
                                     String key = s3Service.uploadFile(file, request.getPullRequestId());
                                     uploadedFileKeys.add(key);
@@ -223,7 +223,7 @@ public class DescriptionServiceImpl implements DescriptionService {
             }
 
             // AI 처리와 S3 업로드를 병렬로 수행
-            Mono<String> aiProcessing = aiClient.processAudioFile(file);
+            Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
             Mono<String> s3Upload = Mono.fromCallable(() -> 
                 s3Service.uploadFile(file, description.getPullRequest().getId())
             ).subscribeOn(Schedulers.boundedElastic());

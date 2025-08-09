@@ -237,22 +237,7 @@ public class AiClient {
                 );
     }
     
-    public Mono<String> processAudioFile(MultipartFile audioFile) {
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", audioFile.getResource())
-                .contentType(MediaType.MULTIPART_FORM_DATA);
-        
-        return aiWebClient.post()
-                .uri("/ai/speech/transcribe")
-                .body(BodyInserters.fromMultipartData(builder.build()))
-                .retrieve()
-                .bodyToMono(AiConventionResponse.class) // 응답을 AiResponse 객체로 받음
-                .map(AiConventionResponse::getResult) // AiResponse 객체에서 "result" 필드 값만 추출
-                .onErrorResume(throwable -> {
-                    System.err.println("파일 전송 중 오류 발생: " + throwable.getMessage());
-                    return Mono.just("AI 음성 처리 실패");
-                });
-    }
+    
     
     public Mono<Void> saveVectorDb(CustomUserDetail customUserDetail, Long repoId, Long prId) {
         
