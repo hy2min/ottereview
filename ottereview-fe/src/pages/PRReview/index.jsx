@@ -1,71 +1,72 @@
-import { FileText, GitCommit, MessageCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { FileText, GitCommit, MessageCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
-import Box from '@/components/Box'
-import Button from '@/components/Button'
-import CommentForm from '@/features/comment/CommentForm'
-import { useCommentStore } from '@/features/comment/commentStore'
-import PRCommentList from '@/features/comment/PRCommentList'
-import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail } from '@/features/pullRequest/prApi'
-import PRFileList from '@/features/pullRequest/PRFileList'
-import { usePRStore } from '@/features/pullRequest/stores/prStore'
-import { useUserStore } from '@/store/userStore'
+import Box from '@/components/Box';
+import Button from '@/components/Button';
+import CommentForm from '@/features/comment/CommentForm';
+import { useCommentStore } from '@/features/comment/commentStore';
+import PRCommentList from '@/features/comment/PRCommentList';
+import CommitList from '@/features/pullRequest/CommitList';
+import { fetchPRDetail } from '@/features/pullRequest/prApi';
+import PRFileList from '@/features/pullRequest/PRFileList';
+import { usePRStore } from '@/features/pullRequest/stores/prStore';
+import { useUserStore } from '@/store/userStore';
 
 const PRReview = () => {
-  const { repoId, prId } = useParams()
-  const user = useUserStore((state) => state.user)
+  const { repoId, prId } = useParams();
+  const user = useUserStore((state) => state.user);
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
-    { id: 'comments', label: '댓글', icon: MessageCircle },
+    { id: 'comments', label: '리뷰', icon: MessageCircle },
     { id: 'commits', label: '커밋', icon: GitCommit },
-  ]
+  ];
 
-  const [activeTab, setActiveTab] = useState('files')
-  const [comment, setComment] = useState('')
+  const [activeTab, setActiveTab] = useState('files');
+  const [comment, setComment] = useState('');
+  const [showCommentForm, setShowCommentForm] = useState(false);
 
-  const prDetail = usePRStore((state) => state.prDetails[prId])
-  const setPRDetail = usePRStore((state) => state.setPRDetail)
+  const prDetail = usePRStore((state) => state.prDetails[prId]);
+  const setPRDetail = usePRStore((state) => state.setPRDetail);
 
-  const loadPRComments = useCommentStore((state) => state.loadPRComments)
-  const submitPRComment = useCommentStore((state) => state.submitPRComment)
+  const loadPRComments = useCommentStore((state) => state.loadPRComments);
+  const submitPRComment = useCommentStore((state) => state.submitPRComment);
 
   useEffect(() => {
-    const existing = useCommentStore.getState().prComments[prId]
+    const existing = useCommentStore.getState().prComments[prId];
     if (!existing || existing.length === 0) {
-      loadPRComments(prId)
+      loadPRComments(prId);
     }
-  }, [prId, loadPRComments])
+  }, [prId, loadPRComments]);
 
   useEffect(() => {
     const load = async () => {
-      if (!repoId || !prId) return
+      if (!repoId || !prId) return;
 
-      // `prDetail`이 없을 때만 API를 호출
       if (!prDetail) {
         try {
-          const pr = await fetchPRDetail({ repoId, prId })
-          console.log('pr:', pr)
-          setPRDetail(prId, pr)
+          const pr = await fetchPRDetail({ repoId, prId });
+          console.log('pr:', pr);
+          setPRDetail(prId, pr);
         } catch (err) {
-          console.error('❌ PR 상세 정보 로딩 실패:', err)
+          console.error('❌ PR 상세 정보 로딩 실패:', err);
         }
       }
-    }
+    };
 
-    load()
-  }, [repoId, prId, prDetail, setPRDetail]) // prDetail을 의존성 배열에 유지하는 것이 무한 루프를 막으면서 최신 데이터를 보장하는 방법입니다.
+    load();
+  }, [repoId, prId, prDetail, setPRDetail]);
 
   const handleSubmit = async () => {
-    if (!comment.trim()) return
+    if (!comment.trim()) return;
     await submitPRComment(prId, {
       author: user.githubUsername,
       content: comment,
-    })
-    setComment('')
-  }
+    });
+    setComment('');
+    setShowCommentForm(false);
+  };
 
   const files =
     prDetail?.files?.map(({ filename, additions, deletions, patch }) => ({
@@ -73,9 +74,9 @@ const PRReview = () => {
       additions,
       deletions,
       patch,
-    })) ?? []
+    })) ?? [];
 
-  const commits = prDetail?.commits ?? []
+  const commits = prDetail?.commits ?? [];
 
   return (
     <div className="pt-2 space-y-3">
@@ -103,16 +104,16 @@ const PRReview = () => {
       </div>
 
       <Box shadow>
-        <div className="flex gap-3 pb-4 flex-wrap">
+        <div className="relative flex gap-3 pb-4 flex-wrap">
           {tabs.map((tab) => {
-            const Icon = tab.icon
+            const Icon = tab.icon;
             return (
               <Button
                 key={tab.id}
                 variant=""
                 size="sm"
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-1 px-4 py-2 rounded-md transition-colors ${
+                className={`flex items-center space-x-1 px-4 py-2 transition-colors ${
                   activeTab === tab.id
                     ? 'bg-primary-500 text-white'
                     : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
@@ -121,22 +122,36 @@ const PRReview = () => {
                 <Icon className="w-4 h-4 mb-[2px]" />
                 <span>{tab.label}</span>
               </Button>
-            )
+            );
           })}
-        </div>
+          <Button
+            variant='primary'
+            size='sm'
+            className='flex ml-auto px-4 py-2'
+            onClick={() => setShowCommentForm(!showCommentForm)}
+          >
+            리뷰 작성
+          </Button>
 
+          {showCommentForm && (
+            <div
+              className="absolute top-full -mt-2 right-0 z-10 w-100"
+            >
+              <CommentForm
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onSubmit={handleSubmit}
+              />
+            </div>
+          )}
+        </div>
+        
         {activeTab === 'files' && <PRFileList files={files} />}
         {activeTab === 'comments' && <PRCommentList prId={prId} />}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
-
-      <CommentForm
-        value={comment}
-        onChange={(e) => setComment(e.target.value)}
-        onSubmit={handleSubmit}
-      />
     </div>
-  )
-}
+  );
+};
 
-export default PRReview
+export default PRReview;
