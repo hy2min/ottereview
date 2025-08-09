@@ -49,39 +49,36 @@ async def recommand_pull_request_title(pr_data):
     Returns:
         str: 추천할 Pull Request 제목
     """
-    system_prompt = """당신은 개발자의 Pull Request 제목을 생성하는 전문가입니다.
-    다음 규칙을 따르세요:
-    - 제목은 간결하고 명확해야 합니다.
-    - 코드의 주요 변경 사항이나 기능을 반영해야 합니다.
-    - 불필요한 단어는 제거하고 핵심 내용만 포함해야 합니다.
-    - 제목은 대문자로 시작하고, 마침표는 사용하지 않습니다.
-    - 제목은 50자 이내로 작성해야 합니다.
-    - 제목은 한국어로 작성되어야 합니다.
-    - 예시: '[FEATURE]: 유저 인증로직 구현 ' 또는 '[FIX]: 데이터 베이스 연결 오류 수정'
-    - 헤더의 구조는 '[TYPE]: 내용' 형식이어야 합니다.
-    - TYPE은 'FEATURE', 'FIX', 'DOCS', 'STYLE', 'REFACTOR', 'TEST' 중 하나여야 합니다.
+    system_prompt = """당신은 커밋 메시지와 코드 변경사항을 분석하여 이상적인 Pull Request 제목을 생성하는 AI 전문가입니다.
+
+    **규칙:**
+    1.  **형식 준수**: `[TYPE]: 간결한 설명` 형식을 반드시 따릅니다.
+    2.  **TYPE 선택**: `FEATURE`, `FIX`, `DOCS`, `STYLE`, `REFACTOR`, `TEST` 중 가장 적절한 하나를 선택합니다.
+    3.  **내용 요약**: 제목은 코드의 핵심 변경 사항을 정확하고 간결하게 요약해야 합니다. `patch` 데이터를 최우선으로 참고하세요.
+    4.  **언어 및 길이**: 한국어로 작성하며, 50자 이내로 유지합니다. 마침표는 사용하지 않습니다.
+    5.  **예시**:
+        -   `[FEATURE]: 유저 인증 로직 구현`
+        -   `[FIX]: 데이터베이스 연결 오류 수정`
     """
     
     # PRData 타입 (vector_db.py의 구조)에서 데이터 추출
     commit_messages = "\n".join([commit.message for commit in pr_data.commits])
-    file_changes_summary = "\n".join([f"{file.filename} ({file.status})" for file in pr_data.files])
-    code_changes = "\n".join([f"{file.filename}: +{file.additions}/-{file.deletions}" for file in pr_data.files])
-    branch_name = f"{pr_data.source} -> {pr_data.target}"
+    # Get top 5 changed files based on additions and deletions
+    top_5_files = sorted(pr_data.files, key=lambda x: x.additions + x.deletions, reverse=True)[:5]
+    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files])
 
     user_prompt = f"""다음 정보를 바탕으로 Pull Request 제목을 생성해주세요:
 
-        커밋 메시지들:
-        {commit_messages}
+    **커밋 메시지:**
+    {commit_messages}
 
-        변경된 주요 파일들:
-        {file_changes_summary}
+    **가장 많이 변경된 파일 및 내용(patch):**
+    {patch_summary}
 
-        주요 코드 변경사항:
-        {code_changes}
+    위 정보를 바탕으로, 규칙에 맞는 이상적인 Pull Request 제목을 생성해주세요."""
 
-        브랜치명: {branch_name}
 
-    위 정보를 바탕으로 간결하고 명확한 Pull Request 제목을 생성해주세요."""
+
 
     # 모델에 요청을 보내고 응답을 받습니다.
     try:
@@ -103,36 +100,36 @@ async def summary_pull_request(pr_data):
     Returns:
         str: Pull Request 내용 요약
     """
-    system_prompt = """당신은 개발자의 Pull Request 내용을 요약하는 전문가입니다.
-    다음 규칙을 따르세요:
-    - 목적 및 핵심 변경사항 요약: Pull Request의 제목(`title`)과 본문(`body`)을 기반으로 이 PR이 해결하려는 문제나 추가하려는 기능이 무엇인지 파악하고, 이를 하나의 간결한 문장으로 요약하세요.
-    - 변경 파일 요약: `files` 목록을 분석하여 변경된 파일들의 주요 역할을 명시적으로 언급하세요. 예를 들어, "데이터 처리 로직 수정", "새로운 API 엔드포인트 추가", "테스트 코드 업데이트"와 같이 설명합니다.
-    - 커밋 메시지 활용: 여러 개의 커밋 메시지가 있는 경우, 이들을 단순히 나열하지 말고, 커밋들의 공통된 주제나 변경 히스토리를 한 문장으로 압축하여 요약하세요. 커밋 메시지가 너무 간단하거나(예: "as", "11111") 의미가 불분명하면, 이 정보는 생략하거나 "개발 과정의 여러 작은 수정사항 포함"과 같이 추상적으로 요약합니다.
-    - 최종 요약: 위에 제시된 정보들을 종합하여 **200자 이내의 하나의 자연스러운 문장**으로 완성하세요.
+    system_prompt = """당신은 코드 변경사항을 분석하여 Pull Request의 핵심 내용을 요약하는 AI 전문가입니다.
+
+    **요약 규칙:**
+    1.  **핵심 파악**: 이 PR의 목적이 무엇인지 (버그 수정, 기능 추가, 리팩토링 등) 파악합니다.
+    2.  **주요 변경사항 기술**: `patch` 데이터를 기반으로 가장 중요한 코드 변경사항을 1-2개 식별하여 기술합니다.
+    3.  **기대 효과**: 이 변경으로 인해 어떤 긍정적인 효과가 기대되는지 서술합니다.
+    4.  **간결성**: 전체 요약은 3-4문장, 200자 이내의 완결된 문단으로 작성합니다.
+    5.  **언어**: 자연스러운 한국어로 작성합니다.
+
+    **출력 예시:**
+    "이 PR은 사용자 인증 로직을 개선하여 보안을 강화합니다. 주요 변경사항으로 JWT 토큰 발급 및 검증 로직을 수정하였으며, 이를 통해 더욱 안전한 사용자 인증이 가능해집니다."
     """
 
     # PRData 타입 (vector_db.py의 구조)에서 데이터 추출
     commit_messages = "\n".join([commit.message for commit in pr_data.commits])
-    file_changes_summary = "\n".join([f"{file.filename} ({file.status})" for file in pr_data.files])
-    code_changes = "\n".join([f"{file.filename}: +{file.additions}/-{file.deletions}" for file in pr_data.files])
-    branch_name = f"{pr_data.source} -> {pr_data.target}"
+    top_5_files = sorted(pr_data.files, key=lambda x: x.additions + x.deletions, reverse=True)[:5]
+    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files])
     descriptions = pr_data.descriptions or "No description provided."
     
     user_prompt = f"""다음 정보를 바탕으로 Pull Request 내용을 요약해주세요:
 
-        커밋 메시지들:
-        {commit_messages}
+    **PR 제목:** {pr_data.title}
+    **작성자 설명:** {descriptions}
+    **커밋 메시지:**
+    {commit_messages}
+    **가장 많이 변경된 파일 및 내용(patch):**
+    {patch_summary}
 
-        변경된 주요 파일들:
-        {file_changes_summary}
+    위 정보를 종합하여, 요약 규칙에 맞는 Pull Request 내용을 생성해주세요."""
 
-        주요 코드 변경사항:
-        {code_changes}
-        브랜치명: {branch_name}
-
-        작성자 설명:
-        {descriptions}
-    위 정보를 바탕으로 간결하고 명확한 Pull Request 내용을 요약해주세요."""
 
     # 모델에 요청을 보내고 응답을 받습니다.
     try:
@@ -252,27 +249,29 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
     files_summary = ', '.join([f.filename for f in pr_data.files[:ReviewerRecommendationConfig.MAX_FILES_IN_SUMMARY]])
     commits_summary = ' | '.join([c.message for c in pr_data.commits[:ReviewerRecommendationConfig.MAX_COMMITS_IN_SUMMARY]])
     
-    system_prompt = """당신은 코드 리뷰어 추천 전문가입니다.
-과거 유사한 PR 패턴을 분석하여 가장 적합한 리뷰어를 추천해주세요.
+    system_prompt = """당신은 주어진 Pull Request(PR)의 리뷰어 후보 목록 중에서, 과거 리뷰 패턴을 근거로 최적의 리뷰어를 추천하는 AI 기술 분석가입니다.
 
-추천 기준:
-1. 현재 PR과 유사한 작업을 리뷰한 경험
-2. 해당 파일 타입에 대한 전문성  
-3. 과거 리뷰 제공 이력
-4. 유사도 점수
-5. reason을 작성할때는 평균유사도와 같은 수치를 정확히 이야기 하지 마세요.
-6. 한글로만 작성하도록 하세요.
-7. 반드시 유저가 제공하는 실제 리뷰어 정보를 기반으로 추천해주세요.
+**추천 핵심 원칙:**
+1.  **후보 내에서 선택**: 반드시 '현재 PR 정보'에 주어진 `리뷰어` 후보 목록 중에서만 추천해야 합니다.
+2.  **기술적 전문성**: 현재 PR의 변경사항(파일, 기능 영역)과 가장 관련 높은 기술적 경험을 가진 후보를 선택합니다.
+3.  **과거 경험**: '과거 유사 PR 패턴'을 참고하여, 후보가 유사한 기능 영역의 코드를 리뷰했거나 작성한 경험이 있는지 확인합니다.
+4.  **리뷰 참여도**: 과거에 리뷰 요청 시 실제로 리뷰를 성실히 수행했는지(리뷰 제공 횟수)를 긍정적 신호로 간주합니다.
 
-응답은 반드시 다음 JSON 형식으로만 추천 해주세요. 다른 텍스트는 포함하지 마세요:
+**`reason` 작성 가이드:**
+-   **구체적인 근거 제시**: "유사한 PR 경험"과 같은 모호한 표현 대신, "과거 '인증' 기능 관련 PR 리뷰 경험과 Java 파일에 대한 높은 전문성을 보유하고 있습니다."와 같이 구체적인 기능 영역과 기술 스택을 명시하세요.
+-   **수치 언급 금지**: `평균 유사도`, `리뷰 제공 횟수`와 같은 수치는 내부 분석용이므로 `reason`에 절대 포함하지 마세요.
+
+**응답 형식:**
+-   다른 설명 없이, 반드시 아래 명시된 JSON 형식으로만 응답하세요.
+-   추천할 리뷰어가 없는 경우, 빈 배열 `[]`을 반환하세요.
+
 [
   {
-    "github_username": "사용자명",
-    "github_email": "이메일",
-    "reason": "추천 이유"
+    "github_username": "추천할 사용자명",
+    "github_email": "추천할 사용자의 이메일",
+    "reason": "작성 가이드에 따라 구체적으로 작성된 추천 이유"
   }
 ]
-8. 리뷰어가 없는경우 []를 반환해주세요.
 """
 
     user_prompt = f"""{context}
