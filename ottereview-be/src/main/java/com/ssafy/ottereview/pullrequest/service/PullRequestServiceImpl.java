@@ -35,7 +35,6 @@ import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -146,7 +145,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .getFullName(), pullRequest.getGithubPrNumber());
 
         // dto 변환 후 리턴
-        return pullRequestMapper.PullRequestToDetailResponse(pullRequest, pullRequestFileChanges,
+        return pullRequestMapper.pullRequestToDetailResponse(pullRequest, pullRequestFileChanges,
                 pullRequestCommitInfos);
 
     }

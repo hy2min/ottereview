@@ -30,7 +30,7 @@ public class BranchProtectionEventService {
             BranchProtection event = objectMapper.readValue(payload, BranchProtection.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
-            log.debug("DTO로 받은 RepositoryEventDto event: {}", formattedPayload);
+            log.debug("DTO로 받은 BranchProtection event: {}", formattedPayload);
             switch (event.getAction()) {
                 case "created":
                     log.info("created event handler start");

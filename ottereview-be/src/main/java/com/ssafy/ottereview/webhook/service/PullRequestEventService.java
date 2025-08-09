@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.webhook.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -32,18 +33,18 @@ public class PullRequestEventService {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
-//            log.debug("DTO로 받은 PullRequestEventService event: {}", formattedPayload);
-            
+            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
+
             switch (event.getAction()) {
                 case "opened":
-                    log.debug("PullRequest opened event received");
+                    // mergeable 값 null
+                    log.debug("PR이 열린 경우 발생하는 callback");
                     handlePullRequestOpened(event);
                     break;
                 
                 case "closed":
-                    log.debug("PullRequest closed event received");
-                    handlePullRequestClosed(event.getPullRequest()
-                            .getId());
+                    log.debug("PR이 닫힌 경우 발생하는 callback");
+                    handlePullRequestClosed(event);
                     break;
                 
                 case "review_requested":
@@ -57,6 +58,19 @@ public class PullRequestEventService {
                 case "assigned":
                     log.debug("PR에 assigned가 할당된 경우 발생하는 callback");
                     break;
+                    
+                case "review_request_removed":
+                    log.debug("PR에 리뷰어 요청이 제거된 경우 발생하는 callback");
+                    break;
+                    
+                case "synchronize":
+                    log.debug("PR이 업데이트된 경우 발생하는 callback");
+                    handlePullRequestSynchronize(event);
+                    break;
+                    
+                case "edited":
+                    log.debug("깃허브 웹페이지에서 PR이 수정된 경우 발생하는 callback");
+                    break;
                 
                 default:
                     log.warn("Unhandled action: {}", event.getAction());
@@ -66,25 +80,41 @@ public class PullRequestEventService {
         }
     }
     
+    // mergeable 값을 못가져옴..
+    private void handlePullRequestSynchronize(PullRequestEventDto event) {
+        log.debug("[웹훅 PR 동기화 로직 실행]");
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
+        
+        pullRequest.synchronizedByWebhook(event);
+    }
+    
     private void handlePullRequestOpened(PullRequestEventDto event) {
-
-        pullRequestRepository.findByGithubId(event.getPullRequest().getId())
+        
+        Long githubId = event.getPullRequest().getId();
+        
+        pullRequestRepository.findByGithubId(githubId)
                 .ifPresentOrElse(
                         existingPullRequest -> log.debug("이미 존재하는 PR 입니다."), // 이미 존재하는 PR이므로 아무 작업도 하지 않음,
                         () -> registerPullRequest(event)
                 );
     }
     
-    private void handlePullRequestClosed(Long githubPrId) {
+    private void handlePullRequestClosed(PullRequestEventDto event) {
         
-        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubPrId)
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubPrId));
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
         
         // PR 상태를 CLOSED로 변경
         pullRequest.updateState(PrState.CLOSED);
 
-        log.info("Pull Request with GitHub PR number {} has been closed.", githubPrId);
+        log.info("Pull Request with GitHub PR number {} has been closed.", githubId);
     }
 
     private void registerPullRequest(PullRequestEventDto event){

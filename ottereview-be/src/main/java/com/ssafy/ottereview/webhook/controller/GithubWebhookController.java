@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.webhook.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.webhook.service.BranchProtectionEventService;
 import com.ssafy.ottereview.webhook.service.InstallationEventService;
@@ -39,8 +40,14 @@ public class GithubWebhookController {
             @RequestHeader("X-GitHub-Delivery") String delivery,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature) {
 
-        log.info("[웹훅 이벤트 수신] 이벤트: {}, delivery: {}", event, delivery);
-
+        try {
+            JsonNode jsonNode = objectMapper.readTree(payload);
+            String action = jsonNode.path("action").asText();
+            log.debug("[웹훅 이벤트 수신] 이벤트: {}, Action: {}", event, action);
+            
+        } catch (Exception e) {
+            log.error("Error parsing payload: {}", e.getMessage());
+        }
         // 이벤트별 처리
         switch (event) {
             case "push":

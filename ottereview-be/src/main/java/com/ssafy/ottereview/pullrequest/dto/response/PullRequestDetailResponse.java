@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Getter
 public class PullRequestDetailResponse {
-
+    
     private Long id;
     private Long githubId;
     private Integer githubPrNumber;
@@ -27,7 +27,7 @@ public class PullRequestDetailResponse {
     private Boolean merged;
     private String base;
     private String head;
-    private boolean mergeable;
+    private Boolean mergeable;
     private LocalDateTime githubCreatedAt;
     private LocalDateTime githubUpdatedAt;
     private Integer commitCnt;
@@ -40,13 +40,11 @@ public class PullRequestDetailResponse {
     private URL diffUrl;
     private String summary;
     private Integer approveCnt;
-
+    
     // 객체 타입
     private UserResponseDto author;
     private RepoResponse repo;
     private List<PullRequestFileInfo> files;
     private List<PullRequestCommitInfo> commits;
-
-
-
+    
 }

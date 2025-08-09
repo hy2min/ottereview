@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class PullRequestMapper {
     
-    public PullRequestDetailResponse PullRequestToDetailResponse(PullRequest pr,
+    public PullRequestDetailResponse pullRequestToDetailResponse(PullRequest pr,
             List<PullRequestFileInfo> pullRequestFileChanges,
             List<PullRequestCommitInfo> pullRequestCommitInfos) {
         return PullRequestDetailResponse.builder()
@@ -30,7 +30,7 @@ public class PullRequestMapper {
                 .merged(pr.getMerged())
                 .head(pr.getHead())
                 .base(pr.getBase())
-                .mergeable(pr.isMergeable())
+                .mergeable(pr.getMergeable() != null && pr.getMergeable())
                 .githubCreatedAt(pr.getGithubCreatedAt())
                 .githubUpdatedAt(pr.getGithubUpdatedAt())
                 .commitCnt(pr.getCommitCnt())
@@ -62,7 +62,7 @@ public class PullRequestMapper {
                 .merged(githubPrResponse.getMerged())
                 .base(githubPrResponse.getBase())
                 .head(githubPrResponse.getHead())
-                .mergeable(githubPrResponse.getMergeable() == null ? false : githubPrResponse.getMergeable())
+                .mergeable(githubPrResponse.getMergeable() != null && githubPrResponse.getMergeable())
                 .githubCreatedAt(githubPrResponse.getGithubCreatedAt())
                 .githubUpdatedAt(githubPrResponse.getGithubUpdatedAt())
                 .commitCnt(githubPrResponse.getCommitCnt())
@@ -77,6 +77,34 @@ public class PullRequestMapper {
                 .build();
     }
     
+    public PullRequest detailResponseToEntity(PullRequestDetailResponse resp, Repo repo, User author) {
+        return PullRequest.builder()
+                .githubId(resp.getGithubId())
+                .githubPrNumber(resp.getGithubPrNumber())
+                .title(resp.getTitle())
+                .body(resp.getBody())
+                .state(PrState.fromGithubState(resp.getState(), resp.getMerged()))
+                .author(author)
+                .merged(resp.getMerged())
+                .base(resp.getBase())
+                .head(resp.getHead())
+                .mergeable(resp.getMergeable() != null && resp.getMergeable())
+                .githubCreatedAt(resp.getGithubCreatedAt())
+                .githubUpdatedAt(resp.getGithubUpdatedAt())
+                .commitCnt(resp.getCommitCnt())
+                .changedFilesCnt(resp.getChangedFilesCnt())
+                .commentCnt(resp.getCommentCnt())
+                .reviewCommentCnt(resp.getReviewCommentCnt())
+                .htmlUrl(resp.getHtmlUrl())
+                .patchUrl(resp.getPatchUrl())
+                .issueUrl(resp.getIssueUrl())
+                .diffUrl(resp.getDiffUrl())
+                .summary(resp.getSummary())
+                .approveCnt(resp.getApproveCnt())
+                .repo(repo)
+                .build();
+    }
+    
     public PullRequestResponse PullRequestToResponse(PullRequest pr) {
         return PullRequestResponse.builder()
                 .id(pr.getId())
@@ -88,7 +116,7 @@ public class PullRequestMapper {
                 .approveCnt(pr.getApproveCnt())
                 .state(pr.getState().toString())
                 .merged(pr.getMerged())
-                .mergeable(pr.isMergeable())
+                .mergeable(pr.getMergeable() != null && pr.getMergeable())
                 .head(pr.getHead())
                 .base(pr.getBase())
                 .commitCnt(pr.getCommitCnt())
