@@ -1,7 +1,7 @@
 import { GitCommit } from 'lucide-react'
 
 import Box from '@/components/Box'
-import { formatRelativeTime } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const CommitList = ({ commits = [] }) => {
   return (
