@@ -1,8 +1,9 @@
 package com.ssafy.ottereview.ai.controller;
 
 import com.ssafy.ottereview.ai.client.AiClient;
-import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
+import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
+import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
@@ -43,7 +44,7 @@ public class AiController {
                 });
     }
 
-    @PostMapping("/recommendation/priorities")  // GET → POST 변경
+    @PostMapping("/recommendation/priorities")
     public Mono<ResponseEntity<AiPriorityResponse>> getPriorityRecommendation(@RequestBody AiRequest request) {
 
         log.info("AI 우선순위 추천 요청 - repoId: {}", request.getRepoId());
@@ -92,7 +93,7 @@ public class AiController {
     }
     
     @PostMapping("/conventions/check")
-    public Mono<ResponseEntity<AiConventionResponse>> checkCodingConvention(@RequestBody AiRequest request) {
+    public Mono<ResponseEntity<AiConventionResponse>> checkCodingConvention(@RequestBody AiConventionRequest request) {
         return aiClient.checkCodingConvention(request)
                 .map(ResponseEntity::ok)
                 .doOnSuccess(response -> log.info("컨벤션 체크 완료"))

@@ -1,9 +1,9 @@
 package com.ssafy.ottereview.pullrequest.dto.response;
 
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
-import com.ssafy.ottereview.user.dto.UserResponseDto;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -42,7 +42,7 @@ public class PullRequestDetailResponse {
     private Integer approveCnt;
     
     // 객체 타입
-    private UserResponseDto author;
+    private PrUserInfo author;
     private RepoResponse repo;
     private List<PullRequestFileInfo> files;
     private List<PullRequestCommitInfo> commits;

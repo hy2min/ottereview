@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.pullrequest.util;
 
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
@@ -9,7 +10,6 @@ import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import org.springframework.stereotype.Component;
 import java.util.List;
@@ -43,8 +43,8 @@ public class PullRequestMapper {
                 .diffUrl(pr.getDiffUrl())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .author(convertToUserResponse(pr.getAuthor()))
-                .repo(RepoResponse.of(pr.getRepo()))
+                .author(convertToPrUserInfo(pr.getAuthor()))
+                .repo(RepoResponse.fromEntity(pr.getRepo()))
                 .files(pullRequestFileChanges)
                 .commits(pullRequestCommitInfos)
                 .build();
@@ -125,21 +125,16 @@ public class PullRequestMapper {
                 .reviewCommentCnt(pr.getReviewCommentCnt())
                 .githubCreatedAt(pr.getGithubCreatedAt())
                 .githubUpdatedAt(pr.getGithubUpdatedAt())
-                .repo(RepoResponse.of(pr.getRepo()))
-                .author(convertToUserResponse(pr.getAuthor()))
+                .repo(RepoResponse.fromEntity(pr.getRepo()))
+                .author(convertToPrUserInfo(pr.getAuthor()))
                 .build();
     }
     
-    private UserResponseDto convertToUserResponse(User user) {
-        return UserResponseDto.builder()
+    public PrUserInfo convertToPrUserInfo(User user) {
+        return PrUserInfo.builder()
                 .id(user.getId())
-                .githubId(user.getGithubId())
                 .githubUsername(user.getGithubUsername())
                 .githubEmail(user.getGithubEmail())
-                .type(user.getType())
-                .profileImageUrl(user.getProfileImageUrl())
-                .rewardPoints(user.getRewardPoints())
-                .userGrade(user.getUserGrade())
                 .build();
     }
 }
