@@ -25,7 +25,7 @@ public class AiPriorityResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PriorityResult {
 
-        private List<PriorityItem> candidates;
+        private List<PriorityItem> priority;
     }
 
     @Builder
@@ -52,7 +52,7 @@ public class AiPriorityResponse {
         
         return AiPriorityResponse.builder()
                 .result(AiPriorityResponse.PriorityResult.builder()
-                        .candidates(List.of(defaultItem))
+                        .priority(List.of(defaultItem))
                         .build())
                 .build();
     }
