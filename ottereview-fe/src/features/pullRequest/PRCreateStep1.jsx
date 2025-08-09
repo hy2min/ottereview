@@ -185,9 +185,9 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
           </Button>
 
           <Button
-            onClick={() => handleNextStep}
+            onClick={handleNextStep}
             variant="primary"
-            disabled={!validateBranches.isPossible}
+            disabled={validateBranches?.isPossible === false}
           >
             다음
           </Button>

@@ -10,14 +10,19 @@ const PRList = () => {
   const reviewerPRs = usePRStore((state) => state.reviewerPRs)
   const [selectedType, setSelectedType] = useState('all')
 
+  // Add the state filter here
   const filteredPRs =
     selectedType === 'authored'
-      ? authoredPRs.map((pr) => ({ ...pr, type: 'authored' }))
+      ? authoredPRs.filter((pr) => pr.state === 'OPEN').map((pr) => ({ ...pr, type: 'authored' }))
       : selectedType === 'reviewed'
-        ? reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' }))
+        ? reviewerPRs.filter((pr) => pr.state === 'OPEN').map((pr) => ({ ...pr, type: 'reviewed' }))
         : [
-            ...authoredPRs.map((pr) => ({ ...pr, type: 'authored' })),
-            ...reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' })),
+            ...authoredPRs
+              .filter((pr) => pr.state === 'OPEN')
+              .map((pr) => ({ ...pr, type: 'authored' })),
+            ...reviewerPRs
+              .filter((pr) => pr.state === 'OPEN')
+              .map((pr) => ({ ...pr, type: 'reviewed' })),
           ]
 
   return (

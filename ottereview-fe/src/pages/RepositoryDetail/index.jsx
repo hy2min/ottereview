@@ -24,14 +24,12 @@ const RepositoryDetail = () => {
   const repoPRs = usePRStore((state) => state.repoPRs)
   const setRepoPRs = usePRStore((state) => state.setRepoPRs)
 
-  const prs = repoPRs.filter((pr) => pr.repo?.id === Number(repoId))
-
   useEffect(() => {
     const load = async () => {
       try {
-        const repoData = await fetchPRList(repoId)
-        console.log('repodata : ', repoData)
-        setRepoPRs(repoData)
+        const repoPRsData = await fetchPRList(repoId)
+        console.log('repoPRsdata : ', repoPRsData)
+        setRepoPRs(repoPRsData)
 
         if (repo?.accountId && repoId) {
           const branchData = await fetchBrancheListByRepoId(repoId)
@@ -54,7 +52,7 @@ const RepositoryDetail = () => {
             <FolderCode className="min-w-8 min-h-8" />
             <h1 className="text-2xl">{name}</h1>
           </div>
-          <p className="text-stone-600">{prs.length}개의 Pull Request</p>
+          <p className="text-stone-600">{repoPRs.length}개의 Pull Request</p>
         </Box>
 
         <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
@@ -63,10 +61,10 @@ const RepositoryDetail = () => {
       </div>
 
       <div className="space-y-3">
-        {prs.length === 0 ? (
+        {repoPRs.length === 0 ? (
           <p>PR이 없습니다.</p>
         ) : (
-          prs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
+          repoPRs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
         )}
       </div>
     </div>
