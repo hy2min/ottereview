@@ -195,4 +195,8 @@ public class PullRequest extends BaseEntity {
         }
         this.base = event.getPullRequest().getBase().getRef();
     }
+    
+    public void addApproveCnt() {
+        this.approveCnt++;
+    }
 }

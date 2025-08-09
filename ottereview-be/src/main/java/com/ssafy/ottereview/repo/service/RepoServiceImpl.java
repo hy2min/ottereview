@@ -14,9 +14,7 @@ import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.User;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -55,7 +53,7 @@ public class RepoServiceImpl implements RepoService {
 
         return repoRepository.findAllByAccount_Id(accountId)
                 .stream()
-                .map(RepoResponse::of)
+                .map(RepoResponse::fromEntity)
                 .toList();
     }
 
@@ -111,7 +109,7 @@ public class RepoServiceImpl implements RepoService {
                 .flatMap(account -> repoRepository.findAllByAccount(account).stream())
                 .distinct()
                 .toList();
-        return repoList.stream().map(RepoResponse::of).toList();
+        return repoList.stream().map(RepoResponse::fromEntity).toList();
     }
 
     @Transactional

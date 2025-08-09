@@ -68,8 +68,14 @@ public class PullRequestEventService {
                     handlePullRequestSynchronize(event);
                     break;
                     
+                case "reopened":
+                    log.debug("PR이 다시 열린 경우 발생하는 callback");
+                    handlePullRequestReopened(event);
+                    break;
+                    
                 case "edited":
                     log.debug("깃허브 웹페이지에서 PR이 수정된 경우 발생하는 callback");
+                    handlePullRequestSynchronize(event);
                     break;
                 
                 default:
@@ -78,6 +84,20 @@ public class PullRequestEventService {
         } catch (Exception e) {
             log.error("Error processing installation event", e);
         }
+    }
+    
+    private void handlePullRequestReopened(PullRequestEventDto event) {
+        log.debug("[웹훅 PR 재오픈 로직 실행]");
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
+        
+        // PR 상태를 OPEN으로 변경
+        pullRequest.updateState(PrState.OPEN);
+        
+        log.info("Pull Request with GitHub PR number {} has been reopened.", githubId);
     }
     
     // mergeable 값을 못가져옴..

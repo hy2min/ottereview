@@ -37,7 +37,7 @@ public class MergeController {
 
 
     @GetMapping()
-    public ResponseEntity<?> getMergeAble(@PathVariable (name = "pr-id") Long pullRequestId, @PathVariable (name = "repo-id") Long repoId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
+    public ResponseEntity<?> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
         PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
