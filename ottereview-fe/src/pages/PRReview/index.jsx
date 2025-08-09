@@ -43,17 +43,20 @@ const PRReview = () => {
     const load = async () => {
       if (!repoId || !prId) return
 
-      try {
-        const pr = await fetchPRDetail({ repoId, prId })
-        console.log('pr:', pr)
-        setPRDetail(prId, pr)
-      } catch (err) {
-        console.error('❌ PR 상세 정보 로딩 실패:', err)
+      // `prDetail`이 없을 때만 API를 호출
+      if (!prDetail) {
+        try {
+          const pr = await fetchPRDetail({ repoId, prId })
+          console.log('pr:', pr)
+          setPRDetail(prId, pr)
+        } catch (err) {
+          console.error('❌ PR 상세 정보 로딩 실패:', err)
+        }
       }
     }
 
     load()
-  }, [repoId, prId, prDetail, setPRDetail])
+  }, [repoId, prId, prDetail, setPRDetail]) // prDetail을 의존성 배열에 유지하는 것이 무한 루프를 막으면서 최신 데이터를 보장하는 방법입니다.
 
   const handleSubmit = async () => {
     if (!comment.trim()) return
