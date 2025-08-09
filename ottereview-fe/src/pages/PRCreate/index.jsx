@@ -18,7 +18,6 @@ const PRCreate = () => {
   const navigate = useNavigate()
   const repo = useRepoStore((state) => state.repos.find((r) => String(r.repoId) === String(repoId)))
   const accountId = repo?.accountId
-  const validationResult = usePRCreateStore((state) => state.validationResult)
 
   const formData = usePRCreateStore((state) => state.formData)
 
@@ -62,41 +61,6 @@ const PRCreate = () => {
       <div className="max-w-4xl mx-auto space-y-4 py-4">
         <StepIndicator currentStep={step} steps={steps} />
         <div>{renderStepComponent()}</div>
-
-        <div className="mx-auto z-10">
-          <div className="flex justify-center items-center space-x-3">
-            <Button
-              onClick={() => {
-                if (step > 1) {
-                  setStep((prevStep) => prevStep - 1)
-                } else {
-                  navigate('/dashboard')
-                }
-              }}
-              variant="secondary"
-            >
-              이전
-            </Button>
-
-            <Button
-              onClick={() => {
-                if (step < 5) {
-                  setStep((prev) => prev + 1)
-                } else {
-                  handleSubmit()
-                }
-              }}
-              variant="primary"
-              // disabled={
-              //   step === 1
-              //     ? !validationResult?.isPossible // Step1에서만 isPossible 체크
-              //     : false // 다른 스텝에서는 별도 조건
-              // }
-            >
-              {step === 5 ? '제출' : '다음'}
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   )
