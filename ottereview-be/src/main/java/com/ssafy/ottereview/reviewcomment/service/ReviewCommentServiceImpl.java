@@ -1,7 +1,7 @@
 package com.ssafy.ottereview.reviewcomment.service;
 
 import com.ssafy.ottereview.account.repository.AccountRepository;
-import com.ssafy.ottereview.ai.client.AiClient;
+import com.ssafy.ottereview.ai.service.AiAudioProcessingService;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.review.service.ReviewGithubService;
@@ -42,7 +42,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     private final ReviewGithubService reviewGithubService;
     private final AccountRepository accountRepository;
     private final S3ServiceImpl s3Service;
-    private final AiClient AiClient;
+    private final AiAudioProcessingService aiAudioProcessingService;
 
     @Override
     @Transactional
@@ -74,7 +74,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                             MultipartFile file = files[commentItem.getFileIndex()];
                             if (file != null && !file.isEmpty()) {
                                 // AI 처리와 S3 업로드를 병렬로
-                                Mono<String> aiProcessing = AiClient.processAudioFile(file);
+                                Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
                                 Mono<String> s3Upload = Mono.fromCallable(() -> {
                                     String key = s3Service.uploadFile(file, reviewId);
                                     uploadedFileKeys.add(key);
@@ -161,7 +161,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                         commentId, file.getOriginalFilename());
 
                 newRecordKey = s3Service.uploadFile(file, commentId);
-                newBody = AiClient.processAudioFile(file).block();  // aiService.convertWithWhisper(file);
+                newBody = aiAudioProcessingService.processAudioFile(file).block();  // aiService.convertWithWhisper(file);
 
                 log.info("댓글 수정 - 새 파일 업로드 완료: CommentId: {}, NewRecordKey: {}",
                         commentId, newRecordKey);
