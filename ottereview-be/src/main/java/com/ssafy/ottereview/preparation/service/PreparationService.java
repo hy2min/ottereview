@@ -1,16 +1,18 @@
-package com.ssafy.ottereview.pullrequest.service;
+package com.ssafy.ottereview.preparation.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
-import com.ssafy.ottereview.pullrequest.dto.preparation.CommitInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
-import com.ssafy.ottereview.pullrequest.dto.preparation.FileChangeInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PreparationResult;
-import com.ssafy.ottereview.pullrequest.dto.preparation.RepoInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.UserInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.request.AdditionalInfoRequest;
-import com.ssafy.ottereview.pullrequest.dto.preparation.request.PreparationValidationRequest;
-import com.ssafy.ottereview.pullrequest.repository.PullRequestRedisRepository;
+import com.ssafy.ottereview.preparation.dto.CommitInfo;
+import com.ssafy.ottereview.preparation.dto.DiffHunk;
+import com.ssafy.ottereview.preparation.dto.FileChangeInfo;
+import com.ssafy.ottereview.preparation.dto.PreparationResult;
+import com.ssafy.ottereview.preparation.dto.RepoInfo;
+import com.ssafy.ottereview.preparation.dto.UserInfo;
+import com.ssafy.ottereview.preparation.dto.request.AdditionalInfoRequest;
+import com.ssafy.ottereview.preparation.dto.request.PreparationValidationRequest;
+import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.util.DiffUtil;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -34,14 +36,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PullRequestPreparationService {
+public class PreparationService {
 
     private final UserRepository userRepository;
     private final GithubApiClient githubApiClient;
     private final DiffUtil diffUtil;
     private final UserAccountService userAccountService;
-    private final PullRequestRedisRepository pullRequestRedisService;
-
+    private final PreparationRedisRepository pullRequestRedisService;
+    private final PullRequestRepository pullRequestRepository;
+    
     public PreparationResult getPreparePullRequestInfo(CustomUserDetail userDetail, Long repoId, String source, String target) {
 
         userAccountService.validateUserPermission(userDetail.getUser()
@@ -62,11 +65,17 @@ public class PullRequestPreparationService {
         Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
 
+        // 이미 있는 PR일 경우 예외 처리
+        if (pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, request.getTarget(), request.getSource(), PrState.OPEN)
+                .isPresent()) {
+            throw new IllegalArgumentException("이미 존재하는 Pull Request입니다.");
+        }
+        
         User author = userDetail.getUser();
 
         Long accountId = repo.getAccount()
                 .getId();
-        List<UserInfo> reviewers = userAccountService.getUsersByAccount(accountId)
+        List<UserInfo> preReviewers = userAccountService.getUsersByAccount(accountId)
                 .stream()
                 .filter(user -> !user.getId()
                         .equals(author.getId())) // author 제외
@@ -81,7 +90,7 @@ public class PullRequestPreparationService {
         GHCompare compare = githubApiClient.getCompare(repo.getAccount()
                 .getInstallationId(), repo.getFullName(), request.getTarget(), request.getSource());
 
-        PreparationResult preparationResult = convertToPreparePullRequestResponse(author, repo, compare, request, reviewers);
+        PreparationResult preparationResult = convertToPreparePullRequestResponse(author, repo, compare, request, preReviewers);
 
         pullRequestRedisService.savePrepareInfo(repoId, preparationResult);
 
@@ -158,7 +167,7 @@ public class PullRequestPreparationService {
                 .build();
     }
 
-    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<UserInfo> reviewers) {
+    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<UserInfo> preReviewers) {
 
         return PreparationResult.builder()
                 .source(request.getSource())
@@ -183,7 +192,7 @@ public class PullRequestPreparationService {
                 .files(convertToFileChanges(compare.getFiles()))
                 .author(UserInfo.of(author.getId(), author.getGithubUsername(), author.getGithubEmail()))
                 .repository(RepoInfo.of(repo.getId(), repo.getFullName()))
-                .preReviewers(reviewers)
+                .preReviewers(preReviewers)
                 .isPossible(isCreatePR(compare.getStatus()
                         .toString(), compare.getAheadBy(), compare.getTotalCommits()))
                 .build();
@@ -194,8 +203,10 @@ public class PullRequestPreparationService {
 
         for (GHCommit.File file : changedFiles) {
             try {
+                log.debug("파일 이름 PreviousFilename: {}", file.getFileName());
                 // GHCommit.File 객체에서 기본 정보 추출
                 FileChangeInfo.FileChangeInfoBuilder builder = FileChangeInfo.builder()
+                        
                         .filename(file.getFileName())
                         .status(file.getStatus())
                         .additions(file.getLinesAdded())

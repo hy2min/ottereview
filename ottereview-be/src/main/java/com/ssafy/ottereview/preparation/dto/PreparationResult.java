@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto.preparation;
+package com.ssafy.ottereview.preparation.dto;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -43,8 +43,8 @@ public class PreparationResult {
         this.summary = summary;
     }
 
-    public void enrollReviewers(List<UserInfo> preReviewers) {
-        this.preReviewers = preReviewers;
+    public void enrollReviewers(List<UserInfo> reviewers) {
+        this.reviewers = reviewers;
     }
 
     public void enrollDescriptions(List<DescriptionInfo> description) {

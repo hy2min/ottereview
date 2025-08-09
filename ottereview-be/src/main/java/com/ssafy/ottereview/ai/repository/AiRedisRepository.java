@@ -46,6 +46,12 @@ public class AiRedisRepository {
             String jsonData = redisTemplate.opsForValue()
                     .get(key);
             
+            // null 체크 추가
+            if (jsonData == null || jsonData.trim().isEmpty()) {
+                log.warn("Redis에서 데이터를 찾을 수 없습니다. key: {}", key);
+                return null;
+            }
+            
             return objectMapper.readValue(jsonData, AiResult.class);
             
         } catch (Exception e) {
