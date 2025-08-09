@@ -9,7 +9,6 @@ import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.io.File;
 import java.io.IOException;
@@ -60,8 +59,8 @@ public class MergeService {
     private final GithubAppUtil githubAppUtil;
     private final AiClient aiClient;
     private final PullRequestRepository pullRequestRepository;
-    private final RepoRepository repoRepository;
     private final UserAccountService userAccountService;
+    
     @Value("${github.app.authentication-jwt-expm}")
     private Long jwtTExpirationMillis;
     
@@ -431,7 +430,7 @@ public class MergeService {
         PullRequest pullRequest = pullRequestRepository.findById(prId)
                 .orElseThrow();
         
-        if (pullRequest.isMergeable()) {
+        if (pullRequest.getMergeable()) {
             try {
                 // Db에 저장된 정보를 가지고 PR 객체를 가져온다!
                 GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount()
