@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.preparation.dto;
 
+import com.ssafy.ottereview.priority.entity.Priority;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +23,15 @@ public class PriorityInfo {
                 .idx(idx)
                 .title(title)
                 .content(content)
+                .build();
+    }
+    
+    public static PriorityInfo from(Priority priority) {
+        return PriorityInfo.builder()
+                .id(priority.getId())
+                .idx(priority.getIdx())
+                .title(priority.getTitle())
+                .content(priority.getContent())
                 .build();
     }
 }

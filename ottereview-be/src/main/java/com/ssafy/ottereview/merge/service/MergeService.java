@@ -2,13 +2,22 @@ package com.ssafy.ottereview.merge.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.ai.client.AiClient;
+import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.dto.MergeResponse;
+import com.ssafy.ottereview.merge.dto.MergedPullRequestInfo;
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
+import com.ssafy.ottereview.preparation.dto.PriorityInfo;
+import com.ssafy.ottereview.priority.repository.PriorityRepository;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.io.File;
 import java.io.IOException;
@@ -60,6 +69,10 @@ public class MergeService {
     private final AiClient aiClient;
     private final PullRequestRepository pullRequestRepository;
     private final UserAccountService userAccountService;
+    private final GithubApiClient githubApiClient;
+    private final ReviewerRepository reviewerRepository;
+    private final PriorityRepository priorityRepository;
+    private final PullRequestMapper pullRequestMapper;
     
     @Value("${github.app.authentication-jwt-expm}")
     private Long jwtTExpirationMillis;
@@ -447,7 +460,24 @@ public class MergeService {
                 pullRequest.updateState(PrState.MERGED);
                 
                 // 머지 성공 시 Python 서버에 관련 정보 저장
-                aiClient.saveVectorDb(customUserDetail, repoId, prId);
+                PullRequestDetailResponse pullRequestDetail = githubApiClient.getPullRequestDetail(prId, repo.getFullName());
+                
+                List<PrUserInfo> reviewers = reviewerRepository.findAllByPullRequest(pullRequest)
+                        .stream()
+                        .map(Reviewer::getUser)
+                        .map(pullRequestMapper::convertToPrUserInfo)
+                        .toList();
+                
+                List<PriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
+                        .stream()
+                        .map(PriorityInfo::from)
+                        .toList();
+                
+                MergedPullRequestInfo mergedPullRequestInfo = MergedPullRequestInfo.from(pullRequestDetail,
+                        reviewers,
+                        priorities);
+                
+                aiClient.saveVectorDb(mergedPullRequestInfo);
                 
                 return true;
                 

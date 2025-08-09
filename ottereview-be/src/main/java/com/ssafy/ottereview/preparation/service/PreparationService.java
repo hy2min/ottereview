@@ -7,7 +7,7 @@ import com.ssafy.ottereview.preparation.dto.DiffHunk;
 import com.ssafy.ottereview.preparation.dto.FileChangeInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.dto.RepoInfo;
-import com.ssafy.ottereview.preparation.dto.UserInfo;
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.request.AdditionalInfoRequest;
 import com.ssafy.ottereview.preparation.dto.request.PreparationValidationRequest;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
@@ -75,11 +75,11 @@ public class PreparationService {
 
         Long accountId = repo.getAccount()
                 .getId();
-        List<UserInfo> preReviewers = userAccountService.getUsersByAccount(accountId)
+        List<PrUserInfo> preReviewers = userAccountService.getUsersByAccount(accountId)
                 .stream()
                 .filter(user -> !user.getId()
                         .equals(author.getId())) // author 제외
-                .map(user -> UserInfo.builder()
+                .map(user -> PrUserInfo.builder()
                         .id(user.getId())
                         .githubUsername(user.getGithubUsername())
                         .githubEmail(user.getGithubEmail())
@@ -115,8 +115,8 @@ public class PreparationService {
             }
             if (request.getReviewers() != null && !request.getReviewers()
                     .isEmpty()) {
-                List<UserInfo> userInfos = convertToReviewerInfos(request.getReviewers());
-                prepareInfo.enrollReviewers(userInfos);
+                List<PrUserInfo> prUserInfos = convertToReviewerInfos(request.getReviewers());
+                prepareInfo.enrollReviewers(prUserInfos);
             }
 
             if (request.getSummary() != null && !request.getSummary()
@@ -144,25 +144,25 @@ public class PreparationService {
         }
     }
 
-    private List<UserInfo> convertToReviewerInfos(List<Long> reviewerIds) {
+    private List<PrUserInfo> convertToReviewerInfos(List<Long> reviewerIds) {
         // reviewerIds를 ReviewerInfo 객체로 변환하는 로직
         return reviewerIds.stream()
                 .map(this::getReviewerInfoById)
                 .collect(Collectors.toList());
     }
 
-    private UserInfo getReviewerInfoById(Long reviewerId) {
+    private PrUserInfo getReviewerInfoById(Long reviewerId) {
         User reviewer = userRepository.findById(reviewerId)
                 .orElseThrow(() -> new IllegalArgumentException("Reviewer not found with id: " + reviewerId));
 
-        return UserInfo.builder()
+        return PrUserInfo.builder()
                 .id(reviewer.getId())
                 .githubUsername(reviewer.getGithubUsername())
                 .githubEmail(reviewer.getGithubEmail())
                 .build();
     }
 
-    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<UserInfo> preReviewers) {
+    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<PrUserInfo> preReviewers) {
 
         return PreparationResult.builder()
                 .source(request.getSource())
@@ -185,7 +185,7 @@ public class PreparationService {
                 .mergeBaseCommit(convertToCommitInfo(compare.getMergeBaseCommit()))
                 .commits(convertCommitArray(compare.getCommits()))
                 .files(convertToFileChanges(compare.getFiles()))
-                .author(UserInfo.of(author.getId(), author.getGithubUsername(), author.getGithubEmail()))
+                .author(PrUserInfo.fromEntity(author))
                 .repository(RepoInfo.of(repo.getId(), repo.getFullName()))
                 .preReviewers(preReviewers)
                 .isPossible(isCreatePR(compare.getStatus()
