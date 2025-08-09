@@ -21,6 +21,39 @@ const Dashboard = () => {
   const setRepos = useRepoStore((state) => state.setRepos)
 
   useEffect(() => {
+    const handleMessage = (event) => {
+      // 보안: 자신의 도메인에서만 메시지 받기
+      if (event.origin !== window.location.origin) return
+
+      if (event.data.type === 'GITHUB_INSTALL_COMPLETE') {
+        console.log('🔄 GitHub 설치 완료 - 대시보드 데이터 새로고침')
+
+        // 기존 fetchData 로직 재실행
+        const fetchData = async () => {
+          try {
+            const fetchedRepos = await fetchRepoList()
+            console.log('📦 레포 응답 (새로고침):', fetchedRepos)
+
+            if (Array.isArray(fetchedRepos)) {
+              setRepos(fetchedRepos)
+            } else {
+              console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
+              setRepos([])
+            }
+          } catch (err) {
+            console.error('📛 레포 새로고침 실패:', err)
+          }
+        }
+
+        fetchData()
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [setRepos])
+
+  useEffect(() => {
     if (!user?.id) return
 
     const fetchData = async () => {
@@ -32,7 +65,7 @@ const Dashboard = () => {
           setRepos(fetchedRepos)
         } else {
           console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
-          setRepos([]) // 또는 clearRepos()
+          setRepos([])
         }
 
         const authored = await fetchAuthoredPRs()

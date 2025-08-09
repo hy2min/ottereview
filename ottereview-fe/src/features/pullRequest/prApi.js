@@ -29,12 +29,19 @@ export const submitPR = async (prData) => {
   return // 구현 예정
 }
 
+export const validatePR = async ({ repoId, source, target }) => {
+  const res = await api.get(`/api/repositories/${repoId}/pull-requests/search`, {
+    params: { source, target },
+  })
+  return res.data
+}
+
 export const validateBranches = async ({ repoId, source, target }) => {
   const res = await api.post(`/api/repositories/${repoId}/pull-requests/preparation/validation`, {
     source,
     target,
   })
-  return res.data // 이걸 그대로 validationResult에 세팅 가능
+  return res.data
 }
 
 // AI 컨벤션 요청
