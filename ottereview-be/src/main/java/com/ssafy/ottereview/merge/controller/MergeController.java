@@ -19,8 +19,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/repositories/{repo-id}/pull-requests/{pr-id}/merges")
 public class MergeController {
@@ -32,11 +33,7 @@ public class MergeController {
 
     @GetMapping("/doing")
     public ResponseEntity<?> doMerge(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable(name = "repo-id") Long repoId, @PathVariable(name = "pr-id") Long prId){
-        Repo repo = repoService.getById(repoId).orElseThrow();
-        User user = customUserDetail.getUser();
-        PullRequestDetailResponse pullRequestDetailResponse= pullRequestService.getPullRequestById(customUserDetail,repoId , prId);
-        PullRequest pullRequest = PullRequest.toEntity(pullRequestDetailResponse,repo,user);
-        return ResponseEntity.ok(mergeService.doMerge(repo,pullRequest));
+       return ResponseEntity.ok(mergeService.doMerge(customUserDetail, repoId, prId));
     }
 
 
@@ -50,7 +47,7 @@ public class MergeController {
     }
 
     @GetMapping("/conflicts")
-    public ResponseEntity<?> getMergeCOnflict(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id")Long pullRequestId) throws Exception {
+    public ResponseEntity<?> getMergeConflict(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id")Long pullRequestId) throws Exception {
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
         PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);

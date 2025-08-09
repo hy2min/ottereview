@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto.detail;
+package com.ssafy.ottereview.pullrequest.dto.info;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +10,7 @@ import org.kohsuke.github.GHPullRequestFileDetail;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PullRequestFileDetail {
+public class PullRequestFileInfo {
 
     private String filename;
     private String status;
@@ -23,8 +23,8 @@ public class PullRequestFileDetail {
     private String blobUrl;
     private String rawUrl;
 
-    public static PullRequestFileDetail from(GHPullRequestFileDetail detail) {
-        PullRequestFileDetail dto = new PullRequestFileDetail();
+    public static PullRequestFileInfo from(GHPullRequestFileDetail detail) {
+        PullRequestFileInfo dto = new PullRequestFileInfo();
         dto.filename = detail.getFilename();
         dto.status = detail.getStatus();
         dto.additions = detail.getAdditions();

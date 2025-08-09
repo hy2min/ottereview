@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto.detail;
+package com.ssafy.ottereview.pullrequest.dto.info;
 
 import java.net.URL;
 import lombok.AllArgsConstructor;
@@ -13,7 +13,7 @@ import java.time.ZoneId;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PullRequestCommitDetail {
+public class PullRequestCommitInfo {
 
     // 기본 커밋 정보
     private String sha;                    // 커밋 해시
@@ -36,9 +36,9 @@ public class PullRequestCommitDetail {
      * @param ghCommitDetail GitHub Pull Request 커밋 상세 정보
      * @return PullRequestCommitDetail 객체
      */
-    public static PullRequestCommitDetail from(GHPullRequestCommitDetail ghCommitDetail) {
+    public static PullRequestCommitInfo from(GHPullRequestCommitDetail ghCommitDetail) {
         try {
-            PullRequestCommitDetailBuilder builder = PullRequestCommitDetail.builder()
+            PullRequestCommitInfoBuilder builder = PullRequestCommitInfo.builder()
                     .sha(ghCommitDetail.getSha())
                     .url(ghCommitDetail.getUrl());
 
