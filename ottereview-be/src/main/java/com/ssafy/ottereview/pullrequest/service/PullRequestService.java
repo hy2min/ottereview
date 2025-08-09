@@ -12,22 +12,27 @@ public interface PullRequestService {
     /**
      * Github repoId로 Github에서 Pull Request 리스트를 조회합니다.
      */
-    List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail customUserDetail, Long repositoryId);
+    List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail, Long repositoryId);
 
     /**
      * 내가 작성한 PR 리스트를 조회합니다.
      */
-    List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail);
+    List<PullRequestResponse> getMyPullRequests(CustomUserDetail userDetail);
 
     /**
      * 특정 레포에 댇한 Pull Request 리스트를 조회합니다.
      */
-    List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId);
+    List<PullRequestResponse> getPullRequests(CustomUserDetail userDetail, Long repoId);
 
     /**
      * pr-id로 DB에 저장된 Pull Request를 조회합니다.
      */
-    PullRequestDetailResponse getPullRequestById(CustomUserDetail customUserDetail, Long repoId, Long pullRequestId);
+    PullRequestDetailResponse getPullRequestById(CustomUserDetail userDetail, Long repoId, Long pullRequestId);
+    
+    /**
+     * 특정 레포지토리의 브랜치에 대한 Pull Request를 조회합니다.
+     */
+    PullRequestResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target);
     
     /**
      *  새로운 Pull Request를 생성합니다.

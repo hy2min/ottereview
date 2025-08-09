@@ -3,8 +3,8 @@ package com.ssafy.ottereview.githubapp.client;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.Arrays;
@@ -160,7 +160,7 @@ public class GithubApiClient {
         }
     }
 
-    public List<PullRequestFileDetail> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
+    public List<PullRequestFileInfo> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -173,7 +173,7 @@ public class GithubApiClient {
             return StreamSupport.stream(files.spliterator(), false)
                     .map(file -> {
                         try {
-                            return PullRequestFileDetail.from(file);
+                            return PullRequestFileInfo.from(file);
                         } catch (Exception e) {
                             log.error("Error converting file detail to DTO: {}", e.getMessage());
                             return null;
@@ -200,7 +200,7 @@ public class GithubApiClient {
      * @param prNumber       Pull Request 번호
      * @return Pull Request 커밋 정보 리스트
      */
-    public List<PullRequestCommitDetail> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
+    public List<PullRequestCommitInfo> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -213,7 +213,7 @@ public class GithubApiClient {
             return StreamSupport.stream(commits.spliterator(), false)
                     .map(commit -> {
                         try {
-                            return PullRequestCommitDetail.from(commit);
+                            return PullRequestCommitInfo.from(commit);
                         } catch (Exception e) {
                             log.error("Error converting commit to DTO: {}", e.getMessage());
                             return null;
