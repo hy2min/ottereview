@@ -2,6 +2,7 @@ package com.ssafy.ottereview.mettingroom.service;
 
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
+import com.ssafy.ottereview.common.config.yjs.handler.YjsWebSocketHandler;
 import com.ssafy.ottereview.email.dto.EmailRequestDto;
 import com.ssafy.ottereview.email.service.EmailService;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class MeetingRoomServiceImpl implements MeetingRoomService {
 
     private static final String SESSION_KEY_PREFIX = "meeting:session:";
+    private final YjsWebSocketHandler yjsWebSocketHandler;
     private final MeetingRoomRepository meetingRoomRepository;
     private final PullRequestRepository pullRequestRepository;
     private final UserAccountRepository userAccountRepository;
@@ -200,7 +202,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     @Transactional
     public void cleanExpiredMeetingRooms() {
         LocalDateTime cutoff = LocalDateTime.now().minusHours(sessionTtlHours);
-        meetingRoomRepository.deleteAllByCreatedAtBefore(cutoff);
+        List<MeetingRoom> expiredRooms = meetingRoomRepository.findAllByCreatedAtBefore(cutoff);
+
+        for (MeetingRoom room : expiredRooms) {
+            meetingRoomRepository.delete(room);
+            yjsWebSocketHandler.closeRoom(room.getId()); // 화이트보드 세션 종료
+        }
     }
 
 }
