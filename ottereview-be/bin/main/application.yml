@@ -1,0 +1,154 @@
+# application.yml - 공통 설정
+spring:
+  application:
+    name: ottereview
+
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}        # Gmail 주소
+    password: ${EMAIL_PASSWORD}        # 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    default-encoding: UTF-8
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+  sql:
+    init:
+      mode: never  # 필요 시 always로
+
+github:
+  app:
+    app-id: ${GITHUB_APP_ID}
+    private-key-path: ${GITHUB_APP_PRIVATE_KEY_PATH:classpath:kb-github-app-private-key.der}
+    authentication-jwt-expm: ${GITHUB_APP_AUTHENTICATION_JWT_ACCESS_EXPMIN:60}
+    oauth:
+      client-id: ${GITHUB_APP_CLIENT_ID}
+      client-secret: ${GITHUB_APP_CLIENT_SECRET}
+      redirect-uri: ${GITHUB_APP_OAUTH_REDIRECT_URI}
+
+  oauth:
+    client-id: ${GITHUB_OAUTH_CLIENT_ID}
+    client-secret: ${GITHUB_OAUTH_CLIENT_SECRET}
+    redirect-uri: ${GITHUB_OAUTH_REDIRECT_URI}
+
+app:
+  front:
+    url: http://localhost:5173
+  ai:
+    url: http://localhost:8000
+
+  jwt:
+    secret: ${APP_JWT_SECRET}
+    access-expmin: ${APP_JWT_ACCESS_EXPMIN}
+    refresh-expmin: ${APP_JWT_REFRESH_EXPMIN}
+
+cloud:
+  aws:
+    credentials:
+      access-key: ${S3_ACCESS_KEY}
+      secret-key: ${S3_SECRET_KEY}
+    S3:
+      bucket: ${S3_BUCKET_NAME}
+    region:
+      static: ${S3_REGION:ap-northeast-2}
+    stack:
+      auto: false
+
+openvidu:
+  url: ${OPENVIDU_URL}
+  secret: ${OPENVIDU_SECRET}
+  session:
+    ttl-hours: 2
+
+logging:
+  level:
+    root: INFO
+    com.ssafy.ottereview: DEBUG
+
+---
+# application-local.yml - 로컬 개발 환경 (IntelliJ 실행)
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+    show-sql: true
+
+  sql:
+    init:
+      mode: never
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+app:
+  front:
+    url: http://localhost:5173
+  ai:
+    url: http://localhost:8000
+
+---
+# application-docker.yml - Docker Compose 환경
+spring:
+  config:
+    activate:
+      on-profile: docker
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  sql:
+    init:
+      mode: never
+
+  data:
+    redis:
+      host: redis
+      port: 6379

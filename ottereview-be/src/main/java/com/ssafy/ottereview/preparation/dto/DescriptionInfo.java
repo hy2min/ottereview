@@ -18,7 +18,7 @@ public class DescriptionInfo {
     private String path;
     private String body;
     private String recordKey;
-    private String position;
+    private Integer position;
     private Integer startLine;
     private String startSide;
     private Integer line;
