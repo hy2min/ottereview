@@ -14,5 +14,7 @@ public interface ReviewerRepository extends JpaRepository<Reviewer, Long> {
     List<Reviewer> findAllByPullRequest(PullRequest pullRequest);
 
     List<Reviewer> findAllByUser(User user);
+    
+    boolean existsByPullRequestAndUser(PullRequest pullRequest, User user);
 
 }

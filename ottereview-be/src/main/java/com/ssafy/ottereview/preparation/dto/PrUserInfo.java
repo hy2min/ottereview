@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.preparation.dto;
 
+import com.ssafy.ottereview.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,17 +10,17 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserInfo {
+public class PrUserInfo {
 
     private Long id;
     private String githubUsername;
     private String githubEmail;
 
-    public static UserInfo of(Long id, String githubUsername, String githubEmail) {
-        return UserInfo.builder()
-                .id(id)
-                .githubUsername(githubUsername)
-                .githubEmail(githubEmail)
+    public static PrUserInfo fromEntity(User user) {
+        return PrUserInfo.builder()
+                .id(user.getId())
+                .githubUsername(user.getGithubUsername())
+                .githubEmail(user.getGithubEmail())
                 .build();
     }
 }

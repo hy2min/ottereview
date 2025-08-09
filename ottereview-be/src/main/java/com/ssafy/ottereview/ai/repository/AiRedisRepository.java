@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.ai.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import java.time.Duration;
@@ -63,7 +64,7 @@ public class AiRedisRepository {
     /**
      * Ai 정보 삭제
      */
-    public void deleteAiInfo(AiRequest request) {
+    public void deleteAiInfo(AiConventionRequest request) {
         try {
             String mainKey = generateMainKey(request.getRepoId(), request.getSource(), request.getTarget());
             

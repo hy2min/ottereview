@@ -1,7 +1,8 @@
 package com.ssafy.ottereview.pullrequest.dto.response;
 
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
-import com.ssafy.ottereview.user.dto.UserResponseDto;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,5 +43,30 @@ public class PullRequestResponse {
     private LocalDateTime githubUpdatedAt;
 
     private RepoResponse repo;
-    private UserResponseDto author;
+    private PrUserInfo author;
+    
+    public static PullRequestResponse fromEntity(PullRequest pullRequest) {
+        return PullRequestResponse.builder()
+                .id(pullRequest.getId())
+                .githubPrNumber(pullRequest.getGithubPrNumber())
+                .githubId(pullRequest.getGithubId())
+                .title(pullRequest.getTitle())
+                .body(pullRequest.getBody())
+                .summary(pullRequest.getSummary())
+                .approveCnt(pullRequest.getApproveCnt())
+                .state(pullRequest.getState().toString())
+                .merged(pullRequest.getMerged())
+                .mergeable(pullRequest.getMergeable())
+                .head(pullRequest.getHead())
+                .base(pullRequest.getBase())
+                .commitCnt(pullRequest.getCommitCnt())
+                .changedFilesCnt(pullRequest.getChangedFilesCnt())
+                .commentCnt(pullRequest.getCommentCnt())
+                .reviewCommentCnt(pullRequest.getReviewCommentCnt())
+                .githubCreatedAt(pullRequest.getGithubCreatedAt())
+                .githubUpdatedAt(pullRequest.getGithubUpdatedAt())
+                .repo(RepoResponse.fromEntity(pullRequest.getRepo()))
+                .author(PrUserInfo.fromEntity(pullRequest.getAuthor()))
+                .build();
+    }
 }
