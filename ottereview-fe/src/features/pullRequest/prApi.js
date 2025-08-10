@@ -33,9 +33,16 @@ export const submitPR = async ({ formData, repoId }) => {
     target: formData.target,
   }
 
-  formDataObj.append('pullRequest', JSON.stringify(pullRequestData))
+  // Blob으로 JSON 데이터 생성
+  const pullRequestBlob = new Blob([JSON.stringify(pullRequestData)], {
+    type: 'application/json',
+  })
 
-  const res = await api.post(`/api/repositories/${repoId}/pull-requests`, formDataObj)
+  formDataObj.append('pullRequest', pullRequestBlob)
+
+  const res = await api.post(`/api/repositories/${repoId}/pull-requests`, formDataObj, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
 
   return res.data
 }
