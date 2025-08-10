@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useChatStore } from '@/features/chat/chatStore'
 
+import { fetchConflictData } from '@/features/chat/chatApi'
+import { useChatStore } from '@/features/chat/chatStore'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'
@@ -10,6 +11,8 @@ import Whiteboard from '@/features/webrtc/Whiteboard'
 const ChatRoom = () => {
   const { roomId } = useParams()
   const [showWhiteboard, setShowWhiteboard] = useState(false)
+  const [conflictData, setConflictData] = useState(null)
+  const [selectedFileName, setSelectedFileName] = useState('')
 
   // chatStore에서 채팅방 정보 가져오기
   const rooms = useChatStore((state) => state.rooms)
@@ -23,6 +26,68 @@ const ChatRoom = () => {
 
   if (!room) {
     room = rooms.find((r) => r.id === Number(roomId) || r.id === roomId)
+  }
+
+  // 🐛 디버깅: room 정보 확인
+  console.log('🔍 ChatRoom 디버깅:')
+  console.log('- roomId:', roomId)
+  console.log('- room 객체:', room)
+  console.log('- room.repoId:', room?.repoId)
+  console.log('- room.prId:', room?.prId)
+  console.log('- room.conflictFiles:', room?.conflictFiles)
+
+  // 충돌 데이터 가져오기
+  useEffect(() => {
+    const loadConflictData = async () => {
+      try {
+        // room에 저장된 repoId, prId 사용
+        if (!room?.repoId || !room?.prId) {
+          console.error('repoId 또는 prId가 없습니다:', { repoId: room?.repoId, prId: room?.prId })
+          return
+        }
+        console.log('📡 API 호출 시작:', { repoId: room.repoId, prId: room.prId })
+        const data = await fetchConflictData(room.repoId, room.prId)
+
+        console.log('✅ API 응답 데이터:', data)
+        console.log('📋 headFileContents:', data?.headFileContents)
+        console.log('📁 files 목록:', data?.files)
+
+        setConflictData(data)
+
+        // room.conflictFiles (Conflict에서 선택한 파일들) 중 첫 번째를 기본 선택
+        if (room.conflictFiles && room.conflictFiles.length > 0) {
+          const firstFile = room.conflictFiles[0]
+          console.log('🎯 기본 선택 파일:', firstFile)
+          setSelectedFileName(firstFile)
+        }
+      } catch (error) {
+        console.error('충돌 데이터 로딩 실패:', error)
+      }
+    }
+
+    if (room && room.repoId && room.prId) {
+      loadConflictData()
+    }
+  }, [room])
+
+  // 선택된 파일의 초기 코드 가져오기
+  const getInitialCode = () => {
+    if (!conflictData || !selectedFileName) {
+      console.log('⚠️ getInitialCode: 데이터 없음', {
+        hasConflictData: !!conflictData,
+        selectedFileName,
+      })
+      return undefined
+    }
+
+    const code = conflictData.headFileContents?.[selectedFileName]
+    console.log('🎯 getInitialCode 결과:')
+    console.log('- 파일명:', selectedFileName)
+    console.log('- 코드 내용:', code)
+    console.log('- 코드 타입:', typeof code)
+    console.log('- 코드 길이:', code?.length || 0)
+
+    return code
   }
 
   return (
@@ -68,6 +133,27 @@ const ChatRoom = () => {
 
           {/* 도구 버튼들 */}
           <div style={{ display: 'flex', gap: '0.5rem' }}>
+            {/* 파일 선택 드롭다운 - room.conflictFiles만 표시 */}
+            {room?.conflictFiles?.length > 0 && (
+              <select
+                value={selectedFileName}
+                onChange={(e) => setSelectedFileName(e.target.value)}
+                style={{
+                  padding: '0.5rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  backgroundColor: 'white',
+                  cursor: 'pointer',
+                }}
+              >
+                {room.conflictFiles.map((fileName) => (
+                  <option key={fileName} value={fileName}>
+                    📄 {fileName}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
               onClick={() => setShowWhiteboard(!showWhiteboard)}
               style={{
@@ -127,7 +213,7 @@ const ChatRoom = () => {
           }}
         >
           <div style={{ height: '100%', padding: '1rem' }}>
-            <CodeEditor roomId={roomId} />
+            <CodeEditor roomId={roomId} initialCode={getInitialCode()} />
           </div>
         </div>
 

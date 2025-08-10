@@ -3,7 +3,7 @@ import * as yorkie from '@yorkie-js/sdk'
 import { basicSetup, EditorView } from 'codemirror'
 import { useEffect, useRef, useState } from 'react'
 
-const CodeEditor = ({ roomId }) => {
+const CodeEditor = ({ roomId, initialCode = null }) => {
   const editorRef = useRef(null)
   const viewRef = useRef(null)
   const docRef = useRef(null)
@@ -60,8 +60,11 @@ const CodeEditor = ({ roomId }) => {
           if (!root.content) {
             root.content = new yorkie.Text()
             // 초기 코드 템플릿
-            const initialCode = `// 채팅방 ${roomId}의 협업 코드 편집기\n// 실시간으로 다른 사용자와 함께 편집할 수 있습니다\n\nfunction hello() {\n  console.log("Hello, collaborative coding!");\n}\n\n`
-            root.content.edit(0, 0, initialCode)
+            const codeToUse =
+              initialCode ||
+              `// 채팅방 ${roomId}의 협업 코드 편집기\n// 실시간으로 다른 사용자와 함께 편집할 수 있습니다\n\nfunction hello() {\n  console.log("Hello, collaborative coding!");\n}\n\n`
+
+            root.content.edit(0, 0, codeToUse)
           }
         })
 
