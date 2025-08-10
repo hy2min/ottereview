@@ -10,7 +10,14 @@ const RepositoryList = () => {
 
   const handleImport = () => {
     const importUrl = import.meta.env.VITE_GITHUB_IMPORT_URL
-    window.location.href = importUrl
+    const width = 600
+    const height = 700
+
+    window.open(
+      importUrl,
+      '_blank',
+      `width=${width},height=${height},left=${(screen.width - width) / 2},top=${(screen.height - height) / 2},scrollbars=yes,resizable=yes`
+    )
   }
 
   const handleRepoClick = (repoId) => {

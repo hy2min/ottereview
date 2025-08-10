@@ -1,20 +1,19 @@
 import { useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import { requestAIConvention, requestAIOthers } from '@/features/pullRequest/prApi'
-import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
 
-const PRCreateStep2 = () => {
-  const { repoId } = useParams()
-  const formData = usePRCreateStore((state) => state.formData)
-  const setFormData = usePRCreateStore((state) => state.setFormData)
-  const setAIConvention = usePRCreateStore((state) => state.setAIConvention)
-  const aiConvention = usePRCreateStore((state) => state.aiConvention)
-  const setAIOthers = usePRCreateStore((state) => state.setAIOthers)
-
+const PRCreateStep2 = ({
+  goToStep,
+  repoId,
+  formData,
+  updateFormData,
+  aiConvention,
+  setAIConvention,
+  setAIOthers,
+}) => {
   const [aiLoading, setAiLoading] = useState(false)
 
   const conventionOptions = [
@@ -93,58 +92,82 @@ const PRCreateStep2 = () => {
     ))
   }
 
+  const handleNextStep = () => {
+    goToStep(3)
+  }
+
   return (
-    <div className="flex w-full mx-auto space-x-4">
-      <Box shadow className="w-2/3 space-y-3">
-      <div>
-        <div className="flex items-center justify-between mt-2">
-          <div className="font-medium">AI 피드백</div>
-          <div className="-mt-[16px]">
-            <Button size="sm" onClick={handleRequestAI}>
-              {aiLoading ? '분석 중...' : '피드백 받기'}
-            </Button>
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row md:items-stretch space-y-3 md:space-y-0 md:gap-4">
+        <Box shadow className="w-full md:w-1/3 md:order-2 space-y-4">
+          <InputBox
+            label="파일명 규칙"
+            as="select"
+            options={conventionOptions}
+            value={formData.file_names || ''}
+            onChange={(e) => updateFormData({ file_names: e.target.value })}
+          />
+          <InputBox
+            label="함수명 규칙"
+            as="select"
+            options={conventionOptions}
+            value={formData.function_names || ''}
+            onChange={(e) => updateFormData({ function_names: e.target.value })}
+          />
+          <InputBox
+            label="변수명 규칙"
+            as="select"
+            options={conventionOptions}
+            value={formData.variable_names || ''}
+            onChange={(e) => updateFormData({ variable_names: e.target.value })}
+          />
+          <InputBox
+            label="클래스명 규칙"
+            as="select"
+            options={conventionOptions}
+            value={formData.class_names || ''}
+            onChange={(e) => updateFormData({ class_names: e.target.value })}
+          />
+          <InputBox
+            label="상수명 규칙"
+            as="select"
+            options={conventionOptions}
+            value={formData.constant_names || ''}
+            onChange={(e) => updateFormData({ constant_names: e.target.value })}
+          />
+        </Box>
+        <Box shadow className="w-full md:w-2/3 md:order-1 space-y-3">
+          <div className='space-y-1'>
+            <div className="flex items-center justify-between mt-2">
+              <div className="font-medium">AI 피드백</div>
+              <div className="-mt-[16px]">
+                <Button size="sm" onClick={handleRequestAI}>
+                  {aiLoading ? '분석 중...' : '피드백 받기'}
+                </Button>
+              </div>
+            </div>
+            <Box className='h-87.75'>
+              <div className="space-y-2">{renderAIConvention(aiConvention?.result)}</div>
+            </Box>
           </div>
+        </Box>
+      </div>
+      <div className="mx-auto z-10">
+        <div className="flex justify-center items-center space-x-3">
+          <Button
+            onClick={() => {
+              goToStep(1)
+            }}
+            variant="secondary"
+          >
+            이전
+          </Button>
+
+          <Button onClick={handleNextStep} variant="primary">
+            다음
+          </Button>
         </div>
-        <div className="space-y-2">{renderAIConvention(aiConvention?.result)}</div>
-        </div>
-      </Box>
-      <Box shadow className="w-1/3 space-y-4">
-        <InputBox
-          label="파일명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.file_names || ''}
-          onChange={(e) => setFormData({ file_names: e.target.value })}
-        />
-        <InputBox
-          label="함수명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.function_names || ''}
-          onChange={(e) => setFormData({ function_names: e.target.value })}
-        />
-        <InputBox
-          label="변수명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.variable_names || ''}
-          onChange={(e) => setFormData({ variable_names: e.target.value })}
-        />
-        <InputBox
-          label="클래스명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.class_names || ''}
-          onChange={(e) => setFormData({ class_names: e.target.value })}
-        />
-        <InputBox
-          label="상수명 규칙"
-          as="select"
-          options={conventionOptions}
-          value={formData.constant_names || ''}
-          onChange={(e) => setFormData({ constant_names: e.target.value })}
-        />
-      </Box>
+      </div>
     </div>
   )
 }

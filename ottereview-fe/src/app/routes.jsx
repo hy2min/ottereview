@@ -1,3 +1,4 @@
+import InstallComplete from '@/features/auth/InstallComplete'
 import Whiteboard from '@/features/webrtc/Whiteboard'
 import ChatRoom from '@/pages/ChatRoom'
 import Conflict from '@/pages/Conflict'
@@ -15,4 +16,5 @@ export const protectedRoutes = [
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
   // { path: '/chatroom/test', element: <ChatRoom />, title: '채팅 테스트' },
   { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
+  { path: '/install-complete', element: <InstallComplete />, title: 'Ottereview 설치' },
 ]
