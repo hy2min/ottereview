@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.merge.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.merge.service.MergeService;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/repositories/{repo-id}/pull-requests/{pr-id}/merges")
+@MvcController
 public class MergeController {
 
     private static final Logger log = LoggerFactory.getLogger(MergeController.class);

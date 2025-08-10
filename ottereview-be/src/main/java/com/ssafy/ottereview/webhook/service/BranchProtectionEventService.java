@@ -3,9 +3,11 @@ package com.ssafy.ottereview.webhook.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.repository.BranchRepository;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.webhook.dto.BranchProtection;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +50,7 @@ public class BranchProtectionEventService {
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
 

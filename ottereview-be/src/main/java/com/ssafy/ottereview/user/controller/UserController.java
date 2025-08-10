@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.mettingroom.dto.MyMeetingRoomResponseDto;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class UserController {
     private final UserService userService;
 
