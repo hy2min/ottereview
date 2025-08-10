@@ -5,24 +5,27 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import { validateBranches, validatePR } from '@/features/pullRequest/prApi'
-import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
 import { useBranchStore } from '@/features/repository/stores/branchStore'
 
-const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
+const PRCreateStep1 = ({
+  goToStep,
+  repoId,
+  formData,
+  updateFormData,
+  setValidationPR,
+  setValidationBranches,
+}) => {
   const navigate = useNavigate()
   const [prCheckResult, setPrCheckResult] = useState(null) // 'exists' | 'not_exists' | null
   const [existingPRData, setExistingPRData] = useState(null)
 
-  const [source, setSource] = useState('')
-  const [target, setTarget] = useState('')
-
-  const setFormData = usePRCreateStore((state) => state.setFormData)
+  const [source, setSource] = useState(formData.source || '')
+  const [target, setTarget] = useState(formData.target || '')
+  const [canGoNext, setCanGoNext] = useState(false)
 
   const branches = useBranchStore((state) => state.branchesByRepo[repoId] || [])
   const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
-  const setValidationBranches = usePRCreateStore((state) => state.setValidationBranches)
-  const setValidationPR = usePRCreateStore((state) => state.setValidationPR)
 
   const handleValidateBranches = async () => {
     try {
@@ -33,42 +36,11 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
       })
 
       setValidationBranches(data)
+      setCanGoNext(data?.isPossible)
+      console.log(data?.isPossible)
       console.log('ValidateBranches', data)
     } catch (err) {
       console.error('브랜치 검증 실패:', err)
-    }
-  }
-
-  const handleValidatePR = async () => {
-    try {
-      const data = await validatePR({
-        repoId,
-        source,
-        target,
-      })
-
-      // 응답 성공 = 기존 PR이 존재
-      setValidationPR(data)
-      setPrCheckResult('exists')
-      setExistingPRData(data)
-      console.log('ValidatePR - 기존 PR 존재:', data)
-    } catch (err) {
-      // 에러 = PR이 존재하지 않음 (생성 가능)
-      console.log('ValidatePR - PR 없음, 생성 가능')
-      setPrCheckResult('not_exists')
-      setExistingPRData(null)
-    }
-  }
-
-  const handleNextStep = () => {
-    // 다음 단계로 넘어가기 전에 formData를 전역 상태에 저장
-    setFormData({ sourceBranch: source, targetBranch: target })
-    goToStep(2)
-  }
-
-  const handleGoToPRReview = () => {
-    if (existingPRData && existingPRData.id) {
-      navigate(`/${repoId}/pr/${existingPRData.id}/review`)
     }
   }
 
@@ -83,20 +55,49 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
     }
 
     loadBranches()
-  }, [repoId, accountId, setBranchesForRepo])
+  }, [repoId, setBranchesForRepo])
 
+  // source나 target이 바뀔 때 상태 초기화 및 검증
   useEffect(() => {
+    // 브랜치가 바뀌면 이전 결과를 먼저 초기화
+    setPrCheckResult(null)
+    setExistingPRData(null)
+    setValidationBranches(null) // 브랜치 검증 결과도 초기화
+
     const isValidBranches = source && target && source !== target
 
     if (isValidBranches) {
-      handleValidatePR()
-    } else {
-      // 브랜치가 유효하지 않으면 상태 초기화
-      setPrCheckResult(null)
-      setExistingPRData(null)
-    }
-  }, [source, target])
+      // 직접 API 호출하여 의존성 배열 문제 해결
+      const validatePRData = async () => {
+        try {
+          const data = await validatePR({
+            repoId,
+            source,
+            target,
+          })
 
+          // 응답 성공 = 기존 PR이 존재
+          setValidationPR(data)
+          setPrCheckResult('exists')
+          setExistingPRData(data)
+          console.log('ValidatePR - 기존 PR 존재:', data)
+        } catch (err) {
+          // 에러 = PR이 존재하지 않음 (생성 가능)
+          console.log('ValidatePR - PR 없음, 생성 가능')
+          setPrCheckResult('not_exists')
+          setExistingPRData(null)
+        }
+      }
+
+      const timeoutId = setTimeout(() => {
+        validatePRData()
+      }, 100)
+
+      return () => clearTimeout(timeoutId)
+    }
+  }, [source, target, repoId, setValidationPR, setValidationBranches])
+
+  // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
       setPrCheckResult(null)
@@ -111,6 +112,19 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
       value: b.name,
     })),
   ]
+
+  const handleGoToPRReview = () => {
+    if (existingPRData && existingPRData.id) {
+      navigate(`/${repoId}/pr/${existingPRData.id}/review`)
+    }
+  }
+
+  const handleNextStep = () => {
+    // props로 받은 updateFormData 사용
+    updateFormData({ source: source, target: target })
+    console.log('Updated formData:', { source: source, target: target })
+    goToStep(2)
+  }
 
   // 상태별 UI 결정
   const isSameBranch = source && target && source === target
@@ -166,7 +180,7 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={isSameBranch || (!canCreatePR && !existingPR)}
+            disabled={isSameBranch || !canCreatePR} // canCreatePR이 true일 때만 브랜치 검증 버튼 활성화
             className={existingPR ? 'bg-green-600 hover:bg-green-700' : ''}
           >
             {existingPR ? '기존 PR 리뷰하러 가기' : '브랜치 검증'}
@@ -184,11 +198,7 @@ const PRCreateStep1 = ({ goToStep, repoId, accountId }) => {
             이전
           </Button>
 
-          <Button
-            onClick={handleNextStep}
-            variant="primary"
-            disabled={validateBranches?.isPossible === false}
-          >
+          <Button onClick={handleNextStep} variant="primary" disabled={!canGoNext}>
             다음
           </Button>
         </div>

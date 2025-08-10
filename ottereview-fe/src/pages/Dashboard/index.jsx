@@ -32,7 +32,7 @@ const Dashboard = () => {
         const fetchData = async () => {
           try {
             const fetchedRepos = await fetchRepoList()
-            console.log('📦 레포 응답 (새로고침):', fetchedRepos)
+            console.log('📦 레포 응답:', fetchedRepos)
 
             if (Array.isArray(fetchedRepos)) {
               setRepos(fetchedRepos)
@@ -40,8 +40,20 @@ const Dashboard = () => {
               console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
               setRepos([])
             }
+
+            const authored = await fetchAuthoredPRs()
+            console.log('📦 내가 작성한 PRs:', authored)
+            setAuthoredPRs(authored)
+
+            const reviewed = await fetchReviewerPRs()
+            console.log('📦 내가 리뷰할 PRs:', reviewed)
+            setReviewerPRs(reviewed)
           } catch (err) {
-            console.error('📛 레포 새로고침 실패:', err)
+            console.error('📛 대시보드 fetch 실패:', err)
+
+            setRepos([])
+            setAuthoredPRs([])
+            setReviewerPRs([])
           }
         }
 

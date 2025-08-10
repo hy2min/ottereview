@@ -1,31 +1,49 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react'
 
-import Badge from '@/components/Badge';
-import Box from '@/components/Box';
-import Button from '@/components/Button';
-import InputBox from '@/components/InputBox';
-import PRFileList from '@/features/pullRequest/PRFileList';
-import { usePRCreateStore } from '@/features/pullRequest/stores/prCreateStore';
-import useLoadingDots from '@/lib/utils/useLoadingDots';
+import Badge from '@/components/Badge'
+import Box from '@/components/Box'
+import Button from '@/components/Button'
+import InputBox from '@/components/InputBox'
+import PRFileList from '@/features/pullRequest/PRFileList'
+import useLoadingDots from '@/lib/utils/useLoadingDots'
 
-const PRCreateStep3 = () => {
-  const [showPriorities, setShowPriorities] = useState(true);
+const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validationBranches }) => {
+  const [showPriorities, setShowPriorities] = useState(true)
 
-  const formData = usePRCreateStore((state) => state.formData);
-  const setFormData = usePRCreateStore((state) => state.setFormData);
-  const aiOthers = usePRCreateStore((state) => state.aiOthers);
-  const validationResult = usePRCreateStore((state) => state.validationResult);
+  // 로컬 상태로 제목과 설명을 관리
+  const [localTitle, setLocalTitle] = useState('')
+  const [localDescription, setLocalDescription] = useState('')
 
-  const candidates = aiOthers?.priority?.result?.candidates || [];
-  const slots = Array.from({ length: 3 }, (_, i) => candidates[i] || null);
+  const candidates = aiOthers?.priority?.result?.candidates || []
+  const slots = Array.from({ length: 3 }, (_, i) => candidates[i] || null)
   const priorityVariantMap = {
     LOW: 'priorityLow',
     MEDIUM: 'priorityMedium',
     HIGH: 'priorityHigh',
-  };
+  }
 
-  const isAiTitleLoading = !aiOthers?.title?.result;
-  const loadingDots = useLoadingDots(isAiTitleLoading, 300);
+  const isAiTitleLoading = !aiOthers?.title?.result
+  const loadingDots = useLoadingDots(isAiTitleLoading, 300)
+
+  // 컴포넌트 마운트 시 기존 formData로 로컬 상태 초기화
+  useEffect(() => {
+    setLocalTitle(formData.title || '')
+    setLocalDescription(formData.description || '')
+  }, [formData.title, formData.description])
+
+  const handleApplyAiTitle = () => {
+    setLocalTitle(aiOthers?.title?.result || '')
+  }
+
+  const handleNextStep = () => {
+    // 다음 단계로 넘어갈 때 로컬 상태를 formData에 반영
+    updateFormData({
+      title: localTitle,
+      description: localDescription,
+    })
+    console.log({ title: localTitle, description: localDescription })
+    goToStep(4)
+  }
 
   return (
     <div className="flex flex-col w-full space-y-3">
@@ -40,20 +58,12 @@ const PRCreateStep3 = () => {
                     AI 추천 제목
                   </label>
                   <div className="-mt-[16px]">
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        setFormData({ title: aiOthers?.title?.result || '' })
-                      }
-                    >
+                    <Button size="sm" onClick={handleApplyAiTitle}>
                       적용
                     </Button>
                   </div>
                   <div className="ml-auto -mt-[16px]">
-                    <Button
-                      size="sm"
-                      onClick={() => setShowPriorities(!showPriorities)}
-                    >
+                    <Button size="sm" onClick={() => setShowPriorities(!showPriorities)}>
                       {showPriorities ? '우선순위 숨김' : '우선순위 보기'}
                     </Button>
                   </div>
@@ -63,24 +73,22 @@ const PRCreateStep3 = () => {
                   type="text"
                   readOnly
                   value={
-                    isAiTitleLoading
-                      ? `추천받는 중${loadingDots}`
-                      : aiOthers?.title?.result || ''
+                    isAiTitleLoading ? `추천받는 중${loadingDots}` : aiOthers?.title?.result || ''
                   }
                   className="bg-white border-2 border-black rounded-[8px] w-full px-2 py-1"
                 />
               </div>
               <InputBox
                 label="PR 제목"
-                value={formData.title || ''}
-                onChange={(e) => setFormData({ title: e.target.value })}
+                value={localTitle}
+                onChange={(e) => setLocalTitle(e.target.value)}
               />
               <InputBox
                 className="h-50"
                 label="PR 설명"
                 as="textarea"
-                value={formData.description || ''}
-                onChange={(e) => setFormData({ description: e.target.value })}
+                value={localDescription}
+                onChange={(e) => setLocalDescription(e.target.value)}
               />
             </div>
           </Box>
@@ -97,20 +105,14 @@ const PRCreateStep3 = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Badge
-                            variant={
-                              priorityVariantMap[candidate.priority_level] || 'default'
-                            }
+                            variant={priorityVariantMap[candidate.priority_level] || 'default'}
                           >
                             {candidate.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-600 truncate">
-                            {candidate.title}
-                          </span>
+                          <span className="text-sm text-gray-600 truncate">{candidate.title}</span>
                         </div>
                       </div>
-                      <p className="text-gray-500 text-sm line-clamp-5">
-                        {candidate.reason}
-                      </p>
+                      <p className="text-gray-500 text-sm line-clamp-5">{candidate.reason}</p>
                     </div>
                   ) : (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -125,10 +127,26 @@ const PRCreateStep3 = () => {
       </div>
 
       <Box shadow>
-        <PRFileList files={validationResult?.files || []} />
+        <PRFileList files={validationBranches?.files || []} />
       </Box>
-    </div>
-  );
-};
+      <div className="mx-auto z-10">
+        <div className="flex justify-center items-center space-x-3">
+          <Button
+            onClick={() => {
+              goToStep(2)
+            }}
+            variant="secondary"
+          >
+            이전
+          </Button>
 
-export default PRCreateStep3;
+          <Button onClick={handleNextStep} variant="primary">
+            다음
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default PRCreateStep3
