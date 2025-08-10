@@ -10,6 +10,7 @@ import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import { fetchPRDetail } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import useLoadingDots from '@/lib/utils/useLoadingDots'
 import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
@@ -26,9 +27,10 @@ const PRReview = () => {
   const [comment, setComment] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
 
-  // PR 상세 정보를 로컬 상태로 관리
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
+
+  const loadingDots = useLoadingDots(loading)
 
   const loadPRComments = useCommentStore((state) => state.loadPRComments)
   const submitPRComment = useCommentStore((state) => state.submitPRComment)
@@ -58,7 +60,7 @@ const PRReview = () => {
     }
 
     load()
-  }, [repoId, prId]) // 매번 새로 호출하여 최신 데이터 보장
+  }, [repoId, prId])
 
   const handleSubmit = async () => {
     if (!comment.trim()) return
@@ -83,12 +85,8 @@ const PRReview = () => {
   // 로딩 중일 때 표시
   if (loading) {
     return (
-      <div className="pt-2 space-y-3">
-        <div className="flex flex-col md:flex-row items-stretch gap-4">
-          <Box shadow className="min-h-24 flex items-center justify-center">
-            <p className="text-stone-600">PR 정보를 불러오는 중...</p>
-          </Box>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center">
+        <p className="text-stone-600 text-2xl">PR 정보를 불러오는 중{loadingDots}</p>
       </div>
     )
   }
@@ -96,12 +94,8 @@ const PRReview = () => {
   // PR 정보가 없을 때 표시
   if (!prDetail) {
     return (
-      <div className="pt-2 space-y-3">
-        <div className="flex flex-col md:flex-row items-stretch gap-4">
-          <Box shadow className="min-h-24 flex items-center justify-center">
-            <p className="text-stone-600">PR 정보를 찾을 수 없습니다.</p>
-          </Box>
-        </div>
+      <div className="fixed inset-0 flex items-center justify-center">
+        <p className="text-stone-600 text-lg">PR 정보를 찾을 수 없습니다.</p>
       </div>
     )
   }
@@ -112,9 +106,7 @@ const PRReview = () => {
         <Box shadow className="min-h-24 flex-row space-y-1 flex items-center">
           <strong className="w-24">AI요약 : </strong>
           <p className="text-sm">
-            JWT 기반 인증 시스템을 구현했습니다. 토큰 생성, 검증, 리프레시 로직이 포함되어 있으며,
-            보안성이 크게 향상되었습니다. 프론트엔드와 백엔드 모두 수정이 필요한 규모가 큰
-            변경사항입니다.
+            {prDetail.summary}
           </p>
         </Box>
 
