@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.pullrequest.util;
 
+import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
@@ -18,6 +19,7 @@ import java.util.List;
 public class PullRequestMapper {
     
     public PullRequestDetailResponse pullRequestToDetailResponse(PullRequest pr,
+            Branch baseBranch , Branch headBranch,
             List<PullRequestFileInfo> pullRequestFileChanges,
             List<PullRequestCommitInfo> pullRequestCommitInfos) {
         return PullRequestDetailResponse.builder()
@@ -28,7 +30,9 @@ public class PullRequestMapper {
                 .body(pr.getBody())
                 .state(pr.getState().toString())
                 .merged(pr.getMerged())
+                .headBranch(headBranch)
                 .head(pr.getHead())
+                .baseBranch(baseBranch)
                 .base(pr.getBase())
                 .mergeable(pr.getMergeable() != null && pr.getMergeable())
                 .githubCreatedAt(pr.getGithubCreatedAt())

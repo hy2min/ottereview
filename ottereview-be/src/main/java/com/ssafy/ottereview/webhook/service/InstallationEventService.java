@@ -10,6 +10,7 @@ import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
+import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.BranchEventDto;
 import com.ssafy.ottereview.webhook.dto.InstallationEventDto;
 import com.ssafy.ottereview.webhook.dto.RepositoryEventDto;
@@ -34,6 +35,7 @@ public class InstallationEventService {
     private final UserAccountService userAccountService;
     private final BranchRepository branchRepository;
     private final RepoService repoService;
+    private final EventSendController eventSendController;
 
     public void processInstallationEvent(String payload) {
 
@@ -145,7 +147,8 @@ public class InstallationEventService {
     }
 
     private void handleBranchDeleted(BranchEventDto event) {
-        branchRepository.deleteByName(event.getName());
+        Repo repo = repoRepository.findByRepoId(event.getRepository().getRepoId()).orElseThrow();
+        branchRepository.deleteByNameAndRepo(event.getName(),repo);
     }
 
     // branch를 새로 만들면 주는 webhook을 다루는 로직이다.
@@ -183,7 +186,7 @@ public class InstallationEventService {
         }
         // repository , branch , pullRequest를 한번에 저장하는 로직이다.
         repoService.updateRepoList(ghRepositoryList, account);
-
+        eventSendController.push("update", "update");
     }
 
 
