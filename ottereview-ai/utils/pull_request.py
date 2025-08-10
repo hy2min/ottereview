@@ -6,7 +6,8 @@ import logging
 import json
 import re
 from collections import defaultdict, Counter
-from .vector_db import vector_db, PRData
+from .vector_db import vector_db
+from models import PRData, PreparationResult
 
 # === 설정 상수들 ===
 class ReviewerRecommendationConfig:
@@ -42,10 +43,10 @@ os.environ["OPENAI_API_BASE"] = "https://gms.ssafy.io/gmsapi/api.openai.com/v1"
 
 model = init_chat_model("gpt-4o-mini", model_provider="openai")
 
-async def recommand_pull_request_title(pr_data):
+async def recommand_pull_request_title(pr_data: PreparationResult):
     """추천할 Pull Request의 제목을 생성합니다.
     Args:
-        pr_data: PRData 객체 (vector_db.py의 구조)
+        pr_data: PreparationResult 객체 (자바 PreparationResult 구조)
     Returns:
         str: 추천할 Pull Request 제목
     """
@@ -61,11 +62,11 @@ async def recommand_pull_request_title(pr_data):
         -   `[FIX]: 데이터베이스 연결 오류 수정`
     """
     
-    # PRData 타입 (vector_db.py의 구조)에서 데이터 추출
+    # PreparationResult 타입에서 데이터 추출
     commit_messages = "\n".join([commit.message for commit in pr_data.commits])
     # Get top 5 changed files based on additions and deletions
     top_5_files = sorted(pr_data.files, key=lambda x: x.additions + x.deletions, reverse=True)[:5]
-    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files])
+    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files if file.patch])
 
     user_prompt = f"""다음 정보를 바탕으로 Pull Request 제목을 생성해주세요:
 
@@ -93,10 +94,10 @@ async def recommand_pull_request_title(pr_data):
     except Exception as e:
         raise e
 
-async def summary_pull_request(pr_data):
+async def summary_pull_request(pr_data: PreparationResult):
     """Pull Request의 내용을 요약합니다.
     Args:
-        pr_data: PRData 객체 (vector_db.py의 구조)
+        pr_data: PreparationResult 객체 (자바 PreparationResult 구조)
     Returns:
         str: Pull Request 내용 요약
     """
@@ -113,16 +114,23 @@ async def summary_pull_request(pr_data):
     "이 PR은 사용자 인증 로직을 개선하여 보안을 강화합니다. 주요 변경사항으로 JWT 토큰 발급 및 검증 로직을 수정하였으며, 이를 통해 더욱 안전한 사용자 인증이 가능해집니다."
     """
 
-    # PRData 타입 (vector_db.py의 구조)에서 데이터 추출
+    # PreparationResult 타입에서 데이터 추출
     commit_messages = "\n".join([commit.message for commit in pr_data.commits])
     top_5_files = sorted(pr_data.files, key=lambda x: x.additions + x.deletions, reverse=True)[:5]
-    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files])
-    descriptions = pr_data.descriptions or "No description provided."
+    patch_summary = "\n".join([f"File: {file.filename}\nPatch:\n{file.patch}" for file in top_5_files if file.patch])
+    descriptions_text = "No description provided."
+    if pr_data.descriptions and len(pr_data.descriptions) > 0:
+        # descriptions는 List[DescriptionInfo]이고, 각각의 body 필드에 실제 설명이 있음
+        valid_descriptions = [desc.body for desc in pr_data.descriptions if desc.body and desc.body.strip()]
+        if valid_descriptions:
+            descriptions_text = " | ".join(valid_descriptions)
+        else:
+            descriptions_text = "Description fields are empty."
     
     user_prompt = f"""다음 정보를 바탕으로 Pull Request 내용을 요약해주세요:
 
     **PR 제목:** {pr_data.title}
-    **작성자 설명:** {descriptions}
+    **작성자 설명:** {descriptions_text}
     **커밋 메시지:**
     {commit_messages}
     **가장 많이 변경된 파일 및 내용(patch):**
@@ -144,12 +152,12 @@ async def summary_pull_request(pr_data):
     except Exception as e:
         raise e
 
-async def recommend_reviewers(pr_data: PRData, limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
+async def recommend_reviewers(pr_data: PreparationResult, limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
     """
     RAG를 활용한 리뷰어 추천 로직
     
     Args:
-        pr_data: PRData 객체 (현재 PR 정보)
+        pr_data: PreparationResult 객체 (현재 PR 정보)
         limit: 추천할 리뷰어 수 (기본값: 3)
         
     Returns:
@@ -176,7 +184,7 @@ async def recommend_reviewers(pr_data: PRData, limit: int = ReviewerRecommendati
         logger.error(f"리뷰어 추천 중 오류 발생: {str(e)}")
         return []
 
-def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PRData) -> str:
+def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PreparationResult) -> str:
     """
     벡터 검색 결과를 LLM용 컨텍스트로 변환
     
@@ -232,13 +240,13 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PRD
     
     return "\n".join(context_parts)
 
-async def _generate_recommendations_with_llm(context: str, pr_data: PRData, similar_patterns: List[Dict[str, Any]], limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
+async def _generate_recommendations_with_llm(context: str, pr_data: PreparationResult, similar_patterns: List[Dict[str, Any]], limit: int = ReviewerRecommendationConfig.DEFAULT_RECOMMENDATION_LIMIT) -> List[Dict[str, Any]]:
     """
     LLM을 활용해 컨텍스트 기반 리뷰어 추천
     
     Args:
         context: 벡터 검색으로 구성된 컨텍스트
-        pr_data: 현재 PR 데이터
+        pr_data: 현재 PreparationResult 데이터
         similar_patterns: 벡터 DB에서 검색된 유사 패턴들 (폴백용)
         limit: 추천할 리뷰어 수
         
@@ -281,7 +289,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PRData, simi
 - 파일들: {files_summary}
 - 커밋 메시지: {commits_summary}
 - 브랜치: {pr_data.source} -> {pr_data.target}
-- 리뷰어: {pr_data.pre_reviewers}
+- 리뷰어: {[user.githubUsername for user in (pr_data.preReviewers or [])]}
 
 위 정보를 종합하여 가장 적합한 리뷰어 {limit}명을 추천해주세요."""
 

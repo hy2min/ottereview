@@ -24,9 +24,9 @@ const PRFileList = ({ files }) => {
   return (
     <div className="space-y-2 text-sm">
       {files.map((f) => (
-        <Box key={f.filename} shadow className="p-2 bg-gray-50 flex flex-col cursor-pointer">
+        <Box key={f.filename} shadow className="p-2 bg-gray-50 flex flex-col ">
           {/* 파일 정보가 담긴 클릭 가능한 헤더 */}
-          <div className="flex justify-between items-center" onClick={() => toggle(f.filename)}>
+          <div className="flex justify-between items-center cursor-pointer" onClick={() => toggle(f.filename)}>
             <div className="flex space-x-3">
               <FileText className="w-4 h-4 text-stone-600" />
               <span>{f.filename}</span>

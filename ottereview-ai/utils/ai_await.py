@@ -1,7 +1,7 @@
 import os
 import asyncio
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from enum import Enum
 import logging
 from dotenv import load_dotenv
@@ -31,7 +31,6 @@ class ConventionType(str, Enum):
     SNAKE_CASE = "snake_case"
     KEBAB_CASE = "kebab-case"
     CONSTANT_CASE = "CONSTANT_CASE"
-    NULL = ""
     
 class ConventionRule(BaseModel):
     """코딩 컨벤션 규칙"""
@@ -40,6 +39,12 @@ class ConventionRule(BaseModel):
     variable_names: Optional[ConventionType] = None
     class_names: Optional[ConventionType] = None
     constant_names: Optional[ConventionType] = None
+
+    @validator('*', pre=True)
+    def empty_str_to_none(cls, v):
+        if v == "":
+            return None
+        return v
 
     def to_prompt_string(self) -> str:
         """규칙 객체를 프롬프트에 사용될 문자열로 변환"""
@@ -55,6 +60,7 @@ class ConventionRule(BaseModel):
         if self.constant_names:
             rules_text.append(f"- 상수명: {self.constant_names.value}")
         return "\n".join(rules_text)
+
 
 def detect_language_from_filename(filename: str) -> str:
     """파일명에서 언어 감지"""
