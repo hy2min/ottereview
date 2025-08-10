@@ -1,48 +1,60 @@
 import { FolderCode, Plus } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import { fetchPRList } from '@/features/pullRequest/prApi'
+import { fetchRepoPRList } from '@/features/pullRequest/prApi'
 import PRCardDetail from '@/features/pullRequest/PRCardDetail'
-import { usePRStore } from '@/features/pullRequest/stores/prStore'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
-import { useBranchStore } from '@/features/repository/stores/branchStore'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
 
 const RepositoryDetail = () => {
   const { repoId } = useParams()
   const navigate = useNavigate()
-  const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
 
   const repos = useRepoStore((state) => state.repos)
   const repo = repos.find((r) => r.id === Number(repoId))
 
-  const [account, name] = repo.fullName.split('/')
+  const [repoPRs, setRepoPRs] = useState([])
+  const [branches, setBranches] = useState([])
 
-  const repoPRs = usePRStore((state) => state.repoPRs)
-  const setRepoPRs = usePRStore((state) => state.setRepoPRs)
+  const name = repo?.fullName?.split('/')[1]
 
   useEffect(() => {
     const load = async () => {
       try {
-        const repoPRsData = await fetchPRList(repoId)
+        const repoPRsData = await fetchRepoPRList(repoId)
         console.log('repoPRsdata : ', repoPRsData)
         setRepoPRs(repoPRsData)
 
         if (repo?.accountId && repoId) {
           const branchData = await fetchBrancheListByRepoId(repoId)
           console.log('branchdata : ', branchData)
-          setBranchesForRepo(Number(repoId), branchData)
+          setBranches(branchData) // 로컬 상태에 저장
         }
       } catch (err) {
         console.error('❌ PR 또는 브랜치 목록 불러오기 실패:', err)
+        setRepoPRs([]) // 에러 시 빈 배열로 초기화
+        setBranches([]) // 브랜치도 빈 배열로 초기화
       }
     }
 
-    load()
-  }, [repoId, setRepoPRs])
+    if (repoId) {
+      load()
+    }
+  }, [repoId, repo?.accountId])
+
+  // repo가 없는 경우 로딩 또는 에러 처리
+  if (!repo) {
+    return (
+      <div className="pt-2">
+        <Box shadow className="min-h-24 flex items-center justify-center">
+          <p className="text-stone-600">레포지토리를 찾을 수 없습니다.</p>
+        </Box>
+      </div>
+    )
+  }
 
   return (
     <div className="pt-2 space-y-3">

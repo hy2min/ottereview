@@ -13,7 +13,7 @@ export const fetchReviewerPRs = async () => {
 }
 
 // 레포에 있는 전체 PR 목록
-export const fetchPRList = async (repoId) => {
+export const fetchRepoPRList = async (repoId) => {
   const res = await api.get(`/api/repositories/${repoId}/pull-requests`)
   return res.data
 }

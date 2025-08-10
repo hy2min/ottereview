@@ -3,11 +3,8 @@ import { useState } from 'react'
 import Box from '../../components/Box'
 import InputBox from '../../components/InputBox'
 import PRCardCompact from './PRCardCompact'
-import { usePRStore } from './stores/prStore'
 
-const PRList = () => {
-  const authoredPRs = usePRStore((state) => state.authoredPRs)
-  const reviewerPRs = usePRStore((state) => state.reviewerPRs)
+const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
   const [selectedType, setSelectedType] = useState('all')
 
   // Add the state filter here
