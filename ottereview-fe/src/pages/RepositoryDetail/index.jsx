@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import InputBox from '@/components/InputBox'
 import { fetchRepoPRList } from '@/features/pullRequest/prApi'
 import PRCardDetail from '@/features/pullRequest/PRCardDetail'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
@@ -18,6 +19,7 @@ const RepositoryDetail = () => {
 
   const [repoPRs, setRepoPRs] = useState([])
   const [branches, setBranches] = useState([])
+  const [selectedBranch, setSelectedBranch] = useState('all') // 브랜치 필터 상태
 
   const name = repo?.fullName?.split('/')[1]
 
@@ -31,12 +33,12 @@ const RepositoryDetail = () => {
         if (repo?.accountId && repoId) {
           const branchData = await fetchBrancheListByRepoId(repoId)
           console.log('branchdata : ', branchData)
-          setBranches(branchData) // 로컬 상태에 저장
+          setBranches(branchData)
         }
       } catch (err) {
         console.error('❌ PR 또는 브랜치 목록 불러오기 실패:', err)
-        setRepoPRs([]) // 에러 시 빈 배열로 초기화
-        setBranches([]) // 브랜치도 빈 배열로 초기화
+        setRepoPRs([])
+        setBranches([])
       }
     }
 
@@ -45,7 +47,18 @@ const RepositoryDetail = () => {
     }
   }, [repoId, repo?.accountId])
 
-  // repo가 없는 경우 로딩 또는 에러 처리
+  // 브랜치별 PR 필터링
+  const filteredPRs = selectedBranch === 'all' 
+    ? repoPRs 
+    : repoPRs.filter(pr => pr.head === selectedBranch)
+
+  // 브랜치 옵션 생성 (PR이 있는 브랜치만)
+  const branchOptions = [
+    { label: '모든 브랜치', value: 'all' },
+    ...Array.from(new Set(repoPRs.map(pr => pr.head)))
+      .map(branch => ({ label: branch, value: branch }))
+  ]
+
   if (!repo) {
     return (
       <div className="pt-2">
@@ -58,39 +71,50 @@ const RepositoryDetail = () => {
 
   return (
     <div className="pt-2 space-y-3">
-      <div className="flex justify-between items-center">
-        <Box shadow className="min-h-24 flex-row space-y-1">
-          <div className="flex items-center space-x-3">
-            <FolderCode className="min-w-8 min-h-8" />
-            <div className="flex items-center space-x-2">
-              <h1 className="text-2xl leading-tight">{name}</h1>
-              {/* Private/Public 아이콘 + 텍스트 */}
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+        <Box shadow className="min-h-24 flex-row space-y-1 w-full lg:w-1/2">
+          <div className="flex items-center space-x-3 min-w-0">
+            <FolderCode className="min-w-8 min-h-8 shrink-0" />
+            <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <h1 className="text-2xl leading-tight truncate">{name}</h1>
               {repo.private ? (
-                <div className="flex items-center space-x-1 text-amber-600">
-                  <Lock className="w-6 h-6 " />
-                  <span className="text-lg font-medium mt-[4px]">Private</span>
-                </div>
+                <Lock className="w-6 h-6 text-amber-600" title="Private Repository" />
               ) : (
-                <div className="flex items-center space-x-1 text-emerald-600 mt-[2px]">
-                  <Globe className="w-6 h-6" />
-                  <span className="text-lg font-medium mt-[4px]">Public</span>
-                </div>
+                <Globe className="w-6 h-6 text-emerald-600" title="Public Repository" />
               )}
             </div>
           </div>
-          <p className="text-stone-600">{repoPRs.length}개의 Pull Request</p>
+          <p className="text-stone-600">{filteredPRs.length}개의 Pull Request</p>
         </Box>
 
-        <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
-          <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
-        </Button>
+        <div className="flex mt-auto items-end gap-3 w-full lg:w-1/2">
+          {/* 브랜치 필터 */}
+          <div className="flex-1">
+            <InputBox
+              as="select"
+              options={branchOptions}
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              placeholder="브랜치 선택"
+            />
+          </div>
+          
+          {/* 새 PR 생성 버튼 */}
+          <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
+            <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3">
-        {repoPRs.length === 0 ? (
-          <p>PR이 없습니다.</p>
+        {filteredPRs.length === 0 ? (
+          selectedBranch === 'all' ? (
+            <p>PR이 없습니다.</p>
+          ) : (
+            <p>선택한 브랜치에 PR이 없습니다.</p>
+          )
         ) : (
-          repoPRs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
+          filteredPRs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
         )}
       </div>
     </div>
