@@ -6,7 +6,6 @@ import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import { validateBranches, validatePR } from '@/features/pullRequest/prApi'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
-import { useBranchStore } from '@/features/repository/stores/branchStore'
 
 const PRCreateStep1 = ({
   goToStep,
@@ -24,8 +23,8 @@ const PRCreateStep1 = ({
   const [target, setTarget] = useState(formData.target || '')
   const [canGoNext, setCanGoNext] = useState(false)
 
-  const branches = useBranchStore((state) => state.branchesByRepo[repoId] || [])
-  const setBranchesForRepo = useBranchStore((state) => state.setBranchesForRepo)
+  // 브랜치 정보를 로컬 상태로 관리
+  const [branches, setBranches] = useState([])
 
   const handleValidateBranches = async () => {
     try {
@@ -48,14 +47,17 @@ const PRCreateStep1 = ({
     const loadBranches = async () => {
       try {
         const fetched = await fetchBrancheListByRepoId(repoId)
-        setBranchesForRepo(repoId, fetched)
+        setBranches(fetched)
       } catch (err) {
         console.error('브랜치 목록 불러오기 실패:', err)
+        setBranches([]) // 에러 시 빈 배열로 초기화
       }
     }
 
-    loadBranches()
-  }, [repoId, setBranchesForRepo])
+    if (repoId) {
+      loadBranches()
+    }
+  }, [repoId])
 
   // source나 target이 바뀔 때 상태 초기화 및 검증
   useEffect(() => {

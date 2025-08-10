@@ -1,11 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import ChatRoomList from '@/features/chat/ChatRoomList'
 import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
 import PRList from '@/features/pullRequest/PRList'
-import { usePRStore } from '@/features/pullRequest/stores/prStore'
 import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryList from '@/features/repository/RepositoryList'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
@@ -16,8 +15,11 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
 
-  const setAuthoredPRs = usePRStore((state) => state.setAuthoredPRs)
-  const setReviewerPRs = usePRStore((state) => state.setReviewerPRs)
+  // 로컬 상태로 PR 데이터 관리
+  const [authoredPRs, setAuthoredPRs] = useState([])
+  const [reviewerPRs, setReviewerPRs] = useState([])
+
+  // 레포는 여전히 zustand 사용 (다른 페이지에서도 사용할 가능성이 있다면)
   const setRepos = useRepoStore((state) => state.setRepos)
 
   useEffect(() => {
@@ -97,7 +99,7 @@ const Dashboard = () => {
     }
 
     fetchData()
-  }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
+  }, [user?.id, setRepos])
 
   const handleTest = async () => {
     try {
@@ -145,7 +147,7 @@ const Dashboard = () => {
           <RepositoryList />
         </div>
         <div className="w-full md:w-1/2 min-w-0">
-          <PRList />
+          <PRList authoredPRs={authoredPRs} reviewerPRs={reviewerPRs} />
         </div>
       </div>
     </div>
