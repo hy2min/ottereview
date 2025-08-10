@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.pullrequest.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/repositories/{repo-id}/pull-requests")
 @RequiredArgsConstructor
+@MvcController
 public class PullRequestController {
     
     private final PullRequestService pullRequestService;

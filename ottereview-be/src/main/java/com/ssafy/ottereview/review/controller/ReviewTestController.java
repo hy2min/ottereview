@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.review.controller;
 
 import com.ssafy.ottereview.account.repository.AccountRepository;
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -28,6 +29,7 @@ import org.springframework.web.client.RestTemplate;
 @RequestMapping("/api/{account-id}/{repo-id}/{pr-id}")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class ReviewTestController {
 
     private final GithubAppUtil githubAppUtil;

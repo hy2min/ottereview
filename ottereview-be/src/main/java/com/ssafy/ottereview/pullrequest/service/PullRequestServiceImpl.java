@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
@@ -19,14 +20,17 @@ import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
@@ -109,8 +113,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     public List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail) {
         User loginUser = userRepository.findById(customUserDetail.getUser()
                         .getId())
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser()
-                        .getId()));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
         
         List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser)
                 .stream()
@@ -140,8 +143,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .getId(), repoId);
         
         PullRequest existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Pull Request not found for source: " + source + " and target: " + target));
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
         
         return pullRequestMapper.PullRequestToResponse(existPullRequest);
     }
@@ -157,7 +159,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         PreparationResult prepareInfo = preparationRedisRepository.getPrepareInfo(repoId, request.getSource(), request.getTarget());
         
         if (prepareInfo == null || !prepareInfo.getIsPossible()) {
-            throw new IllegalArgumentException("PR 생성이 불가능합니다. 준비 상태를 확인해주세요.");
+            throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
         }
         
         // PR 생성 검증
@@ -283,8 +285,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 
                 // 1. repositoryId로 Repo 엔티티를 조회한다.
                 Repo targetRepo = repoRepository.findByRepoId(repo.getId())
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Repository not found with id: " + repo.getId()));
+                        .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
                 
                 // 2. GitHub PR 응답을 PullRequest 엔티티로 변환
                 List<PullRequest> newPullRequests = new ArrayList<>();
@@ -334,10 +335,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error while creating pull requests from GitHub repositories: {}",
-                    e.getMessage(), e);
-            throw new RuntimeException("Failed to create pull requests from GitHub repositories",
-                    e);
+            throw new BusinessException(PullRequestErrorCode.PR_CREATE_FAILED);
         }
         
     }
@@ -355,18 +353,15 @@ public class PullRequestServiceImpl implements PullRequestService {
                     .userGrade("BASIC")
                     .build();
             
-            log.info("New user registered: {}", user.getGithubUsername());
             return userRepository.save(user);
         } catch (Exception e) {
-            log.error("Failed to register user: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to register user from GitHub", e);
+            throw new BusinessException(UserErrorCode.USER_REGISTRATION_FAILED);
         }
     }
     
     private User getUserFromUserInfo(PrUserInfo prUserInfo) {
         return userRepository.findById(prUserInfo.getId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "User not found with id: " + prUserInfo.getId()));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
     }
     
     /**
@@ -374,7 +369,7 @@ public class PullRequestServiceImpl implements PullRequestService {
      */
     private void validatePullRequestCreation(PreparationResult preparationResult, Repo repo) {
         if (preparationResult.getSource() == null || preparationResult.getTarget() == null || preparationResult.getTitle() == null || repo.getFullName() == null) {
-            throw new IllegalArgumentException("Source or target branch is null");
+            throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
         }
     }
     
