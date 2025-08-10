@@ -21,4 +21,6 @@ public interface UserAccountService {
     Repo validateUserPermission(Long userId, Long repoId);
 
     List<UserResponseDto> getUsersByAccount(Long accountId);
+
+    void saveUserAndAccount(User user , Account account);
  }

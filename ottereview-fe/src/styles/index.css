@@ -121,6 +121,18 @@ html {
   --color-info-700: #1976d2;
   --color-info-800: #1565c0;
   --color-info-900: #0d47a1;
+
+  --color-normal-removed-num: #ffcecb;
+  --color-normal-removed-code: #ffebe9;
+  --color-normal-added-num: #aceebb;
+  --color-normal-added-code: #dafbe1;
+
+  --color-selected-normal-num: #edecc3;
+  --color-selected-normal-code: #edf3fd;
+  --color-selected-removed-num: #eec29f;
+  --color-selected-removed-code: #ede1e9;
+  --color-selected-added-num: #9fde94;
+  --color-selected-added-code: #caf0e2;
 }
 
 :root {
@@ -222,6 +234,18 @@ html {
   --color-info-700: #1976d2;
   --color-info-800: #1565c0;
   --color-info-900: #0d47a1;
+
+  --color-normal-removed-num: #ffcecb;
+  --color-normal-removed-code: #ffebe9;
+  --color-normal-added-num: #aceebb;
+  --color-normal-added-code: #dafbe1;
+
+  --color-selected-normal-num: #edecc3;
+  --color-selected-normal-code: #edf3fd;
+  --color-selected-removed-num: #eec29f;
+  --color-selected-removed-code: #ede1e9;
+  --color-selected-added-num: #9fde94;
+  --color-selected-added-code: #caf0e2;
   /* =======================================================
      🖋️ Font Families
      ======================================================= */

@@ -43,6 +43,7 @@ import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -111,8 +112,11 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + customUserDetail.getUser()
                         .getId()));
         
-        List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser);
-        
+        List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser)
+                .stream()
+                .filter(pr -> pr.getState().equals(PrState.OPEN))
+                .toList();
+
         return pullRequests.stream()
                 .map(pullRequestMapper::PullRequestToResponse)
                 .toList();
