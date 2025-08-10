@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/features/auth/authStore'
+import InstallComplete from '@/features/auth/InstallComplete'
 import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import { api } from '@/lib/api'
@@ -40,6 +41,7 @@ const App = () => {
 
   if (pathname === '/chatroom/test') return <ChatRoom />
   if (pathname === '/audiotest') return <AudioChatRoom />
+  if (pathname === '/install-complete') return <InstallComplete />
 
   const isLoggedIn = !!user
 

@@ -1,4 +1,4 @@
-import { api } from '../../lib/api'
+import { api } from '@/lib/api'
 
 // 내가 작성한 PR 목록
 export const fetchAuthoredPRs = async () => {
@@ -25,8 +25,26 @@ export const fetchPRDetail = async ({ repoId, prId }) => {
 }
 
 // PR 생성
-export const submitPR = async (prData) => {
-  return // 구현 예정
+export const submitPR = async ({ formData, repoId }) => {
+  const formDataObj = new FormData()
+
+  const pullRequestData = {
+    source: formData.source,
+    target: formData.target,
+  }
+
+  formDataObj.append('pullRequest', JSON.stringify(pullRequestData))
+
+  const res = await api.post(`/api/repositories/${repoId}/pull-requests`, formDataObj)
+
+  return res.data
+}
+
+export const validatePR = async ({ repoId, source, target }) => {
+  const res = await api.get(`/api/repositories/${repoId}/pull-requests/search`, {
+    params: { source, target },
+  })
+  return res.data
 }
 
 export const validateBranches = async ({ repoId, source, target }) => {
@@ -34,7 +52,7 @@ export const validateBranches = async ({ repoId, source, target }) => {
     source,
     target,
   })
-  return res.data // 이걸 그대로 validationResult에 세팅 가능
+  return res.data
 }
 
 // AI 컨벤션 요청
