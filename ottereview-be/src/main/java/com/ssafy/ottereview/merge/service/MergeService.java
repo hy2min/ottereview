@@ -40,12 +40,14 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.kohsuke.github.GHAppInstallation;
@@ -322,7 +324,9 @@ public class MergeService {
         try {
             // 1. clone repo
             Git git = cloneRepository(repoUrl, tempPath.toString(), installationId);
-            
+
+            ensureOrigin(git, repoUrl);
+
             GHAppInstallationToken installationToken = getToken(installationId);
             var creds = new UsernamePasswordCredentialsProvider("x-access-token", installationToken.getToken());
             // 2. 원격 브랜치 정보 fetch (한 번만)
@@ -384,7 +388,20 @@ public class MergeService {
         }
         return null;
     }
-    
+
+    private void ensureOrigin(Git git, String repoUrl) throws Exception {
+        StoredConfig cfg = git.getRepository().getConfig();
+        if (cfg.getString("remote", "origin", "url") == null) {
+            log.info("임시로 생성한다");
+            git.remoteAdd()
+                    .setName("origin")
+                    .setUri(new URIish(repoUrl))
+                    .call();
+            cfg.setString("remote", "origin", "fetch", "+refs/heads/*:refs/remotes/origin/*");
+            cfg.save();
+        }
+    }
+
     private String getFileContentFromBranch(Git git, String branch, String path, Long installationId) throws Exception {
         Repository repo = git.getRepository();
         GHAppInstallationToken installationToken = getToken(installationId);
