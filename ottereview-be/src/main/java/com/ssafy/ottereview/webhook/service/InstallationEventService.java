@@ -6,6 +6,7 @@ import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.repository.BranchRepository;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
@@ -14,6 +15,7 @@ import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.BranchEventDto;
 import com.ssafy.ottereview.webhook.dto.InstallationEventDto;
 import com.ssafy.ottereview.webhook.dto.RepositoryEventDto;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +66,7 @@ public class InstallationEventService {
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
 

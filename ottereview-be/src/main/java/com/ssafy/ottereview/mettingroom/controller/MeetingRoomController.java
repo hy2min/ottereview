@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/meetings")
 @Slf4j
 @RequiredArgsConstructor
+@MvcController
 public class MeetingRoomController {
     private final MeetingRoomService meetingRoomService;
 

@@ -1,10 +1,13 @@
 package com.ssafy.ottereview.auth.service;
 
 import com.ssafy.ottereview.auth.dto.GithubUserDto;
+import com.ssafy.ottereview.auth.exception.AuthErrorCode;
 import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 import com.ssafy.ottereview.auth.jwt.service.TokenService;
 import com.ssafy.ottereview.auth.jwt.util.JwtUtil;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.user.service.UserService;
 import java.util.List;
@@ -97,7 +100,7 @@ public class AuthServiceImpl implements AuthService {
                         .filter(e -> e.isPrimary() && e.isVerified())
                         .map(e -> e.getEmail())
                         .findFirst()
-                        .orElseThrow(() -> new RuntimeException("GitHub email not provided or private."));
+                        .orElseThrow(() -> new BusinessException(AuthErrorCode.GITHUB_USER_NOT_FOUND));
             }
 
             String avatarUrl = myself.getAvatarUrl();
@@ -105,7 +108,7 @@ public class AuthServiceImpl implements AuthService {
             return new GithubUserDto(login, githubId, email, type, avatarUrl);
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to request GitHub user via hub4j", e);
+            throw new BusinessException(AuthErrorCode.GITHUB_USER_API_ERROR);
         }
     }
 
@@ -142,16 +145,16 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(readOnly = true)
     public LoginResponseDto refreshAccessToken(String refreshToken) {
         if (!jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new BusinessException(AuthErrorCode.INVALID_REFRESH_TOKEN);
         }
         Long userId = Long.valueOf(jwtUtil.getClaims(refreshToken).getSubject());
 
         String storedToken = tokenService.getRefreshToken(userId);
         if (storedToken == null || !storedToken.equals(refreshToken)) {
-            throw new RuntimeException("Refresh token not found or mismatched");
+            throw new BusinessException(AuthErrorCode.REFRESH_TOKEN_INVALID);
         }
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
         String newAccessToken = jwtUtil.createAccessToken(user);
         return new LoginResponseDto(newAccessToken, refreshToken);
     }

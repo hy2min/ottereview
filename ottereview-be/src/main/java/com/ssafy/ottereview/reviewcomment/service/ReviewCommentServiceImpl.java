@@ -2,16 +2,20 @@ package com.ssafy.ottereview.reviewcomment.service;
 
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.ai.service.AiAudioProcessingService;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.review.entity.Review;
+import com.ssafy.ottereview.review.exception.ReviewErrorCode;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.review.service.ReviewGithubService;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
+import com.ssafy.ottereview.reviewcomment.exception.ReviewCommentErrorCode;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.time.Duration;
 import java.util.Collections;
@@ -60,9 +64,9 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
         try {
             // 엔티티 조회
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
             Review review = reviewRepository.findById(reviewId)
-                    .orElseThrow(() -> new IllegalArgumentException("Review not found: " + reviewId));
+                    .orElseThrow(() -> new BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
             // 모든 댓글을 병렬로 처리 후 .block()으로 결과 기다림
             List<ReviewComment> comments = Flux.fromIterable(reviewCommentCreateRequest.getComments())
@@ -132,7 +136,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
             if (!uploadedFileKeys.isEmpty()) {
                 s3Service.cleanupUploadedFiles(uploadedFileKeys);
             }
-            throw new RuntimeException("댓글 일괄 작성에 실패했습니다.", e);
+            throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_CREATE_FAILED);
         }
     }
 
@@ -142,11 +146,12 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     public ReviewCommentResponse updateComment(Long commentId,
                                                ReviewCommentUpdateRequest commentUpdateRequest, Long userId, MultipartFile file) {
         ReviewComment existingComment = reviewCommentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
+                .orElseThrow(() -> new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_NOT_FOUND));
 
         // 작성자 검증
         if (!existingComment.getUser().getId().equals(userId)) {
-            throw new IllegalArgumentException("본인이 작성한 댓글만 수정할 수 있습니다.");
+            throw new BusinessException(
+                    ReviewCommentErrorCode.REVIEW_COMMENT_NOT_AUTHORIZED);
         }
 
         String newBody = existingComment.getBody();
@@ -204,6 +209,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                             log.error(
                                     "댓글 수정 - 기존 파일 삭제 실패 (데이터 정합성 유지됨): CommentId: {}, OldRecordKey: {}, 오류: {}",
                                     commentId, oldRecordKey, oldFileDeleteException.getMessage());
+                         
                         }
                     }
 
