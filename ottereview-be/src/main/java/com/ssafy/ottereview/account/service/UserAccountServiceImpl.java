@@ -83,7 +83,17 @@ public class UserAccountServiceImpl implements UserAccountService {
                 .map(UserResponseDto::fromEntity)
                 .toList();
     }
-    
+
+    @Override
+    public void saveUserAndAccount(User user, Account account) {
+        if(!userAccountRepository.existsByUserAndAccount(user,account)) {
+            userAccountRepository.save(UserAccount.builder()
+                    .account(account)
+                    .user(user)
+                    .build());
+        }
+    }
+
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),
@@ -92,4 +102,6 @@ public class UserAccountServiceImpl implements UserAccountService {
                 account.getType()
         );
     }
+
+
 }
