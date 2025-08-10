@@ -18,13 +18,14 @@ const PRCreateStep1 = ({ repoId, accountId }) => {
 
   const handleValidate = async () => {
     try {
-      const result = await validateBranches({
+      const data = await validateBranches({
         repoId,
         source: formData.sourceBranch,
         target: formData.targetBranch,
       })
-      setValidationResult(result)
-      console.log(result)
+
+      setValidationResult(data)
+      console.log(data)
     } catch (err) {
       console.error('브랜치 검증 실패:', err)
     }
@@ -73,12 +74,26 @@ const PRCreateStep1 = ({ repoId, accountId }) => {
         />
       </div>
 
+      <div className="flex justify-end">
+        <Button
+          variant="primary"
+          onClick={handleValidate}
+          disabled={
+            !formData.sourceBranch ||
+            !formData.targetBranch ||
+            formData.sourceBranch === formData.targetBranch
+          }
+        >
+          브랜치 검증
+        </Button>
+      </div>
+
       {formData.sourceBranch &&
         formData.targetBranch &&
         formData.sourceBranch !== formData.targetBranch && (
-          <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800">
-            <strong>{formData.sourceBranch}</strong> 에서 <strong>{formData.targetBranch}</strong>{' '}
-            로의 변경을 생성합니다.
+          <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800 break-words">
+            <strong>{formData.sourceBranch}</strong> 에서{' '}
+            <strong>{formData.targetBranch}</strong> 로의 변경을 생성합니다.
           </div>
         )}
 
@@ -89,18 +104,6 @@ const PRCreateStep1 = ({ repoId, accountId }) => {
             소스 브랜치와 타겟 브랜치가 동일합니다.
           </div>
         )}
-
-      <Button
-        variant="primary"
-        onClick={handleValidate}
-        disabled={
-          !formData.sourceBranch ||
-          !formData.targetBranch ||
-          formData.sourceBranch === formData.targetBranch
-        }
-      >
-        브랜치 검증
-      </Button>
     </Box>
   )
 }

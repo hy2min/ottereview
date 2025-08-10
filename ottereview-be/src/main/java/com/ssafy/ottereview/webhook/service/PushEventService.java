@@ -3,7 +3,7 @@ package com.ssafy.ottereview.webhook.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
-import com.ssafy.ottereview.pullrequest.service.PullRequestPreparationService;
+import com.ssafy.ottereview.preparation.service.PreparationService;
 import com.ssafy.ottereview.webhook.dto.PushEventDto;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class PushEventService {
     
     private final ObjectMapper objectMapper;
     private final GithubApiClient githubApiClient;
-    private final PullRequestPreparationService prPreparationService;
+    private final PreparationService prPreparationService;
     
     public void processPushEvent(String payload) {
         log.info("Push Event 프로세스 실행");

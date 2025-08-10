@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.ai.repository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import java.time.Duration;
@@ -46,6 +47,12 @@ public class AiRedisRepository {
             String jsonData = redisTemplate.opsForValue()
                     .get(key);
             
+            // null 체크 추가
+            if (jsonData == null || jsonData.trim().isEmpty()) {
+                log.warn("Redis에서 데이터를 찾을 수 없습니다. key: {}", key);
+                return null;
+            }
+            
             return objectMapper.readValue(jsonData, AiResult.class);
             
         } catch (Exception e) {
@@ -57,7 +64,7 @@ public class AiRedisRepository {
     /**
      * Ai 정보 삭제
      */
-    public void deleteAiInfo(AiRequest request) {
+    public void deleteAiInfo(AiConventionRequest request) {
         try {
             String mainKey = generateMainKey(request.getRepoId(), request.getSource(), request.getTarget());
             

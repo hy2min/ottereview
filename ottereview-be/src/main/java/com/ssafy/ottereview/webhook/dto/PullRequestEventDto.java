@@ -28,6 +28,9 @@ public class PullRequestEventDto {
     @JsonProperty("repository")
     private RepositoryInfo repository;
 
+    private String before;
+    private String after;
+    
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter

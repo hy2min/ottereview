@@ -7,12 +7,16 @@ import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.entity.ReviewState;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
+import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.dto.ReviewEventDto;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,24 +31,16 @@ public class ReviewEventService {
     private final ObjectMapper objectMapper;
     private final ReviewRepository reviewRepository;
     private final UserEventService userEventService;
+    private final ReviewerRepository reviewerRepository;
     
     public void processReviewEvent(String payload) {
-        try {
-            JsonNode json = objectMapper.readTree(payload);
-            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(json);
-            
-            log.debug("전체 페이로드 출력:\n{}", formattedPayload);
-        } catch (Exception e) {
-            log.error("Error parsing payload: {}", e.getMessage());
-        }
         
         try {
             
             ReviewEventDto event = objectMapper.readValue(payload, ReviewEventDto.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
-//            log.debug("DTO로 받은 ReviewEventDto event: {}", formattedPayload);
+            log.debug("DTO로 받은 ReviewEventDto event: {}", formattedPayload);
             
             switch (event.getAction()) {
                 case "edited":
@@ -99,7 +95,7 @@ public class ReviewEventService {
                                 .getId()));
         
         // 2. User 조회 또는 생성
-        User reviewer = userRepository.findByGithubId(event.getReview()
+        User author = userRepository.findByGithubId(event.getReview()
                         .getUser()
                         .getId())
                 .orElseGet(() -> userEventService.registerUser(event.getReview()
@@ -110,7 +106,7 @@ public class ReviewEventService {
                 .githubId(event.getReview()
                         .getId())
                 .pullRequest(pullRequest)
-                .user(reviewer)
+                .user(author)
                 .body(event.getReview()
                         .getBody())
                 .commitSha(event.getReview()
@@ -123,5 +119,10 @@ public class ReviewEventService {
         
         // 4. Review 저장
         reviewRepository.save(review);
+        
+        // 5. 작성자가 reviewer인 경우 approveCnt 증가
+        if(reviewerRepository.existsByPullRequestAndUser(pullRequest, author)){
+            pullRequest.addApproveCnt();
+        }
     }
 }

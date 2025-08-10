@@ -1,7 +1,7 @@
-package com.ssafy.ottereview.pullrequest.dto.preparation.request;
+package com.ssafy.ottereview.preparation.dto.request;
 
-import com.ssafy.ottereview.pullrequest.dto.preparation.DescriptionInfo;
-import com.ssafy.ottereview.pullrequest.dto.preparation.PriorityInfo;
+import com.ssafy.ottereview.preparation.dto.DescriptionInfo;
+import com.ssafy.ottereview.preparation.dto.PriorityInfo;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

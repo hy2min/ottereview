@@ -178,7 +178,7 @@ const AudioChatRoom = ({ roomId }) => {
     setSubscribers([])
     setConnectionStatus('connecting')
     if (audioContainer.current) {
-      audioContainer.current.innerHTML = ''
+      audioContainer.current.innerHTML = '' // 오디오 요소들 제거
     }
   }
 

@@ -24,7 +24,7 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
     private static final String ATTR_SEND_LOCK = "__send_lock";
 
     @Override
-    public void afterConnectionEstablished(WebSocketSession session){
+    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         String roomId = extractRoomId(session);
         log.info("YJS WebSocket 연결됨 - roomId: {}, sessionId: {}", roomId, session.getId());
 
@@ -129,6 +129,19 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
             }
         }
         throw new IllegalArgumentException("Invalid WebSocket path: roomId is missing");
+    }
+
+    public void closeRoom(Long roomId) {
+        Set<WebSocketSession> sessions = roomSessions.remove(roomId.toString());
+        if (sessions != null) {
+            for (WebSocketSession s : sessions) {
+                try {
+                    s.close(CloseStatus.GOING_AWAY);
+                } catch (IOException e) {
+                    log.warn("Fail to close YJS session: {}", s.getId());
+                }
+            }
+        }
     }
 
 }

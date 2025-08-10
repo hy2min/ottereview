@@ -2,7 +2,7 @@ import { api } from '../../lib/api'
 
 // 내가 작성한 PR 목록
 export const fetchAuthoredPRs = async () => {
-  const res = await api.get(`/api/repositories/1/pull-requests`)
+  const res = await api.get(`/api/repositories/pull-requests/me`)
   return res.data
 }
 
@@ -35,4 +35,27 @@ export const validateBranches = async ({ repoId, source, target }) => {
     target,
   })
   return res.data // 이걸 그대로 validationResult에 세팅 가능
+}
+
+// AI 컨벤션 요청
+export const requestAIConvention = async ({ repoId, source, target, rules }) => {
+  const payload = {
+    repo_id: repoId,
+    source,
+    target,
+    rules,
+  }
+  const res = await api.post('/api/ai/conventions/check', payload)
+  return res.data
+}
+
+export const requestAIOthers = async ({ repoId, source, target, rules }) => {
+  const payload = {
+    repo_id: repoId,
+    source,
+    target,
+    rules,
+  }
+  const res = await api.post('/api/ai/all', payload)
+  return res.data
 }
