@@ -1,4 +1,4 @@
-import { FolderCode, Plus } from 'lucide-react'
+import { FolderCode, Globe, Lock, Plus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -60,9 +60,23 @@ const RepositoryDetail = () => {
     <div className="pt-2 space-y-3">
       <div className="flex justify-between items-center">
         <Box shadow className="min-h-24 flex-row space-y-1">
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-3">
             <FolderCode className="min-w-8 min-h-8" />
-            <h1 className="text-2xl">{name}</h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-2xl leading-tight">{name}</h1>
+              {/* Private/Public 아이콘 + 텍스트 */}
+              {repo.private ? (
+                <div className="flex items-center space-x-1 text-amber-600">
+                  <Lock className="w-6 h-6 " />
+                  <span className="text-lg font-medium mt-[4px]">Private</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1 text-emerald-600 mt-[2px]">
+                  <Globe className="w-6 h-6" />
+                  <span className="text-lg font-medium mt-[4px]">Public</span>
+                </div>
+              )}
+            </div>
           </div>
           <p className="text-stone-600">{repoPRs.length}개의 Pull Request</p>
         </Box>
