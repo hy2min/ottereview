@@ -2,6 +2,7 @@ package com.ssafy.ottereview.account.controller;
 
 import com.ssafy.ottereview.account.dto.AccountResponse;
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @RestController
+@MvcController
 public class UserAccountController {
     
     private final UserAccountService accountService;

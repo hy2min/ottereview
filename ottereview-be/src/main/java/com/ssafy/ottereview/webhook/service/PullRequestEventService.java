@@ -2,6 +2,7 @@ package com.ssafy.ottereview.webhook.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
@@ -12,6 +13,7 @@ import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.RepositoryInfo;
 import com.ssafy.ottereview.webhook.dto.PullRequestWebhookInfo;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +84,7 @@ public class PullRequestEventService {
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
     
