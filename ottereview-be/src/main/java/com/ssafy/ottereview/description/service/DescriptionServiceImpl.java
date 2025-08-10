@@ -128,7 +128,7 @@ public class DescriptionServiceImpl implements DescriptionService {
                                 // AI 처리와 S3 업로드를 병렬로
                                 Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
                                 Mono<String> s3Upload = Mono.fromCallable(() -> {
-                                    String key = s3Service.uploadFile(file, request.getPullRequestId());
+                                    String key = s3Service.uploadDesFile(file, request.getPullRequestId());
                                     uploadedFileKeys.add(key);
                                     return key;
                                 }).subscribeOn(Schedulers.boundedElastic());
@@ -225,7 +225,7 @@ public class DescriptionServiceImpl implements DescriptionService {
             // AI 처리와 S3 업로드를 병렬로 수행
             Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
             Mono<String> s3Upload = Mono.fromCallable(() -> 
-                s3Service.uploadFile(file, description.getPullRequest().getId())
+                s3Service.uploadDesFile(file, description.getPullRequest().getId())
             ).subscribeOn(Schedulers.boundedElastic());
 
             var result = Mono.zip(aiProcessing, s3Upload).block();

@@ -4,7 +4,8 @@ from langchain.chat_models import init_chat_model
 from typing import List, Dict, Any
 import logging
 from collections import defaultdict, Counter
-from .vector_db import vector_db, PRData
+from .vector_db import vector_db
+from models import PreparationResult, PRData  # PRData는 하위 호환성을 위해 유지
 from .config_based_priority import calculate_config_based_priority_candidates
 
 # .env 파일에서 환경변수 로드
@@ -23,7 +24,7 @@ os.environ["OPENAI_API_BASE"] = "https://gms.ssafy.io/gmsapi/api.openai.com/v1"
 model = init_chat_model("gpt-4o-mini", model_provider="openai")
 
 
-async def recommend_priority(pr_data: PRData) -> Dict[str, Any]:
+async def recommend_priority(pr_data: PreparationResult) -> Dict[str, Any]:
     """
     RAG를 활용한 리뷰 우선순위 추천 로직 - 3개의 후보 반환
     
@@ -76,7 +77,7 @@ def _get_default_error_response() -> Dict[str, Any]:
         ]
     }
 
-def _validate_and_complete_candidates(result: Dict[str, Any], pr_data: PRData) -> Dict[str, Any]:
+def _validate_and_complete_candidates(result: Dict[str, Any], pr_data: PreparationResult) -> Dict[str, Any]:
     """결과를 검증하고, 3개가 안되면 설정 기반 또는 기본값으로 채움"""
     
     candidates = result.get('priority', [])
@@ -125,7 +126,7 @@ def _validate_and_complete_candidates(result: Dict[str, Any], pr_data: PRData) -
 
 
 
-def _build_priority_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PRData) -> str:
+def _build_priority_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PreparationResult) -> str:
     """
     벡터 검색 결과를 LLM용 우선순위 분석 컨텍스트로 변환
     
@@ -187,7 +188,7 @@ def _build_priority_context_from_patterns(patterns: List[Dict[str, Any]], curren
     return "\n".join(context_parts)
 
 
-async def _generate_priority_candidates_with_llm(context: str, pr_data: PRData) -> Dict[str, Any]:
+async def _generate_priority_candidates_with_llm(context: str, pr_data: PreparationResult) -> Dict[str, Any]:
     """
     LLM을 활용해 컨텍스트 기반으로 3개의 우선순위 후보 생성
     
@@ -273,7 +274,7 @@ async def _generate_priority_candidates_with_llm(context: str, pr_data: PRData) 
         return calculate_config_based_priority_candidates(pr_data)
 
 
-def _parse_priority_candidates_response(response_text: str, pr_data: PRData) -> Dict[str, Any]:
+def _parse_priority_candidates_response(response_text: str, pr_data: PreparationResult) -> Dict[str, Any]:
     """
     LLM 우선순위 후보 응답을 파싱
     
@@ -333,175 +334,3 @@ def _parse_priority_candidates_response(response_text: str, pr_data: PRData) -> 
         return calculate_config_based_priority_candidates(pr_data)
 
 
-def _calculate_basic_priority_candidates(pr_data: PRData) -> Dict[str, Any]:
-    """
-    LLM 실패 시 사용할 기본 우선순위 3개 후보 계산
-    
-    **DEPRECATED**: 이 함수는 더 이상 사용되지 않습니다.
-    대신 config_based_priority.py의 calculate_config_based_priority_candidates를 사용하세요.
-    하드코딩된 규칙들이 YAML 설정 파일로 분리되어 더 유지보수하기 쉽습니다.
-    
-    Args:
-        pr_data: PR 데이터
-        
-    Returns:
-        Dict[str, Any]: 3개의 기본 우선순위 후보 결과
-    """
-    try:
-        total_changes = sum(f.additions + f.deletions for f in pr_data.files)
-        file_count = len(pr_data.files)
-        
-        # 파일 타입별 분석
-        security_files = [f for f in pr_data.files if any(keyword in f.filename.lower() 
-                         for keyword in ['auth', 'security', 'jwt', 'password', 'token', 'login'])]
-        
-        db_files = [f for f in pr_data.files if any(keyword in f.filename.lower()
-                   for keyword in ['model', 'entity', 'migration', 'schema', 'database'])]
-        
-        api_files = [f for f in pr_data.files if any(keyword in f.filename.lower()
-                    for keyword in ['controller', 'api', 'endpoint', 'route', 'handler'])]
-        
-        test_files = [f for f in pr_data.files if 'test' in f.filename.lower()]
-        
-        candidates = []
-        
-        # 실제 파일명과 변경사항 분석
-        security_file_names = [f.filename for f in security_files]
-        db_file_names = [f.filename for f in db_files]
-        api_file_names = [f.filename for f in api_files]
-        test_file_names = [f.filename for f in test_files]
-        
-        # 첫 번째 후보: 보안/인증 관련 변경
-        if security_files:
-            security_types = []
-            for fname in security_file_names:
-                if 'jwt' in fname.lower():
-                    security_types.append('JWT 토큰')
-                elif 'auth' in fname.lower():
-                    security_types.append('인증')
-                elif 'security' in fname.lower():
-                    security_types.append('보안 설정')
-                elif any(kw in fname.lower() for kw in ['password', 'token', 'login']):
-                    security_types.append('로그인/토큰')
-            
-            security_desc = ', '.join(security_types) if security_types else '보안'
-            candidates.append({
-                'title': f'{security_desc} 로직 수정',
-                'priority_level': 'CRITICAL',
-                'reason': f'{", ".join(security_file_names[:2])} 등의 보안 관련 파일이 수정되었습니다. {security_desc} 검증 로직과 권한 체크, 보안 취약점이 없는지 확인해주세요.'
-            })
-        elif total_changes > 500 or file_count > 15:
-            main_files = [f.filename for f in pr_data.files[:3]]
-            candidates.append({
-                'title': '대규모 기능 구현',
-                'priority_level': 'HIGH', 
-                'reason': f'{", ".join(main_files)} 등 총 {file_count}개 파일에 {total_changes}라인이 변경되었습니다. 전체적인 아키텍처 영향도와 기능 간 연관성을 확인해주세요.'
-            })
-        else:
-            main_file = pr_data.files[0].filename if pr_data.files else '파일'
-            candidates.append({
-                'title': '일반 기능 변경',
-                'priority_level': 'MEDIUM',
-                'reason': f'{main_file} 등에서 기능이 수정되었습니다. 비즈니스 로직이 올바르게 구현되었는지와 예외 처리를 확인해주세요.'
-            })
-        
-        # 두 번째 후보: API/데이터베이스 변경
-        if db_files:
-            db_desc = []
-            for fname in db_file_names:
-                if 'entity' in fname.lower() or 'model' in fname.lower():
-                    db_desc.append('엔티티/모델')
-                elif 'migration' in fname.lower():
-                    db_desc.append('마이그레이션')
-                elif 'repository' in fname.lower():
-                    db_desc.append('레포지토리')
-            
-            db_type = ', '.join(set(db_desc)) if db_desc else '데이터베이스'
-            candidates.append({
-                'title': f'데이터베이스 {db_type} 변경',
-                'priority_level': 'HIGH',
-                'reason': f'{", ".join(db_file_names[:2])} 등의 데이터베이스 관련 파일이 수정되었습니다. 스키마 변경사항, 데이터 무결성, 마이그레이션 스크립트를 확인해주세요.'
-            })
-        elif api_files:
-            api_desc = []
-            for fname in api_file_names:
-                if 'controller' in fname.lower():
-                    api_desc.append('컨트롤러')
-                elif 'api' in fname.lower():
-                    api_desc.append('API')
-                elif any(kw in fname.lower() for kw in ['endpoint', 'route']):
-                    api_desc.append('엔드포인트')
-            
-            api_type = ', '.join(set(api_desc)) if api_desc else 'API'
-            candidates.append({
-                'title': f'{api_type} 인터페이스 변경', 
-                'priority_level': 'HIGH',
-                'reason': f'{", ".join(api_file_names[:2])} 등의 API 관련 파일이 수정되었습니다. 요청/응답 스펙 변경, 기존 클라이언트 호환성, 에러 처리를 확인해주세요.'
-            })
-        else:
-            candidates.append({
-                'title': '내부 로직 구현',
-                'priority_level': 'MEDIUM',
-                'reason': '내부 비즈니스 로직이 구현되었습니다. 코드 품질, 성능, 가독성 측면에서 검토해주세요.'
-            })
-        
-        # 세 번째 후보: 테스트 및 기타 변경
-        if test_files:
-            candidates.append({
-                'title': '테스트 코드 추가/수정',
-                'priority_level': 'MEDIUM',
-                'reason': f'{", ".join(test_file_names[:2])} 등의 테스트 파일이 수정되었습니다. 테스트 시나리오 적절성, 커버리지, 테스트 코드 품질을 확인해주세요.'
-            })
-        elif total_changes < 50 and file_count <= 3:
-            changed_files = [f.filename for f in pr_data.files]
-            candidates.append({
-                'title': '소규모 수정사항',
-                'priority_level': 'LOW',
-                'reason': f'{", ".join(changed_files)} 파일에 {total_changes}라인의 소규모 변경이 있습니다. 기본적인 코드 리뷰 후 안전하게 진행해주세요.'
-            })
-        else:
-            candidates.append({
-                'title': '코드 품질 검토',
-                'priority_level': 'MEDIUM',
-                'reason': f'여러 파일에 걸친 변경사항이 있습니다. 코딩 컨벤션 준수, 성능 이슈, 유지보수성을 중점적으로 확인해주세요.'
-            })
-        
-        return {
-            'candidates': candidates,
-            'pr_info': {
-                'total_files': file_count,
-                'total_changes': total_changes,
-                'security_files': len(security_files),
-                'db_files': len(db_files),
-                'api_files': len(api_files),
-                'test_files': len(test_files),
-                'branch_info': f"{pr_data.source} -> {pr_data.target}"
-            }
-        }
-        
-    except Exception as e:
-        logger.error(f"기본 우선순위 후보 계산 실패: {str(e)}")
-        return {
-            'candidates': [
-                {
-                    'title': '분석 오류로 인한 기본 설정',
-                    'priority_level': 'MEDIUM',
-                    'reason': '우선순위 분석 중 오류가 발생하여 기본 중간 우선순위로 설정했습니다.'
-                },
-                {
-                    'title': '수동 검토 필요',
-                    'priority_level': 'MEDIUM',
-                    'reason': '자동 분석이 실패하여 수동으로 우선순위를 결정해주세요.'
-                },
-                {
-                    'title': '안전한 기본값 적용',
-                    'priority_level': 'MEDIUM',
-                    'reason': '시스템 오류로 인해 안전한 기본값을 적용했습니다.'
-                }
-            ],
-            'pr_info': {
-                'total_files': len(pr_data.files) if pr_data.files else 0,
-                'total_changes': 0,
-                'branch_info': f"{pr_data.source} -> {pr_data.target}" if pr_data else "unknown"
-            }
-        }
