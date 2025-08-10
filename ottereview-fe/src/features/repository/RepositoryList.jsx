@@ -20,8 +20,11 @@ const RepositoryList = () => {
     )
   }
 
-  const handleRepoClick = (repoId) => {
-    navigate(`/${repoId}`)
+  const handleRepoClick = (repo) => {
+    // fullName에서 레포 이름만 추출 (예: "username/repo-name" -> "repo-name")
+    const repoName = repo.fullName.split('/')[1]
+    // repoId는 path로, repoName은 쿼리 파라미터로 전달
+    navigate(`/${repo.id}?name=${encodeURIComponent(repoName)}`)
   }
 
   return (
@@ -40,7 +43,7 @@ const RepositoryList = () => {
         ) : (
           repos.map((repo) =>
             repo.id ? (
-              <RepositoryCard key={repo.id} repo={repo} onClick={() => handleRepoClick(repo.id)} />
+              <RepositoryCard key={repo.id} repo={repo} onClick={() => handleRepoClick(repo)} />
             ) : null
           )
         )}
