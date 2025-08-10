@@ -1,5 +1,7 @@
 package com.ssafy.ottereview.githubapp.client;
 
+import com.ssafy.ottereview.branch.entity.Branch;
+import com.ssafy.ottereview.branch.repository.BranchRepository;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
@@ -41,6 +43,7 @@ public class GithubApiClient {
     private final GithubAppUtil githubAppUtil;
     private final PullRequestRepository pullRequestRepository;
     private final PullRequestMapper pullRequestMapper;
+    private final BranchRepository branchRepository;
 
     public GithubAccountResponse getAccount(Long installationId) {
         try {
@@ -180,8 +183,11 @@ public class GithubApiClient {
         
         List<PullRequestFileInfo> pullRequestFileChanges = getPullRequestFileChanges(installationId, repositoryName, githubPrNumber);
         List<PullRequestCommitInfo> pullRequestCommitInfos = getPullRequestCommits(installationId, repositoryName, githubPrNumber);
-        
-        return  pullRequestMapper.pullRequestToDetailResponse(pullRequest, pullRequestFileChanges,
+
+        Branch baseBranch = branchRepository.findByNameAndRepo(pullRequest.getBase(), pullRequest.getRepo());
+        Branch headBranch = branchRepository.findByNameAndRepo(pullRequest.getHead(), pullRequest.getRepo());
+
+        return  pullRequestMapper.pullRequestToDetailResponse(pullRequest, baseBranch, headBranch,pullRequestFileChanges,
                 pullRequestCommitInfos);
     }
 
