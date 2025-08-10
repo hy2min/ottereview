@@ -10,7 +10,7 @@ const InputBox = ({
   value,
   onChange,
   className,
-  placeholder, // CustomSelect의 placeholder prop을 위해 추가
+  placeholder,
   ...props
 }) => {
   const base = 'bg-white border-2 border-black rounded-[8px]'
@@ -23,7 +23,15 @@ const InputBox = ({
 
   const renderControl = () => {
     if (as === 'textarea') {
-      return <textarea className={textareaClasses} value={value} onChange={onChange} {...props} />
+      return (
+        <textarea
+          className={textareaClasses}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          {...props}
+        />
+      )
     }
 
     if (as === 'select') {
