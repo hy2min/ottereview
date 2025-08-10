@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.pullrequest.dto.preparation;
+package com.ssafy.ottereview.preparation.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

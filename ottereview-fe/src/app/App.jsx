@@ -58,7 +58,7 @@ const App = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12">
+      <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
         <Routes>
           {protectedRoutes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />

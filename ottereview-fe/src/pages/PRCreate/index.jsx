@@ -59,12 +59,12 @@ const PRCreate = () => {
 
   return (
     <div className="relative min-h-screen pb-[100px]">
-      <div className="max-w-3xl mx-auto space-y-4 py-4">
+      <div className="max-w-4xl mx-auto space-y-4 py-4">
         <StepIndicator currentStep={step} steps={steps} />
         <div>{renderStepComponent()}</div>
 
-        <div className="w-1/5 mx-auto z-10">
-          <div className="mx-auto flex justify-between items-center">
+        <div className="mx-auto z-10">
+          <div className="flex justify-center items-center space-x-3">
             <Button
               onClick={() => {
                 if (step > 1) {
@@ -87,7 +87,11 @@ const PRCreate = () => {
                 }
               }}
               variant="primary"
-              // disabled={step === 1 && !validationResult.isValid}
+              // disabled={
+              //   step === 1
+              //     ? !validationResult?.isPossible // Step1에서만 isPossible 체크
+              //     : false // 다른 스텝에서는 별도 조건
+              // }
             >
               {step === 5 ? '제출' : '다음'}
             </Button>

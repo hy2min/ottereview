@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.branch.repository;
 
 import com.ssafy.ottereview.branch.entity.Branch;
+import com.ssafy.ottereview.repo.entity.Repo;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,5 +15,8 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
     // branch id로 branch 정보 가져오기
     Optional<Branch> findById(Long id);
 
+    List<Branch> findAllByRepo(Repo repo);
 
+
+    void deleteByName(String name);
 }

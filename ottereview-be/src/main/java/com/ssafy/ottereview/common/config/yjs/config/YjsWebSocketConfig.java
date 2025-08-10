@@ -20,7 +20,7 @@ public class YjsWebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(yjsWebSocketHandler, "/api/yjs/{roomId}")
-//                .addInterceptors(yjsHandshakeInterceptor)
+                .addInterceptors(yjsHandshakeInterceptor)
                 .setAllowedOriginPatterns("*"); // 운영에선 도메인 제한 권장
     }
 
@@ -32,4 +32,5 @@ public class YjsWebSocketConfig implements WebSocketConfigurer {
         container.setMaxSessionIdleTimeout(600_000L);          // 10분
         return container;
     }
+
 }

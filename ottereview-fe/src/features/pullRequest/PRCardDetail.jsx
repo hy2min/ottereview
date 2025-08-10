@@ -15,7 +15,7 @@ import { useNavigate } from 'react-router-dom'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import { formatRelativeTime } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const PRCardDetail = ({ pr }) => {
   const navigate = useNavigate()

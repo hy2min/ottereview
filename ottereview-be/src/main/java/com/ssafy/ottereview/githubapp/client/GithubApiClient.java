@@ -3,8 +3,12 @@ package com.ssafy.ottereview.githubapp.client;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,6 +39,8 @@ import org.springframework.stereotype.Service;
 public class GithubApiClient {
 
     private final GithubAppUtil githubAppUtil;
+    private final PullRequestRepository pullRequestRepository;
+    private final PullRequestMapper pullRequestMapper;
 
     public GithubAccountResponse getAccount(Long installationId) {
         try {
@@ -159,8 +165,27 @@ public class GithubApiClient {
             return true;
         }
     }
+    
+    public PullRequestDetailResponse getPullRequestDetail(Long prId, String repositoryName){
+        
+        PullRequest pullRequest = pullRequestRepository.findById(prId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Pull Request not found with id: " + prId));
+        
+        Integer githubPrNumber = pullRequest.getGithubPrNumber();
+        
+        Long installationId = pullRequest.getRepo()
+                .getAccount()
+                .getInstallationId();
+        
+        List<PullRequestFileInfo> pullRequestFileChanges = getPullRequestFileChanges(installationId, repositoryName, githubPrNumber);
+        List<PullRequestCommitInfo> pullRequestCommitInfos = getPullRequestCommits(installationId, repositoryName, githubPrNumber);
+        
+        return  pullRequestMapper.pullRequestToDetailResponse(pullRequest, pullRequestFileChanges,
+                pullRequestCommitInfos);
+    }
 
-    public List<PullRequestFileDetail> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
+    private List<PullRequestFileInfo> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -173,7 +198,7 @@ public class GithubApiClient {
             return StreamSupport.stream(files.spliterator(), false)
                     .map(file -> {
                         try {
-                            return PullRequestFileDetail.from(file);
+                            return PullRequestFileInfo.from(file);
                         } catch (Exception e) {
                             log.error("Error converting file detail to DTO: {}", e.getMessage());
                             return null;
@@ -200,7 +225,7 @@ public class GithubApiClient {
      * @param prNumber       Pull Request 번호
      * @return Pull Request 커밋 정보 리스트
      */
-    public List<PullRequestCommitDetail> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
+    private List<PullRequestCommitInfo> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -213,7 +238,7 @@ public class GithubApiClient {
             return StreamSupport.stream(commits.spliterator(), false)
                     .map(commit -> {
                         try {
-                            return PullRequestCommitDetail.from(commit);
+                            return PullRequestCommitInfo.from(commit);
                         } catch (Exception e) {
                             log.error("Error converting commit to DTO: {}", e.getMessage());
                             return null;
