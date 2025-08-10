@@ -16,12 +16,12 @@ const RepositoryCard = ({ repo, onClick }) => {
           {/* Private/Public 표시 */}
           {repo.private ? (
             <Badge variant="warning" className="flex items-center space-x-1">
-              <Lock className="w-3 h-3" />
+              <Lock className="w-3 h-3 mb-[2px]" />
               <span>Private</span>
             </Badge>
           ) : (
             <Badge variant="success" className="flex items-center space-x-1">
-              <Globe className="w-3 h-3" />
+              <Globe className="w-3 h-3 mb-[2px]" />
               <span>Public</span>
             </Badge>
           )}

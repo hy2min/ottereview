@@ -105,9 +105,7 @@ const PRReview = () => {
       <div className="flex flex-col md:flex-row items-stretch gap-4">
         <Box shadow className="min-h-24 flex-row space-y-1 flex items-center">
           <strong className="w-24">AI요약 : </strong>
-          <p className="text-sm">
-            {prDetail.summary}
-          </p>
+          <p className="text-sm">{prDetail.summary}</p>
         </Box>
 
         <Box shadow className="min-h-24 flex items-center px-4 w-full md:max-w-sm space-y-0">
