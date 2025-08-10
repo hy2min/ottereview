@@ -1,5 +1,5 @@
 // import { useState } from 'react'
-import { useParams } from 'react-router-dom'; // 새로 추가된 코드: URL 파라미터에서 roomId를 가져오기 위해 import
+import { useParams } from 'react-router-dom' // 새로 추가된 코드: URL 파라미터에서 roomId를 가져오기 위해 import
 
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
@@ -16,7 +16,7 @@ const ChatRoom = () => {
   // }
 
   // 새로 추가된 코드: URL 파라미터에서 roomId를 가져옵니다.
-  const { roomId } = useParams();
+  const { roomId } = useParams()
 
   return (
     <div style={{ padding: '2rem' }}>
@@ -45,7 +45,7 @@ const ChatRoom = () => {
               <Chat roomId={roomId} />
             </div>
             <div style={{ flex: 2 }}>
-              <CodeEditor roomName={roomId} />
+              <CodeEditor roomId={roomId} />
             </div>
           </div>
 
