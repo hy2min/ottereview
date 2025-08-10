@@ -7,28 +7,24 @@ import PRCardCompact from './PRCardCompact'
 const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
   const [selectedType, setSelectedType] = useState('all')
 
-  // Add the state filter here
   const filteredPRs =
     selectedType === 'authored'
-      ? authoredPRs.filter((pr) => pr.state === 'OPEN').map((pr) => ({ ...pr, type: 'authored' }))
+      ? authoredPRs.map((pr) => ({ ...pr, type: 'authored' }))
       : selectedType === 'reviewed'
-        ? reviewerPRs.filter((pr) => pr.state === 'OPEN').map((pr) => ({ ...pr, type: 'reviewed' }))
+        ? reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' }))
         : [
-            ...authoredPRs
-              .filter((pr) => pr.state === 'OPEN')
-              .map((pr) => ({ ...pr, type: 'authored' })),
-            ...reviewerPRs
-              .filter((pr) => pr.state === 'OPEN')
-              .map((pr) => ({ ...pr, type: 'reviewed' })),
+            ...authoredPRs.map((pr) => ({ ...pr, type: 'authored' })),
+            ...reviewerPRs.map((pr) => ({ ...pr, type: 'reviewed' })),
           ]
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col">
-      <div className="flex mb-2 space-x-4">
-        <h2 className="text-xl mr-8">진행중인 PR</h2>
+      <div className="flex mb-2 space-x-8">
+        <div className="flex-1">
+          <h2 className="text-xl">진행중인 PR</h2>
+        </div>
 
-        {/* 타입 필터 드롭다운 */}
-        <div className="w-40 -my-[9px] mr-7">
+        <div className="w-40 -my-[9px] mr-4">
           <InputBox
             as="select"
             options={[
