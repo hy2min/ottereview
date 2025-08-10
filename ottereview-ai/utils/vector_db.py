@@ -4,7 +4,6 @@ import json
 import logging
 import numpy as np
 from typing import List, Dict, Optional, Any, Tuple
-from pydantic import BaseModel, Field
 import hashlib
 import os
 from dotenv import load_dotenv
@@ -13,116 +12,16 @@ import traceback
 import uuid
 from datetime import datetime
 from collections import defaultdict
+from models import (
+    PreparationResult, PRDetailData, FileChangeInfo, 
+    DiffLine, DiffHunk, DescriptionInfo, CommitInfo,
+    RepoInfo, PrUserInfo, PriorityInfo,
+    PRData  # 하위 호환성을 위해 유지
+)
 
 load_dotenv()
 
 logger = logging.getLogger(__name__)
-
-class DiffHunkLine(BaseModel):
-    """diff hunk의 각 라인 정보"""
-    oldLine: Optional[int] = None
-    newLine: Optional[int] = None
-    type: str  # context, addition, deletion
-    content: str
-    position: int
-
-class DiffHunk(BaseModel):
-    """diff hunk 정보"""
-    oldStart: int
-    oldLines: int
-    newStart: int
-    newLines: int
-    context: str
-    lines: List[DiffHunkLine]
-
-class FileInfo(BaseModel):
-    """파일 변경 정보"""
-    filename: str
-    status: str  # modified, added, deleted
-    additions: int
-    deletions: int
-    changes: int
-    patch: Optional[str] = None
-    rawUrl: str
-    blobUrl: str
-    diffHunks: Optional[List[DiffHunk]] = None
-
-class CommitInfo(BaseModel):
-    """커밋 정보"""
-    sha: str
-    message: str
-    authorName: str
-    authorEmail: str
-    authorDate: str
-    committerName: str
-    committerEmail: str
-    committerDate: str
-    url: str
-    htmlUrl: str
-    additions: int
-    deletions: int
-    totalChanges: int
-
-class AuthorInfo(BaseModel):
-    """작성자 정보"""
-    id: int
-    githubUsername: str
-    githubEmail: str
-
-class RepositoryInfo(BaseModel):
-    """저장소 정보"""
-    id: int
-    fullName: str
-
-class PreReviewers(BaseModel):
-    """PR 리뷰어 정보"""
-    id: int
-    githubUsername: str
-    githubEmail: str
-
-class Reviewers(BaseModel):
-    """PR 리뷰어 정보"""
-    id: int
-    githubUsername: str
-    githubEmail: str
-    
-class PRData(BaseModel):
-    """Pull Request 전체 데이터"""
-    # PR 기본 정보
-    pr_id: Optional[int] = None
-    source: str
-    target: str
-    url: str
-    htmlUrl: str
-    permalinkUrl: str
-    diffUrl: str
-    patchUrl: str
-    status: str
-    aheadBy: int
-    behindBy: int
-    totalCommits: int
-    
-    # 커밋 정보
-    baseCommit: CommitInfo
-    mergeBaseCommit: CommitInfo
-    commits: List[CommitInfo]
-    
-    # 파일 변경 정보
-    files: List[FileInfo]
-    
-    # 기타 정보 (null일 수 있음)
-    summary: Optional[str] = None
-    pre_reviewers: Optional[List[PreReviewers]] = None
-    reviewers: Optional[List[Reviewers]] = None  # JSON에서는 null
-    reviews: Optional[List] = None  # JSON에서는 null
-    descriptions: Optional[List] = None  # JSON에서는 null
-    priorities: Optional[List] = None  # JSON에서는 null
-    title: Optional[str] = None  # JSON에서는 null
-    body: Optional[str] = None  # JSON에서는 null
-    
-    # 작성자 및 저장소 정보
-    author: AuthorInfo
-    repository: RepositoryInfo
 
 
 class PineconeVectorDB:
@@ -181,7 +80,7 @@ class PineconeVectorDB:
         self.reviewer_patterns_index = self.pc.Index("reviewer-patterns")
         self.priority_patterns_index = self.pc.Index("priority-patterns")
     
-    def _extract_file_categories(self, files: List[FileInfo]) -> Dict[str, int]:
+    def _extract_file_categories(self, files: List[FileChangeInfo]) -> Dict[str, int]:
         """파일 확장자별 카테고리 분류"""
         categories = {}
         for file in files:
@@ -200,60 +99,33 @@ class PineconeVectorDB:
             categories[category] = categories.get(category, 0) + 1
         return categories
     
-    async def store_pr_data(self, pr_id: int, pr_data: PRData) -> bool:
-        """PR 데이터를 벡터 DB에 저장 (머지 완료 후 호출)"""
+    async def store_pr_detail_data(self, pr_detail: PRDetailData) -> bool:
+        """PullRequestDetailResponse 데이터를 벡터 DB에 저장 (머지 완료 후 호출)"""
         try:
             # 1. 리뷰어 패턴 저장 (리뷰어 추천용)
-            await self._store_reviewer_patterns(pr_id, pr_data)
+            if pr_detail.reviewers:
+                await self._store_reviewer_patterns_from_detail(pr_detail)
             
             # 2. 우선순위 패턴 저장 (우선순위 추천용)
-            await self._store_priority_patterns(pr_id, pr_data)
+            await self._store_priority_patterns_from_detail(pr_detail)
             
-            logger.info(f"PR {pr_id} 데이터가 성공적으로 저장되었습니다")
+            logger.info(f"PR {pr_detail.id} 데이터가 성공적으로 저장되었습니다")
             return True
             
         except Exception as e:
-            logger.error(f"PR {pr_id} 저장 중 오류: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"PR {pr_detail.id} 저장 중 오류: {str(e)}\n{traceback.format_exc()}")
             return False
+
+    async def store_pr_data(self, pr_detail: PRDetailData) -> bool:
+        """PR 데이터를 벡터 DB에 저장 (머지 완료 후 호출) - PRDetailData 사용으로 변경"""
+        return await self.store_pr_detail_data(pr_detail)
     
-    async def _store_reviewer_patterns(self, pr_id: str, pr_data: PRData):
-        """리뷰어 추천을 위한 패턴 저장"""
-        if not pr_data.reviewers:
-            return
-            
-        functional_groups = self._group_files_by_function(pr_data.files, [])
-        
-        # 각 리뷰어별로 패턴 저장
-        for i, reviewer_info in enumerate(pr_data.reviewers):
-            for group in functional_groups:
-                context_parts = [
-                    f"리뷰어: {reviewer_info.githubUsername}",
-                    f"기능 영역: {group['category']}",
-                    f"파일들: {', '.join(group['files'])}"
-                ]
-                
-                context = " ".join(context_parts)
-                context_vector = await self.embeddings.aembed_query(context)
-                
-                metadata = {
-                    "pr_id": str(pr_id),
-                    "repository_id": str(pr_data.repository.id),
-                    "reviewer": reviewer_info.githubUsername,
-                    "reviewer_email": reviewer_info.githubEmail,
-                    "functional_category": group['category'],
-                    "timestamp": datetime.now().isoformat()
-                }
-                
-                self.reviewer_patterns_index.upsert(vectors=[{
-                    "id": f"{pr_id}_reviewer_{i}_{group['category']}",
-                    "values": context_vector,
-                    "metadata": metadata
-                }])
     
-    async def _store_priority_patterns(self, pr_id: int, pr_data: PRData):
-        """의미 단위별 우선순위 패턴 저장"""
-        commit_messages = [c.message for c in pr_data.commits]
-        functional_groups = self._group_files_by_function(pr_data.files, commit_messages)
+    
+    async def _store_priority_patterns_from_detail(self, pr_detail: PRDetailData):
+        """PRDetailData로부터 우선순위 패턴 저장"""
+        commit_messages = [c.message for c in pr_detail.commits]
+        functional_groups = self._group_detail_files_by_function(pr_detail.files, commit_messages)
         
         # 각 기능 그룹별로 패턴 저장
         for i, group in enumerate(functional_groups):
@@ -268,8 +140,8 @@ class PineconeVectorDB:
             context_vector = await self.embeddings.aembed_query(context)
             
             metadata = {
-                "pr_id": str(pr_id),
-                "repository_id": str(pr_data.repository.id),
+                "pr_id": str(pr_detail.id),
+                "repository_id": str(pr_detail.repo.id),
                 "functional_category": group['category'],
                 "change_scale": group['change_scale'],
                 "complexity_level": group['complexity_level'],
@@ -278,12 +150,103 @@ class PineconeVectorDB:
             }
             
             self.priority_patterns_index.upsert(vectors=[{
-                "id": f"{pr_id}_priority_{i}",
+                "id": f"{pr_detail.id}_priority_{i}",
                 "values": context_vector,
                 "metadata": metadata
             }])
     
-    def _group_files_by_function(self, files: List[FileInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
+    async def _store_reviewer_patterns_from_detail(self, pr_detail: PRDetailData):
+        """PRDetailData로부터 리뷰어 추천을 위한 패턴 저장"""
+        if not pr_detail.reviewers:
+            return
+            
+        functional_groups = self._group_detail_files_by_function(pr_detail.files, [c.message for c in pr_detail.commits])
+        
+        # 각 리뷰어별로 패턴 저장
+        for i, reviewer_info in enumerate(pr_detail.reviewers):
+            for group in functional_groups:
+                context_parts = [
+                    f"리뷰어: {reviewer_info.githubUsername}",
+                    f"기능 영역: {group['category']}",
+                    f"파일들: {', '.join(group['files'])}"
+                ]
+                
+                context = " ".join(context_parts)
+                context_vector = await self.embeddings.aembed_query(context)
+                
+                metadata = {
+                    "pr_id": str(pr_detail.id),
+                    "repository_id": str(pr_detail.repo.id),
+                    "reviewer": reviewer_info.githubUsername,
+                    "reviewer_email": reviewer_info.githubEmail,
+                    "functional_category": group['category'],
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+                self.reviewer_patterns_index.upsert(vectors=[{
+                    "id": f"{pr_detail.id}_reviewer_{i}_{group['category']}",
+                    "values": context_vector,
+                    "metadata": metadata
+                }])
+    
+    def _group_detail_files_by_function(self, files: List[FileChangeInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
+        """PRDetailFileInfo들을 상위 디렉토리 기준으로 그룹화"""
+        groups = defaultdict(list)
+        for file in files:
+            parent_dir = os.path.dirname(file.filename)
+            if not parent_dir or parent_dir == ".":
+                parent_dir = "root"
+            groups[parent_dir].append(file)
+
+        functional_groups = []
+        for parent_dir, dir_files in groups.items():
+            functional_groups.append(self._create_detail_functional_group(
+                dir_files, parent_dir, commit_messages, [parent_dir]
+            ))
+        
+        return functional_groups
+    
+    def _create_detail_functional_group(self, files: List[FileChangeInfo], category: str, 
+                               commit_messages: List[str], priority_indicators: List[str]) -> Dict[str, Any]:
+        """PRDetailFileInfo로부터 기능 그룹 생성"""
+        total_changes = sum(f.additions + f.deletions for f in files)
+        file_types = list(set([os.path.splitext(f.filename)[1].lower() for f in files]))
+        
+        # 변경 규모 계산
+        if total_changes > 200:
+            change_scale = "대규모"
+            priority_indicators.append("대규모변경")
+        elif total_changes > 50:
+            change_scale = "중간규모"
+            priority_indicators.append("중간규모변경")
+        else:
+            change_scale = "소규모"
+        
+        # 복잡도 계산
+        if len(files) > 5:
+            complexity_level = "복잡"
+            priority_indicators.append("복잡한변경")
+        elif len(files) > 2:
+            complexity_level = "보통"
+        else:
+            complexity_level = "단순"
+        
+        # 관련 커밋 메시지 찾기
+        related_commits = " ".join([msg for msg in commit_messages 
+                                  if any(keyword in msg.lower() for keyword in category.lower().split('/'))])
+        
+        return {
+            "category": category,
+            "files": [f.filename for f in files],
+            "change_scale": change_scale,
+            "complexity_level": complexity_level,
+            "total_changes": total_changes,
+            "file_types": file_types,
+            "priority_indicators": priority_indicators,
+            "related_commits": related_commits or " ".join(commit_messages)
+        }
+    
+    def _group_files_by_function(self, files: List[FileChangeInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
         """파일들을 상위 디렉토리 기준으로 그룹화"""
         groups = defaultdict(list)
         for file in files:
@@ -301,7 +264,7 @@ class PineconeVectorDB:
         
         return functional_groups
     
-    def _create_functional_group(self, files: List[FileInfo], category: str, 
+    def _create_functional_group(self, files: List[FileChangeInfo], category: str, 
                                commit_messages: List[str], priority_indicators: List[str]) -> Dict[str, Any]:
         """기능 그룹 생성"""
         total_changes = sum(f.additions + f.deletions for f in files)
@@ -341,7 +304,7 @@ class PineconeVectorDB:
             "related_commits": related_commits or " ".join(commit_messages)
         }
     
-    async def get_similar_reviewer_patterns(self, pr_data: PRData, limit: int = 10) -> List[Dict[str, Any]]:
+    async def get_similar_reviewer_patterns(self, pr_data: PreparationResult, limit: int = 10) -> List[Dict[str, Any]]:
         """현재 PR과 유사한 리뷰어 패턴 검색"""
         try:
             functional_groups = self._group_files_by_function(pr_data.files, [])
@@ -353,7 +316,7 @@ class PineconeVectorDB:
                     f"파일들: {', '.join(group['files'])}"
                 ]
                 query = " ".join(query_parts)
-                patterns = await self.search_reviewer_patterns(query, pr_data.repository.id, limit)
+                patterns = await self.search_reviewer_patterns(query, pr_data.repository.id if pr_data.repository else 0, limit)
                 all_patterns.extend(patterns)
             
             # Remove duplicates and sort by score
@@ -398,7 +361,7 @@ class PineconeVectorDB:
             logger.error(f"리뷰어 패턴 검색 중 오류: {str(e)}")
             return []
     
-    async def get_similar_priority_patterns(self, pr_data: PRData, limit: int = 5) -> List[Dict[str, Any]]:
+    async def get_similar_priority_patterns(self, pr_data: PreparationResult, limit: int = 5) -> List[Dict[str, Any]]:
         """현재 PR과 유사한 우선순위 패턴 검색"""
         try:
             commit_messages = [c.message for c in pr_data.commits]
@@ -413,7 +376,7 @@ class PineconeVectorDB:
                     f"커밋 메시지: {group['related_commits']}"
                 ]
                 query = " ".join(query_parts)
-                patterns = await self.search_priority_patterns(query, pr_data.repository.id, limit)
+                patterns = await self.search_priority_patterns(query, pr_data.repository.id if pr_data.repository else 0, limit)
                 all_patterns.extend(patterns)
             
             # Remove duplicates and sort by score
