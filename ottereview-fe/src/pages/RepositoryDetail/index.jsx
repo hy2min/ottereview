@@ -47,16 +47,15 @@ const RepositoryDetail = () => {
     }
   }, [repoId, repo?.accountId])
 
-  // 브랜치별 PR 필터링
-  const filteredPRs = selectedBranch === 'all' 
-    ? repoPRs 
-    : repoPRs.filter(pr => pr.head === selectedBranch)
+  const filteredPRs =
+    selectedBranch === 'all' ? repoPRs : repoPRs.filter((pr) => pr.head === selectedBranch)
 
-  // 브랜치 옵션 생성 (PR이 있는 브랜치만)
   const branchOptions = [
     { label: '모든 브랜치', value: 'all' },
-    ...Array.from(new Set(repoPRs.map(pr => pr.head)))
-      .map(branch => ({ label: branch, value: branch }))
+    ...branches.map((branch) => ({
+      label: branch.name,
+      value: branch.name,
+    })),
   ]
 
   if (!repo) {
@@ -98,7 +97,7 @@ const RepositoryDetail = () => {
               placeholder="브랜치 선택"
             />
           </div>
-          
+
           {/* 새 PR 생성 버튼 */}
           <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
             <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기

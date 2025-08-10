@@ -100,22 +100,49 @@ const PRReview = () => {
     )
   }
 
+  // Summary가 있는지 확인하고 표시할 내용 결정
+  const getSummaryContent = () => {
+    if (prDetail.summary && prDetail.summary.trim()) {
+      return prDetail.summary
+    }
+    return "아직 AI 요약이 생성되지 않았습니다."
+  }
+
   return (
     <div className="pt-2 space-y-3">
       <div className="flex flex-col md:flex-row items-stretch gap-4">
         <Box shadow className="min-h-24 flex-row space-y-1 flex items-center">
           <strong className="w-24">AI요약 : </strong>
-          <p className="text-sm">{prDetail.summary}</p>
+          <p className={`text-sm ${!prDetail.summary?.trim() ? 'text-stone-400 italic' : ''}`}>
+            {getSummaryContent()}
+          </p>
         </Box>
 
         <Box shadow className="min-h-24 flex items-center px-4 w-full md:max-w-sm space-y-0">
           <div className="w-full space-y-1">
             <div className="flex justify-between">
               <p className="text-sm">승인 진행률</p>
-              <span className="text-xs text-gray-600">2/2</span>
+              {prDetail.headBranch?.minApproveCnt === 0 ? (
+                <span className="text-sm text-green-600 font-medium">승인 불필요</span>
+              ) : (
+                <span className="text-sm text-gray-600">
+                  {prDetail.approveCnt || 0}/{prDetail.headBranch?.minApproveCnt || 0}
+                </span>
+              )}
             </div>
             <div className="minecraft-progress">
-              <div className="minecraft-progress-fill" />
+              {prDetail.headBranch?.minApproveCnt === 0 ? (
+                <div className="minecraft-progress-fill w-full bg-green-500" />
+              ) : (
+                <div 
+                  className="minecraft-progress-fill" 
+                  style={{
+                    width: `${prDetail.headBranch?.minApproveCnt ? 
+                      Math.min((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt * 100, 100) 
+                      : 0}%`
+                  }}
+                />
+              )}
             </div>
           </div>
         </Box>
