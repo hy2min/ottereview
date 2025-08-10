@@ -66,6 +66,37 @@ public class S3ServiceImpl implements S3Service {
     }
 
     @Override
+    public String uploadDesFile(MultipartFile file, Long descriptionId) {
+        try {
+            String fileName = String.format("%s%s", System.currentTimeMillis(),
+                    file.getOriginalFilename());
+            String fileKey = String.format("voice-comments/review_%d/%s", descriptionId, fileName);
+
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("fileKey", fileKey);
+            metadata.put("fileName", fileName);
+            metadata.put("reviewId", descriptionId.toString());
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileKey)
+                    .contentType(file.getContentType())
+                    .contentLength(file.getSize())
+                    .metadata(metadata)
+                    .build();
+
+            s3Client.putObject(putObjectRequest,
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            return fileKey;
+        } catch (Exception e) {
+            log.error("음성 파일 업로드 실패 - review: {}, File: {}", descriptionId, file.getOriginalFilename(),
+                    e);
+            throw new RuntimeException("음성 파일 업로드 실패: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
     public void deleteFiles(Long reviewId) {
         try {
             String prefix = String.format("voice-comments/review_%d/", reviewId);

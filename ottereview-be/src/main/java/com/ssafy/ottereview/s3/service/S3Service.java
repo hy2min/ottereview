@@ -17,6 +17,8 @@ public interface S3Service {
 
     List<S3Object> listVoiceFilesByReviewId(Long reviewId);
 
+    String uploadDesFile(MultipartFile file, Long descriptionId);
+
     void deleteFiles(Long reviewId);
 
     void deleteFile(String fileKey);
