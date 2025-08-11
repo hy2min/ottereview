@@ -25,12 +25,12 @@ export const fetchPRDetail = async ({ repoId, prId }) => {
 }
 
 // PR 생성
-export const submitPR = async ({ formData, repoId }) => {
+export const submitPR = async ({ source, target, repoId }) => {
   const formDataObj = new FormData()
 
   const pullRequestData = {
-    source: formData.source,
-    target: formData.target,
+    source,
+    target,
   }
 
   // Blob으로 JSON 데이터 생성
@@ -107,6 +107,13 @@ export const submitReview = async ({ accountId, repoId, prId, reviewData }) => {
       'Content-Type': 'multipart/form-data'
     }
   })
+  return res.data
+}
+
+// PR 준비 정보 저장 (전체 formData)
+export const savePRAdditionalInfo = async (repoId, formData) => {
+  console.log('savePRAdditionalInfo payload:', formData)
+  const res = await api.post(`/api/repositories/${repoId}/pull-requests/preparation/additional-info`, formData)
   return res.data
 }
 
