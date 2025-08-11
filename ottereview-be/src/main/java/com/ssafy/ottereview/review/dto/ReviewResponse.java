@@ -22,7 +22,7 @@ public class ReviewResponse {
     private ReviewState state;
     private String body;
     private String commitSha;
-    private List<com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse> reviewComments;
+    private List<ReviewCommentResponse> reviewComments;
     private LocalDateTime githubCreatedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -37,7 +37,7 @@ public class ReviewResponse {
                 review.getBody(),
                 review.getCommitSha(),
                 review.getReviewComments().stream()
-                        .map(comment -> ReviewCommentResponse.from(comment))
+                        .map(ReviewCommentResponse::from)
                         .collect(Collectors.toList()),
                 review.getGithubCreatedAt(),
                 review.getCreatedAt(),
