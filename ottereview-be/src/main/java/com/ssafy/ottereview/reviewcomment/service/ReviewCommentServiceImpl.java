@@ -354,7 +354,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
         List<ReviewComment> comments = reviewCommentRepository.findAllByReview(review);
         return comments.stream()
-                .map(ReviewCommentResponse::from)
+                .map(this::createResponseWithVoiceUrl)
                 .collect(Collectors.toList());
     }
 
@@ -363,7 +363,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     public ReviewCommentResponse getCommentById(Long commentId) {
         ReviewComment comment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found: " + commentId));
-        return ReviewCommentResponse.from(comment);
+        return createResponseWithVoiceUrl(comment);
     }
 
     @Override
@@ -371,7 +371,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     public List<ReviewCommentResponse> getCommentsByUserId(Long userId) {
         List<ReviewComment> comments = reviewCommentRepository.findAllByUserId(userId);
         return comments.stream()
-                .map(ReviewCommentResponse::from)
+                .map(this::createResponseWithVoiceUrl)
                 .collect(Collectors.toList());
     }
 
@@ -383,7 +383,30 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
         List<ReviewComment> comments = reviewCommentRepository.findAllByReviewAndPath(review, path);
         return comments.stream()
-                .map(ReviewCommentResponse::from)
+                .map(this::createResponseWithVoiceUrl)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * ReviewComment를 ReviewCommentResponse로 변환하면서 recordKey가 있으면 Pre-signed URL을 생성합니다.
+     */
+    private ReviewCommentResponse createResponseWithVoiceUrl(ReviewComment comment) {
+        ReviewCommentResponse response = ReviewCommentResponse.from(comment);
+        
+        // recordKey가 있으면 Pre-signed URL 생성
+        if (comment.getRecordKey() != null && !comment.getRecordKey().trim().isEmpty()) {
+            try {
+                String voiceUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60); // 60분 유효
+                return response.toBuilder()
+                        .voiceFileUrl(voiceUrl)
+                        .build();
+            } catch (Exception e) {
+                log.warn("음성 파일 URL 생성 실패 - commentId: {}, recordKey: {}, error: {}", 
+                    comment.getId(), comment.getRecordKey(), e.getMessage());
+                // URL 생성 실패해도 응답은 반환
+            }
+        }
+        
+        return response;
     }
 }

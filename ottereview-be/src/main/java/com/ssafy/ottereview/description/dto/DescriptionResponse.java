@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 public class DescriptionResponse {
 
@@ -37,6 +37,9 @@ public class DescriptionResponse {
 
     private LocalDateTime modifiedAt;
 
+    /** 음성 파일 URL (recordKey가 있을 때만) */
+    private String voiceFileUrl;
+
     public static DescriptionResponse from(Description description) {
         return DescriptionResponse.builder()
                 .id(description.getId())
@@ -53,6 +56,7 @@ public class DescriptionResponse {
                 .startSide(description.getStartSide())
                 .createdAt(description.getCreatedAt())
                 .modifiedAt(description.getModifiedAt())
+                .voiceFileUrl(null) // 서비스에서 별도 설정
                 .build();
     }
 }

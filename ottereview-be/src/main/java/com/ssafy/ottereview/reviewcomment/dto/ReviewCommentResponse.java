@@ -2,10 +2,12 @@ package com.ssafy.ottereview.reviewcomment.dto;
 
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 public class ReviewCommentResponse {
 
@@ -60,6 +62,9 @@ public class ReviewCommentResponse {
     /** 서버 DB 수정 시간 */
     private LocalDateTime modifiedAt;
 
+    /** 음성 파일 URL (recordKey가 있을 때만) */
+    private String voiceFileUrl;
+
     public static ReviewCommentResponse from(ReviewComment comment) {
         return ReviewCommentResponse.builder()
                 .id(comment.getId())
@@ -80,6 +85,7 @@ public class ReviewCommentResponse {
                 .githubUpdatedAt(comment.getGithubUpdatedAt())
                 .createdAt(comment.getCreatedAt())
                 .modifiedAt(comment.getModifiedAt())
+                .voiceFileUrl(null) // 서비스에서 별도 설정
                 .build();
     }
 }
