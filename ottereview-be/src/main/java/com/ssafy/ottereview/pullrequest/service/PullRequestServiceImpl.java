@@ -26,6 +26,7 @@ import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -186,6 +187,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .map(user -> Reviewer.builder()
                         .pullRequest(savePullRequest)
                         .user(user)
+                        .status(ReviewStatus.NONE)
                         .build())
                 .toList();
         
