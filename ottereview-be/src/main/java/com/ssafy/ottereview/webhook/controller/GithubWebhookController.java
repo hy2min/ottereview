@@ -9,6 +9,7 @@ import com.ssafy.ottereview.webhook.service.BranchProtectionEventService;
 import com.ssafy.ottereview.webhook.service.InstallationEventService;
 import com.ssafy.ottereview.webhook.service.PullRequestEventService;
 import com.ssafy.ottereview.webhook.service.PushEventService;
+import com.ssafy.ottereview.webhook.service.RepoEventService;
 import com.ssafy.ottereview.webhook.service.ReviewCommentEventService;
 import com.ssafy.ottereview.webhook.service.ReviewEventService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -34,6 +35,7 @@ public class GithubWebhookController {
     private final ReviewEventService reviewEventService;
     private final ReviewCommentEventService reviewCommentEventService;
     private final BranchProtectionEventService branchProtectionEventService;
+    private final RepoEventService repoEventService;
     private final ObjectMapper objectMapper;
 
     @Hidden
@@ -96,6 +98,11 @@ public class GithubWebhookController {
             case "branch_protection_rule":
                 log.info("Handling branch protection rule event");
                 branchProtectionEventService.processBranchProtection(payload);
+                break;
+
+            case "repository":
+                log.info("Handling repository event");
+                repoEventService.processRepo(payload);
                 break;
 
             default:
