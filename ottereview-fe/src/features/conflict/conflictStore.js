@@ -1,77 +1,75 @@
 import { create } from 'zustand'
+import { fetchConflictData } from '@/features/conflict/conflictApi'
 
-import { api } from '@/lib/api'
+const useConflictStore = create((set, get) => ({
+  // 상태
+  conflictData: null,
+  loading: false,
+  error: null,
+  selectedFiles: [],
+  activeFile: null,
 
-// Conflict 관리를 위한 Zustand 스토어 생성
-export const useConflictStore = create((set, get) => ({
-  // 상태 변수들
-  members: [], // 저장소 멤버 목록
-  conflictFiles: [], // 충돌 파일 목록
-  selectedMembers: [], // 선택된 멤버 이름 목록
-  selectedFiles: [], // 선택된 파일 경로 목록
-  loading: false, // 데이터 로딩 상태
-  error: null, // 에러 상태
-  conflictData: null, //충돌 상세 데이터
-
-  // 액션: 비동기 데이터 로딩
-  fetchConflictData: async (repoId, prId) => {
-    // 이미 로딩 중이면 중복 실행 방지
-    if (get().loading) return
-
-    // 로딩 시작 및 에러 초기화
+  // 액션들
+  fetchConflictFiles: async (repoId, prId) => {
     set({ loading: true, error: null })
-
     try {
-      // 멤버 목록과 PR 상세 정보를 동시에 요청
-      const [membersRes, prDetailRes, conflictRes] = await Promise.all([
-        api.get(`/api/repositories/${repoId}/members`), // 저장소 멤버 목록 API
-        api.get(`/api/repositories/${repoId}/pull-requests/${prId}`), // PR 상세 정보 API
-        api.get(`/api/repositories/${repoId}/pull-requests/${prId}/merges/conflicts`), // 충돌 데이터 API
-      ])
+      console.log('🔄 충돌 데이터 로딩 시작:', { repoId, prId })
+      const data = await fetchConflictData(repoId, prId)
 
-      // 성공 시 상태 업데이트
       set({
-        members: membersRes.data, // 멤버 목록 저장
-        // PR 상세 정보에서 파일 이름만 추출하여 저장
-        conflictFiles: prDetailRes.data.files.map((file) => file.filename),
-        conflictData: conflictRes.data, // 충돌 데이터 저장
-        loading: false, // 로딩 종료
+        conflictData: data,
+        loading: false,
+        error: null,
       })
+
+      console.log('✅ 충돌 데이터 로딩 완료:', data)
+      return data
     } catch (error) {
-      // 실패 시 에러 상태 업데이트
-      console.error('데이터를 불러오는 중 오류가 발생했습니다:', error)
-      set({ error, loading: false })
+      console.error('❌ 충돌 데이터 로딩 실패:', error)
+      set({
+        loading: false,
+        error: error.message,
+      })
+      throw error
     }
   },
 
-  // 액션: 멤버 선택/해제
-  toggleMember: (memberName) => {
-    set((state) => ({
-      selectedMembers: state.selectedMembers.includes(memberName)
-        ? state.selectedMembers.filter((name) => name !== memberName) // 있으면 제거
-        : [...state.selectedMembers, memberName], // 없으면 추가
-    }))
-  },
+  // 파일 선택/해제
+  toggleSelectedFile: (filename) => {
+    const { selectedFiles, activeFile } = get()
+    const newSelectedFiles = selectedFiles.includes(filename)
+      ? selectedFiles.filter((f) => f !== filename)
+      : [...selectedFiles, filename]
 
-  // 액션: 파일 선택/해제
-  toggleFile: (fileName) => {
-    set((state) => ({
-      selectedFiles: state.selectedFiles.includes(fileName)
-        ? state.selectedFiles.filter((file) => file !== fileName) // 있으면 제거
-        : [...state.selectedFiles, fileName], // 없으면 추가
-    }))
-  },
-
-  // 헬퍼: 특정 파일의 headFileContents 가져오기
-  getFileHeadContent: (filename) => {
-    const { conflictData } = get()
-    if (!conflictData || !conflictData.headFileContents) {
-      return ''
+    // 파일이 제거되고 현재 활성 파일이 제거된 파일이라면 activeFile 업데이트
+    let newActiveFile = activeFile
+    if (selectedFiles.includes(filename) && activeFile === filename) {
+      newActiveFile = newSelectedFiles.length > 0 ? newSelectedFiles[0] : null
     }
-    return conflictData.headFileContents[filename] || ''
+    // 파일이 새로 추가되고 현재 활성 파일이 없다면 새 파일을 활성화
+    else if (!selectedFiles.includes(filename) && !activeFile) {
+      newActiveFile = filename
+    }
+
+    set({
+      selectedFiles: newSelectedFiles,
+      activeFile: newActiveFile,
+    })
+
+    console.log('📄 파일 선택 변경:', {
+      filename,
+      action: selectedFiles.includes(filename) ? '제거' : '추가',
+      newSelectedFiles,
+      newActiveFile,
+    })
   },
 
-  // 헬퍼: 특정 파일의 충돌 내용 가져오기
+  // 활성 파일 설정
+  setActiveFile: (filename) => {
+    set({ activeFile: filename })
+  },
+
+  // 파일별 데이터 가져오기 헬퍼 함수들
   getFileConflictContent: (filename) => {
     const { conflictData } = get()
     if (!conflictData || !conflictData.files || !conflictData.conflictFilesContents) {
@@ -82,16 +80,56 @@ export const useConflictStore = create((set, get) => ({
     return fileIndex !== -1 ? conflictData.conflictFilesContents[fileIndex] : null
   },
 
-  // 액션: 상태 초기화 (컴포넌트 언마운트 시 호출)
+  getFileHeadContent: (filename) => {
+    const { conflictData } = get()
+    if (!conflictData || !conflictData.headFileContents) {
+      return ''
+    }
+    return conflictData.headFileContents[filename] || ''
+  },
+
+  getFileBaseContent: (filename) => {
+    const { conflictData } = get()
+    if (!conflictData || !conflictData.baseFileContents) {
+      return ''
+    }
+    return conflictData.baseFileContents[filename] || ''
+  },
+
+  // 파일 목록 가져오기
+  getAvailableFiles: () => {
+    const { conflictData } = get()
+    return conflictData?.files || []
+  },
+
+  // 선택된 파일들의 정보 가져오기
+  getSelectedFilesInfo: () => {
+    const { selectedFiles } = get()
+    const { getFileHeadContent, getFileConflictContent } = get()
+
+    return selectedFiles.map((filename) => ({
+      filename,
+      headContent: getFileHeadContent(filename),
+      conflictContent: getFileConflictContent(filename),
+    }))
+  },
+
+  // 상태 초기화
   reset: () => {
     set({
-      members: [],
-      conflictFiles: [],
-      selectedMembers: [],
-      selectedFiles: [],
+      conflictData: null,
       loading: false,
       error: null,
-      conflictData: null,
+      selectedFiles: [],
+      activeFile: null,
     })
   },
+
+  // 특정 파일이 선택되었는지 확인
+  isFileSelected: (filename) => {
+    const { selectedFiles } = get()
+    return selectedFiles.includes(filename)
+  },
 }))
+
+export default useConflictStore
