@@ -1,9 +1,13 @@
 package com.ssafy.ottereview.pullrequest.dto.response;
 
 import com.ssafy.ottereview.branch.entity.Branch;
-import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestDescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestUserInfo;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -45,9 +49,28 @@ public class PullRequestDetailResponse {
     private Integer approveCnt;
 
     // 객체 타입
-    private PrUserInfo author;
     private RepoResponse repo;
+    private PullRequestUserInfo author;
+    private List<PullRequestReviewerInfo> reviewers;
     private List<PullRequestFileInfo> files;
     private List<PullRequestCommitInfo> commits;
+    private List<PullRequestDescriptionInfo> descriptions;
+    private List<PullRequestReviewInfo> reviews;
+    private List<PullRequestPriorityInfo> priorities;
 
+    public void enrollReview(List<PullRequestReviewInfo> review) {
+        this.reviews = review;
+    }
+
+    public void enrollDescription(List<PullRequestDescriptionInfo> descriptions) {
+        this.descriptions = descriptions;
+    }
+
+    public void enrollReviewers(List<PullRequestReviewerInfo> reviewers) {
+        this.reviewers = reviewers;
+    }
+    
+    public void enrollPriorities(List<PullRequestPriorityInfo> priorities) {
+        this.priorities = priorities;
+    }
 }
