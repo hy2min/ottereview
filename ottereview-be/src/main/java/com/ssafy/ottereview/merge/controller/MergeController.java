@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.merge.controller;
 
 import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.service.MergeService;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -39,12 +40,17 @@ public class MergeController {
 
 
     @GetMapping()
-    public ResponseEntity<?> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
+    public ResponseEntity<MergeCheckResponse> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
         PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
         PullRequest pullRequest1 = pullRequestMapper.detailResponseToEntity(pullRequest, repo, user);
-        return ResponseEntity.ok(mergeService.checkMergeConflict(repo,pullRequest1));
+        MergeCheckResponse reviewerCheck = mergeService.checkMergeStatus(repo, pullRequest1);
+        if (!reviewerCheck.isMergeAble()) {
+            return ResponseEntity.ok(reviewerCheck);
+        }
+        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repo, pullRequest1);
+        return ResponseEntity.ok(githubCheck);
     }
 
     @GetMapping("/conflicts")

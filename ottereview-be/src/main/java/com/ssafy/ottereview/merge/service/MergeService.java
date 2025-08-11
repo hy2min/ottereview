@@ -16,6 +16,7 @@ import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -89,36 +90,6 @@ public class MergeService {
             }
         }
         dir.delete();
-    }
-    
-    public MergeCheckResponse checkMergeConflict(Repo repo, PullRequest pullRequest) {
-        MergeCheckResponse result = null;
-        try {
-            GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount()
-                    .getInstallationId());
-            GHRepository repository = gitHub.getRepository(repo.getFullName());
-            GHPullRequest ghPullRequest = repository.getPullRequest(pullRequest.getGithubPrNumber());
-            
-            // 머지 가능 여부 확인
-            Boolean mergeable = ghPullRequest.getMergeable();
-            String mergeableState = ghPullRequest.getMergeableState();
-            
-            result = MergeCheckResponse.builder()
-                    .prNumber(pullRequest.getGithubPrNumber())
-                    .title(ghPullRequest.getTitle())
-                    .state(ghPullRequest.getState()
-                            .name())
-                    .mergeAble(mergeable)
-                    .hasConflicts(!mergeable)
-                    .mergeState(mergeableState)
-                    .build();
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
     }
     
     public String getHttpsUrl(Repo repo) {
@@ -504,6 +475,55 @@ public class MergeService {
         }
         return false;
     }
-    
-    
+
+
+    public MergeCheckResponse checkMergeStatus(Repo repo, PullRequest pullRequest) {
+        // 1. Reviewer 모두 APPROVED인지 확인
+        List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
+        boolean allApproved = reviewers.stream()
+                .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
+
+        // 승인 안 된 경우 → GitHub API 호출 없이 바로 반환
+        if (!allApproved) {
+            return MergeCheckResponse.builder()
+                    .prNumber(pullRequest.getGithubPrNumber())
+                    .title(pullRequest.getTitle())
+                    .state("OPEN")
+                    .mergeAble(false)
+                    .mergeState("BLOCKED") // 상태는 임의로 지정 가능
+                    .hasConflicts(false)
+                    .build();
+        }
+        return null;
+    }
+
+    public MergeCheckResponse checkMergeConflict(Repo repo, PullRequest pullRequest) {
+        MergeCheckResponse result = null;
+        try {
+            GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount()
+                    .getInstallationId());
+            GHRepository repository = gitHub.getRepository(repo.getFullName());
+            GHPullRequest ghPullRequest = repository.getPullRequest(pullRequest.getGithubPrNumber());
+
+            // 머지 가능 여부 확인
+            Boolean mergeable = ghPullRequest.getMergeable();
+            String mergeableState = ghPullRequest.getMergeableState();
+
+            result = MergeCheckResponse.builder()
+                    .prNumber(pullRequest.getGithubPrNumber())
+                    .title(ghPullRequest.getTitle())
+                    .state(ghPullRequest.getState()
+                            .name())
+                    .mergeAble(mergeable)
+                    .hasConflicts(!mergeable)
+                    .mergeState(mergeableState)
+                    .build();
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }

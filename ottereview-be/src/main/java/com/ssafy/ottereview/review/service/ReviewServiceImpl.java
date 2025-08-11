@@ -12,6 +12,7 @@ import com.ssafy.ottereview.review.entity.ReviewState;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
+import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.reviewcomment.service.ReviewCommentService;
 import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
@@ -63,7 +64,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         List<ReviewCommentResponse> createdComments = createReviewCommentsIfExists(savedReview.getId(), reviewRequest, files, userId);
 
-        GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user);
+        GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user, savedReview.getId());
 
         if (reviewRequest.getState() == ReviewState.APPROVE || reviewRequest.getState() == ReviewState.REQUEST_CHANGES) {
             updateReviewerStatus(pullRequest, user, reviewRequest.getState());
@@ -187,7 +188,8 @@ public class ReviewServiceImpl implements ReviewService {
                                                       Long repoId,
                                                       PullRequest pullRequest,
                                                       ReviewRequest reviewRequest,
-                                                      User user) {
+                                                      User user,
+                                                      Long reviewId) {
         String repoFullName = repoRepository.findById(repoId)
                 .orElseThrow(() -> new RuntimeException("Repository not found"))
                 .getFullName();
@@ -196,13 +198,29 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Account not found"))
                 .getInstallationId();
 
+        List<ReviewCommentCreateRequest.CommentItem> commentItems =
+                reviewCommentRepository.findByReviewId(reviewId).stream()
+                        .map(comment -> ReviewCommentCreateRequest.CommentItem.builder()
+                                .path(comment.getPath())
+                                .body(comment.getBody())
+                                .position(comment.getPosition())
+                                .line(comment.getLine())
+                                .side(comment.getSide())
+                                .startLine(comment.getStartLine())
+                                .startSide(comment.getStartSide())
+                                .fileIndex(null)
+                                .build()
+                        )
+                        .toList();
+
+
         return reviewGithubService.createReviewOnGithub(
                 installationId,
                 repoFullName,
                 pullRequest.getGithubPrNumber(),
                 reviewRequest.getBody(),
                 reviewRequest.getState(),
-                reviewRequest.getReviewComments(),
+                commentItems,
                 user.getGithubUsername()
         );
     }

@@ -8,8 +8,8 @@ import lombok.Getter;
 public class MergeCheckResponse {
     int prNumber;
     String title;
-    String state;
+    String state; //OPEN, CLOSED, MERGED
     boolean mergeAble;
-    String mergeState;
+    String mergeState; // CLEAN, DIRTY, BLOCKED
     boolean hasConflicts;
 }
