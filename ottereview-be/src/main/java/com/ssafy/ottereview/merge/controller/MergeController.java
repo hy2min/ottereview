@@ -5,6 +5,7 @@ import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.service.MergeService;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
@@ -31,6 +32,7 @@ public class MergeController {
     private final MergeService mergeService;
     private final RepoService repoService;
     private final PullRequestService pullRequestService;
+    private final PullRequestRepository pullRequestRepository;
     private final PullRequestMapper pullRequestMapper;
     
     @GetMapping("/doing")
@@ -44,12 +46,21 @@ public class MergeController {
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
         PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
-        PullRequest pullRequest1 = pullRequestMapper.detailResponseToEntity(pullRequest, repo, user);
-        MergeCheckResponse reviewerCheck = mergeService.checkMergeStatus(repo, pullRequest1);
-        if (!reviewerCheck.isMergeAble()) {
-            return ResponseEntity.ok(reviewerCheck);
+        PullRequest existingPullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("PullRequest not found: " + pullRequestId));
+        Boolean reviewerCheck = mergeService.checkMergeStatus(repo, existingPullRequest);
+        if (!reviewerCheck) {
+            MergeCheckResponse blockedResponse = MergeCheckResponse.builder()
+                    .prNumber(existingPullRequest.getGithubPrNumber())
+                    .title(existingPullRequest.getTitle())
+                    .state("OPEN")
+                    .mergeAble(false)
+                    .mergeState("BLOCKED")
+                    .hasConflicts(false)
+                    .build();
+            return ResponseEntity.ok(blockedResponse);
         }
-        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repo, pullRequest1);
+        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repo, existingPullRequest);
         return ResponseEntity.ok(githubCheck);
     }
 

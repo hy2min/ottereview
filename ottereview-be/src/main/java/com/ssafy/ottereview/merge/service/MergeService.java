@@ -477,24 +477,11 @@ public class MergeService {
     }
 
 
-    public MergeCheckResponse checkMergeStatus(Repo repo, PullRequest pullRequest) {
+    public Boolean checkMergeStatus(Repo repo, PullRequest pullRequest) {
         // 1. Reviewer 모두 APPROVED인지 확인
         List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
-        boolean allApproved = reviewers.stream()
+        return reviewers.stream()
                 .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
-
-        // 승인 안 된 경우 → GitHub API 호출 없이 바로 반환
-        if (!allApproved) {
-            return MergeCheckResponse.builder()
-                    .prNumber(pullRequest.getGithubPrNumber())
-                    .title(pullRequest.getTitle())
-                    .state("OPEN")
-                    .mergeAble(false)
-                    .mergeState("BLOCKED") // 상태는 임의로 지정 가능
-                    .hasConflicts(false)
-                    .build();
-        }
-        return null;
     }
 
     public MergeCheckResponse checkMergeConflict(Repo repo, PullRequest pullRequest) {
