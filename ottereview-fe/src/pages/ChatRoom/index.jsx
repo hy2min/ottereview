@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { fetchConflictData } from '@/features/chat/chatApi'
 import { useChatStore } from '@/features/chat/chatStore'
+import { fetchConflictData } from '@/features/conflict/conflictApi'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'

@@ -5,8 +5,12 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import { createChat } from '@/features/chat/chatApi'
 import { useChatStore } from '@/features/chat/chatStore'
-import { fetchConflictFile } from '@/features/conflict/conflictApi'
-import { fetchMemberList } from '@/features/conflict/conflictApi'
+import {
+  fetchConflictData,
+  fetchConflictFile,
+  fetchMemberList,
+} from '@/features/conflict/conflictApi'
+import { useConflictStore } from '@/features/conflict/conflictStore'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
 
 const Conflict = () => {
@@ -14,6 +18,7 @@ const Conflict = () => {
   const repos = useRepoStore((state) => state.repos)
   const accountId = repos.find((r) => r.id === Number(repoId))?.accountId
   const navigate = useNavigate()
+
   const [selectedUsernames, setSelectedUsernames] = useState([])
   const [selectedUserIds, setSelectedUserIds] = useState([])
   const [members, setMembers] = useState([])
@@ -21,10 +26,8 @@ const Conflict = () => {
   const [selectedFiles, setSelectedFiles] = useState([])
   const [roomName, setRoomName] = useState('')
 
-  // 🐛 디버깅: URL 파라미터 확인
-  console.log('🔍 Conflict 컴포넌트 디버깅:')
-  console.log('- repoId:', repoId, 'type:', typeof repoId)
-  console.log('- prId:', prId, 'type:', typeof prId)
+  const [conflictData, setConflictData] = useState(null) // 충돌 데이터 저장
+  const [activeFile, setActiveFile] = useState(null) // 현재 보고 있는 파일
 
   useEffect(() => {
     const fetchMembers = async () => {
@@ -54,6 +57,10 @@ const Conflict = () => {
         const filenames = res.files.map((file) => file.filename)
         setConflictFiles(filenames)
         console.log('📁 충돌 파일 목록 로드:', filenames)
+
+        const conflictRes = await fetchConflictData(repoId, prId)
+        setConflictData(conflictRes)
+        console.log('📄 충돌 데이터 로드:', conflictRes)
       } catch (err) {
         console.error('Failed to fetch conflict files:', err)
       }
@@ -87,6 +94,14 @@ const Conflict = () => {
         action: prev.includes(filename) ? '제거' : '추가',
         newSelection: newFiles,
       })
+      // 파일이 제거되었고 현재 활성 파일이 제거된 파일이라면 activeFile 초기화
+      if (prev.includes(filename) && activeFile === filename) {
+        setActiveFile(newFiles.length > 0 ? newFiles[0] : null)
+      }
+      // 파일이 새로 추가되고 현재 활성 파일이 없다면 새 파일을 활성화
+      else if (!prev.includes(filename) && !activeFile) {
+        setActiveFile(filename)
+      }
 
       return newFiles
     })
@@ -218,6 +233,79 @@ const Conflict = () => {
           <div className="mt-2 text-sm text-red-600">충돌 파일을 최소 1개 이상 선택해주세요.</div>
         )}
       </Box>
+
+      {/* 선택된 파일들의 내용 표시 */}
+      {selectedFiles.length > 0 && conflictData && (
+        <Box shadow>
+          <div className="mb-2 font-medium">선택된 파일 내용</div>
+
+          {/* 파일 탭 버튼들 */}
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {selectedFiles.map((filename) => (
+              <button
+                key={filename}
+                onClick={() => setActiveFile(filename)}
+                className={`px-3 py-2 rounded text-sm border transition-colors ${
+                  activeFile === filename
+                    ? 'bg-blue-500 text-white border-blue-500'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {filename}
+              </button>
+            ))}
+          </div>
+
+          {/* 선택된 파일의 충돌 내용 표시 */}
+          {activeFile && (
+            <div className="border rounded p-3">
+              <div className="font-semibold text-sm mb-3 text-gray-700 flex items-center gap-2">
+                <span>📄 {activeFile}</span>
+                <span className="text-xs text-gray-500">충돌 내용</span>
+              </div>
+
+              {(() => {
+                // conflictData.files에서 activeFile의 인덱스 찾기
+                const fileIndex = conflictData.files ? conflictData.files.indexOf(activeFile) : -1
+                const fileContent =
+                  fileIndex !== -1 && conflictData.conflictFilesContents
+                    ? conflictData.conflictFilesContents[fileIndex]
+                    : null
+
+                console.log('🔍 활성 파일 정보:', {
+                  activeFile,
+                  fileIndex,
+                  allFiles: conflictData.files,
+                  hasContent: !!fileContent,
+                  contentLength: fileContent?.length,
+                })
+
+                return fileContent ? (
+                  <div className="bg-gray-50 p-4 rounded text-sm border">
+                    <pre className="whitespace-pre-wrap overflow-x-auto text-xs font-mono leading-relaxed">
+                      {fileContent}
+                    </pre>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-sm bg-gray-50 p-4 rounded border">
+                    해당 파일의 충돌 내용을 찾을 수 없습니다.
+                    <br />
+                    <small className="text-xs">
+                      파일 인덱스: {fileIndex}, 전체 파일:{' '}
+                      {conflictData.files?.join(', ') || '없음'}
+                      <br />
+                      충돌 내용 개수: {conflictData.conflictFilesContents?.length || 0}
+                    </small>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {/* 초기 상태에서 첫 번째 파일 자동 선택 */}
+          {!activeFile && selectedFiles.length > 0 && setActiveFile(selectedFiles[0])}
+        </Box>
+      )}
 
       {/* 생성 버튼 */}
       <div className="flex justify-end">
