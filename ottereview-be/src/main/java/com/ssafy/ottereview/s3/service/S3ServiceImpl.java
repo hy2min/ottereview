@@ -1,8 +1,10 @@
 package com.ssafy.ottereview.s3.service;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,11 @@ import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +34,7 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 public class S3ServiceImpl implements S3Service {
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Value("${cloud.aws.S3.bucket}")
     private String bucketName;
@@ -34,8 +42,21 @@ public class S3ServiceImpl implements S3Service {
     @Value("${cloud.aws.region.static}")
     private String region;
 
+    // 파일 검증을 위한 상수
+    private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
+            ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"
+    );
+    private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
+            "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4", "audio/aac", 
+            "audio/ogg", "audio/flac", "audio/x-m4a"
+    );
+
     @Override
     public String uploadFile(MultipartFile file, Long reviewId) {
+        // 파일 검증
+        validateFile(file, reviewId);
+        
         try {
             String fileName = String.format("%s%s", System.currentTimeMillis(),
                     file.getOriginalFilename());
@@ -67,10 +88,13 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public String uploadDesFile(MultipartFile file, Long descriptionId) {
+        // 파일 검증 (descriptionId를 reviewId처럼 사용)
+        validateFile(file, descriptionId);
+        
         try {
             String fileName = String.format("%s%s", System.currentTimeMillis(),
                     file.getOriginalFilename());
-            String fileKey = String.format("voice-comments/review_%d/%s", descriptionId, fileName);
+            String fileKey = String.format("voice-comments/pullrequest_%d/%s", descriptionId, fileName);
 
             Map<String, String> metadata = new HashMap<>();
             metadata.put("fileKey", fileKey);
@@ -166,6 +190,158 @@ public class S3ServiceImpl implements S3Service {
     /**
      * 업로드된 파일들을 정리하는 보상 트랜잭션 메서드
      */
+    /**
+     * 파일 검증을 수행하는 메서드
+     */
+    private void validateFile(MultipartFile file, Long id) {
+        if (file == null) {
+            throw new IllegalArgumentException("파일이 null입니다.");
+        }
+        
+        if (id == null) {
+            throw new IllegalArgumentException("ID가 null입니다.");
+        }
+        
+        if (file.isEmpty()) {
+            throw new IllegalArgumentException("빈 파일은 업로드할 수 없습니다.");
+        }
+        
+        // 파일 크기 검증
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new IllegalArgumentException(
+                String.format("파일 크기가 너무 큽니다. 최대 %dMB까지 업로드 가능합니다.", 
+                    MAX_FILE_SIZE / (1024 * 1024)));
+        }
+        
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null || originalFilename.trim().isEmpty()) {
+            throw new IllegalArgumentException("파일명이 유효하지 않습니다.");
+        }
+        
+        // 파일 확장자 검증
+        String fileExtension = getFileExtension(originalFilename);
+        if (!ALLOWED_EXTENSIONS.contains(fileExtension.toLowerCase())) {
+            throw new IllegalArgumentException(
+                String.format("허용되지 않는 파일 형식입니다. 허용 형식: %s", 
+                    String.join(", ", ALLOWED_EXTENSIONS)));
+        }
+        
+        // Content-Type 검증
+        String contentType = file.getContentType();
+        if (contentType == null || !ALLOWED_CONTENT_TYPES.contains(contentType.toLowerCase())) {
+            throw new IllegalArgumentException(
+                String.format("허용되지 않는 파일 타입입니다. Content-Type: %s", contentType));
+        }
+        
+        // 파일명 안전성 검증 (경로 탐색 공격 방지)
+        if (originalFilename.contains("../") || originalFilename.contains("..\\")
+                || originalFilename.contains("/") || originalFilename.contains("\\")) {
+            throw new IllegalArgumentException("파일명에 허용되지 않는 문자가 포함되어 있습니다.");
+        }
+        
+        log.info("파일 검증 완료 - 파일명: {}, 크기: {}, Content-Type: {}", 
+            originalFilename, file.getSize(), contentType);
+    }
+    
+    /**
+     * 파일 확장자를 추출하는 메서드
+     */
+    private String getFileExtension(String filename) {
+        if (filename == null || filename.isEmpty()) {
+            return "";
+        }
+        
+        int lastDotIndex = filename.lastIndexOf(".");
+        if (lastDotIndex == -1 || lastDotIndex == filename.length() - 1) {
+            return "";
+        }
+        
+        return filename.substring(lastDotIndex);
+    }
+    
+    @Override
+    public String generatePresignedUrl(String fileKey, int expirationMinutes) {
+        try {
+            GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileKey)
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(Duration.ofMinutes(expirationMinutes))
+                    .getObjectRequest(getObjectRequest)
+                    .build();
+
+            PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+            String presignedUrl = presignedRequest.url().toString();
+            
+            log.info("Pre-signed URL 생성 완료 - 파일 키: {}, 만료시간: {}분", fileKey, expirationMinutes);
+            return presignedUrl;
+            
+        } catch (Exception e) {
+            log.error("Pre-signed URL 생성 실패 - 파일 키: {}, 오류: {}", fileKey, e.getMessage());
+            throw new RuntimeException("임시 URL 생성에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public Map<String, String> generatePresignedUrlsForReview(Long reviewId, int expirationMinutes) {
+        try {
+            List<S3Object> voiceFiles = listVoiceFilesByReviewId(reviewId);
+            Map<String, String> presignedUrls = new HashMap<>();
+            
+            for (S3Object s3Object : voiceFiles) {
+                String fileKey = s3Object.key();
+                String presignedUrl = generatePresignedUrl(fileKey, expirationMinutes);
+                presignedUrls.put(fileKey, presignedUrl);
+            }
+            
+            log.info("리뷰 ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", reviewId, presignedUrls.size());
+            return presignedUrls;
+            
+        } catch (Exception e) {
+            log.error("리뷰 ID {}의 Pre-signed URL 생성 실패: {}", reviewId, e.getMessage());
+            throw new RuntimeException("음성 파일 URL 생성에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<S3Object> listVoiceFilesByPullRequestId(Long pullRequestId) {
+        try {
+            String prefix = String.format("voice-comments/pullrequest_%d/", pullRequestId);
+            ListObjectsV2Request listObjectsV2Request = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix)
+                    .build();
+            ListObjectsV2Response listObjectsV2Response = s3Client.listObjectsV2(
+                    listObjectsV2Request);
+            return listObjectsV2Response.contents();
+        } catch (Exception e) {
+            throw new RuntimeException("Pull Request 파일 목록 조회 실패", e);
+        }
+    }
+
+    @Override
+    public Map<String, String> generatePresignedUrlsForPullRequest(Long pullRequestId, int expirationMinutes) {
+        try {
+            List<S3Object> voiceFiles = listVoiceFilesByPullRequestId(pullRequestId);
+            Map<String, String> presignedUrls = new HashMap<>();
+            
+            for (S3Object s3Object : voiceFiles) {
+                String fileKey = s3Object.key();
+                String presignedUrl = generatePresignedUrl(fileKey, expirationMinutes);
+                presignedUrls.put(fileKey, presignedUrl);
+            }
+            
+            log.info("Pull Request ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", pullRequestId, presignedUrls.size());
+            return presignedUrls;
+            
+        } catch (Exception e) {
+            log.error("Pull Request ID {}의 Pre-signed URL 생성 실패: {}", pullRequestId, e.getMessage());
+            throw new RuntimeException("Description 음성 파일 URL 생성에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
     public void cleanupUploadedFiles(List<String> uploadedFileKeys) {
         if (uploadedFileKeys.isEmpty()) {
             return;
