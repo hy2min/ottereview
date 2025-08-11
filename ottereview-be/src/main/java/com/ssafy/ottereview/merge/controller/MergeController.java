@@ -1,14 +1,17 @@
 package com.ssafy.ottereview.merge.controller;
 
 import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.service.MergeService;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
@@ -40,19 +43,16 @@ public class MergeController {
        return ResponseEntity.ok(mergeService.doMerge(customUserDetail, repoId, prId));
     }
 
-
     @GetMapping()
-    public ResponseEntity<MergeCheckResponse> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
-        Repo repo = repoService.getById(repoId).orElseThrow();
-        User user = customUserDetail.getUser();
-        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
-        PullRequest existingPullRequest = pullRequestRepository.findById(pullRequestId)
-                .orElseThrow(() -> new IllegalArgumentException("PullRequest not found: " + pullRequestId));
-        Boolean reviewerCheck = mergeService.checkMergeStatus(repo, existingPullRequest);
+    public ResponseEntity<MergeCheckResponse> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId){
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        // 리뷰어 체크
+        Boolean reviewerCheck = mergeService.checkMergeStatus(pullRequest);
         if (!reviewerCheck) {
             MergeCheckResponse blockedResponse = MergeCheckResponse.builder()
-                    .prNumber(existingPullRequest.getGithubPrNumber())
-                    .title(existingPullRequest.getTitle())
+                    .prNumber(pullRequest.getGithubPrNumber())
+                    .title(pullRequest.getTitle())
                     .state("OPEN")
                     .mergeAble(false)
                     .mergeState("BLOCKED")
@@ -60,7 +60,7 @@ public class MergeController {
                     .build();
             return ResponseEntity.ok(blockedResponse);
         }
-        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repo, existingPullRequest);
+        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repoId, pullRequest);
         return ResponseEntity.ok(githubCheck);
     }
 
