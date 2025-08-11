@@ -20,6 +20,7 @@ const RepositoryDetail = () => {
   const [repoPRs, setRepoPRs] = useState([])
   const [branches, setBranches] = useState([])
   const [selectedBranch, setSelectedBranch] = useState('all') // 브랜치 필터 상태
+  const [selectedState, setSelectedState] = useState('all') // 상태 필터 상태
 
   const name = repo?.fullName?.split('/')[1]
 
@@ -47,8 +48,12 @@ const RepositoryDetail = () => {
     }
   }, [repoId, repo?.accountId])
 
-  const filteredPRs =
-    selectedBranch === 'all' ? repoPRs : repoPRs.filter((pr) => pr.head === selectedBranch)
+  // 브랜치와 상태 모두 필터링
+  const filteredPRs = repoPRs.filter((pr) => {
+    const branchMatch = selectedBranch === 'all' || pr.head === selectedBranch
+    const stateMatch = selectedState === 'all' || pr.state === selectedState
+    return branchMatch && stateMatch
+  })
 
   const branchOptions = [
     { label: '모든 브랜치', value: 'all' },
@@ -56,6 +61,13 @@ const RepositoryDetail = () => {
       label: branch.name,
       value: branch.name,
     })),
+  ]
+
+  const stateOptions = [
+    { label: '모든 상태', value: 'all' },
+    { label: '열린 PR', value: 'OPEN' },
+    { label: '닫힌 PR', value: 'CLOSED' },
+    { label: '병합된 PR', value: 'MERGED' },
   ]
 
   if (!repo) {
@@ -98,6 +110,17 @@ const RepositoryDetail = () => {
             />
           </div>
 
+          {/* 상태 필터 */}
+          <div className="flex-1">
+            <InputBox
+              as="select"
+              options={stateOptions}
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              placeholder="상태 선택"
+            />
+          </div>
+
           {/* 새 PR 생성 버튼 */}
           <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
             <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
@@ -107,10 +130,10 @@ const RepositoryDetail = () => {
 
       <div className="space-y-3">
         {filteredPRs.length === 0 ? (
-          selectedBranch === 'all' ? (
+          selectedBranch === 'all' && selectedState === 'all' ? (
             <p>PR이 없습니다.</p>
           ) : (
-            <p>선택한 브랜치에 PR이 없습니다.</p>
+            <p>선택한 조건에 맞는 PR이 없습니다.</p>
           )
         ) : (
           filteredPRs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)
