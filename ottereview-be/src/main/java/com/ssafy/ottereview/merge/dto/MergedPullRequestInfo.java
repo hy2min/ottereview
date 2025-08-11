@@ -1,9 +1,10 @@
 package com.ssafy.ottereview.merge.dto;
 
-import com.ssafy.ottereview.preparation.dto.PrUserInfo;
-import com.ssafy.ottereview.preparation.dto.PriorityInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import java.net.URL;
@@ -44,16 +45,16 @@ public class MergedPullRequestInfo {
     private Integer approveCnt;
     
     // 객체 타입
-    private PrUserInfo author;
+    private PullRequestUserInfo author;
     private RepoResponse repo;
     private List<PullRequestFileInfo> files;
     private List<PullRequestCommitInfo> commits;
-    private List<PrUserInfo> reviewers;
-    private List<PriorityInfo> priorities;
+    private List<PullRequestReviewerInfo> reviewers;
+    private List<PullRequestPriorityInfo> priorities;
     
     public static MergedPullRequestInfo from(PullRequestDetailResponse response,
-                                             List<PrUserInfo> reviewers,
-                                             List<PriorityInfo> priorities) {
+            List<PullRequestReviewerInfo> reviewers,
+            List<PullRequestPriorityInfo> priorities) {
         return MergedPullRequestInfo.builder()
                 .id(response.getId())
                 .githubId(response.getGithubId())

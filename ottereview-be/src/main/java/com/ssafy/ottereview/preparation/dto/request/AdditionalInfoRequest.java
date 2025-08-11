@@ -18,6 +18,6 @@ public class AdditionalInfoRequest {
     private String body;
     private String summary;
     private List<Long> reviewers;
-    private List<DescriptionInfo> description;
-    private List<PriorityInfo> priorities;
+    private List<PreparationDescriptionRequest> descriptions;
+    private List<PreparationPriorityRequest> priorities;
 }
