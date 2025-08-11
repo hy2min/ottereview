@@ -8,12 +8,9 @@ import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
 import PRCreateStep5 from '@/features/pullRequest/PRCreateStep5'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
-import { useRepoStore } from '@/features/repository/stores/repoStore'
 
 const PRCreate = () => {
   const { repoId } = useParams()
-  const repo = useRepoStore((state) => state.repos.find((r) => String(r.repoId) === String(repoId)))
-  const accountId = repo?.accountId
   const [step, setStep] = useState(1)
 
   // 선택된 브랜치 정보 관리 (Step1에서 선택, 최종 PR 생성시 사용)
@@ -96,54 +93,78 @@ const PRCreate = () => {
 
   const steps = ['브랜치 선택', '컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
-  const stepProps = {
-    goToStep,
-    repoId,
-    accountId,
-    selectedBranches,
-    updateSelectedBranches,
-    validationPR,
-    setValidationPR,
-    validationBranches,
-    setValidationBranches,
-    aiConvention,
-    setAIConvention,
-    aiOthers,
-    setAIOthers,
-    // 브랜치 정보 추가
-    branches,
-    // 컨벤션 규칙 추가
-    conventionRules,
-    setConventionRules,
-    // PR 제목과 설명 추가
-    prTitle,
-    setPrTitle,
-    prBody,
-    setPrBody,
-    // 댓글 관련 props 추가
-    reviewComments,
-    audioFiles,
-    onAddComment: handleAddLineComment,
-    // 리뷰어 관련 props 추가
-    selectedReviewers,
-    setSelectedReviewers,
+  const getStepProps = (stepNumber) => {
+    const baseProps = { goToStep, repoId }
+    
+    switch (stepNumber) {
+      case 1:
+        return {
+          ...baseProps,
+          selectedBranches,
+          updateSelectedBranches,
+          validationBranches,
+          setValidationBranches,
+          setValidationPR,
+          branches,
+        }
+      case 2:
+        return {
+          ...baseProps,
+          validationBranches,
+          aiConvention,
+          setAIConvention,
+          setAIOthers,
+          conventionRules,
+          setConventionRules,
+        }
+      case 3:
+        return {
+          ...baseProps,
+          validationBranches,
+          aiOthers,
+          reviewComments,
+          audioFiles,
+          onAddComment: handleAddLineComment,
+          prTitle,
+          setPrTitle,
+          prBody,
+          setPrBody,
+        }
+      case 4:
+        return {
+          ...baseProps,
+          validationBranches,
+          aiOthers,
+          selectedReviewers,
+          setSelectedReviewers,
+        }
+      case 5:
+        return {
+          ...baseProps,
+          validationBranches,
+          prTitle,
+          prBody,
+          selectedReviewers,
+        }
+      default:
+        return baseProps
+    }
   }
-
 
   const renderStepComponent = () => {
     switch (step) {
       case 1:
-        return <PRCreateStep1 {...stepProps} />
+        return <PRCreateStep1 {...getStepProps(1)} />
       case 2:
-        return <PRCreateStep2 {...stepProps} />
+        return <PRCreateStep2 {...getStepProps(2)} />
       case 3:
-        return <PRCreateStep3 {...stepProps} />
+        return <PRCreateStep3 {...getStepProps(3)} />
       case 4:
-        return <PRCreateStep4 {...stepProps} />
+        return <PRCreateStep4 {...getStepProps(4)} />
       case 5:
-        return <PRCreateStep5 {...stepProps} />
+        return <PRCreateStep5 {...getStepProps(5)} />
       default:
-        return <PRCreateStep1 {...stepProps} />
+        return <PRCreateStep1 {...getStepProps(1)} />
     }
   }
 
