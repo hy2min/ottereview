@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.review.repository;
 
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.review.entity.Review;
 import java.util.List;
 import java.util.Optional;
@@ -24,4 +25,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findByIdWithComments(@Param("reviewId") Long reviewId);
 
     Optional<Review> findByGithubId(Long githubId);
+
+    List<Review> findAllByPullRequest(PullRequest pullRequest);
 }

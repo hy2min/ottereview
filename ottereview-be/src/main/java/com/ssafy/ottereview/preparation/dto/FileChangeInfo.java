@@ -21,5 +21,5 @@ public class FileChangeInfo {
     private String patch;
     private URL rawUrl;
     private URL blobUrl;
-    private List<DiffHunk> diffHunks;
+//    private List<DiffHunk> diffHunks;
 }

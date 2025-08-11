@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.preparation.dto;
+package com.ssafy.ottereview.pullrequest.dto.info;
 
 import com.ssafy.ottereview.user.entity.User;
 import lombok.AllArgsConstructor;
@@ -10,17 +10,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PrUserInfo {
+public class PullRequestUserInfo {
 
     private Long id;
-    private Long githubId;
     private String githubUsername;
     private String githubEmail;
 
-    public static PrUserInfo fromEntity(User user) {
-        return PrUserInfo.builder()
+    public static PullRequestUserInfo fromEntity(User user) {
+        return PullRequestUserInfo.builder()
                 .id(user.getId())
-                .githubId(user.getGithubId())
                 .githubUsername(user.getGithubUsername())
                 .githubEmail(user.getGithubEmail())
                 .build();
