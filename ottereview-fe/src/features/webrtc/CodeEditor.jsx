@@ -14,8 +14,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
   useEffect(() => {
     if (!roomId) return
 
-    console.log('Yorkie CodeEditor 초기화 시작, roomId:', roomId)
-
     let view
     let client
 
@@ -27,8 +25,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
         // 환경변수 확인
         const rpcAddr = import.meta.env.VITE_YORKIE_API_ADDR
         const apiKey = import.meta.env.VITE_YORKIE_API_KEY
-
-        console.log('Yorkie 설정:', { rpcAddr, hasApiKey: !!apiKey })
 
         if (!rpcAddr || !apiKey) {
           throw new Error('Yorkie 환경변수가 설정되지 않았습니다.')
@@ -44,7 +40,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         await client.activate()
         clientRef.current = client
-        console.log('Yorkie 클라이언트 활성화 완료')
 
         // 2. 문서 생성 및 연결 (roomId를 문서 키로 사용)
         const doc = new yorkie.Document(`code_editor_${roomId}`, {
@@ -53,7 +48,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         await client.attach(doc)
         docRef.current = doc
-        console.log('Yorkie 문서 연결 완료')
 
         // 초기 content 생성
         doc.update((root) => {
@@ -92,14 +86,12 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         doc.subscribe((event) => {
           if (event.type === 'snapshot') {
-            console.log('Yorkie 문서 스냅샷 받음')
             syncText()
           }
         })
 
         doc.subscribe('$.content', (event) => {
           if (event.type === 'remote-change') {
-            console.log('원격 변경 감지:', event.value)
             const { operations } = event.value
             handleOperations(operations)
           }
@@ -137,7 +129,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
         // 초기 동기화
         syncText()
         setStatus('connected')
-        console.log('Yorkie CodeEditor 초기화 완료')
       } catch (error) {
         console.error('Yorkie CodeEditor 초기화 실패:', error)
         setError(error.message)
@@ -170,7 +161,6 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
     initialize()
 
     return () => {
-      console.log('Yorkie CodeEditor 정리 중...')
       if (client) {
         client.deactivate().catch(console.error)
       }

@@ -11,6 +11,7 @@ export const useConflictStore = create((set, get) => ({
   selectedFiles: [], // 선택된 파일 경로 목록
   loading: false, // 데이터 로딩 상태
   error: null, // 에러 상태
+  conflictData: null, //충돌 상세 데이터
 
   // 액션: 비동기 데이터 로딩
   fetchConflictData: async (repoId, prId) => {
@@ -22,9 +23,10 @@ export const useConflictStore = create((set, get) => ({
 
     try {
       // 멤버 목록과 PR 상세 정보를 동시에 요청
-      const [membersRes, prDetailRes] = await Promise.all([
+      const [membersRes, prDetailRes, conflictRes] = await Promise.all([
         api.get(`/api/repositories/${repoId}/members`), // 저장소 멤버 목록 API
         api.get(`/api/repositories/${repoId}/pull-requests/${prId}`), // PR 상세 정보 API
+        api.get(`/api/repositories/${repoId}/pull-requests/${prId}/merges/conflicts`), // 충돌 데이터 API
       ])
 
       // 성공 시 상태 업데이트
@@ -32,6 +34,7 @@ export const useConflictStore = create((set, get) => ({
         members: membersRes.data, // 멤버 목록 저장
         // PR 상세 정보에서 파일 이름만 추출하여 저장
         conflictFiles: prDetailRes.data.files.map((file) => file.filename),
+        conflictData: conflictRes.data, // 충돌 데이터 저장
         loading: false, // 로딩 종료
       })
     } catch (error) {
@@ -59,6 +62,26 @@ export const useConflictStore = create((set, get) => ({
     }))
   },
 
+  // 헬퍼: 특정 파일의 headFileContents 가져오기
+  getFileHeadContent: (filename) => {
+    const { conflictData } = get()
+    if (!conflictData || !conflictData.headFileContents) {
+      return ''
+    }
+    return conflictData.headFileContents[filename] || ''
+  },
+
+  // 헬퍼: 특정 파일의 충돌 내용 가져오기
+  getFileConflictContent: (filename) => {
+    const { conflictData } = get()
+    if (!conflictData || !conflictData.files || !conflictData.conflictFilesContents) {
+      return null
+    }
+
+    const fileIndex = conflictData.files.indexOf(filename)
+    return fileIndex !== -1 ? conflictData.conflictFilesContents[fileIndex] : null
+  },
+
   // 액션: 상태 초기화 (컴포넌트 언마운트 시 호출)
   reset: () => {
     set({
@@ -68,6 +91,7 @@ export const useConflictStore = create((set, get) => ({
       selectedFiles: [],
       loading: false,
       error: null,
+      conflictData: null,
     })
   },
 }))

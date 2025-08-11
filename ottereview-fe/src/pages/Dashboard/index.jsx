@@ -103,7 +103,7 @@ const Dashboard = () => {
 
   const handleTest = async () => {
     try {
-      const res = await api.get(`/api/repositories/1/pull-requests/5/merges/conflicts`)
+      const res = await api.get(`/api/repositories/8/pull-requests/23/merges/conflicts`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
