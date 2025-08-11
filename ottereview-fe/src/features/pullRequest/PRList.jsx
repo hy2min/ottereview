@@ -24,7 +24,7 @@ const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
           <h2 className="text-xl">진행중인 PR</h2>
         </div>
 
-        <div className="w-40 -my-[9px] mr-4">
+        <div className="w-40 -mt-[9px] mr-4">
           <InputBox
             as="select"
             options={[
@@ -41,7 +41,7 @@ const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {filteredPRs.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-2xl text-gray-500">작성된 PR이 없습니다.</p>
+            <p className="text-2xl text-gray-500">진행중인 PR이 없습니다.</p>
           </div>
         ) : (
           filteredPRs.map((pr) => <PRCardCompact key={pr.id} pr={pr} type={pr.type} />)

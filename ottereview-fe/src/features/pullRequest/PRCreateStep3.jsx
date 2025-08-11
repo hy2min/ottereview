@@ -5,10 +5,12 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validationBranches }) => {
-  const [showPriorities, setShowPriorities] = useState(true)
+  // 쿠키로 우선순위 표시 상태 관리
+  const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
 
   // 로컬 상태로 제목과 설명을 관리
   const [localTitle, setLocalTitle] = useState('')
@@ -33,6 +35,10 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
 
   const handleApplyAiTitle = () => {
     setLocalTitle(aiOthers?.title?.result || '')
+  }
+
+  const handleTogglePriorities = () => {
+    setShowPriorities(!showPriorities)
   }
 
   const handleNextStep = () => {
@@ -63,7 +69,7 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
                     </Button>
                   </div>
                   <div className="ml-auto -mt-[16px]">
-                    <Button size="sm" onClick={() => setShowPriorities(!showPriorities)}>
+                    <Button size="sm" onClick={handleTogglePriorities}>
                       {showPriorities ? '우선순위 숨김' : '우선순위 보기'}
                     </Button>
                   </div>
@@ -127,7 +133,7 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
       </div>
 
       <Box shadow>
-        <PRFileList files={validationBranches?.files || []} />
+        <PRFileList files={validationBranches?.files || []} showDiffHunk={true} />
       </Box>
       <div className="mx-auto z-10">
         <div className="flex justify-center items-center space-x-3">
