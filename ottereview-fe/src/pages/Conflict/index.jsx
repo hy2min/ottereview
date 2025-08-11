@@ -91,7 +91,6 @@ const Conflict = () => {
       return newFiles
     })
   }
-
   const handleCreateChat = async () => {
     try {
       console.log('🚀 채팅방 생성 시작')
@@ -135,46 +134,23 @@ const Conflict = () => {
 
       console.log('✅ API 응답:', result)
 
-      if (!result || !result.meetingroomId) {
-        throw new Error('API 응답에 meetingroomId가 없습니다.')
+      // API 응답 구조에 따라 조건 수정 (meetingroomId 또는 다른 필드명일 수 있음)
+      if (!result) {
+        throw new Error('채팅방 생성 API 응답이 없습니다.')
       }
 
-      // ChatStore에 저장할 데이터 준비
-      const roomData = {
-        id: result.meetingroomId,
-        roomName: roomName.trim(),
-        members: [...selectedUsernames], // 배열 복사
-        conflictFiles: [...selectedFiles], // 배열 복사
-        repoId: Number(repoId),
-        prId: Number(prId),
-      }
+      // 성공 메시지
+      alert('채팅방이 성공적으로 생성되었습니다!')
 
-      console.log('💾 ChatStore에 저장할 데이터:', roomData)
+      console.log('🎯 대시보드로 이동')
 
-      // ChatStore에 저장
-      useChatStore.getState().addRoom(roomData)
-
-      // 저장 확인
-      const allRooms = useChatStore.getState().rooms
-      console.log('💾 저장 후 전체 rooms:', allRooms)
-
-      const savedRoom = allRooms.find((r) => r.id === result.meetingroomId)
-      console.log('💾 방금 저장된 방:', savedRoom)
-
-      if (!savedRoom) {
-        console.error('❌ 방이 제대로 저장되지 않았습니다!')
-      }
-
-      console.log('🎯 채팅방으로 이동:', `/chatroom/${result.meetingroomId}`)
-
-      // 채팅방으로 직접 이동
-      navigate(`/chatroom/${result.meetingroomId}`)
+      // 대시보드로 이동
+      navigate('/dashboard')
     } catch (err) {
       console.error('❌ 채팅방 생성 실패:', err)
       alert(`채팅방 생성에 실패했습니다: ${err.message}`)
     }
   }
-
   return (
     <div className="space-y-4 py-4">
       {/* 채팅방 이름 입력 */}
