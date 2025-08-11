@@ -40,7 +40,7 @@ async def recommend_priority(pr_data: PreparationResult) -> Dict[str, Any]:
         
         if not similar_patterns:
             logger.warning("유사한 우선순위 패턴을 찾을 수 없습니다. 설정 기반 분석으로 대체합니다.")
-            return calculate_config_based_priority_candidates(pr_data)
+            similar_patterns=" "
         
         # 2. 검색된 패턴들을 LLM용 컨텍스트로 변환
         context = _build_priority_context_from_patterns(similar_patterns, pr_data)
