@@ -35,5 +35,7 @@ public class Reviewer {
     @Column(nullable = false)
     private ReviewStatus status;
 
-
+    public void updateStatus(ReviewStatus newStatus) {
+        this.status = newStatus;
+    }
 }

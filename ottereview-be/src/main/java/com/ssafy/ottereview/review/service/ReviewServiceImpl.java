@@ -8,14 +8,19 @@ import com.ssafy.ottereview.review.dto.GithubReviewResponse;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.entity.Review;
+import com.ssafy.ottereview.review.entity.ReviewState;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.reviewcomment.service.ReviewCommentService;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
+import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.s3.service.S3Service;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +49,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewCommentService reviewCommentService;
     private final ReviewGithubService reviewGithubService;
     private final AccountRepository accountRepository;
+    private final ReviewerRepository reviewerRepository;
     private final S3Service s3Service;
 
     @Override
@@ -59,9 +65,27 @@ public class ReviewServiceImpl implements ReviewService {
 
         GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user);
 
+        if (reviewRequest.getState() == ReviewState.APPROVE || reviewRequest.getState() == ReviewState.REQUEST_CHANGES) {
+            updateReviewerStatus(pullRequest, user, reviewRequest.getState());
+        }
+
         updateGithubIdsForComments(savedReview, createdComments, githubResult, user);
 
         return buildReviewResponse(savedReview);
+    }
+
+    private void updateReviewerStatus(PullRequest pullRequest, User user, @NotNull ReviewState state) {
+        Reviewer reviewer = (Reviewer) reviewerRepository.findByPullRequestAndUser(pullRequest, user)
+                .orElse(null);
+        if (reviewer == null) return;
+
+        reviewer.updateStatus(
+            switch (state) {
+                case APPROVE -> ReviewStatus.APPROVED;
+                case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
+                default -> reviewer.getStatus();
+            }
+        );
     }
 
 //    @Override
