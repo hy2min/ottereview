@@ -4,12 +4,16 @@ import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.preparation.dto.CommitInfo;
+import com.ssafy.ottereview.preparation.dto.DescriptionInfo;
 import com.ssafy.ottereview.preparation.dto.DiffHunk;
 import com.ssafy.ottereview.preparation.dto.FileChangeInfo;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
+import com.ssafy.ottereview.preparation.dto.PriorityInfo;
 import com.ssafy.ottereview.preparation.dto.RepoInfo;
 import com.ssafy.ottereview.preparation.dto.request.AdditionalInfoRequest;
+import com.ssafy.ottereview.preparation.dto.request.PreparationDescriptionRequest;
+import com.ssafy.ottereview.preparation.dto.request.PreparationPriorityRequest;
 import com.ssafy.ottereview.preparation.dto.request.PreparationValidationRequest;
 import com.ssafy.ottereview.preparation.exception.PreparationErrorCode;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
@@ -19,6 +23,7 @@ import com.ssafy.ottereview.pullrequest.util.DiffUtil;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHCommit;
@@ -127,14 +133,27 @@ public class PreparationService {
                 prepareInfo.enrollSummary(request.getSummary());
             }
             
-            if (request.getDescription() != null && !request.getDescription()
-                    .isEmpty()) {
-                prepareInfo.enrollDescriptions(request.getDescription());
+            List<PreparationDescriptionRequest> descriptionRequests = request.getDescriptions();
+            if (descriptionRequests != null && !descriptionRequests.isEmpty()) {
+                log.debug("Description requests: {}", descriptionRequests);
+                List<DescriptionInfo> descriptionInfos = descriptionRequests.stream()
+                        .map(desc -> {
+                            User author = userRepository.findById(desc.getAuthorId())
+                                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+                            return DescriptionInfo.fromRequest(desc, PrUserInfo.fromEntity(author));
+                        }).toList();
+                
+                prepareInfo.enrollDescriptions(descriptionInfos);
             }
             
-            if (request.getPriorities() != null && !request.getPriorities()
+            List<PreparationPriorityRequest> priorityRequests = request.getPriorities();
+            if (priorityRequests != null && !priorityRequests
                     .isEmpty()) {
-                prepareInfo.enrollPriorities(request.getPriorities());
+                
+                List<PriorityInfo> priorityInfoStream = priorityRequests.stream()
+                        .map(PriorityInfo::fromRequest).toList();
+                
+                prepareInfo.enrollPriorities(priorityInfoStream);
             }
             
             // 4. Repository에서 저장
@@ -209,15 +228,16 @@ public class PreparationService {
                         .deletions(file.getLinesDeleted())
                         .rawUrl(file.getRawUrl())
                         .blobUrl(file.getBlobUrl())
-                        .changes(file.getLinesChanged());
+                        .changes(file.getLinesChanged())
+                        .patch(file.getPatch());
                 
-                String detailedPatch = file.getPatch();
-                if (detailedPatch != null && !detailedPatch.isEmpty()) {
-                    List<DiffHunk> diffHunks = diffUtil.parseDiffHunks(detailedPatch);
-                    builder.patch(detailedPatch)
-                            .diffHunks(diffHunks);
-                    
-                }
+//                String detailedPatch = file.getPatch();
+//                if (detailedPatch != null && !detailedPatch.isEmpty()) {
+//                    List<DiffHunk> diffHunks = diffUtil.parseDiffHunks(detailedPatch);
+//                    builder.patch(detailedPatch)
+//                            .diffHunks(diffHunks);
+//
+//                }
                 
                 fileChanges.add(builder.build());
                 

@@ -5,6 +5,7 @@ import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
@@ -47,7 +48,7 @@ public class PullRequestMapper {
                 .diffUrl(pr.getDiffUrl())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .author(convertToPrUserInfo(pr.getAuthor()))
+                .author(PullRequestUserInfo.fromEntity(pr.getAuthor()))
                 .repo(RepoResponse.fromEntity(pr.getRepo()))
                 .files(pullRequestFileChanges)
                 .commits(pullRequestCommitInfos)

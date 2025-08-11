@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.preparation.dto;
 
+import com.ssafy.ottereview.preparation.dto.request.PreparationPriorityRequest;
 import com.ssafy.ottereview.priority.entity.Priority;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,26 +13,23 @@ import lombok.NoArgsConstructor;
 @Builder
 public class PriorityInfo {
 
-    private Long id;
-    private int idx;
+    private String level;
     private String title;
     private String content;
-
-    public static PriorityInfo of(Long id, int idx, String title, String content) {
-        return PriorityInfo.builder()
-                .id(id)
-                .idx(idx)
-                .title(title)
-                .content(content)
-                .build();
-    }
     
     public static PriorityInfo from(Priority priority) {
         return PriorityInfo.builder()
-                .id(priority.getId())
-                .idx(priority.getIdx())
+                .level(priority.getLevel())
                 .title(priority.getTitle())
                 .content(priority.getContent())
+                .build();
+    }
+    
+    public static PriorityInfo fromRequest(PreparationPriorityRequest request) {
+        return PriorityInfo.builder()
+                .level(request.getLevel())
+                .title(request.getTitle())
+                .content(request.getContent())
                 .build();
     }
 }

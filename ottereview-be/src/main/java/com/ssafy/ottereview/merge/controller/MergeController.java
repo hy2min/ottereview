@@ -11,7 +11,6 @@ import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
-import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
@@ -68,7 +67,7 @@ public class MergeController {
     public ResponseEntity<?> getMergeConflict(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id")Long pullRequestId) throws Exception {
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
-        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
+        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequest(customUserDetail, repoId, pullRequestId);
         PullRequest pullRequest1 = pullRequestMapper.detailResponseToEntity(pullRequest, repo, user);
         String url = mergeService.getHttpsUrl(repo);
         log.info(pullRequest1.getHead() +", " + pullRequest1.getBase());

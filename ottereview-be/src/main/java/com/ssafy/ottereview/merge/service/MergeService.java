@@ -9,9 +9,9 @@ import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.dto.MergeResponse;
 import com.ssafy.ottereview.merge.dto.MergedPullRequestInfo;
 import com.ssafy.ottereview.merge.exception.MergeErrorCode;
-import com.ssafy.ottereview.preparation.dto.PrUserInfo;
-import com.ssafy.ottereview.preparation.dto.PriorityInfo;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
@@ -20,7 +20,6 @@ import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.repo.service.RepoService;
 import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
@@ -456,15 +455,14 @@ public class MergeService {
                 // 머지 성공 시 Python 서버에 관련 정보 저장
                 PullRequestDetailResponse pullRequestDetail = githubApiClient.getPullRequestDetail(prId, repo.getFullName());
                 
-                List<PrUserInfo> reviewers = reviewerRepository.findAllByPullRequest(pullRequest)
+                List<PullRequestReviewerInfo> reviewers = reviewerRepository.findAllByPullRequest(pullRequest)
                         .stream()
-                        .map(Reviewer::getUser)
-                        .map(pullRequestMapper::convertToPrUserInfo)
+                        .map(PullRequestReviewerInfo::fromEntity)
                         .toList();
                 
-                List<PriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
+                List<PullRequestPriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
                         .stream()
-                        .map(PriorityInfo::from)
+                        .map(PullRequestPriorityInfo::fromEntity)
                         .toList();
                 
                 MergedPullRequestInfo mergedPullRequestInfo = MergedPullRequestInfo.from(pullRequestDetail,
