@@ -7,14 +7,12 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail, submitReview, fetchPRReviews } from '@/features/pullRequest/prApi'
+import { fetchPRDetail, fetchPRReviews, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
-import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
-  const user = useUserStore((state) => state.user)
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -46,10 +44,10 @@ const PRReview = () => {
 
         // 리뷰 목록도 함께 가져오기 (아직 미사용, 저장만)
         try {
-          const reviews = await fetchPRReviews({ 
-            accountId: pr.repo.accountId, 
-            repoId, 
-            prId 
+          const reviews = await fetchPRReviews({
+            accountId: pr.repo.accountId,
+            repoId,
+            prId,
           })
           setPrReviews(reviews)
           console.log('reviews:', reviews)
