@@ -1,60 +1,54 @@
 @import 'tailwindcss';
-
-/* ===== 폰트 등록 ===== */
-@font-face {
-  font-family: 'BMJUA';
-  src:
-    url('../fonts/BMJUA_ttf.ttf') format('truetype'),
-    url('../fonts/BMJUA_otf.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css');
 
 /* ===== 전역 폰트 적용 ===== */
 body {
-  font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
+  font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
   background-color: var(--color-warning-100);
   background-attachment: fixed;
   min-height: 100vh;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 html {
   scrollbar-gutter: stable;
 }
 
 @theme {
-  --color-primary-50: #e8f5e8;
-  --color-primary-100: #c8e6c8;
-  --color-primary-200: #a8d7a8;
-  --color-primary-300: #88c888;
-  --color-primary-400: #68b968;
-  --color-primary-500: #48aa48;
-  --color-primary-600: #3a8a3a;
-  --color-primary-700: #2c6a2c;
-  --color-primary-800: #1e4a1e;
-  --color-primary-900: #102a10;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
 
-  --color-secondary-50: #f0f8ff;
-  --color-secondary-100: #e0f0ff;
-  --color-secondary-200: #c0e0ff;
-  --color-secondary-300: #a0d0ff;
-  --color-secondary-400: #80c0ff;
-  --color-secondary-500: #60b0ff;
-  --color-secondary-600: #4d8ccc;
-  --color-secondary-700: #3a6899;
-  --color-secondary-800: #274466;
-  --color-secondary-900: #142033;
+  --color-secondary-50: #f0fdfa;
+  --color-secondary-100: #ccfbf1;
+  --color-secondary-200: #99f6e4;
+  --color-secondary-300: #5eead4;
+  --color-secondary-400: #2dd4bf;
+  --color-secondary-500: #14b8a6;
+  --color-secondary-600: #0d9488;
+  --color-secondary-700: #0f766e;
+  --color-secondary-800: #115e59;
+  --color-secondary-900: #134e4a;
 
-  --color-accent-50: #fff8e1;
-  --color-accent-100: #ffecb3;
-  --color-accent-200: #ffe082;
-  --color-accent-300: #ffd54f;
-  --color-accent-400: #ffca28;
-  --color-accent-500: #ffc107;
-  --color-accent-600: #ffb300;
-  --color-accent-700: #ffa000;
-  --color-accent-800: #ff8f00;
-  --color-accent-900: #ff6f00;
+  --color-accent-50: #fdf4ff;
+  --color-accent-100: #fae8ff;
+  --color-accent-200: #f5d0fe;
+  --color-accent-300: #f0abfc;
+  --color-accent-400: #e879f9;
+  --color-accent-500: #d946ef;
+  --color-accent-600: #c026d3;
+  --color-accent-700: #a21caf;
+  --color-accent-800: #86198f;
+  --color-accent-900: #701a75;
 
   --color-earth-50: #f5f5dc;
   --color-earth-100: #e8e8b8;
@@ -315,11 +309,12 @@ html {
   animation: minecraft-progress 1s linear infinite;
 }
 
-/* Pixel Art Logo - Reduced shadow */
+/* Logo Typography */
 .pixel-logo {
-  font-family: var(--font-pixel); /* @apply font-pixel */
-  color: var(--color-primary-600); /* @apply text-primary-600 */
-  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+  font-family: 'Inter', 'Pretendard', sans-serif;
+  color: var(--color-primary-600);
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .minecraft-container {
@@ -453,4 +448,69 @@ html {
   100% {
     background-position: 8px 8px;
   }
+}
+
+/* ===== 스크롤 애니메이션 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+
+/* 스크롤 기반 애니메이션을 위한 초기 상태 */
+.scroll-animation {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-animation.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== 개선된 타이포그래피 ===== */
+.text-display {
+  font-family: 'Inter', 'Pretendard', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.text-headline {
+  font-family: 'Inter', 'Pretendard', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.text-body {
+  font-family: 'Pretendard', 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.6;
+}
+
+.text-caption {
+  font-family: 'Inter', 'Pretendard', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
