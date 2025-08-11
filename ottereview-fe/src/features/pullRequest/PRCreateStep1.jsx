@@ -5,26 +5,34 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import { validateBranches, validatePR } from '@/features/pullRequest/prApi'
-import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
 
 const PRCreateStep1 = ({
   goToStep,
   repoId,
-  formData,
-  updateFormData,
+  selectedBranches,
+  updateSelectedBranches,
   setValidationPR,
   setValidationBranches,
+  validationBranches,
+  branches,
 }) => {
   const navigate = useNavigate()
   const [prCheckResult, setPrCheckResult] = useState(null) // 'exists' | 'not_exists' | null
   const [existingPRData, setExistingPRData] = useState(null)
 
-  const [source, setSource] = useState(formData.source || '')
-  const [target, setTarget] = useState(formData.target || '')
-  const [canGoNext, setCanGoNext] = useState(false)
+  const [source, setSource] = useState(selectedBranches.source || '')
+  const [target, setTarget] = useState(selectedBranches.target || '')
 
-  // 브랜치 정보를 로컬 상태로 관리
-  const [branches, setBranches] = useState([])
+  // selectedBranches가 업데이트되면 로컬 상태도 동기화 (다른 단계에서 돌아왔을 때)
+  useEffect(() => {
+    setSource(selectedBranches.source || '')
+    setTarget(selectedBranches.target || '')
+  }, [selectedBranches.source, selectedBranches.target])
+
+  // 로컬 상태가 변경되면 즉시 selectedBranches에도 반영
+  useEffect(() => {
+    updateSelectedBranches({ source, target })
+  }, [source, target]) // updateSelectedBranches 제거
 
   const handleValidateBranches = async () => {
     try {
@@ -35,7 +43,6 @@ const PRCreateStep1 = ({
       })
 
       setValidationBranches(data)
-      setCanGoNext(data?.isPossible)
       console.log(data?.isPossible)
       console.log('ValidateBranches', data)
     } catch (err) {
@@ -43,21 +50,6 @@ const PRCreateStep1 = ({
     }
   }
 
-  useEffect(() => {
-    const loadBranches = async () => {
-      try {
-        const fetched = await fetchBrancheListByRepoId(repoId)
-        setBranches(fetched)
-      } catch (err) {
-        console.error('브랜치 목록 불러오기 실패:', err)
-        setBranches([]) // 에러 시 빈 배열로 초기화
-      }
-    }
-
-    if (repoId) {
-      loadBranches()
-    }
-  }, [repoId])
 
   // source나 target이 바뀔 때 상태 초기화 및 검증
   useEffect(() => {
@@ -122,9 +114,8 @@ const PRCreateStep1 = ({
   }
 
   const handleNextStep = () => {
-    // props로 받은 updateFormData 사용
-    updateFormData({ source: source, target: target })
-    console.log('Updated formData:', { source: source, target: target })
+    // useEffect에서 이미 formData 업데이트됨
+    console.log('Current formData:', { source, target })
     goToStep(2)
   }
 
@@ -132,6 +123,7 @@ const PRCreateStep1 = ({
   const isSameBranch = source && target && source === target
   const canCreatePR = prCheckResult === 'not_exists'
   const existingPR = prCheckResult === 'exists'
+  const canGoNext = validationBranches?.isPossible === true
 
   return (
     <div className="space-y-4">
