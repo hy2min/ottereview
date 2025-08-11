@@ -1,11 +1,12 @@
 import { Plus } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import CommentForm from '@/features/comment/CommentForm'
 
-const CodeDiff = ({ patch, onAddComment }) => {
+const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
   const [comments, setComments] = useState({})
+  const [submittedComments, setSubmittedComments] = useState({})
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
@@ -20,8 +21,9 @@ const CodeDiff = ({ patch, onAddComment }) => {
   const lines = patch.split('\n')
   let oldLine = 0
   let newLine = 0
+  let position = 0
 
-  // 댓글 관련 상태를 한번에 처리하는 헬퍼 함수
+  // 댓글 폼 닫기
   const closeCommentForm = (lineIndex) => {
     setActiveCommentLines((prev) => {
       const newSet = new Set(prev)
@@ -35,17 +37,16 @@ const CodeDiff = ({ patch, onAddComment }) => {
     })
   }
 
-  const handleLineClick = (lineIndex, lineNumber, isNew, lineType) => {
+  // 댓글 버튼 클릭
+  const handleLineClick = (lineIndex, lineNumber, isNew, lineType, currentPosition) => {
     const lineId = `${isNew ? 'new' : 'old'}-${lineNumber}`
 
     setActiveCommentLines((prev) => {
       const newSet = new Set(prev)
       if (newSet.has(lineIndex)) {
-        // 이미 열려있으면 닫기
         closeCommentForm(lineIndex)
-        return prev // 상태는 closeCommentForm에서 처리
+        return prev
       } else {
-        // 새로 열기
         newSet.add(lineIndex)
         setComments((prevComments) => ({
           ...prevComments,
@@ -55,6 +56,11 @@ const CodeDiff = ({ patch, onAddComment }) => {
             isNew,
             lineType,
             id: lineId,
+            position: currentPosition,
+            diffHunk: patch,
+            side: isNew ? 'RIGHT' : 'LEFT',
+            path: filePath,
+            fileIndex: null,
           },
         }))
         return newSet
@@ -64,12 +70,8 @@ const CodeDiff = ({ patch, onAddComment }) => {
 
   // 드래그 시작
   const handleMouseDown = (lineIndex, event) => {
-    // 댓글 버튼 클릭인 경우 드래그 시작하지 않음
-    if (event.target.closest('.comment-button')) {
-      return
-    }
+    if (event.target.closest('.comment-button')) return
 
-    // 새로운 드래그 시작 시 기존 선택 초기화
     setSelectedLines(new Set())
     setClickedLine(null)
     setIsDragging(true)
@@ -85,13 +87,14 @@ const CodeDiff = ({ patch, onAddComment }) => {
     }
   }
 
-  // 코드 영역 클릭 핸들러
+  // 코드 영역 클릭
   const handleCodeClick = (lineIndex) => {
     setClickedLine(clickedLine === lineIndex ? null : lineIndex)
   }
 
-  // 드래그 종료
-  const handleMouseUp = () => {
+  // 전역 마우스업 이벤트 핸들러
+  const handleGlobalMouseUp = useCallback(() => {
+    // 드래그 상태일 때만 처리
     if (isDragging && dragStart !== null && dragEnd !== null) {
       const start = Math.min(dragStart, dragEnd)
       const end = Math.max(dragStart, dragEnd)
@@ -105,54 +108,184 @@ const CodeDiff = ({ patch, onAddComment }) => {
       })
     }
 
+    // 드래그 상태 초기화
     setIsDragging(false)
     setDragStart(null)
     setDragEnd(null)
-  }
-
-  // 전역 마우스업 이벤트 처리
-  React.useEffect(() => {
-    const handleGlobalMouseUp = () => {
-      if (isDragging) {
-        handleMouseUp()
-      }
-    }
-
-    document.addEventListener('mouseup', handleGlobalMouseUp)
-    return () => {
-      document.removeEventListener('mouseup', handleGlobalMouseUp)
-    }
   }, [isDragging, dragStart, dragEnd])
 
-  const handleCommentChange = (lineIndex, content) => {
+  // 전역 마우스업 이벤트
+  useEffect(() => {
+    // 드래깅 중일 때만 이벤트 리스너 추가
+    if (isDragging) {
+      document.addEventListener('mouseup', handleGlobalMouseUp)
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp)
+      }
+    }
+  }, [isDragging, handleGlobalMouseUp])
+
+  const handleCommentChange = (lineIndex, content, audioFile = null) => {
     setComments((prevComments) => ({
       ...prevComments,
       [lineIndex]: {
         ...prevComments[lineIndex],
         content,
+        audioFile,
       },
     }))
   }
 
   const handleCommentSubmit = (lineIndex) => {
     const commentData = comments[lineIndex]
-    if (commentData?.content?.trim()) {
-      onAddComment?.({
-        line: commentData.lineNumber,
-        isNewLine: commentData.isNew,
-        content: commentData.content.trim(),
-        lineId: commentData.id,
+    const hasTextContent = commentData?.content?.trim()
+    const hasAudioFile = commentData?.audioFile
+
+    // 텍스트나 음성 중 하나라도 있어야 제출 가능
+    if (hasTextContent || hasAudioFile) {
+      // 선택된 라인들 정보 수집
+      const allSelectedLines = new Set([...selectedLines, lineIndex])
+      if (clickedLine !== null) {
+        allSelectedLines.add(clickedLine)
+      }
+
+      // 선택된 라인들을 인덱스 순으로 정렬
+      const sortedSelectedLines = Array.from(allSelectedLines).sort((a, b) => a - b)
+
+      // 각 라인의 실제 정보를 수집하기 위해 diff를 다시 파싱
+      let tempOldLine = 0
+      let tempNewLine = 0
+      let tempPosition = 0
+      const lineData = new Map() // lineIndex -> {lineNumber, position, side}
+
+      lines.forEach((rawLine, idx) => {
+        const line = rawLine ?? ''
+        const isHeader = line.startsWith('@@')
+        const isFileHeader =
+          line.startsWith('diff ') || line.startsWith('---') || line.startsWith('+++')
+        const isMeta = line.startsWith('\\')
+
+        if (isHeader) {
+          const m = line.match(/@@ -(\d+),?\d* \+(\d+),?\d* @@/)
+          if (m) {
+            tempOldLine = parseInt(m[1], 10)
+            tempNewLine = parseInt(m[2], 10)
+          }
+          return
+        }
+
+        // position 계산 (실제 코드 라인만)
+        if (!isFileHeader && !isMeta && !isHeader) {
+          tempPosition++
+        }
+
+        const firstChar = line.charAt(0)
+        const lineIsAdded = firstChar === '+' && !isFileHeader
+        const lineIsRemoved = firstChar === '-' && !isFileHeader
+        const lineIsContext = firstChar === ' '
+
+        // 댓글 가능한 라인의 정보 저장
+        if (lineIsAdded || lineIsRemoved || lineIsContext) {
+          const currentLineNumber = lineIsAdded ? tempNewLine : tempOldLine
+          const side = lineIsAdded ? 'RIGHT' : 'LEFT'
+
+          lineData.set(idx, {
+            lineNumber: currentLineNumber,
+            position: tempPosition,
+            side: side,
+          })
+        }
+
+        // 라인 번호 증가
+        if (lineIsRemoved || lineIsContext) tempOldLine++
+        if (lineIsAdded || lineIsContext) tempNewLine++
       })
 
+      // 선택된 라인들의 정보 추출
+      const selectedLinesInfo = sortedSelectedLines.map((idx) => lineData.get(idx)).filter(Boolean) // undefined 제거
+
+      // 음성 파일이 있으면 fileIndex는 임시로 -1로 설정 (PRReview에서 실제 인덱스로 변경됨)
+      // 텍스트만 있으면 fileIndex는 null이고 body는 텍스트 내용
+      const fileIndex = hasAudioFile ? -1 : null // PRReview에서 실제 인덱스로 업데이트됨
+      const bodyText = hasAudioFile ? '' : commentData.content?.trim() || ''
+
+      if (selectedLinesInfo.length === 0) {
+        // 선택된 라인 정보가 없으면 원래 댓글 데이터 사용
+        const reviewCommentData = {
+          path: commentData.path,
+          body: bodyText,
+          position: commentData.position,
+          line: commentData.lineNumber,
+          side: commentData.side,
+          startLine: commentData.lineNumber,
+          startSide: commentData.side,
+          fileIndex: fileIndex,
+          ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
+        }
+
+        onAddComment?.(reviewCommentData)
+        console.log(reviewCommentData)
+
+        // 제출된 댓글을 배열에 추가
+        setSubmittedComments((prev) => ({
+          ...prev,
+          [lineIndex]: [
+            ...(prev[lineIndex] || []),
+            {
+              ...commentData,
+              id: Date.now(), // 임시 ID
+              submittedAt: new Date().toLocaleTimeString(),
+            },
+          ],
+        }))
+      } else {
+        // 첫 번째와 마지막 라인 정보 사용
+        const firstLine = selectedLinesInfo[0]
+        const lastLine = selectedLinesInfo[selectedLinesInfo.length - 1]
+
+        // startLine은 line보다 작아야 함 (GitHub API 요구사항)
+        const actualStartLine = Math.min(firstLine.lineNumber, lastLine.lineNumber)
+        const actualEndLine = Math.max(firstLine.lineNumber, lastLine.lineNumber)
+
+        const reviewCommentData = {
+          path: commentData.path,
+          body: bodyText,
+          position: lastLine.position, // 마지막 라인의 position
+          line: actualEndLine, // 실제 끝 라인 번호
+          side: lastLine.side, // 마지막 라인의 side
+          startLine: actualStartLine !== actualEndLine ? actualStartLine : undefined, // 멀티라인인 경우만 startLine 설정
+          startSide: actualStartLine !== actualEndLine ? firstLine.side : undefined, // 멀티라인인 경우만 startSide 설정
+          fileIndex: fileIndex,
+          ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
+        }
+
+        onAddComment?.(reviewCommentData)
+        console.log(reviewCommentData)
+
+        // 제출된 댓글을 배열에 추가
+        setSubmittedComments((prev) => ({
+          ...prev,
+          [lineIndex]: [
+            ...(prev[lineIndex] || []),
+            {
+              ...commentData,
+              id: Date.now() + Math.random(), // 임시 ID (두 번째 케이스)
+              submittedAt: new Date().toLocaleTimeString(),
+            },
+          ],
+        }))
+      }
+
+      // 댓글 제출 성공 후 폼 닫기
       closeCommentForm(lineIndex)
+
+      // 선택 상태 초기화
+      setSelectedLines(new Set())
+      setClickedLine(null)
     }
   }
 
-  const handleCommentCancel = (lineIndex) => {
-    closeCommentForm(lineIndex)
-  }
-
-  // 드래그 중인 라인인지 확인
+  // 드래그 중인 라인 확인
   const isDraggedLine = (lineIndex) => {
     if (!isDragging || dragStart === null || dragEnd === null) return false
     const start = Math.min(dragStart, dragEnd)
@@ -197,15 +330,22 @@ const CodeDiff = ({ patch, onAddComment }) => {
               )
             }
 
+            // position 계산 (1부터 시작)
+            if (!isFileHeader && !isMeta && !isHeader) {
+              position++
+            }
+
             const displayOld = isRemoved || isContext ? oldLine : ''
             const displayNew = isAdded || isContext ? newLine : ''
             const currentLineNumber = isAdded ? newLine : oldLine
+            const currentPosition = position
 
             if (isRemoved || isContext) oldLine++
             if (isAdded || isContext) newLine++
 
             const lineType = isAdded ? 'added' : isRemoved ? 'removed' : 'context'
 
+            // 배경색 설정
             const codeBg = isAdded
               ? 'bg-normal-added-code text-gray-900'
               : isRemoved
@@ -218,13 +358,14 @@ const CodeDiff = ({ patch, onAddComment }) => {
                 ? 'bg-normal-removed-num text-gray-900'
                 : 'bg-white text-gray-500'
 
+            // 상태 확인
             const canComment = isAdded || isContext || isRemoved
             const isHovered = hoveredLine === idx
             const isSelected = selectedLines.has(idx)
             const isDragged = isDraggedLine(idx)
             const isClicked = clickedLine === idx
 
-            // 선택된 라인의 배경색 처리
+            // 선택된 라인의 배경색
             const finalCodeBg =
               isSelected || isDragged
                 ? isAdded
@@ -245,7 +386,7 @@ const CodeDiff = ({ patch, onAddComment }) => {
 
             return (
               <React.Fragment key={idx}>
-                {/* 라인 번호 영역 */}
+                {/* 라인 번호 */}
                 <div
                   className={`w-16 text-right pr-2 select-none border-r border-gray-200 cursor-pointer hover:bg-opacity-80 transition-colors ${finalNumBg}`}
                   onMouseDown={(e) => handleMouseDown(idx, e)}
@@ -280,7 +421,15 @@ const CodeDiff = ({ patch, onAddComment }) => {
                     !activeCommentLines.has(idx) && (
                       <div
                         className="absolute -left-0 top-1/2 transform -translate-y-1/2 z-10 comment-button"
-                        onClick={() => handleLineClick(idx, currentLineNumber, isAdded, lineType)}
+                        onClick={() =>
+                          handleLineClick(
+                            idx,
+                            currentLineNumber,
+                            isAdded,
+                            lineType,
+                            currentPosition
+                          )
+                        }
                       >
                         <div className="w-5 h-5 bg-blue-600 flex items-center justify-center rounded-[3px] border border-gray-200">
                           <Plus className="w-3 h-3 text-white" />
@@ -293,29 +442,59 @@ const CodeDiff = ({ patch, onAddComment }) => {
                       <span className="text-gray-400 italic">{line}</span>
                     ) : (
                       <div className="flex">
-                        {/* +/- 기호 영역 */}
                         {isAdded && <span className="w-4 text-gray-900">+</span>}
                         {isRemoved && <span className="w-4 text-gray-900">-</span>}
                         {isContext && <span className="w-4"></span>}
-
-                        {/* 실제 코드 영역 - 중복 제거 */}
                         <span className="flex-1">{line.slice(1)}</span>
                       </div>
                     )}
                   </div>
 
+                  {/* 제출된 댓글들 표시 (폼 위쪽) */}
+                  {submittedComments[idx] &&
+                    submittedComments[idx].map((comment) => (
+                      <div key={comment.id} className="mx-2 mb-2">
+                        <div className="p-4 bg-white border border-gray-200 rounded shadow-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                              <span className="text-sm font-medium">나</span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-stone-900">내 댓글</span>
+                              <span className="text-sm text-stone-500 ml-2">
+                                {comment.submittedAt}
+                              </span>
+                            </div>
+                            {comment.audioFile && (
+                              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-auto">
+                                🎵 음성
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-stone-700">
+                            {comment.content || (comment.audioFile ? '음성 댓글' : '')}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+
                   {/* 댓글 폼 */}
                   {activeCommentLines.has(idx) && (
                     <div
-                      className="p-4"
                       onMouseEnter={(e) => e.stopPropagation()}
                       onMouseLeave={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <CommentForm
+                        size="normal"
                         value={comments[idx]?.content || ''}
                         onChange={(e) => handleCommentChange(idx, e.target.value)}
+                        onAudioChange={(audioFile) =>
+                          handleCommentChange(idx, comments[idx]?.content || '', audioFile)
+                        }
                         onSubmit={() => handleCommentSubmit(idx)}
-                        onCancel={() => handleCommentCancel(idx)}
+                        onCancel={() => closeCommentForm(idx)}
+                        enableAudio={true}
                       />
                     </div>
                   )}

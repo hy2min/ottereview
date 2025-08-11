@@ -189,7 +189,7 @@ public class DescriptionServiceImpl implements DescriptionService {
     public List<DescriptionResponse> getDescriptionsByPullRequestId(Long pullRequestId) {
         List<Description> descriptions = descriptionRepository.findByPullRequestId(pullRequestId);
         return descriptions.stream()
-                .map(DescriptionResponse::from)
+                .map(this::createResponseWithVoiceUrl)
                 .collect(Collectors.toList());
     }
 
@@ -198,7 +198,7 @@ public class DescriptionServiceImpl implements DescriptionService {
     public DescriptionResponse getDescriptionById(Long descriptionId) {
         Description description = descriptionRepository.findById(descriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Description not found: " + descriptionId));
-        return DescriptionResponse.from(description);
+        return createResponseWithVoiceUrl(description);
     }
 
     @Override
@@ -259,6 +259,29 @@ public class DescriptionServiceImpl implements DescriptionService {
 
         descriptionRepository.delete(description);
         log.info("Description 삭제 완료 - ID: {}", descriptionId);
+    }
+
+    /**
+     * Description을 DescriptionResponse로 변환하면서 recordKey가 있으면 Pre-signed URL을 생성합니다.
+     */
+    private DescriptionResponse createResponseWithVoiceUrl(Description description) {
+        DescriptionResponse response = DescriptionResponse.from(description);
+        
+        // recordKey가 있으면 Pre-signed URL 생성
+        if (description.getRecordKey() != null && !description.getRecordKey().trim().isEmpty()) {
+            try {
+                String voiceUrl = s3Service.generatePresignedUrl(description.getRecordKey(), 60); // 60분 유효
+                return response.toBuilder()
+                        .voiceFileUrl(voiceUrl)
+                        .build();
+            } catch (Exception e) {
+                log.warn("음성 파일 URL 생성 실패 - descriptionId: {}, recordKey: {}, error: {}", 
+                    description.getId(), description.getRecordKey(), e.getMessage());
+                // URL 생성 실패해도 응답은 반환
+            }
+        }
+        
+        return response;
     }
 
 }

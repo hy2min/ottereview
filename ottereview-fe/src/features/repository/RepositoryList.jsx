@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
+import Button from '@/components/Button'
 import RepositoryCard from '@/features/repository/RepositoryCard'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
 
@@ -31,9 +32,9 @@ const RepositoryList = () => {
     <Box shadow className="w-full h-[70vh] flex flex-col">
       <div className="flex justify-between mb-2">
         <h2 className="text-xl">레포지토리</h2>
-        <button className="border-2 border-black px-4" onClick={handleImport}>
-          연결
-        </button>
+        <Button variant="" className="-mt-[11px]" onClick={handleImport}>
+          레포지토리 연결
+        </Button>
       </div>
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {repos.length === 0 ? (
