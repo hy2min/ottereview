@@ -32,6 +32,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ReviewServiceImpl implements ReviewService {
 
+    private static final String COMMENT_TEMPLATE = """
+            **👀 Reviewer: @%s**
+            %s
+            """;
     private final ReviewCommentRepository reviewCommentRepository;
     private final RepoRepository repoRepository;
     private final ReviewRepository reviewRepository;
@@ -42,109 +46,22 @@ public class ReviewServiceImpl implements ReviewService {
     private final AccountRepository accountRepository;
     private final S3Service s3Service;
 
-    private static final String COMMENT_TEMPLATE = """
-            **👀 Reviewer: @%s**
-            %s
-            """;
-
-
     @Override
     @Transactional
     public ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
                                                 ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        User user = findUser(userId);
+        PullRequest pullRequest = findPullRequest(prId);
 
-        PullRequest pullRequest = pullRequestRepository.findById(prId)
-                .orElseThrow(() -> new RuntimeException("Pull request not found: " + prId));
+        Review savedReview = saveReview(reviewRequest, pullRequest, user);
 
-        Review review = Review.builder()
-                .pullRequest(pullRequest)
-                .user(user)
-                .state(reviewRequest.getState())
-                .body(reviewRequest.getBody())
-                .commitSha(reviewRequest.getCommitSha())
-                .build();
+        List<ReviewCommentResponse> createdComments = createReviewCommentsIfExists(savedReview.getId(), reviewRequest, files, userId);
 
-        // Review 먼저 저장하여 ID 확보
-        Review savedReview = reviewRepository.save(review);
+        GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user);
 
-        // ReviewComment들이 있으면 ReviewCommentService를 통해 생성 (파일 포함)
-        List<ReviewCommentResponse> createdComments = new ArrayList<>();
-        if (reviewRequest.getReviewComments() != null && !reviewRequest.getReviewComments()
-                .isEmpty()) {
-            ReviewCommentCreateRequest commentCreateRequest = ReviewCommentCreateRequest.builder()
-                    .comments(reviewRequest.getReviewComments())
-                    .build();
+        updateGithubIdsForComments(savedReview, createdComments, githubResult, user);
 
-            // ReviewCommentService의 createComments 메소드 사용하고 결과 받기 (파일 포함)
-            createdComments = reviewCommentService.createComments(
-                    savedReview.getId(),
-                    commentCreateRequest,
-                    files, // 파일 배열 전달
-                    userId
-            );
-        }
-        // GitHub API 호출
-        String repoFullName = repoRepository.findById(repoId)
-                .orElseThrow(() -> new RuntimeException("Repository not found"))
-                .getFullName();
-
-        Long installationId = accountRepository.findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found"))
-                .getInstallationId();
-
-        GithubReviewResponse githubResult = reviewGithubService.createReviewOnGithub(
-                installationId,
-                repoFullName,
-                pullRequest.getGithubPrNumber(),
-                reviewRequest.getBody(),
-                reviewRequest.getState(),
-                reviewRequest.getReviewComments(),
-                user.getGithubUsername()
-        );
-
-        // 깃허브 아이디 재설정
-        savedReview.updateGithubId(githubResult.getReviewId());
-
-        // body 기반으로 githubCommentId를 가져오기 위한 맵
-        Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
-        Map<Long, String> commentDiffs = githubResult.getCommentDiffs();
-        Map<Long, Integer> commentPositions = githubResult.getCommentPositions();
-
-        for (ReviewCommentResponse localComment : createdComments) {
-            // 우리가 보낼 때 사용한 포맷과 동일하게 포맷팅
-            String formattedBody = COMMENT_TEMPLATE.formatted(user.getGithubUsername(), localComment.getBody());
-
-            Long githubCommentId = bodyToGithubCommentId.get(formattedBody);
-            if (githubCommentId != null) {
-                reviewCommentRepository.updateGithubId(localComment.getId(), githubCommentId);
-                reviewCommentRepository.updateDiffHunk(localComment.getId(), commentDiffs.get(githubCommentId));
-                reviewCommentRepository.updatePosition(localComment.getId(), commentPositions.get(githubCommentId));
-            } else {
-                log.warn("No matching GitHub comment for localCommentId={}, formattedBody={}", localComment.getId(), formattedBody);
-            }
-        }
-
-        // 코멘트 response dto로 변경
-        List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId()).stream()
-                .map(ReviewCommentResponse::from)
-                .toList();
-
-        // ReviewResponse를 직접 생성 (DB 재조회 없이)
-        return new ReviewResponse(
-                savedReview.getId(),
-                savedReview.getPullRequest().getId(),
-                savedReview.getPullRequest().getGithubPrNumber(),
-                savedReview.getUser().getGithubUsername(),
-                savedReview.getState(),
-                savedReview.getBody(),
-                savedReview.getCommitSha(),
-                updatedComments,
-                savedReview.getGithubCreatedAt(),
-                savedReview.getCreatedAt(),
-                savedReview.getModifiedAt()
-        );
+        return buildReviewResponse(savedReview);
     }
 
 //    @Override
@@ -204,6 +121,112 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
 
         return ReviewResponse.from(review);
+    }
+
+    private User findUser(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+    }
+
+    private PullRequest findPullRequest(Long prId) {
+        return pullRequestRepository.findById(prId)
+                .orElseThrow(() -> new RuntimeException("Pull request not found: " + prId));
+    }
+
+    private Review saveReview(ReviewRequest reviewRequest, PullRequest pullRequest, User user) {
+        Review review = Review.builder()
+                .pullRequest(pullRequest)
+                .user(user)
+                .state(reviewRequest.getState())
+                .body(reviewRequest.getBody())
+                .commitSha(reviewRequest.getCommitSha())
+                .build();
+        return reviewRepository.save(review);
+    }
+
+    private List<ReviewCommentResponse> createReviewCommentsIfExists(Long reviewId,
+                                                                     ReviewRequest reviewRequest,
+                                                                     MultipartFile[] files,
+                                                                     Long userId) {
+        if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        ReviewCommentCreateRequest commentCreateRequest = ReviewCommentCreateRequest.builder()
+                .comments(reviewRequest.getReviewComments())
+                .build();
+
+        return reviewCommentService.createComments(reviewId, commentCreateRequest, files, userId);
+    }
+
+    private GithubReviewResponse createReviewOnGithub(Long accountId,
+                                                      Long repoId,
+                                                      PullRequest pullRequest,
+                                                      ReviewRequest reviewRequest,
+                                                      User user) {
+        String repoFullName = repoRepository.findById(repoId)
+                .orElseThrow(() -> new RuntimeException("Repository not found"))
+                .getFullName();
+
+        Long installationId = accountRepository.findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found"))
+                .getInstallationId();
+
+        return reviewGithubService.createReviewOnGithub(
+                installationId,
+                repoFullName,
+                pullRequest.getGithubPrNumber(),
+                reviewRequest.getBody(),
+                reviewRequest.getState(),
+                reviewRequest.getReviewComments(),
+                user.getGithubUsername()
+        );
+    }
+
+    private void updateGithubIdsForComments(Review savedReview,
+                                            List<ReviewCommentResponse> createdComments,
+                                            GithubReviewResponse githubResult,
+                                            User user) {
+
+        savedReview.updateGithubId(githubResult.getReviewId());
+
+        Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
+        Map<Long, String> commentDiffs = githubResult.getCommentDiffs();
+        Map<Long, Integer> commentPositions = githubResult.getCommentPositions();
+
+        for (ReviewCommentResponse localComment : createdComments) {
+            String formattedBody = COMMENT_TEMPLATE.formatted(user.getGithubUsername(), localComment.getBody());
+
+            Long githubCommentId = bodyToGithubCommentId.get(formattedBody);
+            if (githubCommentId != null) {
+                reviewCommentRepository.updateGithubId(localComment.getId(), githubCommentId);
+                reviewCommentRepository.updateDiffHunk(localComment.getId(), commentDiffs.get(githubCommentId));
+                reviewCommentRepository.updatePosition(localComment.getId(), commentPositions.get(githubCommentId));
+            } else {
+                log.warn("No matching GitHub comment for localCommentId={}, formattedBody={}",
+                        localComment.getId(), formattedBody);
+            }
+        }
+    }
+
+    private ReviewResponse buildReviewResponse(Review savedReview) {
+        List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId()).stream()
+                .map(ReviewCommentResponse::from)
+                .toList();
+
+        return new ReviewResponse(
+                savedReview.getId(),
+                savedReview.getPullRequest().getId(),
+                savedReview.getPullRequest().getGithubPrNumber(),
+                savedReview.getUser().getGithubUsername(),
+                savedReview.getState(),
+                savedReview.getBody(),
+                savedReview.getCommitSha(),
+                updatedComments,
+                savedReview.getGithubCreatedAt(),
+                savedReview.getCreatedAt(),
+                savedReview.getModifiedAt()
+        );
     }
 
 

@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,129 +34,47 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             %s
             """;
     private final GithubAppUtil githubAppUtil;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public GithubReviewResponse createReviewOnGithub(Long installationId, String repoFullName, int githubPrNumber, String body, ReviewState state, List<ReviewCommentCreateRequest.CommentItem> reviewComments, String githubUsername) {
+    public GithubReviewResponse createReviewOnGithub(
+            Long installationId,
+            String repoFullName,
+            int githubPrNumber,
+            String body,
+            ReviewState state,
+            List<ReviewCommentCreateRequest.CommentItem> reviewComments,
+            String githubUsername
+    ) {
         try {
-            // API URL 구성
-            String url = String.format("https://api.github.com/repos/%s/pulls/%d/reviews", repoFullName, githubPrNumber);
-
-            String formattedBody = REVIEW_TEMPLATE.formatted(githubUsername, body);
-
-            List<Map<String, Object>> formattedComments = (reviewComments == null || reviewComments.isEmpty())
-                    ? List.of()
-                    : reviewComments.stream()
-                    .map(c -> {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("path", c.getPath());
-
-                        // 멀티 라인 코멘트인 경우 start_line/start_side 추가
-                        if (c.getStartLine() != null) {
-                            map.put("start_line", c.getStartLine());
-                            if (c.getStartSide() != null) {
-                                map.put("start_side", c.getStartSide());
-                            }
-                        }
-
-                        // 단일 라인 or 멀티 라인 공통으로 line/side 설정
-                        map.put("line", c.getLine());
-                        if (c.getSide() != null) {
-                            map.put("side", c.getSide());
-                        }
-
-                        map.put("body", COMMENT_TEMPLATE.formatted(githubUsername, c.getBody()));
-                        return map;
-                    })
-                    .collect(Collectors.toList());
-
-            // 요청 바디
-            Map<String, Object> requestBody = Map.of(
-                    "body", formattedBody,
-                    "event", state.name(),
-                    "comments", formattedComments
-            );
-
-            // 헤더
             String token = githubAppUtil.getInstallationToken(installationId);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createAuthHeaders(token);
 
-            // 요청 전송
-            RestTemplate restTemplate = new RestTemplate();
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+            // GitHub Review 생성 요청
+            String reviewUrl = String.format("https://api.github.com/repos/%s/pulls/%d/reviews", repoFullName, githubPrNumber);
+            Map<String, Object> requestBody = createReviewRequestBody(body, state, reviewComments, githubUsername);
+            Long reviewId = postReview(reviewUrl, requestBody, headers);
 
-            Long reviewId = null;
-            List<Long> commentIds = new ArrayList<>();
-            Map<Long, String> commentDiffs = new HashMap<>();
-            Map<Long, Integer> commentPositions = new HashMap<>();
-            Map<String, Long> bodyToGithubCommentId = new HashMap<>();
+            // 해당 리뷰 코멘트들 조회
+            List<JsonNode> reviewCommentNodes = fetchReviewComments(repoFullName, githubPrNumber, headers);
+            return parseGithubReviewResponse(reviewId, reviewCommentNodes);
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                ObjectMapper objectMapper = new ObjectMapper();
-                JsonNode jsonNode = objectMapper.readTree(response.getBody());
-                reviewId = jsonNode.get("id").asLong();
-
-                String commentsUrl = String.format(
-                        "https://api.github.com/repos/%s/pulls/%d/comments",
-                        repoFullName, githubPrNumber
-                );
-
-                ResponseEntity<String> commentsResponse = restTemplate.exchange(
-                        commentsUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class
-                );
-
-                if (commentsResponse.getStatusCode().is2xxSuccessful() && commentsResponse.getBody() != null) {
-                    JsonNode commentsArray = new ObjectMapper().readTree(commentsResponse.getBody());
-                    for (JsonNode commentNode : commentsArray) {
-                        if (commentNode.get("pull_request_review_id").asLong() == reviewId) {
-                            String commentBody = commentNode.get("body").asText();
-                            Long commentId = commentNode.get("id").asLong();
-                            bodyToGithubCommentId.put(commentBody, commentId);
-                            commentIds.add(commentId);
-
-                            String diffHunk = commentNode.has("diff_hunk") ? commentNode.get("diff_hunk").asText() : null;
-                            commentDiffs.put(commentId, diffHunk);
-
-                            Integer position = commentNode.has("position") && !commentNode.get("position").isNull() ? commentNode.get("position").asInt() : null;
-                            commentPositions.put(commentId, position);
-                        }
-                    }
-
-                }
-            }
-            log.info("GitHub Review Created: reviewId={}, commentIds={}", reviewId, commentIds);
-            return new GithubReviewResponse(reviewId, commentIds, commentDiffs, commentPositions, bodyToGithubCommentId);
         } catch (Exception e) {
             throw new RuntimeException("GitHub 리뷰 생성 실패: " + e.getMessage(), e);
         }
     }
 
+
     @Override
     public void updateReviewCommentOnGithub(Long installationId, String repoFullName, Long githubId, String newBody, String githubUsername) {
         try {
-            String url = String.format(
-                    "https://api.github.com/repos/%s/pulls/comments/%d",
-                    repoFullName, githubId
-            );
-
-            String formattedBody = COMMENT_TEMPLATE.formatted(githubUsername, newBody);
-
-            // 요청 바디
-            Map<String, Object> requestBody = Map.of("body", formattedBody);
-
-            // 헤더
             String token = githubAppUtil.getInstallationToken(installationId);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
-            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpHeaders headers = createAuthHeaders(token);
+            String url = String.format("https://api.github.com/repos/%s/pulls/comments/%d", repoFullName, githubId);
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            // PATCH 요청 전송
-            RestTemplate restTemplate = new RestTemplate();
-            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-            restTemplate.exchange(url, HttpMethod.PATCH, entity, String.class);
+            Map<String, Object> requestBody = Map.of("body", COMMENT_TEMPLATE.formatted(githubUsername, newBody));
+            RestTemplate restTemplate = createPatchRestTemplate();
+            restTemplate.exchange(url, HttpMethod.PATCH, new HttpEntity<>(requestBody, headers), String.class);
 
             log.info("GitHub Review Comment Updated: commentId={}", githubId);
 
@@ -176,12 +93,10 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             );
 
             String token = githubAppUtil.getInstallationToken(installationId);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(token);
+            HttpHeaders headers = createAuthHeaders(token);
 
             RestTemplate restTemplate = new RestTemplate();
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-            restTemplate.exchange(url, HttpMethod.DELETE, entity, String.class);
+            restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
 
             log.info("GitHub Review Comment Deleted: commentId={}", commentId);
 
@@ -189,6 +104,101 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             log.error("DELETE Review Comment failed: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("GitHub 리뷰 코멘트 삭제 실패: " + e.getMessage(), e);
         }
+    }
+
+    private HttpHeaders createAuthHeaders(String token) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
+    }
+
+    private Map<String, Object> createReviewRequestBody(String body, ReviewState state,
+                                                        List<ReviewCommentCreateRequest.CommentItem> reviewComments,
+                                                        String githubUsername) {
+        Map<String, Object> requestBody = new HashMap<>();
+
+        if (body != null && !body.isBlank()) {
+            String formattedBody = REVIEW_TEMPLATE.formatted(githubUsername, body);
+            requestBody.put("body", formattedBody);
+        }
+
+        requestBody.put("event", state.name());
+        requestBody.put("comments", formatCommentItems(reviewComments, githubUsername));
+
+        return requestBody;
+    }
+
+    private List<Map<String, Object>> formatCommentItems(List<ReviewCommentCreateRequest.CommentItem> commentItems, String githubUsername) {
+        if (commentItems == null || commentItems.isEmpty()) {
+            return List.of();
+        }
+        return commentItems.stream().map(c -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("path", c.getPath());
+            if (c.getStartLine() != null) {
+                map.put("start_line", c.getStartLine());
+                if (c.getStartSide() != null) map.put("start_side", c.getStartSide());
+            }
+            map.put("line", c.getLine());
+            if (c.getSide() != null) map.put("side", c.getSide());
+            map.put("body", COMMENT_TEMPLATE.formatted(githubUsername, c.getBody()));
+            return map;
+        }).toList();
+    }
+
+    private Long postReview(String url, Map<String, Object> requestBody, HttpHeaders headers) throws Exception {
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.postForEntity(url, new HttpEntity<>(requestBody, headers), String.class);
+        if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return jsonNode.get("id").asLong();
+        }
+        return null;
+    }
+
+    private List<JsonNode> fetchReviewComments(String repoFullName, int githubPrNumber, HttpHeaders headers) throws Exception {
+        String commentsUrl = String.format("https://api.github.com/repos/%s/pulls/%d/comments", repoFullName, githubPrNumber);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> commentsResponse = restTemplate.exchange(commentsUrl, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+        if (commentsResponse.getStatusCode().is2xxSuccessful() && commentsResponse.getBody() != null) {
+            JsonNode commentsArray = objectMapper.readTree(commentsResponse.getBody());
+            List<JsonNode> list = new ArrayList<>();
+            commentsArray.forEach(list::add);
+            return list;
+        }
+        return List.of();
+    }
+
+    private GithubReviewResponse parseGithubReviewResponse(Long reviewId, List<JsonNode> comments) {
+        List<Long> commentIds = new ArrayList<>();
+        Map<Long, String> commentDiffs = new HashMap<>();
+        Map<Long, Integer> commentPositions = new HashMap<>();
+        Map<String, Long> bodyToGithubCommentId = new HashMap<>();
+
+        for (JsonNode commentNode : comments) {
+            if (commentNode.get("pull_request_review_id").asLong() == reviewId) {
+                Long commentId = commentNode.get("id").asLong();
+                String commentBody = commentNode.get("body").asText();
+                bodyToGithubCommentId.put(commentBody, commentId);
+                commentIds.add(commentId);
+
+                String diffHunk = commentNode.has("diff_hunk") ? commentNode.get("diff_hunk").asText() : null;
+                commentDiffs.put(commentId, diffHunk);
+
+                Integer position = commentNode.has("position") && !commentNode.get("position").isNull() ? commentNode.get("position").asInt() : null;
+                commentPositions.put(commentId, position);
+            }
+        }
+        log.info("GitHub Review Created: reviewId={}, commentIds={}", reviewId, commentIds);
+        return new GithubReviewResponse(reviewId, commentIds, commentDiffs, commentPositions, bodyToGithubCommentId);
+    }
+
+    private RestTemplate createPatchRestTemplate() {
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        return restTemplate;
     }
 
 
