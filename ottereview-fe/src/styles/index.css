@@ -1,16 +1,27 @@
-@import 'tailwindcss';
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css');
+@import 'tailwindcss';
 
 /* ===== 전역 폰트 적용 ===== */
 body {
-  font-family: 'Pretendard', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
-  background-color: var(--color-warning-100);
+  font-family:
+    'Pretendard',
+    'Inter',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif !important;
+  background-color: var(--bg-primary);
   background-attachment: fixed;
   min-height: 100vh;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 html {
   scrollbar-gutter: stable;
@@ -72,38 +83,38 @@ html {
   --color-stone-800: #373737;
   --color-stone-900: #1c1c1c;
 
-  --color-danger-50: #ffeaea;
-  --color-danger-100: #ffd5d5;
-  --color-danger-200: #ffb3b3;
-  --color-danger-300: #ff9191;
-  --color-danger-400: #ff6f6f;
-  --color-danger-500: #ff4d4d;
-  --color-danger-600: #cc3e3e;
-  --color-danger-700: #992e2e;
-  --color-danger-800: #661f1f;
-  --color-danger-900: #330f0f;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #cf222e;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
 
-  --color-success-50: #e8f5e8;
-  --color-success-100: #c8e6c8;
-  --color-success-200: #a8d7a8;
-  --color-success-300: #88c888;
-  --color-success-400: #68b968;
-  --color-success-500: #48aa48;
-  --color-success-600: #3a8a3a;
-  --color-success-700: #2c6a2c;
-  --color-success-800: #1e4a1e;
-  --color-success-900: #102a10;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #1a7f37;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
 
-  --color-warning-50: #fff8e1;
-  --color-warning-100: #ffecb3;
-  --color-warning-200: #ffe082;
-  --color-warning-300: #ffd54f;
-  --color-warning-400: #ffca28;
-  --color-warning-500: #ffc107;
-  --color-warning-600: #ffb300;
-  --color-warning-700: #ffa000;
-  --color-warning-800: #ff8f00;
-  --color-warning-900: #ff6f00;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #bf8700;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
 
   --color-info-50: #e3f2fd;
   --color-info-100: #bbdefb;
@@ -129,17 +140,51 @@ html {
   --color-selected-added-code: #caf0e2;
 }
 
+[data-theme='light'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fdfdfd;
+  --bg-tertiary: #f7f8f9;
+  --text-primary: #0d1117;
+  --text-secondary: #656d76;
+  --text-muted: #8b949e;
+  --border-primary: #d0d7de;
+  --border-secondary: #afb8c1;
+  --shadow-color: rgba(0, 0, 0, 0.12);
+  --accent-primary: #0969da;
+  --accent-secondary: #1f2328;
+  --success-color: #1a7f37;
+  --warning-color: #bf8700;
+  --danger-color: #cf222e;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #1a1d29;
+  --bg-secondary: #232530;
+  --bg-tertiary: #2d3142;
+  --text-primary: #ffffff;
+  --text-secondary: #b8bcc8;
+  --text-muted: #9ca3af;
+  --border-primary: #484c5a;
+  --border-secondary: #3d4354;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+  --accent-primary: #60a5fa;
+  --accent-secondary: #ffffff;
+  --success-color: #4ade80;
+  --warning-color: #fbbf24;
+  --danger-color: #f87171;
+}
+
 :root {
-  --color-primary-50: #e8f5e8;
-  --color-primary-100: #c8e6c8;
-  --color-primary-200: #a8d7a8;
-  --color-primary-300: #88c888;
-  --color-primary-400: #68b968;
-  --color-primary-500: #48aa48;
-  --color-primary-600: #3a8a3a;
-  --color-primary-700: #2c6a2c;
-  --color-primary-800: #1e4a1e;
-  --color-primary-900: #102a10;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #0969da;
+  --color-primary-600: #0557b8;
+  --color-primary-700: #0b4695;
+  --color-primary-800: #1e3a8a;
+  --color-primary-900: #1e293b;
 
   --color-secondary-50: #f0f8ff;
   --color-secondary-100: #e0f0ff;
@@ -185,38 +230,38 @@ html {
   --color-stone-800: #373737;
   --color-stone-900: #1c1c1c;
 
-  --color-danger-50: #ffeaea;
-  --color-danger-100: #ffd5d5;
-  --color-danger-200: #ffb3b3;
-  --color-danger-300: #ff9191;
-  --color-danger-400: #ff6f6f;
-  --color-danger-500: #ff4d4d;
-  --color-danger-600: #cc3e3e;
-  --color-danger-700: #992e2e;
-  --color-danger-800: #661f1f;
-  --color-danger-900: #330f0f;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #cf222e;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
 
-  --color-success-50: #e8f5e8;
-  --color-success-100: #c8e6c8;
-  --color-success-200: #a8d7a8;
-  --color-success-300: #88c888;
-  --color-success-400: #68b968;
-  --color-success-500: #48aa48;
-  --color-success-600: #3a8a3a;
-  --color-success-700: #2c6a2c;
-  --color-success-800: #1e4a1e;
-  --color-success-900: #102a10;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #1a7f37;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
 
-  --color-warning-50: #fff8e1;
-  --color-warning-100: #ffecb3;
-  --color-warning-200: #ffe082;
-  --color-warning-300: #ffd54f;
-  --color-warning-400: #ffca28;
-  --color-warning-500: #ffc107;
-  --color-warning-600: #ffb300;
-  --color-warning-700: #ffa000;
-  --color-warning-800: #ff8f00;
-  --color-warning-900: #ff6f00;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #bf8700;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
 
   --color-info-50: #e3f2fd;
   --color-info-100: #bbdefb;
@@ -318,22 +363,31 @@ html {
 }
 
 .minecraft-container {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  background-color: var(--bg-secondary);
+  border-width: 2px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  padding: 1rem;
   border-radius: 8px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Soft rounded containers */
 .soft-container {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  background-color: var(--bg-secondary);
+  border-width: 1px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 12px var(--shadow-color);
+  padding: 1rem;
   border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+/* 다크모드에서 컨테이너 가시성 개선 */
+[data-theme='dark'] .soft-container {
+  border-color: #525866;
+  background-color: #2a2d3a;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(255, 255, 255, 0.02);
 }
 
 /* Utility classes */
@@ -346,68 +400,76 @@ html {
 
 /* Soft rounded cards */
 .soft-card {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  background-color: var(--bg-secondary);
+  border-width: 1px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 8px var(--shadow-color);
   border-radius: 12px;
-  transition-property: all; /* @apply transition-all */
-  transition-duration: 200ms; /* @apply duration-200 */
+  transition: all 0.2s ease;
 }
 .soft-card:hover {
-  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
+  box-shadow: 0 4px 16px var(--shadow-color);
+  transform: translateY(-2px);
 }
 
-/* Soft rounded buttons */
-.soft-btn {
-  display: inline-flex; /* @apply inline-flex */
-  align-items: center; /* @apply items-center */
-  justify-content: center; /* @apply justify-center */
-  font-weight: 500; /* @apply font-medium (Tailwind font-medium은 500) */
-  transition-property: all; /* @apply transition-all */
-  transition-duration: 200ms; /* @apply duration-200 */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  border-radius: 8px;
+/* 다크모드에서 카드 가시성 개선 */
+[data-theme='dark'] .soft-card {
+  border-color: #525866;
+  background-color: #2a2d3a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(255, 255, 255, 0.03);
 }
-.soft-btn:hover {
-  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
-  transform: translateY(-4px); /* @apply hover:-translate-y-1 */
+
+[data-theme='dark'] .soft-card:hover {
+  border-color: #60a5fa;
+  background-color: #2f3241;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(96, 165, 250, 0.1);
 }
-.soft-btn:active {
-  box-shadow: var(--shadow-pixel-inset); /* @apply active:shadow-pixel-inset */
-  transform: translateY(0); /* @apply active:translate-y-0 */
+
+/* Modern button base styles */
+.btn-focus-ring:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
-.soft-btn:focus {
-  outline: 2px solid transparent; /* @apply focus:outline-none */
-  outline-offset: 2px; /* @apply focus:ring-offset-2 */
-  --tw-ring-color: currentColor; /* @apply focus:ring-2 */
-  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+
+.btn-focus-ring:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* Soft rounded inputs */
 .soft-input {
-  width: 100%; /* @apply w-full */
-  padding: 0.5rem 0.75rem; /* @apply px-3 py-2 */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  background-color: white; /* @apply bg-white */
-  color: #1a202c; /* @apply text-gray-900 (Tailwind gray-900) */
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-width: 1px;
+  border-color: var(--border-primary);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--shadow-color);
 }
 .soft-input:focus {
-  outline: 2px solid transparent; /* @apply focus:outline-none */
-  outline-offset: 2px; /* @apply focus:ring-offset-2 (일반적으로 ring-offset-width는 2px) */
-  --tw-ring-color: var(--color-primary-500); /* @apply focus:ring-primary-500 */
-  border-color: var(--color-primary-500); /* @apply focus:border-primary-500 */
-  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.1), 0 1px 3px var(--shadow-color);
 }
 
 .soft-input::placeholder {
-  color: #6b7280; /* @apply placeholder-gray-500 (Tailwind gray-500) */
+  color: var(--text-muted);
+}
+
+/* 다크모드에서 input 가시성 개선 */
+[data-theme='dark'] .soft-input {
+  background-color: #2a2d3a;
+  border-color: #525866;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='dark'] .soft-input:focus {
+  border-color: #60a5fa;
+  background-color: #2f3241;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15), 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 박스 쉐도우를 위한 유틸리티 클래스 */
@@ -513,4 +575,109 @@ html {
   font-weight: 500;
   letter-spacing: 0.025em;
   text-transform: uppercase;
+}
+
+/* 다크모드 호환 유틸리티 클래스 */
+.theme-btn {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
+}
+
+/* 다크모드에서 테마 버튼 가시성 개선 */
+[data-theme='dark'] .theme-btn {
+  background-color: #2a2d3a;
+  border-color: #525866;
+  color: #b8bcc8;
+}
+
+[data-theme='dark'] .theme-btn:hover {
+  background-color: #2f3241;
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+.theme-text {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-border {
+  border-color: var(--border-primary);
+}
+
+.theme-shadow {
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.theme-shadow-lg {
+  box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color);
+}
+
+/* 다크모드에서 더 부드러운 그림자 효과 */
+[data-theme='dark'] .theme-shadow {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='dark'] .theme-shadow-lg {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(255, 255, 255, 0.03);
+}
+
+/* 자동 슬라이드 컨테이너 - 스크롤바 완전 숨김 */
+.chat-room-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chat-room-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 자동 슬라이드 애니메이션 */
+.auto-slide-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.auto-slide-track {
+  display: flex;
+  gap: 12px;
+  will-change: transform;
+}
+
+/* 텍스트 줄 제한 유틸리티 */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 호버 스케일 효과 */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
 }

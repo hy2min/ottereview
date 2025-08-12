@@ -11,28 +11,28 @@ const Badge = ({
 }) => {
   const base = 'inline-flex items-center rounded-full font-medium'
   const variantClasses = {
-    default: 'bg-gray-100 text-gray-800',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    primary: 'bg-blue-100 text-blue-800',
-    purple: 'bg-purple-100 text-purple-800',
-    orange: 'bg-orange-100 text-orange-800',
-    pink: 'bg-pink-100 text-pink-800',
-    teal: 'bg-teal-100 text-teal-800',
-    cyan: 'bg-cyan-100 text-cyan-800',
-    indigo: 'bg-indigo-100 text-indigo-800',
-    lime: 'bg-lime-100 text-lime-800',
-    amber: 'bg-amber-100 text-amber-800',
-    fuchsia: 'bg-fuchsia-100 text-fuchsia-800',
-    rose: 'bg-rose-100 text-rose-800',
-    sky: 'bg-sky-100 text-sky-800',
-    emerald: 'bg-emerald-100 text-emerald-800',
+    default: 'theme-bg-tertiary theme-text border theme-border',
+    success: 'bg-green-100 text-green-700 border border-green-200',
+    warning: 'bg-amber-100 text-amber-700 border border-amber-200',
+    danger: 'bg-red-100 text-red-700 border border-red-200',
+    primary: 'bg-blue-100 text-blue-700 border border-blue-200',
+    purple: 'bg-purple-100 text-purple-700 border border-purple-200',
+    orange: 'bg-orange-100 text-orange-700 border border-orange-200',
+    pink: 'bg-pink-100 text-pink-700 border border-pink-200',
+    teal: 'bg-teal-100 text-teal-700 border border-teal-200',
+    cyan: 'bg-cyan-100 text-cyan-700 border border-cyan-200',
+    indigo: 'bg-indigo-100 text-indigo-700 border border-indigo-200',
+    lime: 'bg-lime-100 text-lime-700 border border-lime-200',
+    amber: 'bg-amber-100 text-amber-700 border border-amber-200',
+    fuchsia: 'bg-fuchsia-100 text-fuchsia-700 border border-fuchsia-200',
+    rose: 'bg-rose-100 text-rose-700 border border-rose-200',
+    sky: 'bg-sky-100 text-sky-700 border border-sky-200',
+    emerald: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
 
     // 우선순위 전용
-    priorityLow: 'bg-gray-200 text-gray-800',
-    priorityMedium: 'bg-amber-200 text-amber-900',
-    priorityHigh: 'bg-red-500 text-white',
+    priorityLow: 'theme-bg-tertiary theme-text-muted border theme-border',
+    priorityMedium: 'bg-amber-100 text-amber-700 border border-amber-200',
+    priorityHigh: 'bg-red-600 text-white border border-red-600',
   }
 
   const sizeClasses = {

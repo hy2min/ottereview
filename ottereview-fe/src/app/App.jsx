@@ -10,6 +10,7 @@ import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Landing from '@/pages/Landing'
+import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
 
 const App = () => {
@@ -18,8 +19,14 @@ const App = () => {
   const clearUser = useUserStore((state) => state.clearUser)
   const clearTokens = useAuthStore((state) => state.clearTokens)
   const accessToken = useAuthStore((state) => state.accessToken)
+  const initTheme = useThemeStore((state) => state.initTheme)
   const { pathname } = useLocation()
   const attemptedFetch = useRef(false)
+
+  // 테마 초기화
+  useEffect(() => {
+    initTheme()
+  }, [initTheme])
 
   // user 복원 로직
   useEffect(() => {
