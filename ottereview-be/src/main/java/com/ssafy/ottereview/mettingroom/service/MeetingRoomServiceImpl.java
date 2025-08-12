@@ -6,10 +6,7 @@ import com.ssafy.ottereview.common.config.yjs.handler.YjsWebSocketHandler;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.email.dto.EmailRequestDto;
 import com.ssafy.ottereview.email.service.EmailService;
-import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
+import com.ssafy.ottereview.mettingroom.dto.*;
 import com.ssafy.ottereview.mettingroom.entity.MeetingParticipant;
 import com.ssafy.ottereview.mettingroom.entity.MeetingRoom;
 import com.ssafy.ottereview.mettingroom.entity.MeetingRoomFiles;
@@ -137,10 +134,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
-        List<MeetingRoomFiles> conflictFiles = meetingRoomFilesRepository.findAllByMeetingRoom(room);
+        List<MeetingRoomFilesDto> files = meetingRoomFilesRepository.findAllByMeetingRoom(room).stream().map(r -> {
+            return new MeetingRoomFilesDto(r.getFileName());
+        }).toList();
 
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(),
-                participantDtos,conflictFiles);
+                participantDtos,files);
     }
 
     @Override
@@ -156,7 +155,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .toList();
 
         // conflictFiles 조회
-        List<MeetingRoomFiles> files = meetingRoomFilesRepository.findAllByMeetingRoom(room);
+        List<MeetingRoomFilesDto> files = meetingRoomFilesRepository.findAllByMeetingRoom(room).stream().map(r -> {
+
+            return new MeetingRoomFilesDto(r.getFileName());
+        }).toList();
 
         // Owner ID
         Long ownerId = room.getParticipants().stream()
