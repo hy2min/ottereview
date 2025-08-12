@@ -78,6 +78,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionService descriptionService;
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
+
     
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
@@ -88,11 +89,21 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 2. 해당 레포지토리의 Pull Request 목록 조회
 //        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
         List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
+
         
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
-                .map(pullRequestMapper::PullRequestToResponse)
+                .map(pullRequest -> {
+                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest,checkMergeStatus(pullRequest));
+                })
                 .toList();
+    }
+
+    private Boolean checkMergeStatus(PullRequest pullRequest) {
+        // Reviewer 모두 APPROVED인지 확인
+        List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
+        return reviewers.stream()
+                .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
     }
     
     @Override
