@@ -30,6 +30,7 @@ const PRReview = () => {
 
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
 
   const loadingDots = useLoadingDots(loading)
 
@@ -119,7 +120,7 @@ const PRReview = () => {
     try {
       const reviewData = {
         reviewRequest: {
-          state: 'COMMENT',
+          state: reviewState, // 선택된 리뷰 상태 사용
           body: comment.trim(),
           commitSha: prDetail?.commits?.[0]?.sha || '',
           reviewComments: reviewComments,
@@ -153,6 +154,7 @@ const PRReview = () => {
   const handleCancel = () => {
     setComment('')
     setShowCommentForm(false)
+    setReviewState('COMMENT') // 리뷰 상태도 초기화
   }
 
   const prFiles =
@@ -308,6 +310,9 @@ const PRReview = () => {
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 enableAudio={false}
+                reviewState={reviewState}
+                onReviewStateChange={setReviewState}
+                showReviewState={true}
               />
             </div>
           )}
