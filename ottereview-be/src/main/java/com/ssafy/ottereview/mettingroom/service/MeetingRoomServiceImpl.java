@@ -6,19 +6,19 @@ import com.ssafy.ottereview.common.config.yjs.handler.YjsWebSocketHandler;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.email.dto.EmailRequestDto;
 import com.ssafy.ottereview.email.service.EmailService;
-import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
-import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
+import com.ssafy.ottereview.mettingroom.dto.*;
 import com.ssafy.ottereview.mettingroom.entity.MeetingParticipant;
 import com.ssafy.ottereview.mettingroom.entity.MeetingRoom;
+import com.ssafy.ottereview.mettingroom.entity.MeetingRoomFiles;
 import com.ssafy.ottereview.mettingroom.exception.MeetingRoomErrorCode;
 import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
+import com.ssafy.ottereview.mettingroom.repository.MeetingRoomFilesRepository;
 import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.user.entity.User;
+import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +50,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final OpenViduService openViduService;
     private final EmailService emailService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final MeetingRoomFilesRepository meetingRoomFilesRepository;
+
     @Value("${openvidu.session.ttl-hours}")
     private long sessionTtlHours;
 
@@ -94,8 +96,20 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
             room.addParticipant(participant);
         }
 
-        // Cascade로 참여자까지 함께 저장됨
+
+        // 3) 부모 먼저 save (ID 확보)
         meetingRoomRepository.save(room);
+        List<MeetingRoomFiles> fileEntities = new ArrayList<>();
+        // 4) 파일 저장은 '부모 save 이후'에
+        if (request.getFiles() != null && !request.getFiles().isEmpty()) {
+             fileEntities = request.getFiles().stream()
+                    .map(fn -> MeetingRoomFiles.builder()
+                            .fileName(fn)
+                            .meetingRoom(room)   // 이제 영속/ID 있음
+                            .build())
+                    .toList();
+            meetingRoomFilesRepository.saveAll(fileEntities);
+        }
 
         // 이메일 보내는 로직
         room.getParticipants().stream()
@@ -120,8 +134,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
+        List<MeetingRoomFilesDto> files = meetingRoomFilesRepository.findAllByMeetingRoom(room).stream().map(r -> {
+            return new MeetingRoomFilesDto(r.getFileName());
+        }).toList();
+
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(),
-                participantDtos);
+                participantDtos,files);
     }
 
     @Override
@@ -136,6 +154,12 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .toList();
 
+        // conflictFiles 조회
+        List<MeetingRoomFilesDto> files = meetingRoomFilesRepository.findAllByMeetingRoom(room).stream().map(r -> {
+
+            return new MeetingRoomFilesDto(r.getFileName());
+        }).toList();
+
         // Owner ID
         Long ownerId = room.getParticipants().stream()
                 .filter(MeetingParticipant::isOwner)
@@ -144,7 +168,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .orElse(null);
 
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId,
-                participantDtos);
+                participantDtos,files);
     }
 
     @Override

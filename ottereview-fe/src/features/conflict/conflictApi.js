@@ -10,3 +10,8 @@ export const fetchConflictFile = async ({ repoId, prId }) => {
   const res = await api.get(`/api/repositories/${repoId}/pull-requests/${prId}`)
   return res.data
 }
+// 충돌 데이터 조회
+export const fetchConflictData = async (repoId, prId) => {
+  const res = await api.get(`api/repositories/${repoId}/pull-requests/${prId}/merges/conflicts`)
+  return res.data
+}
