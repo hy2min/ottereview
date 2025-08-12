@@ -24,4 +24,6 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
     Optional<PullRequest> findByGithubId(Long githubId);
     
     Optional<PullRequest> findByRepoAndBaseAndHeadAndState(Repo repo, String base, String head, PrState state);
+    
+    Boolean existsByRepoAndBaseAndHeadAndState(Repo repo, String base, String head, PrState state);
 }

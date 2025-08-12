@@ -16,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -88,4 +89,33 @@ public class PullRequestController {
         return ResponseEntity.ok()
                 .build();
     }
+
+    @PutMapping("/{pr-id}/close")
+    @Operation(
+            summary = "Pull Request 닫기",
+            description = "지정된 Pull Request를 닫습니다. DB의 상태와 GitHub의 상태를 모두 업데이트합니다."
+    )
+    public ResponseEntity<Void> closePullRequest(
+            @AuthenticationPrincipal CustomUserDetail userDetail,
+            @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
+        
+        pullRequestService.closePullRequest(userDetail, repoId, pullRequestId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{pr-id}/reopen")
+    @Operation(
+            summary = "Pull Request 다시 열기",
+            description = "닫힌 Pull Request를 엽니다. DB의 상태와 GitHub의 상태를 모두 업데이트합니다."
+    )
+    public ResponseEntity<Void> reopenPullRequest(
+            @AuthenticationPrincipal CustomUserDetail userDetail,
+            @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
+
+        pullRequestService.reopenPullRequest(userDetail, repoId, pullRequestId);
+        return ResponseEntity.ok().build();
+    }
+
 }
