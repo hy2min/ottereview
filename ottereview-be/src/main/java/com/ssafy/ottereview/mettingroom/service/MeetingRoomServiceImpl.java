@@ -12,8 +12,10 @@ import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.entity.MeetingParticipant;
 import com.ssafy.ottereview.mettingroom.entity.MeetingRoom;
+import com.ssafy.ottereview.mettingroom.entity.MeetingRoomFiles;
 import com.ssafy.ottereview.mettingroom.exception.MeetingRoomErrorCode;
 import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
+import com.ssafy.ottereview.mettingroom.repository.MeetingRoomFilesRepository;
 import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
@@ -50,6 +52,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final OpenViduService openViduService;
     private final EmailService emailService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final MeetingRoomFilesRepository meetingRoomFilesRepository;
+
     @Value("${openvidu.session.ttl-hours}")
     private long sessionTtlHours;
 
@@ -65,6 +69,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .roomName(request.getRoomName())
                 .pullRequest(pullRequest)
                 .build();
+        for(String files: request.getFiles()){
+            meetingRoomFilesRepository.save(MeetingRoomFiles.builder().fileName(files).meetingRoom(room).build());
+        }
 
         // 초대받은 사람 셋
         Set<Long> inviteeIds = request.getInviteeIds() != null
@@ -120,8 +127,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
+        List<MeetingRoomFiles> conflictFiles = meetingRoomFilesRepository.findAllByMeetingRoom(room);
+
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(),
-                participantDtos);
+                participantDtos,conflictFiles);
     }
 
     @Override
@@ -136,6 +145,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .toList();
 
+        // conflictFiles 조회
+        List<MeetingRoomFiles> files = meetingRoomFilesRepository.findAllByMeetingRoom(room);
+
         // Owner ID
         Long ownerId = room.getParticipants().stream()
                 .filter(MeetingParticipant::isOwner)
@@ -144,7 +156,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .orElse(null);
 
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId,
-                participantDtos);
+                participantDtos,files);
     }
 
     @Override
