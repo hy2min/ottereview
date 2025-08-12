@@ -39,9 +39,17 @@ const PRCreateStep3 = ({
 
   const isAiTitleLoading = !aiOthers?.title?.result
   const loadingDots = useLoadingDots(isAiTitleLoading, 300)
+  const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
+
+  // 따옴표 제거 함수
+  const removeQuotes = (str) => {
+    if (!str) return str
+    return str.replace(/^["']|["']$/g, '')
+  }
 
   const handleApplyAiTitle = () => {
-    setPrTitle(aiOthers?.title?.result || '')
+    const aiTitle = aiOthers?.title?.result || ''
+    setPrTitle(removeQuotes(aiTitle))
   }
 
   const handleTogglePriorities = () => {
@@ -58,7 +66,7 @@ const PRCreateStep3 = ({
 
       // AI 우선순위 데이터를 백엔드 형식으로 변환
       const aiPriorities = aiOthers?.priority?.result?.priority || []
-      const formattedPriorities = aiPriorities.map(priority => ({
+      const formattedPriorities = aiPriorities.map((priority) => ({
         level: priority.priority_level,
         title: priority.title,
         content: priority.reason,
@@ -85,18 +93,22 @@ const PRCreateStep3 = ({
 
   return (
     <div className="flex flex-col w-full space-y-3">
-      <div className="flex flex-col md:flex-row md:items-stretch space-y-3 md:space-y-0 md:space-x-4">
+      <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:gap-4">
         {/* 왼쪽 박스 */}
-        <div className={`w-full ${showPriorities ? 'md:w-2/3' : 'md:w-full'} space-y-3`}>
-          <Box shadow>
-            <div className="space-y-2 mt-2">
-              <div className="relative space-y-1">
+        <div className={`w-full ${showPriorities ? 'md:w-2/3 md:order-1' : 'md:w-full'}`}>
+          <Box shadow className="flex flex-col h-full">
+            <div className="flex flex-col h-full mt-2">
+              <div className="relative space-y-1 mb-2">
                 <div className="flex items-center space-x-2">
                   <label htmlFor="aiTitle" className="block font-medium">
                     AI 추천 제목
                   </label>
                   <div className="-mt-[16px]">
-                    <Button size="sm" onClick={handleApplyAiTitle}>
+                    <Button
+                      size="sm"
+                      onClick={handleApplyAiTitle}
+                      disabled={isAiTitleLoading || isAiTitleError}
+                    >
                       적용
                     </Button>
                   </div>
@@ -111,53 +123,69 @@ const PRCreateStep3 = ({
                   type="text"
                   readOnly
                   value={
-                    isAiTitleLoading ? `추천받는 중${loadingDots}` : aiOthers?.title?.result || ''
+                    isAiTitleLoading
+                      ? `추천받는 중${loadingDots}`
+                      : removeQuotes(aiOthers?.title?.result || '')
                   }
                   className="bg-white border-2 border-black rounded-[8px] w-full px-2 py-1"
                 />
               </div>
-              <InputBox
-                label="PR 제목"
-                value={prTitle}
-                onChange={(e) => setPrTitle(e.target.value)}
-              />
-              <InputBox
-                className="h-50"
-                label="PR 설명"
-                as="textarea"
-                value={prBody}
-                onChange={(e) => setPrBody(e.target.value)}
-              />
+              <div className="mb-2">
+                <InputBox
+                  label="PR 제목"
+                  value={prTitle}
+                  onChange={(e) => setPrTitle(e.target.value)}
+                />
+              </div>
+              <div className="flex-1 flex flex-col min-h-0">
+                <InputBox
+                  className="flex-1 resize-none"
+                  label="PR 설명"
+                  as="textarea"
+                  markdown={true}
+                  value={prBody}
+                  onChange={(e) => setPrBody(e.target.value)}
+                />
+              </div>
             </div>
           </Box>
         </div>
 
         {/* 오른쪽 박스 */}
         {showPriorities && (
-          <div className="w-full md:w-1/3 flex flex-col space-y-3 min-h-0">
-            {slots.map((priority, index) => (
-              <Box key={index} shadow className="flex flex-1">
-                <div className="flex flex-col h-full min-h-0 w-full">
-                  {priority ? (
-                    <div className="space-y-2 overflow-hidden">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge variant={priorityVariantMap[priority.priority_level] || 'default'}>
+          <div className="w-full md:w-1/3 md:order-2">
+            <Box shadow className="h-[450px] flex flex-col">
+              <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
+              <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
+                {slots.map((priority, index) => (
+                  <Box key={index} className='p-3'>
+                    {priority ? (
+                      <div className="space-y-2 min-h-22">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant={priorityVariantMap[priority.priority_level] || 'default'}
+                            className="shrink-0"
+                          >
                             {priority.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-600 truncate">{priority.title}</span>
+                          <span className="text-sm text-gray-800 font-medium leading-tight">
+                            {priority.title}
+                          </span>
                         </div>
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                          {priority.reason}
+                          
+                        </p>
                       </div>
-                      <p className="text-gray-500 text-sm line-clamp-5">{priority.reason}</p>
-                    </div>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-sm text-gray-400">
-                      추천 없음
-                    </div>
-                  )}
-                </div>
-              </Box>
-            ))}
+                    ) : (
+                      <div className="flex items-center justify-center h-22 text-sm text-gray-400">
+                        추천 없음
+                      </div>
+                    )}
+                  </Box>
+                ))}
+              </div>
+            </Box>
           </div>
         )}
       </div>
