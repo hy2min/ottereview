@@ -57,6 +57,7 @@ public class GithubCallbackController {
                     .build();
 
         } catch (Exception e) {
+            e.printStackTrace();
             throw new BusinessException(GithubAppErrorCode.GITHUB_APP_INSTALLATION_FAILED);
         }
     }
