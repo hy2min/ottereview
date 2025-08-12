@@ -176,6 +176,7 @@ async def recommend_pr_priority(request: PRRequest):
     """
     pr_data = await get_pr_data_from_redis(request.repo_id, request.source, request.target)
     priority_candidates = await recommend_priority(pr_data)
+    logger.info(f"Priority candidates: {priority_candidates}")
     return {"result": priority_candidates}
 
 class ConventionRequest(BaseModel):
