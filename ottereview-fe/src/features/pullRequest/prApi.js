@@ -70,6 +70,7 @@ export const requestAIConvention = async ({ repoId, source, target, rules }) => 
     target,
     rules,
   }
+  console.log(payload)
   const res = await api.post('/api/ai/conventions/check', payload)
   return res.data
 }
@@ -81,6 +82,7 @@ export const requestAIOthers = async ({ repoId, source, target, rules }) => {
     target,
     rules,
   }
+  console.log(payload)
   const res = await api.post('/api/ai/all', payload)
   return res.data
 }

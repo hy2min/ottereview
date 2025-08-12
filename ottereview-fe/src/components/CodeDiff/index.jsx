@@ -3,10 +3,16 @@ import React, { useCallback, useEffect, useState } from 'react'
 
 import CommentForm from '@/features/comment/CommentForm'
 
-const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
+const CodeDiff = ({
+  patch,
+  onAddComment,
+  filePath,
+  initialSubmittedComments = {},
+  showDiffHunk = false,
+}) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
   const [comments, setComments] = useState({})
-  const [submittedComments, setSubmittedComments] = useState({})
+  const [submittedComments, setSubmittedComments] = useState(initialSubmittedComments)
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
@@ -15,6 +21,11 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
+
+  // initialSubmittedComments가 변경될 때 submittedComments 업데이트
+  useEffect(() => {
+    setSubmittedComments(initialSubmittedComments)
+  }, [initialSubmittedComments])
 
   if (!patch) return null
 
@@ -223,10 +234,15 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
 
-        onAddComment?.(reviewCommentData)
+        // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
+        onAddComment?.(lineIndex, {
+          ...commentData,
+          ...reviewCommentData, // reviewCommentData 정보도 포함
+        })
+
         console.log(reviewCommentData)
 
-        // 제출된 댓글을 배열에 추가
+        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
           ...prev,
           [lineIndex]: [
@@ -259,10 +275,15 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
 
-        onAddComment?.(reviewCommentData)
+        // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
+        onAddComment?.(lineIndex, {
+          ...commentData,
+          ...reviewCommentData, // reviewCommentData 정보도 포함
+        })
+
         console.log(reviewCommentData)
 
-        // 제출된 댓글을 배열에 추가
+        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
           ...prev,
           [lineIndex]: [
@@ -471,9 +492,25 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
                               </span>
                             )}
                           </div>
-                          <p className="text-stone-700">
-                            {comment.content || (comment.audioFile ? '음성 댓글' : '')}
-                          </p>
+                          <div className="space-y-2">
+                            <p className="text-stone-700">
+                              {comment.content || (comment.audioFile ? '음성 댓글' : '')}
+                            </p>
+                            {comment.audioFile && (
+                              <div className="flex items-center gap-2">
+                                <audio
+                                  controls
+                                  className="h-8 rounded-full border border-gray-300 "
+                                >
+                                  <source
+                                    src={URL.createObjectURL(comment.audioFile)}
+                                    type={comment.audioFile.type}
+                                  />
+                                  브라우저가 오디오를 지원하지 않습니다.
+                                </audio>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
