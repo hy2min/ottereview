@@ -1,157 +1,665 @@
-import { OpenVidu } from 'openvidu-browser';
-import React, { useEffect, useRef, useState } from 'react';
+import { OpenVidu } from 'openvidu-browser'
+import React, { useEffect, useRef, useState } from 'react'
 
-import { useAuthStore } from '@/features/auth/authStore';
+import { useAuthStore } from '@/features/auth/authStore'
+import { useChatStore } from '@/features/chat/chatStore'
 
-// 백엔드 주소는 환경 변수로 관리하는 것이 좋습니다.
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const AudioChatRoom = ({ roomId }) => {
-  // --- 상태(State) 관리 ---
-  const [session, setSession] = useState(undefined);
-  const [isSessionJoined, setIsSessionJoined] = useState(false);
-  const [subscribers, setSubscribers] = useState([]);
-  // 사용자 이름은 실제 유저 정보로 대체하는 것을 권장합니다.
-  const [myUserName] = useState('User' + Math.floor(Math.random() * 100));
-  const audioContainer = useRef(null);
+  const [session, setSession] = useState(undefined)
+  const [publisher, setPublisher] = useState(undefined)
+  const [isSessionJoined, setIsSessionJoined] = useState(false)
+  const [subscribers, setSubscribers] = useState([])
+  const [isMicMuted, setIsMicMuted] = useState(false)
+  const [isSpeakerMuted, setIsSpeakerMuted] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState('connecting')
+  const [isOwner, setIsOwner] = useState(false)
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false)
+  const [myUserInfo, setMyUserInfo] = useState(null)
+  const audioContainer = useRef(null)
 
-  // --- 핵심 로직: roomId가 변경될 때마다 자동으로 세션에 참여 ---
+  // 현재 사용자 정보와 Owner 여부 확인
   useEffect(() => {
-    // roomId가 유효할 때만 세션 참여 로직 실행
-    if (roomId) {
-      joinSession(roomId);
+    const user = useAuthStore.getState().user
+    if (user) {
+      setMyUserInfo({
+        id: user.id,
+        username: user.githubUsername || user.username || `User-${user.id}`,
+        role: user.role,
+      })
     }
 
-    // 컴포넌트가 언마운트되거나 roomId가 변경될 때 기존 세션 연결을 해제 (클린업)
+    // Owner 권한 확인
+    const checkOwnership = () => {
+      const rooms = useChatStore.getState().rooms
+      const currentRoom = rooms.find((r) => r.id === Number(roomId))
+
+      if (currentRoom && user) {
+        // 방 생성자이거나 관리자인 경우 owner
+        const isRoomOwner =
+          currentRoom.createdBy === user.id ||
+          currentRoom.ownerId === user.id ||
+          user.role === 'ADMIN'
+        setIsOwner(isRoomOwner)
+      }
+    }
+
+    if (user) {
+      checkOwnership()
+    }
+  }, [roomId])
+
+  useEffect(() => {
+    if (roomId && myUserInfo) {
+      joinSession(roomId)
+    }
     return () => {
       if (session) {
-        leaveSession();
+        leaveSession()
       }
-    };
-  }, [roomId]); // roomId가 변경될 때마다 이 useEffect가 다시 실행됩니다.
+    }
+  }, [roomId, myUserInfo])
 
-  // --- 세션 참여 함수 ---
   const joinSession = async (currentRoomId) => {
     try {
-      const accessToken = useAuthStore.getState().accessToken;
+      setConnectionStatus('connecting')
+      const accessToken = useAuthStore.getState().accessToken
       if (!accessToken) {
-        console.error('음성 채팅 참여 실패: 액세스 토큰이 없습니다.');
-        return;
+        console.error('음성 채팅 참여 실패: 액세스 토큰이 없습니다.')
+        setConnectionStatus('error')
+        return
       }
 
-      // OpenVidu 토큰을 백엔드로부터 요청
       const response = await fetch(`${BACKEND_URL}/api/meetings/${currentRoomId}/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-      });
+      })
 
       if (!response.ok) {
-        // 404 Not Found는 아직 백엔드에 세션이 생성되지 않았음을 의미할 수 있습니다.
+        const errorBody = await response.text()
+        console.error('서버 응답 에러:', { status: response.status, body: errorBody })
+
         if (response.status === 404) {
-          console.warn(`세션(ID: ${currentRoomId})을 찾을 수 없습니다. 아직 생성되지 않았을 수 있습니다.`);
-          // 이 경우, 사용자에게 잠시 후 다시 시도하라는 메시지를 보여줄 수 있습니다.
-          return;
+          console.warn(`세션(ID: ${currentRoomId})을 찾을 수 없습니다.`)
+          setConnectionStatus('error')
+          return
         }
-        throw new Error(`토큰 요청 실패 (status=${response.status})`);
+        throw new Error(`토큰 요청 실패 (status=${response.status}): ${errorBody}`)
       }
 
-      const { openviduToken } = await response.json();
+      const { openviduToken } = await response.json()
 
-      // --- OpenVidu 초기화 및 세션 설정 ---
-      const ov = new OpenVidu();
-      const mySession = ov.initSession();
-      setSession(mySession);
+      const ov = new OpenVidu()
+      const mySession = ov.initSession()
+      setSession(mySession)
 
-      // 다른 사용자가 스트림을 생성했을 때(입장했을 때) 실행될 이벤트 핸들러
       mySession.on('streamCreated', (event) => {
-        const subscriber = mySession.subscribe(event.stream, undefined);
-        setSubscribers((prev) => [...prev, subscriber]);
+        const subscriber = mySession.subscribe(event.stream, undefined)
+        setSubscribers((prev) => [...prev, subscriber])
+        const audio = document.createElement('audio')
+        audio.autoplay = true
+        audio.controls = false
+        audio.muted = isSpeakerMuted
+        subscriber.addVideoElement(audio)
+        audioContainer.current?.appendChild(audio)
+      })
 
-        // 오디오 요소를 생성하여 스트림을 재생
-        const audio = document.createElement('audio');
-        audio.autoplay = true;
-        audio.controls = false; // 오디오 컨트롤러는 보이지 않게 설정
-        subscriber.addVideoElement(audio);
-        audioContainer.current?.appendChild(audio);
-      });
-
-      // 다른 사용자가 스트림을 파괴했을 때(퇴장했을 때) 실행될 이벤트 핸들러
       mySession.on('streamDestroyed', (event) => {
-        // 해당 구독자를 상태에서 제거하는 로직 (구현 필요)
-      });
+        setSubscribers((prev) =>
+          prev.filter((sub) => sub.stream.streamId !== event.stream.streamId)
+        )
+        const audioElements = audioContainer.current?.querySelectorAll('audio')
+        audioElements?.forEach((audio) => {
+          if (audio.srcObject === event.stream.getMediaStream()) {
+            audio.remove()
+          }
+        })
+      })
 
-      // 생성된 토큰을 사용하여 세션에 연결
-      await mySession.connect(openviduToken, { clientData: myUserName });
+      // 세션 종료 이벤트 감지
+      mySession.on('sessionDisconnected', (event) => {
+        console.log('세션이 종료되었습니다:', event.reason)
+        if (event.reason === 'sessionClosedByServer') {
+          alert('방장이 음성 채팅을 종료했습니다.')
+        }
+        handleSessionEnd()
+      })
 
-      // 내 오디오/비디오를 송출할 퍼블리셔 초기화
-      const publisher = await ov.initPublisherAsync(undefined, {
-        audioSource: undefined, // 기본 마이크
-        videoSource: false, // 비디오는 사용 안 함
+      // 참여자 변화 감지 - 방장이 나가면 자동으로 세션 정리
+      mySession.on('connectionDestroyed', (event) => {
+        const connectionData = JSON.parse(event.connection.data)
+        console.log(`${connectionData.username}님이 나갔습니다.`)
+
+        // 방장이 나간 경우 세션 정리
+        if (connectionData.isOwner && !isOwner) {
+          setTimeout(() => {
+            alert('방장이 나가서 음성 채팅이 종료됩니다.')
+            handleSessionEnd()
+          }, 1000)
+        }
+      })
+
+      // 실제 사용자 정보를 포함한 연결 데이터
+      const connectionData = {
+        username: myUserInfo.username,
+        userId: myUserInfo.id,
+        isOwner: isOwner,
+      }
+
+      await mySession.connect(openviduToken, {
+        clientData: JSON.stringify(connectionData),
+      })
+
+      const myPublisher = await ov.initPublisherAsync(undefined, {
+        audioSource: undefined,
+        videoSource: false,
         publishAudio: true,
         publishVideo: false,
-      });
+      })
 
-      // 내 스트림을 세션에 발행
-      mySession.publish(publisher);
-      setIsSessionJoined(true); // 세션 참여 완료 상태로 변경
+      mySession.publish(myPublisher)
+      setPublisher(myPublisher)
+      setIsSessionJoined(true)
+      setConnectionStatus('connected')
     } catch (error) {
-      console.error('세션 참여 중 오류 발생:', error);
-      // 사용자에게 실패 메시지를 보여줄 수 있습니다.
+      console.error('세션 참여 중 오류 발생:', error)
+      setConnectionStatus('error')
     }
-  };
-
-  // --- 세션 떠나기 함수 ---
-  const leaveSession = () => {
-    if (session) {
-      session.disconnect(); // 세션 연결 해제
-    }
-    // 모든 관련 상태 초기화
-    setSession(undefined);
-    setIsSessionJoined(false);
-    setSubscribers([]);
-    if (audioContainer.current) {
-      audioContainer.current.innerHTML = ''; // 오디오 요소들 제거
-    }
-  };
-
-  // --- UI 렌더링 ---
-
-  // 세션에 참여 중이 아닐 때 보여줄 로딩 화면
-  if (!isSessionJoined) {
-    return (
-      <div className="p-4 border border-stone-200 rounded-lg mb-4 bg-stone-50">
-        <h5 className="font-bold text-stone-700">🔊 음성 채팅 연결 중...</h5>
-        <p className="text-sm text-stone-500">Room ID: {roomId}에 참여하고 있습니다.</p>
-      </div>
-    );
   }
 
-  // 세션에 성공적으로 참여했을 때 보여줄 화면
-  return (
-    <div className="p-4 border border-green-300 rounded-lg mb-4 bg-green-50">
-      <h5 className="font-bold text-green-800">🟢 음성 채팅 중 (Room: {roomId})</h5>
-      <div className="my-2">
-        <p className="text-sm font-semibold">{myUserName} (나)</p>
-        <h6 className="text-xs font-bold mt-2">참여자 목록</h6>
-        <ul className="text-xs list-disc list-inside">
-          {subscribers.map((sub, i) => (
-            <li key={i}>{JSON.parse(sub.stream.connection.data).clientData}</li>
-          ))}
-        </ul>
-      </div>
-      <button
-        onClick={leaveSession}
-        className="px-3 py-1 text-xs font-semibold text-white bg-red-500 rounded-full hover:bg-red-600"
-      >
-        🚪 나가기
-      </button>
-      {/* 오디오 요소를 담을 컨테이너 (화면에는 보이지 않음) */}
-      <div ref={audioContainer} style={{ display: 'none' }}></div>
-    </div>
-  );
-};
+  const handleSessionEnd = () => {
+    setSession(undefined)
+    setPublisher(undefined)
+    setIsSessionJoined(false)
+    setSubscribers([])
+    setConnectionStatus('connecting')
+    if (audioContainer.current) {
+      audioContainer.current.innerHTML = '' // 오디오 요소들 제거
+    }
+  }
 
-export default AudioChatRoom;
+  const leaveSession = () => {
+    if (session) {
+      session.disconnect()
+    }
+    handleSessionEnd()
+  }
+
+  // Owner 전용: 전체 세션 종료 - OpenVidu 자동 삭제 방지
+  const closeEntireSession = async () => {
+    try {
+      const accessToken = useAuthStore.getState().accessToken
+
+      // 서버에 세션 종료 요청
+      const response = await fetch(`${BACKEND_URL}/api/meetings/${roomId}/close`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+
+      if (response.ok) {
+        console.log('음성 세션이 성공적으로 종료되었습니다.')
+        // 현재 사용자도 세션에서 나가기
+        leaveSession()
+        alert('음성 채팅이 종료되었습니다.')
+      } else {
+        console.error('세션 종료 실패:', response.status)
+        alert('세션 종료에 실패했습니다.')
+      }
+    } catch (error) {
+      console.error('세션 종료 중 오류:', error)
+      alert('세션 종료 중 오류가 발생했습니다.')
+    }
+    setShowCloseConfirm(false)
+  }
+
+  const toggleMicrophone = () => {
+    if (publisher) {
+      publisher.publishAudio(!isMicMuted)
+      setIsMicMuted(!isMicMuted)
+    }
+  }
+
+  const toggleSpeaker = () => {
+    setIsSpeakerMuted(!isSpeakerMuted)
+    const audioElements = audioContainer.current?.querySelectorAll('audio')
+    audioElements?.forEach((audio) => {
+      audio.muted = !isSpeakerMuted
+    })
+  }
+
+  const getStatusColor = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return { bg: '#d4edda', border: '#c3e6cb', text: '#155724' }
+      case 'error':
+        return { bg: '#f8d7da', border: '#f5c6cb', text: '#721c24' }
+      default:
+        return { bg: '#fff3cd', border: '#ffeaa7', text: '#856404' }
+    }
+  }
+
+  const getStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return '🟢'
+      case 'error':
+        return '🔴'
+      default:
+        return '🟡'
+    }
+  }
+
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return '음성 채팅 연결됨'
+      case 'error':
+        return '연결 실패'
+      default:
+        return '연결 중...'
+    }
+  }
+
+  const colors = getStatusColor()
+
+  return (
+    <div
+      style={{
+        backgroundColor: colors.bg,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '8px',
+        overflow: 'hidden',
+        position: 'relative',
+      }}
+    >
+      {/* 헤더 */}
+      <div
+        style={{
+          padding: '1rem',
+          borderBottom: `1px solid ${colors.border}`,
+          backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '0.5rem',
+          }}
+        >
+          <h4
+            style={{
+              margin: 0,
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              color: colors.text,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            {getStatusIcon()} {getStatusText()}
+            {isOwner && (
+              <span
+                style={{
+                  fontSize: '0.625rem',
+                  padding: '0.125rem 0.375rem',
+                  backgroundColor: '#f59e0b',
+                  color: 'white',
+                  borderRadius: '9999px',
+                  fontWeight: '600',
+                }}
+              >
+                방장
+              </span>
+            )}
+          </h4>
+
+          {isSessionJoined && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {!isOwner && (
+                <button
+                  onClick={leaveSession}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#6b7280',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = '#4b5563')}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#6b7280')}
+                >
+                  🚪 나가기
+                </button>
+              )}
+
+              {isOwner && (
+                <button
+                  onClick={() => setShowCloseConfirm(true)}
+                  style={{
+                    padding: '0.25rem 0.5rem',
+                    fontSize: '0.75rem',
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                  }}
+                  onMouseEnter={(e) => (e.target.style.backgroundColor = '#dc2626')}
+                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#ef4444')}
+                >
+                  🛑 세션 종료
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div
+          style={{
+            fontSize: '0.75rem',
+            color: colors.text,
+            opacity: 0.8,
+          }}
+        >
+          Room ID: {roomId}
+        </div>
+      </div>
+
+      {/* 세션 종료 확인 모달 */}
+      {showCloseConfirm && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              padding: '1.5rem',
+              borderRadius: '8px',
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+              maxWidth: '300px',
+              textAlign: 'center',
+            }}
+          >
+            <h3
+              style={{
+                margin: '0 0 1rem 0',
+                fontSize: '1rem',
+                color: '#1f2937',
+              }}
+            >
+              🛑 음성 세션 종료
+            </h3>
+            <p
+              style={{
+                margin: '0 0 1.5rem 0',
+                fontSize: '0.875rem',
+                color: '#6b7280',
+                lineHeight: '1.4',
+              }}
+            >
+              모든 참여자가 음성 채팅에서 연결 해제됩니다. 정말 종료하시겠습니까?
+              <br />
+              <small style={{ color: '#ef4444' }}>
+                (OpenVidu 자동 삭제를 방지하기 위해 방장이 직접 종료해주세요)
+              </small>
+            </p>
+            <div
+              style={{
+                display: 'flex',
+                gap: '0.5rem',
+                justifyContent: 'center',
+              }}
+            >
+              <button
+                onClick={() => setShowCloseConfirm(false)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.875rem',
+                  backgroundColor: '#6b7280',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                취소
+              </button>
+              <button
+                onClick={closeEntireSession}
+                style={{
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.875rem',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                }}
+              >
+                종료
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 컨트롤 버튼들 */}
+      {isSessionJoined && (
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            borderBottom: `1px solid ${colors.border}`,
+            backgroundColor: 'rgba(255, 255, 255, 0.3)',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.5rem',
+              justifyContent: 'center',
+            }}
+          >
+            <button
+              onClick={toggleMicrophone}
+              style={{
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.75rem',
+                backgroundColor: isMicMuted ? '#ef4444' : '#22c55e',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s',
+              }}
+            >
+              {isMicMuted ? '🎤❌' : '🎤'} {isMicMuted ? '음소거됨' : '음소거 해제'}
+            </button>
+
+            <button
+              onClick={toggleSpeaker}
+              style={{
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.75rem',
+                backgroundColor: isSpeakerMuted ? '#ef4444' : '#22c55e',
+                color: 'white',
+                border: 'none',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontWeight: '500',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s',
+              }}
+            >
+              {isSpeakerMuted ? '🔇' : '🔊'} {isSpeakerMuted ? '스피커 음소거' : '스피커 켜짐'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 참여자 목록 */}
+      <div style={{ padding: '1rem' }}>
+        <h5
+          style={{
+            margin: '0 0 0.75rem 0',
+            fontSize: '0.75rem',
+            fontWeight: '600',
+            color: colors.text,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+          }}
+        >
+          참여자 ({isSessionJoined ? subscribers.length + 1 : 0})
+        </h5>
+
+        {isSessionJoined ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {/* 나 자신 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0.5rem',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                borderRadius: '6px',
+                border: '1px solid rgba(34, 197, 94, 0.2)',
+              }}
+            >
+              <div
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: isMicMuted ? '#ef4444' : '#22c55e',
+                  marginRight: '0.5rem',
+                  animation: isMicMuted ? 'none' : 'pulse 2s infinite',
+                }}
+              ></div>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  color: '#155724',
+                }}
+              >
+                {myUserInfo?.username} (나) {isOwner && '👑'} {isMicMuted && '🎤❌'}
+              </span>
+            </div>
+
+            {/* 다른 참여자들 */}
+            {subscribers.map((sub, i) => {
+              const participantData = JSON.parse(sub.stream.connection.data)
+              return (
+                <div
+                  key={i}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0.5rem',
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+                    borderRadius: '6px',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '8px',
+                      height: '8px',
+                      borderRadius: '50%',
+                      backgroundColor: '#22c55e',
+                      marginRight: '0.5rem',
+                      animation: 'pulse 2s infinite',
+                    }}
+                  ></div>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      color: colors.text,
+                    }}
+                  >
+                    {participantData.username} {participantData.isOwner && '👑'}
+                  </span>
+                </div>
+              )
+            })}
+
+            {subscribers.length === 0 && (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '1rem',
+                  fontSize: '0.75rem',
+                  color: colors.text,
+                  opacity: 0.7,
+                }}
+              >
+                다른 참여자를 기다리고 있습니다...
+              </div>
+            )}
+          </div>
+        ) : (
+          <div
+            style={{
+              textAlign: 'center',
+              padding: '1rem',
+              fontSize: '0.75rem',
+              color: colors.text,
+              opacity: 0.7,
+            }}
+          >
+            {connectionStatus === 'error'
+              ? '연결에 실패했습니다. 새로고침 후 다시 시도해주세요.'
+              : '음성 채팅에 연결하는 중...'}
+          </div>
+        )}
+      </div>
+
+      {/* 숨겨진 오디오 컨테이너 */}
+      <div ref={audioContainer} style={{ display: 'none' }}></div>
+
+      {/* pulse 애니메이션 스타일 */}
+      <style jsx>{`
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default AudioChatRoom

@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.pullrequest.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
+@MvcController
 public class UserPullRequestController {
 
     private final PullRequestService pullRequestService;

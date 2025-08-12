@@ -2,9 +2,11 @@ package com.ssafy.ottereview.webhook.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.preparation.service.PreparationService;
 import com.ssafy.ottereview.webhook.dto.PushEventDto;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,7 @@ public class PushEventService {
             PushEventDto pushInfo = extractPushEventInfo(json);
             
         } catch (Exception e) {
-            log.error("Error processing push event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
     

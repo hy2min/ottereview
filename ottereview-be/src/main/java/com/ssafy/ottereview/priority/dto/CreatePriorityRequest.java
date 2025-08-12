@@ -11,12 +11,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CreatePriorityRequest {
-    private int idx;
+
+    private String level;
     private String title;
     private String content;
-    public static Priority to(CreatePriorityRequest createPriorityRequest){
+
+    public static Priority to(CreatePriorityRequest createPriorityRequest) {
         return Priority.builder()
-                .idx(createPriorityRequest.getIdx())
+                .level(createPriorityRequest.getLevel())
                 .title(createPriorityRequest.getTitle())
                 .content(createPriorityRequest.getContent())
                 .build();

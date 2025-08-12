@@ -1,6 +1,8 @@
 package com.ssafy.ottereview.ai.config;
 
 import com.ssafy.ottereview.ai.exception.AiApiException;
+import com.ssafy.ottereview.ai.exception.AiErrorCode;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutException;
@@ -85,8 +87,7 @@ public class WebClientConfig {
                 return response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
                             log.error("AI API Client Error [{}]: {}", response.statusCode(), errorBody);
-                            return Mono.error(new AiApiException("AI API 클라이언트 오류: " + errorBody,
-                                    response.statusCode()));
+                            return Mono.error(new BusinessException(AiErrorCode.AI_API_ERROR, errorBody));
                         });
             }
 
@@ -94,8 +95,7 @@ public class WebClientConfig {
                 return response.bodyToMono(String.class)
                         .flatMap(errorBody -> {
                             log.error("AI API Server Error [{}]: {}", response.statusCode(), errorBody);
-                            return Mono.error(new AiApiException("AI API 서버 오류: " + errorBody,
-                                    response.statusCode()));
+                            return Mono.error(new BusinessException(AiErrorCode.AI_API_ERROR, errorBody));
                         });
             }
 

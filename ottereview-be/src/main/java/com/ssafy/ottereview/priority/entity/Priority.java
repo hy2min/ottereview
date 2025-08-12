@@ -28,8 +28,8 @@ public class Priority {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "`index`", nullable =false)
-    private int idx;
+    @Column(name = "level", nullable =false)
+    private String level;
 
     @Column(name = "title", nullable = false)
     private String title;

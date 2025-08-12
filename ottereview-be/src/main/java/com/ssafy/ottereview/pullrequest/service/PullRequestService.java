@@ -28,7 +28,7 @@ public interface PullRequestService {
     /**
      * pr-id로 DB에 저장된 Pull Request를 조회합니다.
      */
-    PullRequestDetailResponse getPullRequestById(CustomUserDetail userDetail, Long repoId, Long pullRequestId);
+    PullRequestDetailResponse getPullRequest(CustomUserDetail userDetail, Long repoId, Long pullRequestId);
     
     /**
      * 특정 레포지토리의 브랜치에 대한 Pull Request를 조회합니다.
