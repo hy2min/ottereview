@@ -57,7 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
-                                                ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
+            ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
         User user = findUser(userId);
         PullRequest pullRequest = findPullRequest(prId);
 
@@ -82,11 +82,11 @@ public class ReviewServiceImpl implements ReviewService {
         if (reviewer == null) return;
 
         reviewer.updateStatus(
-            switch (state) {
-                case APPROVE -> ReviewStatus.APPROVED;
-                case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
-                default -> reviewer.getStatus();
-            }
+                switch (state) {
+                    case APPROVE -> ReviewStatus.APPROVED;
+                    case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
+                    default -> reviewer.getStatus();
+                }
         );
     }
 
@@ -137,7 +137,7 @@ public class ReviewServiceImpl implements ReviewService {
     public List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId) {
         List<Review> reviews = reviewRepository.findByPullRequestId(prId);
         return reviews.stream()
-                .map(this::buildReviewResponse)
+                .map(ReviewResponse::from)
                 .collect(Collectors.toList());
     }
 
@@ -146,33 +146,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
 
-        return buildReviewResponse(review);
-    }
-
-
-
-    private ReviewCommentResponse buildReviewCommentWithVoiceUrl(ReviewComment comment) {
-        ReviewCommentResponse response = ReviewCommentResponse.from(comment);
-        
-        log.debug("Processing review comment id: {}, recordKey: '{}'", comment.getId(), comment.getRecordKey());
-        
-        if (comment.getRecordKey() != null && !comment.getRecordKey().isEmpty()) {
-            try {
-                log.info("Generating presigned URL for recordKey: {}", comment.getRecordKey());
-                String presignedUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60);
-                log.info("Generated presigned URL successfully for recordKey: {}", comment.getRecordKey());
-                response = response.toBuilder()
-                        .voiceFileUrl(presignedUrl)
-                        .build();
-            } catch (Exception e) {
-                log.error("Failed to generate presigned URL for recordKey: {}, error: {}", 
-                        comment.getRecordKey(), e.getMessage(), e);
-            }
-        } else {
-            log.debug("RecordKey is null or empty for comment id: {}", comment.getId());
-        }
-        
-        return response;
+        return ReviewResponse.from(review);
     }
 
     private User findUser(Long userId) {
@@ -197,9 +171,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private List<ReviewCommentResponse> createReviewCommentsIfExists(Long reviewId,
-                                                                     ReviewRequest reviewRequest,
-                                                                     MultipartFile[] files,
-                                                                     Long userId) {
+            ReviewRequest reviewRequest,
+            MultipartFile[] files,
+            Long userId) {
         if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments().isEmpty()) {
             return new ArrayList<>();
         }
@@ -212,11 +186,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private GithubReviewResponse createReviewOnGithub(Long accountId,
-                                                      Long repoId,
-                                                      PullRequest pullRequest,
-                                                      ReviewRequest reviewRequest,
-                                                      User user,
-                                                      Long reviewId) {
+            Long repoId,
+            PullRequest pullRequest,
+            ReviewRequest reviewRequest,
+            User user,
+            Long reviewId) {
         String repoFullName = repoRepository.findById(repoId)
                 .orElseThrow(() -> new RuntimeException("Repository not found"))
                 .getFullName();
@@ -253,9 +227,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void updateGithubIdsForComments(Review savedReview,
-                                            List<ReviewCommentResponse> createdComments,
-                                            GithubReviewResponse githubResult,
-                                            User user) {
+            List<ReviewCommentResponse> createdComments,
+            GithubReviewResponse githubResult,
+            User user) {
 
         savedReview.updateGithubId(githubResult.getReviewId());
 
