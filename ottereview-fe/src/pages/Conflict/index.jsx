@@ -192,6 +192,7 @@ function hello() {
         alert('충돌 파일을 최소 1개 이상 선택해주세요.')
         return
       }
+      console.log(selectedFiles)
 
       // 선택된 멤버들의 ID 추출
       const selectedMemberIds = members
@@ -214,6 +215,7 @@ function hello() {
         prId: Number(prId),
         roomName: trimmedRoomName,
         inviteeIds: selectedMemberIds,
+        files: selectedFiles,
       })
 
       console.log('✅ API 응답:', result)

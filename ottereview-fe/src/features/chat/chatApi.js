@@ -1,11 +1,12 @@
 import { api } from '@/lib/api'
 
 // 채팅방 생성
-export const createChat = async ({ prId, roomName, inviteeIds }) => {
+export const createChat = async ({ prId, roomName, inviteeIds, files }) => {
   const res = await api.post('api/meetings', {
     prId,
     roomName,
     inviteeIds,
+    files,
   })
   return res.data
 }
