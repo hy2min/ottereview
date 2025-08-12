@@ -11,4 +11,5 @@ public class MeetingRoomRequestDto {
     private Long prId;
     private String roomName;
     private List<Long> inviteeIds;
+    private List<String> files;
 }
