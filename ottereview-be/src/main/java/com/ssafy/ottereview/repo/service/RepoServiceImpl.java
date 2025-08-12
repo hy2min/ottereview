@@ -208,8 +208,8 @@ public class RepoServiceImpl implements RepoService {
         List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
         Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
         // 추가할때 원래 있던 레포지토리가 있으면 제외하고 List에 담는다.
+        repoMap = repoMap.stream().filter(id -> !dbRepoSet.contains(id.getId())).toList();
         List<Repo> repoList = repoMap.stream()
-            .filter(id -> !dbRepoSet.contains(id.getId()))
             .map(r -> {
             Repo repo = Repo.builder().repoId(r.getId()).fullName(r.getFullName()).isPrivate(r.isPrivate()).account(account).build();
             branchesToSave.addAll(branchService.createBranchList(r, repo));

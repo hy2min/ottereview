@@ -19,7 +19,7 @@ public class PullRequestResponse {
     private Long id;
     private Integer githubPrNumber;
     private Long githubId;
-    // Pull Request 관련 정보
+    private String commitSha;
     private String title;
     private String body;
     private String summary;
@@ -27,6 +27,7 @@ public class PullRequestResponse {
     private String state;
     private Boolean merged;
     private Boolean mergeable;
+    private Boolean isApproved;
 
     // 브랜치 정보
     private String head;
@@ -50,6 +51,7 @@ public class PullRequestResponse {
                 .id(pullRequest.getId())
                 .githubPrNumber(pullRequest.getGithubPrNumber())
                 .githubId(pullRequest.getGithubId())
+                .commitSha(pullRequest.getCommitSha())
                 .title(pullRequest.getTitle())
                 .body(pullRequest.getBody())
                 .summary(pullRequest.getSummary())
@@ -57,6 +59,32 @@ public class PullRequestResponse {
                 .state(pullRequest.getState().toString())
                 .merged(pullRequest.getMerged())
                 .mergeable(pullRequest.getMergeable())
+                .head(pullRequest.getHead())
+                .base(pullRequest.getBase())
+                .commitCnt(pullRequest.getCommitCnt())
+                .changedFilesCnt(pullRequest.getChangedFilesCnt())
+                .commentCnt(pullRequest.getCommentCnt())
+                .reviewCommentCnt(pullRequest.getReviewCommentCnt())
+                .githubCreatedAt(pullRequest.getGithubCreatedAt())
+                .githubUpdatedAt(pullRequest.getGithubUpdatedAt())
+                .repo(RepoResponse.fromEntity(pullRequest.getRepo()))
+                .author(PrUserInfo.fromEntity(pullRequest.getAuthor()))
+                .build();
+    }
+
+    public static PullRequestResponse fromEntityAndIsApproved(PullRequest pullRequest, Boolean isApproved) {
+        return PullRequestResponse.builder()
+                .id(pullRequest.getId())
+                .githubPrNumber(pullRequest.getGithubPrNumber())
+                .githubId(pullRequest.getGithubId())
+                .title(pullRequest.getTitle())
+                .body(pullRequest.getBody())
+                .summary(pullRequest.getSummary())
+                .approveCnt(pullRequest.getApproveCnt())
+                .state(pullRequest.getState().toString())
+                .merged(pullRequest.getMerged())
+                .mergeable(pullRequest.getMergeable())
+                .isApproved(isApproved)
                 .head(pullRequest.getHead())
                 .base(pullRequest.getBase())
                 .commitCnt(pullRequest.getCommitCnt())
