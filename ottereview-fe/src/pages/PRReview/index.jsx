@@ -1,4 +1,4 @@
-import { FileText, GitCommit, MessageCircle } from 'lucide-react'
+import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -26,6 +26,7 @@ const PRReview = () => {
   const [reviewComments, setReviewComments] = useState([]) // 라인별 댓글들 보관
   const [files, setFiles] = useState([]) // 녹음 파일들 보관
   const [prReviews, setPrReviews] = useState([]) // 기존 리뷰 목록 (아직 미사용, 저장만)
+  const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
 
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -85,6 +86,30 @@ const PRReview = () => {
     }
   }
 
+  // 파일별 라인 댓글 추가 함수 (새로 추가)
+  const handleAddFileLineComment = (filePath, lineIndex, commentData) => {
+    setFileComments((prev) => ({
+      ...prev,
+      [filePath]: {
+        ...prev[filePath],
+        submittedComments: {
+          ...prev[filePath]?.submittedComments,
+          [lineIndex]: [
+            ...(prev[filePath]?.submittedComments?.[lineIndex] || []),
+            {
+              ...commentData,
+              id: Date.now() + Math.random(),
+              submittedAt: new Date().toLocaleTimeString(),
+            },
+          ],
+        },
+      },
+    }))
+
+    // 기존 reviewComments에도 추가 (최종 제출을 위해)
+    handleAddLineComment(commentData)
+  }
+
   const handleSubmit = async () => {
     if (!comment.trim() && reviewComments.length === 0) {
       alert('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
@@ -123,6 +148,11 @@ const PRReview = () => {
     } catch (error) {
       console.error('❌ 리뷰 제출 실패:', error)
     }
+  }
+
+  const handleCancel = () => {
+    setComment('')
+    setShowCommentForm(false)
   }
 
   const prFiles =
@@ -165,6 +195,12 @@ const PRReview = () => {
     <div className="pt-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
       <Box shadow className="space-y-3">
+        {/* 레포지토리 정보 */}
+        <div className="flex items-center space-x-1 text-sm text-stone-600">
+          <FolderCode className="w-4 h-4 mb-[2px]" />
+          <span className="font-medium">{prDetail.repo?.fullName}</span>
+          <span>#{prDetail.githubPrNumber}</span>
+        </div>
         <h1 className="text-2xl font-bold text-gray-900">{prDetail.title}</h1>
         {prDetail.body && prDetail.body.trim() && (
           <div className="text-sm text-gray-600 whitespace-pre-wrap">{prDetail.body}</div>
@@ -214,6 +250,26 @@ const PRReview = () => {
         </Box>
       </div>
 
+      {/* 리뷰어 목록 */}
+      {prDetail.reviewers && prDetail.reviewers.length > 0 && (
+        <Box shadow className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-600" />
+            <h3 className="text-sm font-medium text-gray-700">리뷰어</h3>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {prDetail.reviewers.map((reviewer) => (
+              <div
+                key={reviewer.id}
+                className="inline-flex items-center px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-800"
+              >
+                <span>@{reviewer.githubUsername}</span>
+              </div>
+            ))}
+          </div>
+        </Box>
+      )}
+
       <Box shadow>
         <div className="relative flex gap-3 pb-4 flex-wrap">
           {tabs.map((tab) => {
@@ -250,6 +306,7 @@ const PRReview = () => {
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 onSubmit={handleSubmit}
+                onCancel={handleCancel}
                 enableAudio={false}
               />
             </div>
@@ -257,7 +314,12 @@ const PRReview = () => {
         </div>
 
         {activeTab === 'files' && (
-          <PRFileList files={prFiles} onAddComment={handleAddLineComment} showDiffHunk={false} />
+          <PRFileList
+            files={prFiles}
+            onAddComment={handleAddFileLineComment}
+            fileComments={fileComments}
+            showDiffHunk={false}
+          />
         )}
         {activeTab === 'comments' && <PRCommentList prId={prId} />}
         {activeTab === 'commits' && <CommitList commits={commits} />}

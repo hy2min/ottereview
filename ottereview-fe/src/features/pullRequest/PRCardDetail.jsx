@@ -50,7 +50,7 @@ const PRCardDetail = ({ pr }) => {
         <div className="flex justify-between items-start space-x-2">
           <div className="flex items-center space-x-3 min-w-0 flex-1">
             <div className="min-w-10 min-h-10 bg-primary-500 border-2 border-black rounded-lg flex items-center justify-center">
-              <GitPullRequest className="w-5 h-5 text-white" />
+              <GitPullRequest className="w-5 h-5 -mt-[4px] text-white" />
             </div>
             <div className="min-w-0">
               <h3 className="font-semibold text-stone-900 mb-1">
