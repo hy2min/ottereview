@@ -16,6 +16,7 @@ const PRCreateStep3 = ({
   reviewComments,
   audioFiles,
   onAddComment,
+  fileComments = {},
   prTitle,
   setPrTitle,
   prBody,
@@ -166,6 +167,7 @@ const PRCreateStep3 = ({
           files={validationBranches?.files || []}
           showDiffHunk={true}
           onAddComment={onAddComment}
+          fileComments={fileComments}
         />
       </Box>
       <div className="mx-auto z-10">

@@ -17,8 +17,9 @@ const PRCreateStep1 = ({
   branches,
 }) => {
   const navigate = useNavigate()
-  const [prCheckResult, setPrCheckResult] = useState(null) // 'exists' | 'not_exists' | null
+  const [prCheckResult, setPrCheckResult] = useState(null)
   const [existingPRData, setExistingPRData] = useState(null)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const [source, setSource] = useState(selectedBranches.source || '')
   const [target, setTarget] = useState(selectedBranches.target || '')
@@ -50,12 +51,12 @@ const PRCreateStep1 = ({
     }
   }
 
-
   // source나 target이 바뀔 때 상태 초기화 및 검증
   useEffect(() => {
     // 브랜치가 바뀌면 이전 결과를 먼저 초기화
     setPrCheckResult(null)
     setExistingPRData(null)
+    setErrorMessage('')
     setValidationBranches(null) // 브랜치 검증 결과도 초기화
 
     const isValidBranches = source && target && source !== target
@@ -70,16 +71,27 @@ const PRCreateStep1 = ({
             target,
           })
 
-          // 응답 성공 = 기존 PR이 존재
           setValidationPR(data)
-          setPrCheckResult('exists')
-          setExistingPRData(data)
-          console.log('ValidatePR - 기존 PR 존재:', data)
+          
+          // isExist가 true면 기존 PR 존재
+          if (data.isExist) {
+            setPrCheckResult('exists')
+            setExistingPRData(data)
+            setErrorMessage('')
+            console.log('ValidatePR - 기존 PR 존재:', data)
+          } else {
+            // isExist가 false면 PR 생성 가능하지만 브랜치 검증 필요
+            setPrCheckResult('not_exists')
+            setExistingPRData(null)
+            setErrorMessage('')
+            console.log('ValidatePR - PR 없음, 생성 가능', data)
+          }
         } catch (err) {
-          // 에러 = PR이 존재하지 않음 (생성 가능)
-          console.log('ValidatePR - PR 없음, 생성 가능')
-          setPrCheckResult('not_exists')
+          console.log('ValidatePR 에러:', err)
+          // API 에러는 생성 불가 상태로 처리
+          setPrCheckResult('error')
           setExistingPRData(null)
+          setErrorMessage('PR 확인 중 오류가 발생했습니다.')
         }
       }
 
@@ -108,8 +120,8 @@ const PRCreateStep1 = ({
   ]
 
   const handleGoToPRReview = () => {
-    if (existingPRData && existingPRData.id) {
-      navigate(`/${repoId}/pr/${existingPRData.id}/review`)
+    if (existingPRData && existingPRData.prId) {
+      navigate(`/${repoId}/pr/${existingPRData.prId}/review`)
     }
   }
 
@@ -123,7 +135,11 @@ const PRCreateStep1 = ({
   const isSameBranch = source && target && source === target
   const canCreatePR = prCheckResult === 'not_exists'
   const existingPR = prCheckResult === 'exists'
+  const hasError = prCheckResult === 'error'
   const canGoNext = validationBranches?.isPossible === true
+  
+  // 브랜치 검증 버튼 활성화 조건: PR이 존재하지 않을 때만
+  const canValidateBranches = canCreatePR && !isSameBranch && !hasError
 
   return (
     <div className="space-y-4">
@@ -156,7 +172,7 @@ const PRCreateStep1 = ({
             </div>
           )}
 
-          {source && target && !isSameBranch && !existingPR && (
+          {source && target && !isSameBranch && !existingPR && !hasError && (
             <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800 break-words w-full">
               <strong>{source}</strong> 에서 <strong>{target}</strong> 로의 변경을 생성합니다.
             </div>
@@ -167,6 +183,12 @@ const PRCreateStep1 = ({
               <p className="text-green-800">이미 생성된 Pull Request가 있습니다.</p>
             </div>
           )}
+
+          {hasError && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
+              {errorMessage}
+            </div>
+          )}
         </div>
 
         {/* 고정된 버튼 영역 */}
@@ -174,7 +196,7 @@ const PRCreateStep1 = ({
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={isSameBranch || !canCreatePR} // canCreatePR이 true일 때만 브랜치 검증 버튼 활성화
+            disabled={existingPR ? false : !canValidateBranches}
             className={existingPR ? 'bg-green-600 hover:bg-green-700' : ''}
           >
             {existingPR ? '기존 PR 리뷰하러 가기' : '브랜치 검증'}
