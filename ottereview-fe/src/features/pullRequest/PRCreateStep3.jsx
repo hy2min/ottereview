@@ -154,7 +154,7 @@ const PRCreateStep3 = ({
         {/* 오른쪽 박스 */}
         {showPriorities && (
           <div className="w-full md:w-1/3 md:order-2">
-            <Box shadow className="h-full flex flex-col">
+            <Box shadow className="h-[450px] flex flex-col">
               <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
