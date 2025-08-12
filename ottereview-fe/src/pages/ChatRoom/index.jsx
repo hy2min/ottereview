@@ -1,93 +1,115 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { fetchConflictData } from '@/features/chat/chatApi'
-import { useChatStore } from '@/features/chat/chatStore'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'
 import Whiteboard from '@/features/webrtc/Whiteboard'
+import { api } from '@/lib/api'
 
 const ChatRoom = () => {
   const { roomId } = useParams()
   const [showWhiteboard, setShowWhiteboard] = useState(false)
-  const [conflictData, setConflictData] = useState(null)
-  const [selectedFileName, setSelectedFileName] = useState('')
+  const [conflictFiles, setConflictFiles] = useState([])
+  const [roomInfo, setRoomInfo] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // chatStore에서 채팅방 정보 가져오기
-  const rooms = useChatStore((state) => state.rooms)
-  const getRoomById = useChatStore((state) => state.getRoomById)
-
-  // 여러 방법으로 방 찾기 시도
-  let room = null
-  if (getRoomById) {
-    room = getRoomById(Number(roomId))
-  }
-
-  if (!room) {
-    room = rooms.find((r) => r.id === Number(roomId) || r.id === roomId)
-  }
-
-  // 🐛 디버깅: room 정보 확인
-  console.log('🔍 ChatRoom 디버깅:')
-  console.log('- roomId:', roomId)
-  console.log('- room 객체:', room)
-  console.log('- room.repoId:', room?.repoId)
-  console.log('- room.prId:', room?.prId)
-  console.log('- room.conflictFiles:', room?.conflictFiles)
-
-  // 충돌 데이터 가져오기
+  // 미팅룸 정보 및 파일 목록 가져오기
   useEffect(() => {
-    const loadConflictData = async () => {
+    const fetchMeetingRoom = async () => {
       try {
-        // room에 저장된 repoId, prId 사용
-        if (!room?.repoId || !room?.prId) {
-          console.error('repoId 또는 prId가 없습니다:', { repoId: room?.repoId, prId: room?.prId })
-          return
+        setLoading(true)
+        setError(null)
+
+        console.log(`📡 미팅룸 ${roomId} 정보 요청 중...`)
+        const response = await api.get(`/api/meetings/${roomId}`)
+
+        console.log('📋 미팅룸 API 응답:', response.data)
+
+        // 미팅룸 기본 정보 설정
+        if (response.data) {
+          setRoomInfo({
+            id: roomId,
+            name: response.data.name || response.data.roomName || `Room ${roomId}`,
+            // 다른 필요한 정보들도 여기서 설정
+          })
         }
-        console.log('📡 API 호출 시작:', { repoId: room.repoId, prId: room.prId })
-        const data = await fetchConflictData(room.repoId, room.prId)
 
-        console.log('✅ API 응답 데이터:', data)
-        console.log('📋 headFileContents:', data?.headFileContents)
-        console.log('📁 files 목록:', data?.files)
+        // 파일 목록 추출
+        let files = []
+        const data = response.data
 
-        setConflictData(data)
+        if (data) {
+          // Case 1: files 배열이 직접 있는 경우
+          if (Array.isArray(data.files)) {
+            files = extractFileNames(data.files)
+          }
+          // Case 2: meeting_room_files 배열이 있는 경우 (DB 테이블명 기반)
+          else if (Array.isArray(data.meeting_room_files)) {
+            files = extractFileNames(data.meeting_room_files)
+          }
+          // Case 3: meetingRoomFiles 배열이 있는 경우 (camelCase)
+          else if (Array.isArray(data.meetingRoomFiles)) {
+            files = extractFileNames(data.meetingRoomFiles)
+          }
+          // Case 4: 중첩된 data 구조인 경우
+          else if (data.data && Array.isArray(data.data)) {
+            files = extractFileNames(data.data)
+          }
+          // Case 5: 응답 자체가 배열인 경우
+          else if (Array.isArray(data)) {
+            files = extractFileNames(data)
+          }
+        }
 
-        // room.conflictFiles (Conflict에서 선택한 파일들) 중 첫 번째를 기본 선택
-        if (room.conflictFiles && room.conflictFiles.length > 0) {
-          const firstFile = room.conflictFiles[0]
-          console.log('🎯 기본 선택 파일:', firstFile)
-          setSelectedFileName(firstFile)
+        console.log(`✅ 추출된 파일 목록:`, files)
+        setConflictFiles(files)
+
+        if (files.length === 0) {
+          console.warn('⚠️ 파일 목록이 비어있습니다.')
         }
       } catch (error) {
-        console.error('충돌 데이터 로딩 실패:', error)
+        console.error('❌ 미팅룸 정보 요청 실패:', error)
+        setError('미팅룸 정보를 불러올 수 없습니다.')
+      } finally {
+        setLoading(false)
       }
     }
 
-    if (room && room.repoId && room.prId) {
-      loadConflictData()
+    if (roomId) {
+      fetchMeetingRoom()
     }
-  }, [room])
+  }, [roomId])
 
-  // 선택된 파일의 초기 코드 가져오기
-  const getInitialCode = () => {
-    if (!conflictData || !selectedFileName) {
-      console.log('⚠️ getInitialCode: 데이터 없음', {
-        hasConflictData: !!conflictData,
-        selectedFileName,
+  // 파일명 추출 헬퍼 함수
+  const extractFileNames = (items) => {
+    if (!Array.isArray(items)) {
+      console.warn('⚠️ extractFileNames: 입력이 배열이 아닙니다:', items)
+      return []
+    }
+
+    return items
+      .map((item, index) => {
+        console.log(`📄 Item ${index}:`, item)
+
+        // 문자열인 경우 그대로 반환
+        if (typeof item === 'string') {
+          return item.trim()
+        }
+
+        // 객체인 경우 다양한 속성명 시도
+        if (typeof item === 'object' && item !== null) {
+          const fileName = item.file_name || item.fileName || item.filename || item.name || null
+
+          console.log(`📄 객체에서 추출된 파일명:`, fileName)
+          return fileName
+        }
+
+        console.log(`📄 처리할 수 없는 항목:`, item)
+        return null
       })
-      return undefined
-    }
-
-    const code = conflictData.headFileContents?.[selectedFileName]
-    console.log('🎯 getInitialCode 결과:')
-    console.log('- 파일명:', selectedFileName)
-    console.log('- 코드 내용:', code)
-    console.log('- 코드 타입:', typeof code)
-    console.log('- 코드 길이:', code?.length || 0)
-
-    return code
+      .filter((fileName) => fileName && typeof fileName === 'string' && fileName.trim() !== '')
   }
 
   return (
@@ -108,7 +130,7 @@ const ChatRoom = () => {
           backgroundColor: 'white',
           boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
           zIndex: 10,
-          flexShrink: 0, // 헤더가 축소되지 않도록
+          flexShrink: 0,
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -116,16 +138,10 @@ const ChatRoom = () => {
             <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1f2937' }}>🧪 협업 개발실</h2>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
               🔒 Room ID: <strong>{roomId}</strong>
-              {room && (
+              {roomInfo && (
                 <>
                   <span style={{ margin: '0 1rem' }}>•</span>
-                  📝 {room.roomName || `Room ${roomId}`}
-                  {room.members?.length > 0 && (
-                    <>
-                      <span style={{ margin: '0 1rem' }}>•</span>
-                      👥 {room.members.join(', ')}
-                    </>
-                  )}
+                  📝 {roomInfo.name}
                 </>
               )}
             </p>
@@ -133,27 +149,6 @@ const ChatRoom = () => {
 
           {/* 도구 버튼들 */}
           <div style={{ display: 'flex', gap: '0.5rem' }}>
-            {/* 파일 선택 드롭다운 - room.conflictFiles만 표시 */}
-            {room?.conflictFiles?.length > 0 && (
-              <select
-                value={selectedFileName}
-                onChange={(e) => setSelectedFileName(e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem',
-                  backgroundColor: 'white',
-                  cursor: 'pointer',
-                }}
-              >
-                {room.conflictFiles.map((fileName) => (
-                  <option key={fileName} value={fileName}>
-                    📄 {fileName}
-                  </option>
-                ))}
-              </select>
-            )}
             <button
               onClick={() => setShowWhiteboard(!showWhiteboard)}
               style={{
@@ -173,21 +168,71 @@ const ChatRoom = () => {
           </div>
         </div>
 
-        {/* 충돌 파일 정보 */}
-        {room?.conflictFiles?.length > 0 && (
-          <div
-            style={{
-              marginTop: '0.75rem',
-              padding: '0.5rem 0.75rem',
-              backgroundColor: '#fef3c7',
-              border: '1px solid #f59e0b',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
-            }}
-          >
-            ⚡ <strong>충돌 파일:</strong> {room.conflictFiles.join(', ')}
-          </div>
-        )}
+        {/* 상태 표시 */}
+        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {/* 로딩 상태 */}
+          {loading && (
+            <div
+              style={{
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#dbeafe',
+                border: '1px solid #3b82f6',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                color: '#1e40af',
+              }}
+            >
+              🔄 미팅룸 정보 로딩 중...
+            </div>
+          )}
+
+          {/* 에러 상태 */}
+          {error && (
+            <div
+              style={{
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#fee2e2',
+                border: '1px solid #ef4444',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                color: '#dc2626',
+              }}
+            >
+              ❌ {error}
+            </div>
+          )}
+
+          {/* 충돌 파일 정보 */}
+          {!loading && conflictFiles.length > 0 && (
+            <div
+              style={{
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#fef3c7',
+                border: '1px solid #f59e0b',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+              }}
+            >
+              ⚡ <strong>충돌 파일 ({conflictFiles.length}개):</strong> {conflictFiles.join(', ')}
+            </div>
+          )}
+
+          {/* 파일 없음 상태 */}
+          {!loading && !error && conflictFiles.length === 0 && (
+            <div
+              style={{
+                padding: '0.5rem 0.75rem',
+                backgroundColor: '#f3f4f6',
+                border: '1px solid #9ca3af',
+                borderRadius: '6px',
+                fontSize: '0.875rem',
+                color: '#6b7280',
+              }}
+            >
+              📭 편집할 파일이 없습니다
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 메인 컨텐츠 영역 */}
@@ -196,7 +241,7 @@ const ChatRoom = () => {
           flex: 1,
           display: 'flex',
           overflow: 'hidden',
-          minHeight: 0, // 중요: flex 컨테이너가 축소될 수 있도록
+          minHeight: 0,
         }}
       >
         {/* 중앙 메인 영역 - 코드편집기 */}
@@ -212,8 +257,51 @@ const ChatRoom = () => {
             minHeight: 0,
           }}
         >
-          <div style={{ height: '100%', padding: '1rem' }}>
-            <CodeEditor roomId={roomId} initialCode={getInitialCode()} />
+          <div style={{ height: '100%' }}>
+            {!loading && conflictFiles.length > 0 ? (
+              <CodeEditor
+                conflictFiles={conflictFiles}
+                key={`editor-${roomId}-${conflictFiles.join(',')}`}
+              />
+            ) : (
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  color: '#6b7280',
+                  fontSize: '1.125rem',
+                  padding: '2rem',
+                }}
+              >
+                {loading ? (
+                  <>
+                    <div style={{ fontSize: '2rem' }}>📁</div>
+                    <div>미팅룸 정보를 불러오는 중...</div>
+                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                      미팅룸 API에서 충돌 파일 정보를 가져오고 있습니다.
+                    </div>
+                  </>
+                ) : error ? (
+                  <>
+                    <div style={{ fontSize: '2rem' }}>❌</div>
+                    <div>미팅룸 정보를 불러올 수 없습니다</div>
+                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{error}</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontSize: '2rem' }}>📭</div>
+                    <div>편집할 파일이 없습니다</div>
+                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                      이 미팅룸에는 충돌 파일이 설정되어 있지 않습니다.
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -225,8 +313,8 @@ const ChatRoom = () => {
             flexDirection: 'column',
             margin: '1rem 1rem 1rem 0',
             gap: '1rem',
-            minHeight: 0, // 중요: flex 컨테이너가 축소될 수 있도록
-            flexShrink: 0, // 사이드바 너비 고정
+            minHeight: 0,
+            flexShrink: 0,
           }}
         >
           {/* 음성 채팅 - 고정 높이 */}
@@ -236,8 +324,8 @@ const ChatRoom = () => {
               borderRadius: '8px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               overflow: 'hidden',
-              height: '250px', // 고정 높이로 변경
-              flexShrink: 0, // 축소되지 않도록
+              height: '250px',
+              flexShrink: 0,
             }}
           >
             <div
@@ -245,7 +333,7 @@ const ChatRoom = () => {
                 padding: '1rem',
                 borderBottom: '1px solid #e5e7eb',
                 backgroundColor: '#f8f9fa',
-                height: '60px', // 헤더 고정 높이
+                height: '60px',
                 boxSizing: 'border-box',
                 flexShrink: 0,
               }}
@@ -255,8 +343,8 @@ const ChatRoom = () => {
             <div
               style={{
                 padding: '1rem',
-                height: 'calc(100% - 60px)', // 헤더 제외한 나머지 높이
-                overflow: 'auto', // 필요시 스크롤
+                height: 'calc(100% - 60px)',
+                overflow: 'auto',
               }}
             >
               <AudioChatRoom roomId={roomId} />
@@ -269,11 +357,11 @@ const ChatRoom = () => {
               backgroundColor: 'white',
               borderRadius: '8px',
               boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              flex: 1, // 남은 공간 모두 사용
+              flex: 1,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
-              minHeight: 0, // 중요: flex 아이템이 축소될 수 있도록
+              minHeight: 0,
             }}
           >
             <div
@@ -281,19 +369,18 @@ const ChatRoom = () => {
                 padding: '1rem',
                 borderBottom: '1px solid #e5e7eb',
                 backgroundColor: '#f8f9fa',
-                flexShrink: 0, // 헤더가 축소되지 않도록
+                flexShrink: 0,
               }}
             >
               <h3 style={{ margin: 0, fontSize: '1rem', color: '#374151' }}>💬 채팅</h3>
             </div>
-            {/* Chat 컴포넌트가 모든 공간을 사용할 수 있도록 */}
             <div
               style={{
                 flex: 1,
-                display: 'flex', // Chat 컴포넌트를 위한 flex 컨테이너
+                display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden',
-                minHeight: 0, // 중요: 축소 가능하도록
+                minHeight: 0,
               }}
             >
               <Chat roomId={roomId} />
@@ -401,28 +488,6 @@ const ChatRoom = () => {
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* 디버깅 정보 */}
-      {process.env.NODE_ENV === 'development' && !room && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '1rem',
-            left: '1rem',
-            padding: '1rem',
-            backgroundColor: '#fef3c7',
-            border: '1px solid #f59e0b',
-            borderRadius: '8px',
-            fontSize: '0.875rem',
-            maxWidth: '400px',
-            zIndex: 30,
-          }}
-        >
-          <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>🐛 디버깅 정보:</p>
-          <p style={{ margin: '0 0 0.5rem 0' }}>roomId: {roomId}</p>
-          <p style={{ margin: 0 }}>저장된 방 개수: {rooms.length}</p>
         </div>
       )}
     </div>
