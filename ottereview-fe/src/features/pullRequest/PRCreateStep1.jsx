@@ -17,7 +17,7 @@ const PRCreateStep1 = ({
   branches,
 }) => {
   const navigate = useNavigate()
-  const [prCheckResult, setPrCheckResult] = useState(null) // 'exists' | 'not_exists' | 'error' | null
+  const [prCheckResult, setPrCheckResult] = useState(null)
   const [existingPRData, setExistingPRData] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -71,27 +71,27 @@ const PRCreateStep1 = ({
             target,
           })
 
-          // 응답 성공 = 기존 PR이 존재
           setValidationPR(data)
-          setPrCheckResult('exists')
-          setExistingPRData(data)
-          console.log('ValidatePR - 기존 PR 존재:', data)
-        } catch (err) {
-          console.log('ValidatePR 에러:', err)
-
-          // 404 에러만 PR 생성 가능
-          if (err.response?.status === 404) {
-            console.log('ValidatePR - PR 없음, 생성 가능')
+          
+          // isExist가 true면 기존 PR 존재
+          if (data.isExist) {
+            setPrCheckResult('exists')
+            setExistingPRData(data)
+            setErrorMessage('')
+            console.log('ValidatePR - 기존 PR 존재:', data)
+          } else {
+            // isExist가 false면 PR 생성 가능하지만 브랜치 검증 필요
             setPrCheckResult('not_exists')
             setExistingPRData(null)
             setErrorMessage('')
-          } else {
-            // 다른 에러는 생성 불가
-            console.log('ValidatePR - 알 수 없는 오류로 PR 생성 불가')
-            setPrCheckResult('error')
-            setExistingPRData(null)
-            setErrorMessage('알 수 없는 오류로 PR 생성이 불가능합니다.')
+            console.log('ValidatePR - PR 없음, 생성 가능', data)
           }
+        } catch (err) {
+          console.log('ValidatePR 에러:', err)
+          // API 에러는 생성 불가 상태로 처리
+          setPrCheckResult('error')
+          setExistingPRData(null)
+          setErrorMessage('PR 확인 중 오류가 발생했습니다.')
         }
       }
 
@@ -120,8 +120,8 @@ const PRCreateStep1 = ({
   ]
 
   const handleGoToPRReview = () => {
-    if (existingPRData && existingPRData.id) {
-      navigate(`/${repoId}/pr/${existingPRData.id}/review`)
+    if (existingPRData && existingPRData.prId) {
+      navigate(`/${repoId}/pr/${existingPRData.prId}/review`)
     }
   }
 
@@ -137,6 +137,9 @@ const PRCreateStep1 = ({
   const existingPR = prCheckResult === 'exists'
   const hasError = prCheckResult === 'error'
   const canGoNext = validationBranches?.isPossible === true
+  
+  // 브랜치 검증 버튼 활성화 조건: PR이 존재하지 않을 때만
+  const canValidateBranches = canCreatePR && !isSameBranch && !hasError
 
   return (
     <div className="space-y-4">
@@ -193,7 +196,7 @@ const PRCreateStep1 = ({
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={isSameBranch || hasError || !canCreatePR} // 에러 상태일 때도 비활성화
+            disabled={existingPR ? false : !canValidateBranches}
             className={existingPR ? 'bg-green-600 hover:bg-green-700' : ''}
           >
             {existingPR ? '기존 PR 리뷰하러 가기' : '브랜치 검증'}
