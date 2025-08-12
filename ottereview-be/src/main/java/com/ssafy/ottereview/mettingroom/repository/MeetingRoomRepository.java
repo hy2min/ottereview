@@ -24,4 +24,5 @@ public interface MeetingRoomRepository extends JpaRepository<MeetingRoom, Long> 
 
     void deleteAllByCreatedAtBefore(LocalDateTime cutoff);
 
+    List<MeetingRoom> findAllByCreatedAtBefore(LocalDateTime cutoff);
 }

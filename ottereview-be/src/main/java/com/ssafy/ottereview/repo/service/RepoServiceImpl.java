@@ -14,14 +14,15 @@ import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.entity.User;
-import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.PersistenceContext;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
@@ -55,7 +56,7 @@ public class RepoServiceImpl implements RepoService {
 
         return repoRepository.findAllByAccount_Id(accountId)
                 .stream()
-                .map(RepoResponse::of)
+                .map(RepoResponse::fromEntity)
                 .toList();
     }
 
@@ -111,7 +112,7 @@ public class RepoServiceImpl implements RepoService {
                 .flatMap(account -> repoRepository.findAllByAccount(account).stream())
                 .distinct()
                 .toList();
-        return repoList.stream().map(RepoResponse::of).toList();
+        return repoList.stream().map(RepoResponse::fromEntity).toList();
     }
 
     @Transactional
@@ -210,8 +211,8 @@ public class RepoServiceImpl implements RepoService {
         List<Long> dbRepoList = repoRepository.findRepoIdsByAccountId(account.getId());
         Set<Long> dbRepoSet = new HashSet<>(dbRepoList);
         // 추가할때 원래 있던 레포지토리가 있으면 제외하고 List에 담는다.
+        repoMap = repoMap.stream().filter(id -> !dbRepoSet.contains(id.getId())).toList();
         List<Repo> repoList = repoMap.stream()
-            .filter(id -> !dbRepoSet.contains(id.getId()))
             .map(r -> {
             Repo repo = Repo.builder().repoId(r.getId()).fullName(r.getFullName()).isPrivate(r.isPrivate()).account(account).build();
             branchesToSave.addAll(branchService.createBranchList(r, repo));

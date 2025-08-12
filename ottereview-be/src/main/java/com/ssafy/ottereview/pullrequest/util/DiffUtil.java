@@ -1,7 +1,7 @@
 package com.ssafy.ottereview.pullrequest.util;
 
-import com.ssafy.ottereview.pullrequest.dto.preparation.DiffHunk;
-import com.ssafy.ottereview.pullrequest.dto.preparation.DiffLine;
+import com.ssafy.ottereview.preparation.dto.DiffHunk;
+import com.ssafy.ottereview.preparation.dto.DiffLine;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

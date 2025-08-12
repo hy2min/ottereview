@@ -27,7 +27,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendChatInvite(EmailRequestDto.ChatInvite invite) {
         try {
             // 초대 링크 생성
-            String link = frontUrl + "/meetingroom/join?roomId=" + invite.getRoomId();
+            String link = frontUrl + "/chatroom/" + invite.getRoomId();
 
             // 메일 DTO 생성
             EmailResponseDto.EmailMessage emailMessage = EmailResponseDto.EmailMessage.builder()

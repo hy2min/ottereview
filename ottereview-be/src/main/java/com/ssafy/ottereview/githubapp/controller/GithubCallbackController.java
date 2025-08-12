@@ -1,5 +1,8 @@
 package com.ssafy.ottereview.githubapp.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.githubapp.exception.GithubAppErrorCode;
 import com.ssafy.ottereview.githubapp.util.GithubInstallationFacade;
 import com.ssafy.ottereview.githubapp.util.GithubUpdateFacade;
 import java.net.URI;
@@ -14,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Slf4j
 @RequiredArgsConstructor
 @Controller
+@MvcController
 public class GithubCallbackController {
 
     private final GithubInstallationFacade githubInstallationFacade;
-    private final GithubUpdateFacade githubUpdateFacade;
 
     @GetMapping("/")
     public String index() {
@@ -43,23 +46,18 @@ public class GithubCallbackController {
             if (setupAction.equals("install")) {
                 log.debug("install 로직 실행");
                 githubInstallationFacade.processInstallationWithOAuth(installationId, code);
-            } else if (setupAction.equals("update")) {
-                log.debug(setupAction);
-//                githubUpdateFacade.processUpdateWithOAuth(installationId);
             }
-            // 🎯 리디렉션할 프론트엔드 URI
-            log.debug("리다이렉트 URL 생성");
-            URI redirectUri = URI.create("https://i13c108.p.ssafy.io/dashboard"); // 또는 환경 변수로 관리
+
+            //🎯 리디렉션할 프론트엔드 URI
+           log.debug("리다이렉트 URL 생성");
+          URI redirectUri = URI.create("https://i13c108.p.ssafy.io/install-complete"); // 또는 환경 변수로 관리
 
             return ResponseEntity.status(HttpStatus.FOUND)
                     .location(redirectUri)
                     .build();
 
         } catch (Exception e) {
-            log.error("Unexpected error during GitHub installation", e);
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .build();
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_INSTALLATION_FAILED);
         }
     }
 }

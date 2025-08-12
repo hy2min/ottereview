@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.BranchInfo;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -70,4 +71,7 @@ public class PullRequestWebhookInfo {
     
     @JsonProperty("head")
     private BranchInfo head;
+    
+    @JsonProperty("requested_reviewers")
+    private List<UserWebhookInfo> requestedReviewers;
 }

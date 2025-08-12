@@ -31,18 +31,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+        // "/api/yjs/" 경로 요청이면 필터 동작 건너뜀
+        if (path.startsWith("/api/yjs/")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         String accessToken = extractToken(request);
         log.debug("accessToken: {}", accessToken);
 
-        if (accessToken != null && jwtUtil.validateToken(accessToken)) {
-            try {
-                Claims claims = jwtUtil.getClaims(accessToken);
-                Long userId = Long.valueOf(claims.getSubject());
-                setAuthentication(userId, request);
-            } catch (Exception e) {
-                log.warn("인증 정보 설정 중 오류: {}", e.getMessage());
+        // 유효한 토큰인 경우 인증 정보 설정
+        if (accessToken != null) {
+            if (jwtUtil.validateToken(accessToken)) {
+                try {
+                    Claims claims = jwtUtil.getClaims(accessToken);
+                    Long userId = Long.valueOf(claims.getSubject());
+                    setAuthentication(userId, request);
+                } catch (Exception e) {
+                    log.warn("인증 정보 설정 중 오류: {}", e.getMessage());
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401
+                response.getWriter().write("JWT token is invalid or expired.");
+                return;
             }
         }
+
         filterChain.doFilter(request, response);
     }
 
