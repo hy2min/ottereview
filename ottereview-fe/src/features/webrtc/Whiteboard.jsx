@@ -1,7 +1,7 @@
 import 'tldraw/tldraw.css'
 
 import randomColor from 'randomcolor'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react'
 import { createTLStore, defaultShapeUtils, Tldraw } from 'tldraw'
 import { names, uniqueNamesGenerator } from 'unique-names-generator'
 import * as Y from 'yjs'
@@ -17,12 +17,16 @@ const Whiteboard = ({ roomId }) => {
 
   const editorRef = useRef(null)
 
-  // STOMP 웹소켓 연결을 설정
-  useEffect(() => {
-    const token = useAuthStore.getState().accessToken
-    const socket = new SockJS('https://i13c108.p.ssafy.io/api/ws')
-    const stomp = Stomp.over(socket)
-    stomp.debug = () => {} // 디버그 로그 비활성화
+  // Yjs Doc, WebsocketProvider, Tldraw store 생성 및 동기화
+  const store = useMemo(() => {
+    const doc = new Y.Doc()
+    console.log('roomId:', roomId);
+    // JWT 토큰 없이 WebSocket URL, roomId만 경로에 포함
+    const wsUrl = `ws://localhost:8080/api/yjs`
+    const provider = new WebsocketProvider(wsUrl, roomId, doc)
+  
+    // 로컬 사용자 상태 설정 (임의 이름과 색상)
+    provider.awareness.setLocalStateField('user', { name, color })
 
     provider.on('status', event => {
       if (event.status === 'connected') {
@@ -78,6 +82,17 @@ const Whiteboard = ({ roomId }) => {
     editor.updateInstanceState({ id: userId, meta: { name, color } })
     setLoading(false)
   }, [userId, name, color])
+
+  useEffect(() => {
+    const provider = store.provider
+    if (!provider) return
+
+    const interval = setInterval(() => {
+      provider.awareness.setLocalStateField('heartbeat', Date.now())
+    }, 30_000) // 30초마다 하트비트
+
+    return () => clearInterval(interval)
+  }, [store])
 
   return (
     <div style={{ height: '100vh', width: '100%' }}>

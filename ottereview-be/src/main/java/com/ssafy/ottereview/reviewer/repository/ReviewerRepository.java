@@ -4,6 +4,8 @@ import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,5 +16,10 @@ public interface ReviewerRepository extends JpaRepository<Reviewer, Long> {
     List<Reviewer> findAllByPullRequest(PullRequest pullRequest);
 
     List<Reviewer> findAllByUser(User user);
+    
+    boolean existsByPullRequestAndUser(PullRequest pullRequest, User user);
 
+    Optional<Object> findByPullRequestAndUser(PullRequest pullRequest, User user);
+
+    List<Reviewer> findByPullRequest(PullRequest pullRequest);
 }

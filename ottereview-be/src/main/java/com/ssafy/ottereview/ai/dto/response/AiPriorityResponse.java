@@ -25,7 +25,7 @@ public class AiPriorityResponse {
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class PriorityResult {
 
-        private List<PriorityItem> candidates;
+        private List<PriorityItem> priority;
     }
 
     @Builder
@@ -41,6 +41,9 @@ public class AiPriorityResponse {
         private String priorityLevel;
 
         private String reason;
+
+        @JsonProperty("related_files")
+        private List<String> relatedFiles;
     }
     
     public static AiPriorityResponse createDefaultPriorityResponse() {
@@ -48,11 +51,12 @@ public class AiPriorityResponse {
                 .title("기본 우선순위")
                 .priorityLevel("MEDIUM")
                 .reason("우선순위를 수동으로 설정해주세요")
+                .relatedFiles(List.of())
                 .build();
         
         return AiPriorityResponse.builder()
                 .result(AiPriorityResponse.PriorityResult.builder()
-                        .candidates(List.of(defaultItem))
+                        .priority(List.of(defaultItem))
                         .build())
                 .build();
     }

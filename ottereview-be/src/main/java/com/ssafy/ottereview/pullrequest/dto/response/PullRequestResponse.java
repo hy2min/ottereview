@@ -1,7 +1,8 @@
 package com.ssafy.ottereview.pullrequest.dto.response;
 
+import com.ssafy.ottereview.preparation.dto.PrUserInfo;
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
-import com.ssafy.ottereview.user.dto.UserResponseDto;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +19,7 @@ public class PullRequestResponse {
     private Long id;
     private Integer githubPrNumber;
     private Long githubId;
-    // Pull Request 관련 정보
+    private String commitSha;
     private String title;
     private String body;
     private String summary;
@@ -26,6 +27,7 @@ public class PullRequestResponse {
     private String state;
     private Boolean merged;
     private Boolean mergeable;
+    private Boolean isApproved;
 
     // 브랜치 정보
     private String head;
@@ -42,5 +44,57 @@ public class PullRequestResponse {
     private LocalDateTime githubUpdatedAt;
 
     private RepoResponse repo;
-    private UserResponseDto author;
+    private PrUserInfo author;
+    
+    public static PullRequestResponse fromEntity(PullRequest pullRequest) {
+        return PullRequestResponse.builder()
+                .id(pullRequest.getId())
+                .githubPrNumber(pullRequest.getGithubPrNumber())
+                .githubId(pullRequest.getGithubId())
+                .commitSha(pullRequest.getCommitSha())
+                .title(pullRequest.getTitle())
+                .body(pullRequest.getBody())
+                .summary(pullRequest.getSummary())
+                .approveCnt(pullRequest.getApproveCnt())
+                .state(pullRequest.getState().toString())
+                .merged(pullRequest.getMerged())
+                .mergeable(pullRequest.getMergeable())
+                .head(pullRequest.getHead())
+                .base(pullRequest.getBase())
+                .commitCnt(pullRequest.getCommitCnt())
+                .changedFilesCnt(pullRequest.getChangedFilesCnt())
+                .commentCnt(pullRequest.getCommentCnt())
+                .reviewCommentCnt(pullRequest.getReviewCommentCnt())
+                .githubCreatedAt(pullRequest.getGithubCreatedAt())
+                .githubUpdatedAt(pullRequest.getGithubUpdatedAt())
+                .repo(RepoResponse.fromEntity(pullRequest.getRepo()))
+                .author(PrUserInfo.fromEntity(pullRequest.getAuthor()))
+                .build();
+    }
+
+    public static PullRequestResponse fromEntityAndIsApproved(PullRequest pullRequest, Boolean isApproved) {
+        return PullRequestResponse.builder()
+                .id(pullRequest.getId())
+                .githubPrNumber(pullRequest.getGithubPrNumber())
+                .githubId(pullRequest.getGithubId())
+                .title(pullRequest.getTitle())
+                .body(pullRequest.getBody())
+                .summary(pullRequest.getSummary())
+                .approveCnt(pullRequest.getApproveCnt())
+                .state(pullRequest.getState().toString())
+                .merged(pullRequest.getMerged())
+                .mergeable(pullRequest.getMergeable())
+                .isApproved(isApproved)
+                .head(pullRequest.getHead())
+                .base(pullRequest.getBase())
+                .commitCnt(pullRequest.getCommitCnt())
+                .changedFilesCnt(pullRequest.getChangedFilesCnt())
+                .commentCnt(pullRequest.getCommentCnt())
+                .reviewCommentCnt(pullRequest.getReviewCommentCnt())
+                .githubCreatedAt(pullRequest.getGithubCreatedAt())
+                .githubUpdatedAt(pullRequest.getGithubUpdatedAt())
+                .repo(RepoResponse.fromEntity(pullRequest.getRepo()))
+                .author(PrUserInfo.fromEntity(pullRequest.getAuthor()))
+                .build();
+    }
 }

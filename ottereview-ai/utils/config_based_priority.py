@@ -5,11 +5,11 @@
 from typing import Dict, Any, List
 import logging
 from .priority_config import get_priority_config
-from .vector_db import PRData
+from models import PreparationResult, PRData  # PRData는 하위 호환성을 위해 유지
 
 logger = logging.getLogger(__name__)
 
-def calculate_config_based_priority_candidates(pr_data: PRData) -> Dict[str, Any]:
+def calculate_config_based_priority_candidates(pr_data: PreparationResult) -> Dict[str, Any]:
     """
     설정 파일 기반으로 3개의 우선순위 후보 계산
     
@@ -236,7 +236,7 @@ def _generate_third_candidate(file_rule_matches: Dict, config, total_changes: in
     }
 
 
-def _get_error_fallback_candidates(pr_data: PRData) -> Dict[str, Any]:
+def _get_error_fallback_candidates(pr_data: PreparationResult) -> Dict[str, Any]:
     """에러 상황에서 사용할 기본 후보들"""
     try:
         config = get_priority_config()

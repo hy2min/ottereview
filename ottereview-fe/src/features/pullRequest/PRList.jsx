@@ -3,11 +3,8 @@ import { useState } from 'react'
 import Box from '../../components/Box'
 import InputBox from '../../components/InputBox'
 import PRCardCompact from './PRCardCompact'
-import { usePRStore } from './stores/prStore'
 
-const PRList = () => {
-  const authoredPRs = usePRStore((state) => state.authoredPRs)
-  const reviewerPRs = usePRStore((state) => state.reviewerPRs)
+const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
   const [selectedType, setSelectedType] = useState('all')
 
   const filteredPRs =
@@ -22,11 +19,12 @@ const PRList = () => {
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col">
-      <div className="flex mb-2 space-x-4">
-        <h2 className="text-xl mr-8">진행중인 PR</h2>
+      <div className="flex mb-2 space-x-8">
+        <div className="flex-1">
+          <h2 className="text-xl">진행중인 PR</h2>
+        </div>
 
-        {/* 타입 필터 드롭다운 */}
-        <div className="w-40 -my-[9px] mr-7">
+        <div className="w-40 -mt-[9px] mr-4">
           <InputBox
             as="select"
             options={[
@@ -43,7 +41,7 @@ const PRList = () => {
       <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {filteredPRs.length === 0 ? (
           <div className="flex items-center justify-center h-full">
-            <p className="text-2xl text-gray-500">작성된 PR이 없습니다.</p>
+            <p className="text-2xl text-gray-500">진행중인 PR이 없습니다.</p>
           </div>
         ) : (
           filteredPRs.map((pr) => <PRCardCompact key={pr.id} pr={pr} type={pr.type} />)

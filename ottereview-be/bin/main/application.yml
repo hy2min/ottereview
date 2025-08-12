@@ -58,7 +58,6 @@ github:
 
 app:
   front:
-    url: http://i13c108.p.ssafy.io:8082
   ai:
     url: http://i13c108.p.ssafy.io:8080
 

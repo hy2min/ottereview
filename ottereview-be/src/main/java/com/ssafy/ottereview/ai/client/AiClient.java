@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.ai.client;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
@@ -9,6 +10,7 @@ import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
 import com.ssafy.ottereview.ai.dto.response.AiSummaryResponse;
 import com.ssafy.ottereview.ai.dto.response.AiTitleResponse;
 import com.ssafy.ottereview.ai.repository.AiRedisRepository;
+import com.ssafy.ottereview.merge.dto.MergedPullRequestInfo;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -16,12 +18,8 @@ import java.util.Collections;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -49,7 +47,7 @@ public class AiClient {
                 .timeout(Duration.ofMinutes(1))
                 .doOnSuccess(title -> log.info("Title 생성 완료: {}", title))
                 .doOnError(error -> log.error("Title 생성 실패", error))
-                .onErrorReturn(new AiTitleResponse("제목을 입력해주세요"));  // 기본값 제공
+                .onErrorReturn(createDefaultTitleResponse());  // 기본값 제공
     }
     
     /**
@@ -65,7 +63,7 @@ public class AiClient {
                 .timeout(Duration.ofMinutes(1))
                 .doOnSuccess(summary -> log.info("Summary 생성 완료"))
                 .doOnError(error -> log.error("Summary 생성 실패", error))
-                .onErrorReturn(new AiSummaryResponse("요약을 입력해주세요"));
+                .onErrorReturn(createDefaultSummaryResponse());
     }
     
     /**
@@ -81,7 +79,7 @@ public class AiClient {
                 .timeout(Duration.ofMinutes(1))
                 .doOnSuccess(reviewers -> log.info("Reviewers 추천 완료: {}", reviewers))
                 .doOnError(error -> log.error("Reviewers 추천 실패", error))
-                .onErrorReturn(new AiReviewerResponse());
+                .onErrorReturn(createDefaultReviewersResponse());
     }
     
     /**
@@ -103,7 +101,7 @@ public class AiClient {
     /**
      * 코딩 컨벤션 검사
      */
-    public Mono<AiConventionResponse> checkCodingConvention(AiRequest request) {
+    public Mono<AiConventionResponse> checkCodingConvention(AiConventionRequest request) {
         
         return aiWebClient.post()
                 .uri("/ai/coding-convention/check")
@@ -113,7 +111,7 @@ public class AiClient {
                 .timeout(Duration.ofMinutes(1))
                 .doOnSuccess(conventions -> log.info("Coding Convention 검사 완료"))
                 .doOnError(error -> log.error("Coding Convention 검사 실패", error))
-                .onErrorReturn(new AiConventionResponse("결과 없음"));
+                .onErrorReturn(createDefaultConventionResponse());
     }
     
     /**
@@ -172,15 +170,6 @@ public class AiClient {
                     return Mono.just(createDefaultTitleResponse());
                 });
         
-        Mono<AiSummaryResponse> summaryMono = getSummary(request)
-                .timeout(Duration.ofMinutes(2))
-                .doOnSubscribe(sub -> log.info("Summary 분석 시작"))
-                .doOnSuccess(result -> log.debug("Summary 분석 완료"))
-                .onErrorResume(error -> {
-                    log.warn("Summary 분석 실패, 기본값 사용", error);
-                    return Mono.just(createDefaultSummaryResponse());
-                });
-        
         Mono<AiReviewerResponse> reviewersMono = recommendReviewers(request)
                 .timeout(Duration.ofMinutes(2))
                 .doOnSubscribe(sub -> log.info("Reviewers 분석 시작"))
@@ -199,24 +188,13 @@ public class AiClient {
                     return Mono.just(createDefaultPriorityResponse());
                 });
         
-        Mono<AiConventionResponse> conventionMono = checkCodingConvention(request)
-                .timeout(Duration.ofMinutes(2))
-                .doOnSubscribe(sub -> log.info("Convention 분석 시작"))
-                .doOnSuccess(result -> log.debug("Convention 분석 완료"))
-                .onErrorResume(error -> {
-                    log.warn("Convention 분석 실패, 기본값 사용", error);
-                    return Mono.just(createDefaultConventionResponse());
-                });
-        
         // 5. 모든 결과를 조합하고 캐시 저장
-        return Mono.zip(titleMono, summaryMono, reviewersMono, priorityMono, conventionMono)
+        return Mono.zip(titleMono, reviewersMono, priorityMono)
                 .map(results -> {
                     AiResult analysisResult = AiResult.builder()
                             .title(results.getT1())
-                            .summary(results.getT2())
-                            .reviewers(results.getT3())
-                            .priority(results.getT4())
-                            .conventions(results.getT5())
+                            .reviewers(results.getT2())
+                            .priority(results.getT3())
                             .analysisTime(startTime)
                             .build();
                     
@@ -233,27 +211,28 @@ public class AiClient {
                                 })
                 );
     }
-
-    public Mono<String> processAudioFile(MultipartFile audioFile) {
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", audioFile.getResource())
-                .contentType(MediaType.MULTIPART_FORM_DATA);
-
+    
+    
+    
+    public Mono<Void> saveVectorDb(MergedPullRequestInfo mergedPullRequestInfo) {
+        log.debug("Vector DB 저장 시작 - PR ID: {}", mergedPullRequestInfo.getId());
         return aiWebClient.post()
-                .uri("/ai/speech/transcribe")
-                .body(BodyInserters.fromMultipartData(builder.build()))
+                .uri("/ai/vector-db/store")
+                .bodyValue(mergedPullRequestInfo)
                 .retrieve()
-                .bodyToMono(AiConventionResponse.class) // 응답을 AiResponse 객체로 받음
-                .map(AiConventionResponse::getResult) // AiResponse 객체에서 "result" 필드 값만 추출
-                .onErrorResume(throwable -> {
-                    System.err.println("파일 전송 중 오류 발생: " + throwable.getMessage());
-                    return Mono.just("AI 음성 처리 실패");
+                .bodyToMono(Void.class)
+                .timeout(Duration.ofMinutes(2))
+                .doOnSuccess(result -> log.info("Vector DB 저장 완료 - PR ID: {}", mergedPullRequestInfo.getId()))
+                .doOnError(error -> log.error("Vector DB 저장 실패 - PR ID: {}", mergedPullRequestInfo.getId(), error))
+                .onErrorResume(error -> {
+                    log.warn("Vector DB 저장 실패하였지만 계속 진행 - PR ID: {}", mergedPullRequestInfo.getId());
+                    return Mono.empty();
                 });
     }
-
+    
     private Mono<Void> validateUserPermissionAsync(Long userId, Long repoId) {
         return Mono.fromCallable(() -> {
-//                    userAccountService.validateUserPermission(userId, repoId);
+                    userAccountService.validateUserPermission(userId, repoId);
                     return null;
                 })
                 .subscribeOn(Schedulers.boundedElastic())
@@ -302,10 +281,8 @@ public class AiClient {
         
         return Mono.just(AiResult.builder()
                 .title(createDefaultTitleResponse())
-                .summary(createDefaultSummaryResponse())
                 .reviewers(createDefaultReviewersResponse())
                 .priority(createDefaultPriorityResponse())
-                .conventions(createDefaultConventionResponse())
                 .analysisTime(startTime)
                 .hasErrors(true)  // 에러 플래그 추가
                 .errorMessage(error.getMessage())

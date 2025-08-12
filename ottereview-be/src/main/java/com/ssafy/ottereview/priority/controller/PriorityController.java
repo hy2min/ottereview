@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.priority.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.priority.dto.CreatePriorityRequest;
 import com.ssafy.ottereview.priority.service.PriorityService;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/api/pull-requests/{pr-id}/priorities")
+@MvcController
 public class PriorityController {
 
     private final PriorityService priorityService;
