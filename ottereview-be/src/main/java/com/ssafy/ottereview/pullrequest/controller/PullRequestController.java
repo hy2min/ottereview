@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @MvcController
 public class PullRequestController {
-    
+
     private final PullRequestService pullRequestService;
 
     @GetMapping("/github")
@@ -38,7 +38,7 @@ public class PullRequestController {
     public ResponseEntity<List<PullRequestResponse>> getPullRequestsByGithub(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
         return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
     }
-    
+
     @GetMapping("/search")
     @Operation(
             summary = "브랜치 정보를 이용한 Open 상태 Pull Request 단일 조회",
@@ -53,7 +53,7 @@ public class PullRequestController {
         PullRequestResponse pullRequest = pullRequestService.getPullRequestByBranch(userDetail, repoId, source, target);
         return ResponseEntity.ok(pullRequest);
     }
-    
+
     @GetMapping("/{pr-id}")
     @Operation(
             summary = "Pull Request 상세 조회",
@@ -62,7 +62,7 @@ public class PullRequestController {
     public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
         return ResponseEntity.ok(pullRequestService.getPullRequest(userDetail, repoId, pullRequestId));
     }
-    
+
     @GetMapping()
     @Operation(
             summary = "레포지토리 Pull Request 목록 조회",
