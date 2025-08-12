@@ -43,22 +43,9 @@ public class MergeController {
     }
 
     @GetMapping()
-    public ResponseEntity<MergeCheckResponse> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId){
+    public ResponseEntity<MergeCheckResponse> getMergeAbleFromGithub(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId){
         PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
                 .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
-        // 리뷰어 체크
-        Boolean reviewerCheck = mergeService.checkMergeStatus(pullRequest);
-        if (!reviewerCheck) {
-            MergeCheckResponse blockedResponse = MergeCheckResponse.builder()
-                    .prNumber(pullRequest.getGithubPrNumber())
-                    .title(pullRequest.getTitle())
-                    .state("OPEN")
-                    .mergeAble(false)
-                    .mergeState("BLOCKED")
-                    .hasConflicts(false)
-                    .build();
-            return ResponseEntity.ok(blockedResponse);
-        }
         MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repoId, pullRequest);
         return ResponseEntity.ok(githubCheck);
     }
