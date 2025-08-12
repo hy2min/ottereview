@@ -243,6 +243,12 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         // PR 저장
         PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
+        PrUserInfo prepareAuthor = prepareInfo.getAuthor();
+        User author = userRepository.findById(prepareAuthor.getId())
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        pullRequest.enrollAuthor(author);
+
         pullRequest.enrollSummary(prepareInfo.getSummary());
         PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
         

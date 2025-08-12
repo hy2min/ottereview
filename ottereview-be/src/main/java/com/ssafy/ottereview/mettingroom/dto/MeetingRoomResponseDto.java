@@ -17,5 +17,5 @@ public class MeetingRoomResponseDto {
     private String roomName;
     private Long ownerId;
     private List<MeetingParticipantDto> participants;
-    private List<MeetingRoomFiles> files;
+    private List<MeetingRoomFilesDto> files;
 }
