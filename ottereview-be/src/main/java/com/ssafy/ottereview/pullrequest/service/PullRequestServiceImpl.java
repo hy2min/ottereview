@@ -52,6 +52,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -82,6 +86,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .getId(), repoId);
         
         // 2. 해당 레포지토리의 Pull Request 목록 조회
+//        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
         List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
         
         // 3. Pull Request 목록을 DTO로 변환하여 반환
@@ -110,6 +115,8 @@ public class PullRequestServiceImpl implements PullRequestService {
         synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
         
         // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
+//        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
+
         List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
         
         return finalPullRequests.stream()
