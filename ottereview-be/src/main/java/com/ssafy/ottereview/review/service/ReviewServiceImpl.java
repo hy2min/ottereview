@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
+@Transactional
 public class ReviewServiceImpl implements ReviewService {
 
     private static final String COMMENT_TEMPLATE = """
