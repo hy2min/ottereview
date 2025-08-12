@@ -4,6 +4,7 @@ import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
 import com.ssafy.ottereview.user.entity.User;
+import java.util.List;
 
 public interface MeetingRoomService {
     MeetingRoomResponseDto createMeetingRoom(MeetingRoomRequestDto request, User user);
