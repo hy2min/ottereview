@@ -22,7 +22,6 @@ import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
-import com.ssafy.ottereview.pullrequest.dto.response.PullRequestValidationResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
@@ -202,21 +201,17 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         return pullRequestDetailResponse;
     }
-
-
+    
     @Override
-    public PullRequestValidationResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target) {
-
+    public PullRequestResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target) {
+        
         Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
-
-        Optional<PullRequest> existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN);
-
-        if (existPullRequest.isPresent()) {
-            return new PullRequestValidationResponse(true, existPullRequest.get().getId());
-        }
-
-        return new PullRequestValidationResponse(false, null);
+        
+        PullRequest existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        
+        return pullRequestMapper.PullRequestToResponse(existPullRequest);
     }
     
     @Override
@@ -243,12 +238,6 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         // PR 저장
         PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
-        PrUserInfo prepareAuthor = prepareInfo.getAuthor();
-        User author = userRepository.findById(prepareAuthor.getId())
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-
-        pullRequest.enrollAuthor(author);
-
         pullRequest.enrollSummary(prepareInfo.getSummary());
         PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
         
