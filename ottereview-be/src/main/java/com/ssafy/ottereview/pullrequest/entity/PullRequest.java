@@ -2,6 +2,7 @@ package com.ssafy.ottereview.pullrequest.entity;
 
 import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
@@ -199,4 +200,44 @@ public class PullRequest extends BaseEntity {
     public void addApproveCnt() {
         this.approveCnt++;
     }
+
+    public static PullRequest to(PullRequestResponse event){
+        Repo repoEntity = null;
+        if (event.getRepo() != null) {
+            repoEntity = Repo.builder()
+                    .id(event.getRepo().getId())
+                    .build();
+        }
+
+        User authorEntity = null;
+        if (event.getAuthor() != null) {
+            authorEntity = User.builder()
+                    .id(event.getAuthor().getId())
+                    .build();
+        }
+
+        return PullRequest.builder()
+                .id(event.getId())
+                .githubPrNumber(event.getGithubPrNumber())
+                .githubId(event.getGithubId())
+                .title(event.getTitle())
+                .body(event.getBody())
+                .summary(event.getSummary())
+                .approveCnt(event.getApproveCnt())
+                .state(PrState.valueOf(event.getState())) // enum 변환
+                .merged(event.getMerged())
+                .mergeable(event.getMergeable())
+                .head(event.getHead())
+                .base(event.getBase())
+                .commitCnt(event.getCommitCnt())
+                .changedFilesCnt(event.getChangedFilesCnt())
+                .commentCnt(event.getCommentCnt())
+                .reviewCommentCnt(event.getReviewCommentCnt())
+                .githubCreatedAt(event.getGithubCreatedAt())
+                .githubUpdatedAt(event.getGithubUpdatedAt())
+                .repo(repoEntity)
+                .author(authorEntity)
+                .build();
+    }
+
 }
