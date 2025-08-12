@@ -36,6 +36,7 @@ public class MeetingRoomController {
         return ResponseEntity.ok(response);
     }
 
+
     @DeleteMapping("/{meetingroom-id}")
     public ResponseEntity<Void> closeMeetingRoom(@PathVariable("meetingroom-id") Long roomId, @AuthenticationPrincipal CustomUserDetail userDetail) {
         Long userId = userDetail.getUser().getId();
