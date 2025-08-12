@@ -373,6 +373,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                                 Reviewer.builder()
                                         .pullRequest(pullRequest)
                                         .user(reviewer)
+                                        .status(ReviewStatus.NONE)
                                         .build());
                     }
                     newPullRequests.add(pullRequest);
