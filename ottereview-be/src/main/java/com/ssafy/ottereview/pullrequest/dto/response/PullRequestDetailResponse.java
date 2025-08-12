@@ -26,6 +26,7 @@ public class PullRequestDetailResponse {
     private Long id;
     private Long githubId;
     private Integer githubPrNumber;
+    private String commitSha;
     private String title;
     private String body;
     private String state;

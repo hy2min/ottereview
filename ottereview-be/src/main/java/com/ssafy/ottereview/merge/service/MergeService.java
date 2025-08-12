@@ -481,13 +481,6 @@ public class MergeService {
     }
 
 
-    public Boolean checkMergeStatus(PullRequest pullRequest) {
-        // 1. Reviewer 모두 APPROVED인지 확인
-        List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
-        return reviewers.stream()
-                .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
-    }
-
     public MergeCheckResponse checkMergeConflict(Long repoId, PullRequest pullRequest) {
         Repo repo = repoRepository.findById(repoId)
                 .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
