@@ -70,6 +70,7 @@ export const requestAIConvention = async ({ repoId, source, target, rules }) => 
     target,
     rules,
   }
+  console.log(payload)
   const res = await api.post('/api/ai/conventions/check', payload)
   return res.data
 }
@@ -81,6 +82,7 @@ export const requestAIOthers = async ({ repoId, source, target, rules }) => {
     target,
     rules,
   }
+  console.log(payload)
   const res = await api.post('/api/ai/all', payload)
   return res.data
 }
@@ -88,37 +90,46 @@ export const requestAIOthers = async ({ repoId, source, target, rules }) => {
 // PR 리뷰 제출
 export const submitReview = async ({ accountId, repoId, prId, reviewData }) => {
   const formData = new FormData()
-  
+
   // reviewRequest를 JSON Blob으로 추가
   const reviewRequestBlob = new Blob([JSON.stringify(reviewData.reviewRequest)], {
-    type: 'application/json'
+    type: 'application/json',
   })
   formData.append('reviewRequest', reviewRequestBlob)
-  
+
   // 음성 파일들을 추가
   if (reviewData.files && reviewData.files.length > 0) {
     reviewData.files.forEach((file, index) => {
       formData.append('files', file)
     })
   }
-  
-  const res = await api.post(`/api/accounts/${accountId}/repositories/${repoId}/pull-requests/${prId}/review`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
+
+  const res = await api.post(
+    `/api/accounts/${accountId}/repositories/${repoId}/pull-requests/${prId}/review`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     }
-  })
+  )
   return res.data
 }
 
 // PR 준비 정보 저장 (전체 formData)
 export const savePRAdditionalInfo = async (repoId, formData) => {
   console.log('savePRAdditionalInfo payload:', formData)
-  const res = await api.post(`/api/repositories/${repoId}/pull-requests/preparation/additional-info`, formData)
+  const res = await api.post(
+    `/api/repositories/${repoId}/pull-requests/preparation/additional-info`,
+    formData
+  )
   return res.data
 }
 
 // PR 리뷰 목록 가져오기
 export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
-  const res = await api.get(`/api/accounts/${accountId}/repositories/${repoId}/pull-requests/${prId}/review`)
+  const res = await api.get(
+    `/api/accounts/${accountId}/repositories/${repoId}/pull-requests/${prId}/review`
+  )
   return res.data
 }

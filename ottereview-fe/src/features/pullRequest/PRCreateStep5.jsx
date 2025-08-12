@@ -11,6 +11,7 @@ const PRCreateStep5 = ({
   prTitle, 
   prBody,
   selectedReviewers,
+  resetCommentStates,
 }) => {
   const navigate = useNavigate()
 
@@ -23,6 +24,9 @@ const PRCreateStep5 = ({
       }
       console.log('PR 제출 데이터:', submitData)
       await submitPR(submitData)
+      
+      // PR 생성 완료 시 댓글 상태 초기화
+      resetCommentStates?.()
       
       // navigate('/dashboard')
     } catch (err) {

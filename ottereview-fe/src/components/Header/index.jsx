@@ -27,7 +27,7 @@ const Header = () => {
   return (
     <header className="bg-transparent pb-1 pt-2">
       <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-3 bg-danger-300 border-2 border-black shadow-pixel p-4 rounded-4xl">
+        <div className="grid grid-cols-3 bg-gray-300 border-2 border-black shadow-pixel p-4 rounded-4xl">
           <button
             onClick={() => navigate('/dashboard')}
             className="text-xl justify-self-start cursor-pointer"
@@ -36,7 +36,7 @@ const Header = () => {
           </button>
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
           <div className="justify-self-end">
-            <Button onClick={handleLogout} variant="secondary">
+            <Button onClick={handleLogout} variant="" className="bg-white">
               로그아웃
             </Button>
           </div>

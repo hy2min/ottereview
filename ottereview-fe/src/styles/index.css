@@ -14,7 +14,7 @@
 /* ===== 전역 폰트 적용 ===== */
 body {
   font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
-  background-color: var(--color-warning-100);
+  /* background-color: var(--color-warning-100); */
   background-attachment: fixed;
   min-height: 100vh;
 }

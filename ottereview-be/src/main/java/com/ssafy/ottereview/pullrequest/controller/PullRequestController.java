@@ -4,6 +4,7 @@ import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestValidationResponse;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -44,14 +45,13 @@ public class PullRequestController {
             summary = "브랜치 정보를 이용한 Open 상태 Pull Request 단일 조회",
             description = "특정 레포지토리의 소스 브랜치와 타겟 브랜치에 대한 Pull-Request를 조회합니다."
     )
-    public ResponseEntity<PullRequestResponse> getPullRequestByBranch(
+    public ResponseEntity<PullRequestValidationResponse> getPullRequestByBranch(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
             @RequestParam String source,
             @RequestParam String target
     ) {
-        PullRequestResponse pullRequest = pullRequestService.getPullRequestByBranch(userDetail, repoId, source, target);
-        return ResponseEntity.ok(pullRequest);
+        return ResponseEntity.ok(pullRequestService.getPullRequestByBranch(userDetail, repoId, source, target));
     }
 
     @GetMapping("/{pr-id}")
@@ -59,7 +59,8 @@ public class PullRequestController {
             summary = "Pull Request 상세 조회",
             description = "특정 Pull Request의 상세 정보를 조회합니다."
     )
-    public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
+    public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
         return ResponseEntity.ok(pullRequestService.getPullRequest(userDetail, repoId, pullRequestId));
     }
 

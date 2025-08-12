@@ -59,6 +59,7 @@ const PRCreate = () => {
   // PR 생성 과정에서 작성된 댓글들 (모든 step에서 유지됨)
   const [reviewComments, setReviewComments] = useState([])
   const [audioFiles, setAudioFiles] = useState([])
+  const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
   
   // 선택된 리뷰어들 (객체 배열로 관리)
   const [selectedReviewers, setSelectedReviewers] = useState([])
@@ -67,7 +68,14 @@ const PRCreate = () => {
     setSelectedBranches((prev) => ({ ...prev, ...partial }))
   }
 
-  // 라인별 댓글 추가 함수
+  // PR 생성 완료 시 댓글 상태 초기화 함수
+  const resetCommentStates = () => {
+    setReviewComments([])
+    setAudioFiles([])
+    setFileComments({})
+  }
+
+  // 라인별 댓글 추가 함수 (기존)
   const handleAddLineComment = (commentData) => {
     // 음성 파일이 있는 경우 (fileIndex가 -1인 경우)
     if (commentData.audioFile && commentData.fileIndex === -1) {
@@ -85,6 +93,30 @@ const PRCreate = () => {
       // 텍스트 댓글인 경우 (fileIndex가 null)
       setReviewComments((prev) => [...prev, commentData])
     }
+  }
+
+  // 파일별 라인 댓글 추가 함수 (새로 추가)
+  const handleAddFileLineComment = (filePath, lineIndex, commentData) => {
+    setFileComments((prev) => ({
+      ...prev,
+      [filePath]: {
+        ...prev[filePath],
+        submittedComments: {
+          ...prev[filePath]?.submittedComments,
+          [lineIndex]: [
+            ...(prev[filePath]?.submittedComments?.[lineIndex] || []),
+            {
+              ...commentData,
+              id: Date.now() + Math.random(),
+              submittedAt: new Date().toLocaleTimeString(),
+            },
+          ],
+        },
+      },
+    }))
+
+    // 기존 reviewComments에도 추가 (최종 제출을 위해)
+    handleAddLineComment(commentData)
   }
 
   const goToStep = (stepNumber) => {
@@ -124,7 +156,8 @@ const PRCreate = () => {
           aiOthers,
           reviewComments,
           audioFiles,
-          onAddComment: handleAddLineComment,
+          onAddComment: handleAddFileLineComment,
+          fileComments,
           prTitle,
           setPrTitle,
           prBody,
@@ -145,6 +178,7 @@ const PRCreate = () => {
           prTitle,
           prBody,
           selectedReviewers,
+          resetCommentStates,
         }
       default:
         return baseProps
