@@ -127,18 +127,6 @@ const Dashboard = () => {
           >
             응답 테스트
           </button>
-          <button
-            onClick={() => navigate('/chatroom/test')}
-            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
-          >
-            채팅 테스트
-          </button>
-          <button
-            onClick={() => navigate('/audiotest')}
-            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
-          >
-            오디오 테스트
-          </button>
         </div>
       </div>
 

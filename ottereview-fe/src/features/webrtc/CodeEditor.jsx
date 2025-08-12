@@ -1,9 +1,11 @@
+import { javascript } from '@codemirror/lang-javascript'
 import { Transaction } from '@codemirror/state'
+import { oneDark } from '@codemirror/theme-one-dark'
 import * as yorkie from '@yorkie-js/sdk'
 import { basicSetup, EditorView } from 'codemirror'
 import { useEffect, useRef, useState } from 'react'
 
-const CodeEditor = ({ roomId, initialCode = null }) => {
+const CodeEditor = ({ roomId, fileName, documentKey }) => {
   const editorRef = useRef(null)
   const viewRef = useRef(null)
   const docRef = useRef(null)
@@ -12,7 +14,9 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!roomId) return
+    if (!roomId || !fileName || !documentKey) return
+
+    console.log('Yorkie CodeEditor 초기화 시작:', { roomId, fileName, documentKey })
 
     let view
     let client
@@ -25,6 +29,8 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
         // 환경변수 확인
         const rpcAddr = import.meta.env.VITE_YORKIE_API_ADDR
         const apiKey = import.meta.env.VITE_YORKIE_API_KEY
+
+        console.log('Yorkie 설정:', { rpcAddr, hasApiKey: !!apiKey })
 
         if (!rpcAddr || !apiKey) {
           throw new Error('Yorkie 환경변수가 설정되지 않았습니다.')
@@ -40,25 +46,33 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         await client.activate()
         clientRef.current = client
+        console.log('Yorkie 클라이언트 활성화 완료')
 
-        // 2. 문서 생성 및 연결 (roomId를 문서 키로 사용)
-        const doc = new yorkie.Document(`code_editor_${roomId}`, {
+        // 2. 문서 생성 및 연결 (ChatRoom에서 전달받은 documentKey 사용)
+        const doc = new yorkie.Document(documentKey, {
           enableDevtools: true,
         })
 
         await client.attach(doc)
         docRef.current = doc
+        console.log('Yorkie 문서 연결 완료:', documentKey)
 
-        // 초기 content 생성
+        // 초기 content 확인 (Conflict에서 이미 생성되었을 수 있음)
         doc.update((root) => {
           if (!root.content) {
             root.content = new yorkie.Text()
-            // 초기 코드 템플릿
-            const codeToUse =
-              initialCode ||
-              `// 채팅방 ${roomId}의 협업 코드 편집기\n// 실시간으로 다른 사용자와 함께 편집할 수 있습니다\n\nfunction hello() {\n  console.log("Hello, collaborative coding!");\n}\n\n`
+            // 기본 템플릿 (Conflict에서 이미 설정되지 않은 경우에만)
+            const defaultCode = `// 파일: ${fileName}
+// 충돌 해결용 코드 편집기
+// 실시간으로 다른 사용자와 함께 편집할 수 있습니다
 
-            root.content.edit(0, 0, codeToUse)
+function hello() {
+  console.log("Hello, collaborative coding!");
+}
+
+// TODO: 충돌을 해결하고 올바른 코드를 작성하세요
+`
+            root.content.edit(0, 0, defaultCode)
           }
         })
 
@@ -86,12 +100,14 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         doc.subscribe((event) => {
           if (event.type === 'snapshot') {
+            console.log('Yorkie 문서 스냅샷 받음')
             syncText()
           }
         })
 
         doc.subscribe('$.content', (event) => {
           if (event.type === 'remote-change') {
+            console.log('원격 변경 감지:', event.value)
             const { operations } = event.value
             handleOperations(operations)
           }
@@ -99,7 +115,7 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
 
         await client.sync()
 
-        // 4. EditorView 생성
+        // 4. EditorView 생성 (언어 지원 및 테마 추가)
         const updateListener = EditorView.updateListener.of((v) => {
           if (!doc || !v.docChanged) return
 
@@ -119,9 +135,44 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
           }
         })
 
+        // 파일 확장자에 따른 언어 설정
+        const getLanguageExtension = (fileName) => {
+          const ext = fileName.split('.').pop()?.toLowerCase()
+          switch (ext) {
+            case 'js':
+            case 'jsx':
+            case 'ts':
+            case 'tsx':
+              return javascript()
+            default:
+              return javascript() // 기본값
+          }
+        }
+
         view = new EditorView({
           doc: '',
-          extensions: [basicSetup, updateListener],
+          extensions: [
+            basicSetup,
+            getLanguageExtension(fileName),
+            oneDark, // 다크 테마
+            updateListener,
+            EditorView.theme({
+              '&': {
+                height: '100%',
+                fontSize: '14px',
+              },
+              '.cm-content': {
+                fontFamily: 'JetBrains Mono, Consolas, Monaco, "Courier New", monospace',
+                lineHeight: '1.5',
+              },
+              '.cm-editor': {
+                height: '100%',
+              },
+              '.cm-scroller': {
+                height: '100%',
+              },
+            }),
+          ],
           parent: editorRef.current,
         })
         viewRef.current = view
@@ -129,6 +180,7 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
         // 초기 동기화
         syncText()
         setStatus('connected')
+        console.log('Yorkie CodeEditor 초기화 완료')
       } catch (error) {
         console.error('Yorkie CodeEditor 초기화 실패:', error)
         setError(error.message)
@@ -161,6 +213,7 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
     initialize()
 
     return () => {
+      console.log('Yorkie CodeEditor 정리 중...')
       if (client) {
         client.deactivate().catch(console.error)
       }
@@ -168,26 +221,31 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
         view.destroy()
       }
     }
-  }, [roomId])
+  }, [roomId, fileName, documentKey]) // documentKey 변경시 재초기화
 
   if (status === 'error') {
     return (
-      <div style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '1rem' }}>
-        <h3>코드 편집기 연결 오류</h3>
-        <div
-          style={{
-            padding: '15px',
-            border: '1px solid #ff6b6b',
-            borderRadius: '4px',
-            backgroundColor: '#fff5f5',
-            color: '#d63031',
-          }}
-        >
-          <strong>오류:</strong> {error}
-          <details style={{ marginTop: '10px', fontSize: '0.9em' }}>
-            <summary style={{ cursor: 'pointer' }}>해결 방법</summary>
-            <ul style={{ marginTop: '5px', paddingLeft: '20px' }}>
-              <li>환경변수 VITE_YORKIE_API_ADDR와 VITE_YORKIE_API_KEY 확인</li>
+      <div
+        style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: '1rem',
+          padding: '2rem',
+          backgroundColor: '#fee2e2',
+          borderRadius: '8px',
+        }}
+      >
+        <div style={{ fontSize: '2rem' }}>❌</div>
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ margin: '0 0 0.5rem 0', color: '#dc2626' }}>연결 오류</h3>
+          <p style={{ margin: '0 0 1rem 0', color: '#7f1d1d' }}>{error}</p>
+          <details style={{ fontSize: '0.875rem', color: '#991b1b' }}>
+            <summary style={{ cursor: 'pointer', marginBottom: '0.5rem' }}>해결 방법</summary>
+            <ul style={{ textAlign: 'left', paddingLeft: '1.5rem' }}>
+              <li>Yorkie 환경변수 확인</li>
               <li>개발 서버 재시작</li>
               <li>네트워크 연결 확인</li>
             </ul>
@@ -198,39 +256,67 @@ const CodeEditor = ({ roomId, initialCode = null }) => {
   }
 
   return (
-    <div style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '1rem' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* 상태 표시 헤더 */}
       <div
         style={{
+          padding: '0.75rem 1rem',
+          backgroundColor: status === 'connected' ? '#dcfce7' : '#fef3c7',
+          borderBottom: '1px solid #e5e7eb',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '10px',
+          flexShrink: 0,
         }}
       >
-        <h3>협업 코드 편집기 (Room: {roomId})</h3>
         <div
           style={{
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '0.8em',
-            backgroundColor: status === 'connected' ? '#d4edda' : '#fff3cd',
-            color: status === 'connected' ? '#155724' : '#856404',
-            border: `1px solid ${status === 'connected' ? '#c3e6cb' : '#ffeaa7'}`,
+            fontSize: '0.875rem',
+            fontWeight: '500',
+            color: status === 'connected' ? '#166534' : '#92400e',
           }}
         >
-          {status === 'connecting' ? '연결 중...' : '연결됨 ✓'}
+          📄 {fileName}
+        </div>
+        <div
+          style={{
+            padding: '0.25rem 0.75rem',
+            borderRadius: '9999px',
+            fontSize: '0.75rem',
+            fontWeight: '500',
+            backgroundColor: status === 'connected' ? '#16a34a' : '#f59e0b',
+            color: 'white',
+          }}
+        >
+          {status === 'connecting' ? '🔄 연결 중...' : '✅ 실시간 협업'}
         </div>
       </div>
+
+      {/* 에디터 영역 */}
       <div
-        id="editor"
         ref={editorRef}
         style={{
-          height: '400px',
-          border: '1px solid #e5e7eb',
-          borderRadius: '4px',
+          flex: 1,
+          overflow: 'hidden',
           opacity: status === 'connected' ? 1 : 0.7,
         }}
       />
+
+      {/* 디버그 정보 (개발 환경에서만) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div
+          style={{
+            padding: '0.5rem',
+            fontSize: '0.75rem',
+            backgroundColor: '#f3f4f6',
+            color: '#6b7280',
+            borderTop: '1px solid #e5e7eb',
+            flexShrink: 0,
+          }}
+        >
+          🐛 Debug: {status} | 문서키: {documentKey}
+        </div>
+      )}
     </div>
   )
 }
