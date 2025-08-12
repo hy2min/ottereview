@@ -4,12 +4,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.service.UserAccountService;
-import com.ssafy.ottereview.branch.service.BranchService;
+import com.ssafy.ottereview.branch.entity.Branch;
+import com.ssafy.ottereview.branch.repository.BranchRepository;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
+import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
+import com.ssafy.ottereview.webhook.controller.EventSendController;
+import com.ssafy.ottereview.webhook.dto.BranchEventDto;
 import com.ssafy.ottereview.webhook.dto.InstallationEventDto;
 import com.ssafy.ottereview.webhook.dto.RepositoryEventDto;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +35,9 @@ public class InstallationEventService {
     private final RepoRepository repoRepository;
     private final GithubApiClient githubApiClient;
     private final UserAccountService userAccountService;
-    private final BranchService branchService;
+    private final BranchRepository branchRepository;
     private final RepoService repoService;
+    private final EventSendController eventSendController;
 
     public void processInstallationEvent(String payload) {
 
@@ -59,7 +66,7 @@ public class InstallationEventService {
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
 
@@ -83,7 +90,7 @@ public class InstallationEventService {
                     break;
 
                 case "added":
-                    log.debug("Repository added event recevied");
+                    log.debug("Repository added event received");
                     handleRepositoryAdded(event);
                     break;
                 default:
@@ -93,6 +100,69 @@ public class InstallationEventService {
             log.error("Error processing installation event", e);
         }
     }
+
+    public void processAddBranchesEvent(String payload) {
+        log.debug("Added Branch Event 프로세스 실행");
+        try {
+            BranchEventDto event = objectMapper.readValue(payload, BranchEventDto.class);
+            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(event);
+            log.debug("DTO로 받은 BranchEventDto event: {}", formattedPayload);
+
+            switch (event.getRefType()) {
+                case "branch":
+                    log.debug("Branch added event received");
+                    handleBranchAdded(event);
+                    break;
+
+                case "tag":
+                    log.debug("tag added event received");
+                    break;
+            }
+
+        } catch (Exception e) {
+            log.error("Error Add Branch processing event", e);
+        }
+    }
+
+    public void processDeleteBranchesEvent(String payload) {
+        log.debug("Branch delete Event 프로세스 실행");
+        try {
+            BranchEventDto event = objectMapper.readValue(payload, BranchEventDto.class);
+            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
+                    .writeValueAsString(event);
+            log.debug("DTO로 받은 BranchEventDto event: {}", formattedPayload);
+            switch (event.getRefType()) {
+                case "branch":
+                    log.debug("Branch deleted event received");
+                    handleBranchDeleted(event);
+                    break;
+
+                case "tag":
+                    log.debug("tag deleted event received");
+                    break;
+            }
+
+        } catch (Exception e) {
+            log.error("Error Add Branch processing event", e);
+        }
+    }
+
+    private void handleBranchDeleted(BranchEventDto event) {
+        Repo repo = repoRepository.findByRepoId(event.getRepository().getRepoId()).orElseThrow();
+        branchRepository.deleteByNameAndRepo(event.getName(),repo);
+    }
+
+    // branch를 새로 만들면 주는 webhook을 다루는 로직이다.
+    private void handleBranchAdded(BranchEventDto event) {
+        Repo repo = repoRepository.findByRepoId(event.getRepository().getRepoId()).orElseThrow();
+        branchRepository.save(Branch.builder()
+                .name(event.getName())
+                .repo(repo)
+                .minApproveCnt(0)
+                .build());
+    }
+    // B
 
     private void handleInstallationDeleted(InstallationEventDto event) {
         accountRepository.deleteByGithubId(event.getInstallation()
@@ -118,6 +188,8 @@ public class InstallationEventService {
         }
         // repository , branch , pullRequest를 한번에 저장하는 로직이다.
         repoService.updateRepoList(ghRepositoryList, account);
-
+        eventSendController.push("update", "update");
     }
+
+
 }

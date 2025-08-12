@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "codemirror": "^6.0.2",
     "fabric": "^6.7.1",
+    "framer-motion": "^12.23.12",
     "livekit-client": "^2.15.4",
     "lodash": "^4.17.21",
     "lucide-react": "^0.534.0",

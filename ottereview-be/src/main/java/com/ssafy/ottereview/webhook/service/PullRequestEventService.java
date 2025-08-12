@@ -1,17 +1,27 @@
 package com.ssafy.ottereview.webhook.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.reviewer.dto.ReviewerResponse;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
+import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
+import com.ssafy.ottereview.reviewer.service.ReviewerService;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.RepositoryInfo;
 import com.ssafy.ottereview.webhook.dto.PullRequestWebhookInfo;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,24 +36,26 @@ public class PullRequestEventService {
     private final PullRequestRepository pullRequestRepository;
     private final RepoRepository repoRepository;
     private final UserRepository userRepository;
-    
+    private final ReviewerService reviewerService;
+    private final ReviewerRepository reviewerRepository;
+
     public void processPullRequestEvent(String payload) {
         try {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
-//            log.debug("DTO로 받은 PullRequestEventService event: {}", formattedPayload);
-            
+            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
+
             switch (event.getAction()) {
                 case "opened":
-                    log.debug("PullRequest opened event received");
+                    // mergeable 값 null
+                    log.debug("PR이 열린 경우 발생하는 callback");
                     handlePullRequestOpened(event);
                     break;
                 
                 case "closed":
-                    log.debug("PullRequest closed event received");
-                    handlePullRequestClosed(event.getPullRequest()
-                            .getId());
+                    log.debug("PR이 닫힌 경우 발생하는 callback");
+                    handlePullRequestClosed(event);
                     break;
                 
                 case "review_requested":
@@ -57,34 +69,94 @@ public class PullRequestEventService {
                 case "assigned":
                     log.debug("PR에 assigned가 할당된 경우 발생하는 callback");
                     break;
+                    
+                case "review_request_removed":
+                    log.debug("PR에 리뷰어 요청이 제거된 경우 발생하는 callback");
+                    break;
+                    
+                case "synchronize":
+                    log.debug("PR이 업데이트된 경우 발생하는 callback");
+                    handlePullRequestSynchronize(event);
+                    break;
+                    
+                case "reopened":
+                    log.debug("PR이 다시 열린 경우 발생하는 callback");
+                    handlePullRequestReopened(event);
+                    break;
+                    
+                case "edited":
+                    log.debug("깃허브 웹페이지에서 PR이 수정된 경우 발생하는 callback");
+                    handlePullRequestSynchronize(event);
+                    break;
                 
                 default:
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
     
-    private void handlePullRequestOpened(PullRequestEventDto event) {
+    private void handlePullRequestReopened(PullRequestEventDto event) {
+        log.debug("[웹훅 PR 재오픈 로직 실행]");
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
+        
+        // PR 상태를 OPEN으로 변경
+        pullRequest.updateState(PrState.OPEN);
+        
+        log.info("Pull Request with GitHub PR number {} has been reopened.", githubId);
+    }
+    
+    // mergeable 값을 못가져옴..
+    private void handlePullRequestSynchronize(PullRequestEventDto event) {
+        log.debug("[웹훅 PR 동기화 로직 실행]");
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
 
-        pullRequestRepository.findByGithubId(event.getPullRequest().getId())
+        List<ReviewerResponse> reviewerList = reviewerService.getReviewerByPullRequest(pullRequest.getId());
+        // reviewer들의 state를 none으로 바꿔야한다.
+        List<Reviewer> reviewers = reviewerList.stream().map(r -> Reviewer.builder()
+                .id(r.getId())
+                .user(User.to(r.getUser()))
+                .status(ReviewStatus.NONE)
+                .pullRequest(PullRequest.to(r.getPullRequest())).build()).toList();
+
+        // 만약 Synchronize 가 들어오면 모든 Reviewr들의 state를 None으로 초기화한다.
+        reviewerRepository.saveAll(reviewers);
+
+        pullRequest.synchronizedByWebhook(event);
+    }
+    
+    private void handlePullRequestOpened(PullRequestEventDto event) {
+        
+        Long githubId = event.getPullRequest().getId();
+        
+        pullRequestRepository.findByGithubId(githubId)
                 .ifPresentOrElse(
                         existingPullRequest -> log.debug("이미 존재하는 PR 입니다."), // 이미 존재하는 PR이므로 아무 작업도 하지 않음,
                         () -> registerPullRequest(event)
                 );
     }
     
-    private void handlePullRequestClosed(Long githubPrId) {
+    private void handlePullRequestClosed(PullRequestEventDto event) {
         
-        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubPrId)
+        Long githubId = event.getPullRequest().getId();
+        
+        PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
                 .orElseThrow(() -> new IllegalArgumentException(
-                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubPrId));
+                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
         
         // PR 상태를 CLOSED로 변경
         pullRequest.updateState(PrState.CLOSED);
 
-        log.info("Pull Request with GitHub PR number {} has been closed.", githubPrId);
+        log.info("Pull Request with GitHub PR number {} has been closed.", githubId);
     }
 
     private void registerPullRequest(PullRequestEventDto event){

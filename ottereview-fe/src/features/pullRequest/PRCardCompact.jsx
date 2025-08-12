@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
-import { formatRelativeTime } from '@/lib/utils'
+import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const PRCardCompact = ({ pr, type }) => {
   const navigate = useNavigate()

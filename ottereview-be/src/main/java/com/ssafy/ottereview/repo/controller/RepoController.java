@@ -1,11 +1,11 @@
 package com.ssafy.ottereview.repo.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.service.RepoServiceImpl;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
-import com.ssafy.ottereview.user.entity.User;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@MvcController
 public class RepoController {
 
     private final RepoServiceImpl repoService;
@@ -50,7 +51,7 @@ public class RepoController {
         if (repo.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        RepoResponse body = RepoResponse.of(repo.get());
+        RepoResponse body = RepoResponse.fromEntity(repo.get());
         return ResponseEntity.ok(body);
     }
 
@@ -83,7 +84,7 @@ public class RepoController {
         }
         // Optional 객체를 Repo 객체로 변환
         Repo repo = repoOptional.get();
-        RepoResponse repoResponse = RepoResponse.of(repo);
+        RepoResponse repoResponse = RepoResponse.fromEntity(repo);
         return ResponseEntity.ok(repoResponse);
     }
 
@@ -108,7 +109,7 @@ public class RepoController {
         RepoUpdateRequest repoUpdateRequest = RepoUpdateRequest.builder().repoId(repo.getId()).account(repo.getAccount())
                 .isCushion(repo.isCushion()).isPrivate(repo.isPrivate()).build();
         repoService.updateRepo(repoUpdateRequest);
-        RepoResponse repoResponse = RepoResponse.of(repo);
+        RepoResponse repoResponse = RepoResponse.fromEntity(repo);
         return ResponseEntity.ok(repoResponse);
     }
 

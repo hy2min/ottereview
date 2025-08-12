@@ -2,9 +2,10 @@ package com.ssafy.ottereview.pullrequest.entity;
 
 import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,6 +44,9 @@ public class PullRequest extends BaseEntity {
 
     @Column
     private Long githubId;
+    
+    @Column
+    private String commitSha;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id")
@@ -73,7 +77,7 @@ public class PullRequest extends BaseEntity {
     private String head;
 
     @Column(nullable = false)
-    private boolean mergeable;
+    private Boolean mergeable;
 
     @Column
     private LocalDateTime githubCreatedAt; // GitHub에서의 생성일시
@@ -125,6 +129,8 @@ public class PullRequest extends BaseEntity {
 
     public boolean hasChangedFrom(GithubPrResponse githubPr) {
         return !Objects.equals(this.githubPrNumber, githubPr.getGithubPrNumber()) ||
+                !Objects.equals(this.githubId, githubPr.getGithubId()) ||
+                !Objects.equals(this.commitSha, githubPr.getCommitSha()) ||
                 !Objects.equals(this.title, githubPr.getTitle()) ||
                 !Objects.equals(this.state, githubPr.getState()) ||
                 !Objects.equals(this.body, githubPr.getBody()) ||
@@ -146,6 +152,7 @@ public class PullRequest extends BaseEntity {
 
     public void updateFromGithub(GithubPrResponse githubPr) {
         // 기본 PR 정보 업데이트
+        this.commitSha = githubPr.getCommitSha();
         this.githubPrNumber = githubPr.getGithubPrNumber();
         this.title = githubPr.getTitle();
         this.state = PrState.fromGithubState(githubPr.getState(), githubPr.getMerged());
@@ -153,7 +160,7 @@ public class PullRequest extends BaseEntity {
         this.merged = githubPr.getMerged();
         this.base = githubPr.getBase();
         this.head = githubPr.getHead();
-        this.mergeable = githubPr.getMergeable();
+        this.mergeable = githubPr.getMergeable() != null && githubPr.getMergeable();
 
         // GitHub 시간 정보 업데이트
         this.githubCreatedAt = githubPr.getGithubCreatedAt();
@@ -175,32 +182,69 @@ public class PullRequest extends BaseEntity {
     public void updateState(PrState state){
         this.state = state;
     }
+    
+    public void synchronizedByWebhook(PullRequestEventDto event){
+        this.commitSha = event.getPullRequest().getHead().getSha();
+        this.title = event.getPullRequest().getTitle();
+        this.body = event.getPullRequest().getBody();
+        this.state = PrState.fromGithubState(event.getPullRequest().getState(), event.getPullRequest().getMerged());
+        this.merged = event.getPullRequest().getMerged() != null && event.getPullRequest().getMerged();
+        this.githubUpdatedAt = event.getPullRequest().getUpdatedAt();
+        this.commitCnt = event.getPullRequest().getCommits();
+        this.changedFilesCnt = event.getPullRequest().getChangedFiles();
+        this.commentCnt = event.getPullRequest().getComments();
+        this.reviewCommentCnt = event.getPullRequest().getReviewComments();
+        this.htmlUrl = event.getPullRequest().getHtmlUrl();
+        this.patchUrl = event.getPullRequest().getPatchUrl();
+        this.issueUrl = event.getPullRequest().getIssueUrl();
+        this.diffUrl = event.getPullRequest().getDiffUrl();
+        if(event.getPullRequest().getMergeable() != null) {
+            this.mergeable = event.getPullRequest().getMergeable();
+        }
+        this.base = event.getPullRequest().getBase().getRef();
+    }
+    
+    public void addApproveCnt() {
+        this.approveCnt++;
+    }
 
-    public static PullRequest toEntity(PullRequestDetailResponse resp, Repo repo, User author) {
+    public static PullRequest to(PullRequestResponse event){
+        Repo repoEntity = null;
+        if (event.getRepo() != null) {
+            repoEntity = Repo.builder()
+                    .id(event.getRepo().getId())
+                    .build();
+        }
+
+        User authorEntity = null;
+        if (event.getAuthor() != null) {
+            authorEntity = User.builder()
+                    .id(event.getAuthor().getId())
+                    .build();
+        }
+
         return PullRequest.builder()
-                .githubId(resp.getGithubId())
-                .githubPrNumber(resp.getGithubPrNumber())
-                .title(resp.getTitle())
-                .body(resp.getBody())
-                .state(PrState.fromGithubState(resp.getState(), resp.getMerged()))
-                .author(author)
-                .merged(resp.getMerged())
-                .base(resp.getBase())
-                .head(resp.getHead())
-                .mergeable(resp.isMergeable())
-                .githubCreatedAt(resp.getGithubCreatedAt())
-                .githubUpdatedAt(resp.getGithubUpdatedAt())
-                .commitCnt(resp.getCommitCnt())
-                .changedFilesCnt(resp.getChangedFilesCnt())
-                .commentCnt(resp.getCommentCnt())
-                .reviewCommentCnt(resp.getReviewCommentCnt())
-                .htmlUrl(resp.getHtmlUrl())
-                .patchUrl(resp.getPatchUrl())
-                .issueUrl(resp.getIssueUrl())
-                .diffUrl(resp.getDiffUrl())
-                .summary(resp.getSummary())
-                .approveCnt(resp.getApproveCnt())
-                .repo(repo)
+                .id(event.getId())
+                .githubPrNumber(event.getGithubPrNumber())
+                .githubId(event.getGithubId())
+                .title(event.getTitle())
+                .body(event.getBody())
+                .summary(event.getSummary())
+                .approveCnt(event.getApproveCnt())
+                .state(PrState.valueOf(event.getState())) // enum 변환
+                .merged(event.getMerged())
+                .mergeable(event.getMergeable())
+                .head(event.getHead())
+                .base(event.getBase())
+                .commitCnt(event.getCommitCnt())
+                .changedFilesCnt(event.getChangedFilesCnt())
+                .commentCnt(event.getCommentCnt())
+                .reviewCommentCnt(event.getReviewCommentCnt())
+                .githubCreatedAt(event.getGithubCreatedAt())
+                .githubUpdatedAt(event.getGithubUpdatedAt())
+                .repo(repoEntity)
+                .author(authorEntity)
                 .build();
     }
+
 }

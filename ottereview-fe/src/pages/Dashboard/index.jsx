@@ -1,11 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import ChatRoomList from '@/features/chat/ChatRoomList'
 import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
 import PRList from '@/features/pullRequest/PRList'
-import { usePRStore } from '@/features/pullRequest/stores/prStore'
 import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryList from '@/features/repository/RepositoryList'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
@@ -16,9 +15,57 @@ const Dashboard = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
 
-  const setAuthoredPRs = usePRStore((state) => state.setAuthoredPRs)
-  const setReviewerPRs = usePRStore((state) => state.setReviewerPRs)
+  // 로컬 상태로 PR 데이터 관리
+  const [authoredPRs, setAuthoredPRs] = useState([])
+  const [reviewerPRs, setReviewerPRs] = useState([])
+
+  // 레포는 여전히 zustand 사용 (다른 페이지에서도 사용할 가능성이 있다면)
   const setRepos = useRepoStore((state) => state.setRepos)
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      // 보안: 자신의 도메인에서만 메시지 받기
+      if (event.origin !== window.location.origin) return
+
+      if (event.data.type === 'GITHUB_INSTALL_COMPLETE') {
+        console.log('🔄 GitHub 설치 완료 - 대시보드 데이터 새로고침')
+
+        // 기존 fetchData 로직 재실행
+        const fetchData = async () => {
+          try {
+            const fetchedRepos = await fetchRepoList()
+            console.log('📦 레포 응답:', fetchedRepos)
+
+            if (Array.isArray(fetchedRepos)) {
+              setRepos(fetchedRepos)
+            } else {
+              console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
+              setRepos([])
+            }
+
+            const authored = await fetchAuthoredPRs()
+            console.log('📦 내가 작성한 PRs:', authored)
+            setAuthoredPRs(authored)
+
+            const reviewed = await fetchReviewerPRs()
+            console.log('📦 내가 리뷰할 PRs:', reviewed)
+            setReviewerPRs(reviewed)
+          } catch (err) {
+            console.error('📛 대시보드 fetch 실패:', err)
+
+            setRepos([])
+            setAuthoredPRs([])
+            setReviewerPRs([])
+          }
+        }
+
+        fetchData()
+      }
+    }
+
+    window.addEventListener('message', handleMessage)
+    return () => window.removeEventListener('message', handleMessage)
+  }, [setRepos])
 
   useEffect(() => {
     if (!user?.id) return
@@ -32,7 +79,7 @@ const Dashboard = () => {
           setRepos(fetchedRepos)
         } else {
           console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
-          setRepos([]) // 또는 clearRepos()
+          setRepos([])
         }
 
         const authored = await fetchAuthoredPRs()
@@ -52,11 +99,11 @@ const Dashboard = () => {
     }
 
     fetchData()
-  }, [user?.id, setRepos, setAuthoredPRs, setReviewerPRs])
+  }, [user?.id, setRepos])
 
   const handleTest = async () => {
     try {
-      const res = await api.get(`/api/accounts/repositories/2/users`)
+      const res = await api.get(`/api/repositories/1/pull-requests/5/merges/conflicts`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
@@ -100,7 +147,7 @@ const Dashboard = () => {
           <RepositoryList />
         </div>
         <div className="w-full md:w-1/2 min-w-0">
-          <PRList />
+          <PRList authoredPRs={authoredPRs} reviewerPRs={reviewerPRs} />
         </div>
       </div>
     </div>

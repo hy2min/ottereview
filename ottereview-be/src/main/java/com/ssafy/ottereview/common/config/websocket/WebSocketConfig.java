@@ -1,4 +1,4 @@
-package com.ssafy.ottereview.common.config.websocket;
+package com.ssafy.ottereview.common.config.webSocket;
 
 import com.ssafy.ottereview.auth.jwt.interceptor.StompAuthChannelInterceptor;
 import lombok.RequiredArgsConstructor;

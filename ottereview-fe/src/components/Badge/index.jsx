@@ -1,7 +1,14 @@
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
-const Badge = ({ children, variant = 'default', size = 'lg', className, ...props }) => {
+const Badge = ({
+  children,
+  variant = 'default',
+  size = 'lg',
+  withDot = false,
+  className,
+  ...props
+}) => {
   const base = 'inline-flex items-center rounded-full font-medium'
   const variantClasses = {
     default: 'bg-gray-100 text-gray-800',
@@ -21,11 +28,17 @@ const Badge = ({ children, variant = 'default', size = 'lg', className, ...props
     rose: 'bg-rose-100 text-rose-800',
     sky: 'bg-sky-100 text-sky-800',
     emerald: 'bg-emerald-100 text-emerald-800',
+
+    // 우선순위 전용
+    priorityLow: 'bg-gray-200 text-gray-800',
+    priorityMedium: 'bg-amber-200 text-amber-900',
+    priorityHigh: 'bg-red-500 text-white',
   }
 
   const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-2.5 py-0.5 text-xs',
+    xs: 'px-1.5 py-1 text-[11px]',
+    sm: 'px-2 py-1 text-xs',
+    md: 'px-2.5 py-1 text-xs',
     lg: 'px-3 py-1 text-sm',
   }
 
@@ -33,6 +46,7 @@ const Badge = ({ children, variant = 'default', size = 'lg', className, ...props
 
   return (
     <span className={classes} {...props}>
+      {withDot && <Dot />}
       {children}
     </span>
   )

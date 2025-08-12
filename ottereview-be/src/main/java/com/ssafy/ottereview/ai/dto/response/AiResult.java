@@ -13,10 +13,8 @@ import lombok.NoArgsConstructor;
 public class AiResult {
 
     private AiTitleResponse title;
-    private AiSummaryResponse summary;
     private AiReviewerResponse reviewers;
     private AiPriorityResponse priority;
-    private AiConventionResponse conventions;
     private LocalDateTime analysisTime;
     private String errorMessage;
     private Boolean hasErrors;

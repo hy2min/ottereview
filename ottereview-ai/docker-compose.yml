@@ -26,6 +26,6 @@ services:
       start_period: 30s
 
 networks:
-  springboot-mysql-net: 
+  springboot-mysql-net:
     driver: bridge
     external: true
