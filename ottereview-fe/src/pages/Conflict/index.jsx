@@ -471,47 +471,6 @@ function hello() {
               {yorkieInitializing ? '문서 생성 중...' : '채팅방 개설'}
             </button>
           </div>
-
-          {/* 개발 환경에서만 표시되는 디버그 정보 */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-              <div className="mb-3 font-medium text-gray-700">🐛 생성 정보 미리보기</div>
-              <div className="text-sm space-y-2 text-gray-600">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <p>
-                    <strong className="text-gray-800">Repository ID:</strong> {repoId}
-                  </p>
-                  <p>
-                    <strong className="text-gray-800">Pull Request ID:</strong> {prId}
-                  </p>
-                </div>
-                <p>
-                  <strong className="text-gray-800">채팅방 이름:</strong> {roomName || '(미입력)'}
-                </p>
-                <p>
-                  <strong className="text-gray-800">선택된 멤버:</strong> {selectedMembers.length}명
-                  - {selectedMembers.join(', ') || '(없음)'}
-                </p>
-                <p>
-                  <strong className="text-gray-800">멤버 ID들:</strong>{' '}
-                  {members
-                    .filter((member) => selectedMembers.includes(member.githubUsername))
-                    .map((member) => `${member.githubUsername}(${member.id})`)
-                    .join(', ') || '(없음)'}
-                </p>
-                <p>
-                  <strong className="text-gray-800">선택된 파일:</strong> {selectedFiles.length}개 -{' '}
-                  {selectedFiles.join(', ') || '(없음)'}
-                </p>
-                <p className="pt-2 border-t border-gray-200">
-                  <strong className="text-gray-800">생성 가능:</strong>{' '}
-                  <span className={isCreateButtonDisabled ? 'text-red-600' : 'text-green-600'}>
-                    {!isCreateButtonDisabled ? '✅ 예' : '❌ 아니오'}
-                  </span>
-                </p>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>
