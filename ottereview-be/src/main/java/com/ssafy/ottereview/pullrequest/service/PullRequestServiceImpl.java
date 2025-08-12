@@ -22,6 +22,7 @@ import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestValidationResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
@@ -52,6 +53,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -74,6 +79,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionService descriptionService;
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
+
     
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
@@ -82,12 +88,23 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .getId(), repoId);
         
         // 2. 해당 레포지토리의 Pull Request 목록 조회
+//        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
         List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
+
         
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
-                .map(pullRequestMapper::PullRequestToResponse)
+                .map(pullRequest -> {
+                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest,checkMergeStatus(pullRequest));
+                })
                 .toList();
+    }
+
+    private Boolean checkMergeStatus(PullRequest pullRequest) {
+        // Reviewer 모두 APPROVED인지 확인
+        List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
+        return reviewers.stream()
+                .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
     }
     
     @Override
@@ -110,6 +127,8 @@ public class PullRequestServiceImpl implements PullRequestService {
         synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
         
         // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
+//        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
+
         List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
         
         return finalPullRequests.stream()
@@ -183,17 +202,21 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         return pullRequestDetailResponse;
     }
-    
+
+
     @Override
-    public PullRequestResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target) {
-        
+    public PullRequestValidationResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target) {
+
         Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
-        
-        PullRequest existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN)
-                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
-        
-        return pullRequestMapper.PullRequestToResponse(existPullRequest);
+
+        Optional<PullRequest> existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN);
+
+        if (existPullRequest.isPresent()) {
+            return new PullRequestValidationResponse(true, existPullRequest.get().getId());
+        }
+
+        return new PullRequestValidationResponse(false, null);
     }
     
     @Override
@@ -373,6 +396,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                                 Reviewer.builder()
                                         .pullRequest(pullRequest)
                                         .user(reviewer)
+                                        .status(ReviewStatus.NONE)
                                         .build());
                     }
                     newPullRequests.add(pullRequest);
