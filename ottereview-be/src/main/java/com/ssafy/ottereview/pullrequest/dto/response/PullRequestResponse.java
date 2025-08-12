@@ -19,7 +19,7 @@ public class PullRequestResponse {
     private Long id;
     private Integer githubPrNumber;
     private Long githubId;
-    // Pull Request 관련 정보
+    private String commitSha;
     private String title;
     private String body;
     private String summary;
@@ -50,6 +50,7 @@ public class PullRequestResponse {
                 .id(pullRequest.getId())
                 .githubPrNumber(pullRequest.getGithubPrNumber())
                 .githubId(pullRequest.getGithubId())
+                .commitSha(pullRequest.getCommitSha())
                 .title(pullRequest.getTitle())
                 .body(pullRequest.getBody())
                 .summary(pullRequest.getSummary())

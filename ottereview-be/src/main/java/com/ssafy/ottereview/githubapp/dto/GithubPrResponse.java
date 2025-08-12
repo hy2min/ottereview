@@ -20,6 +20,7 @@ public class GithubPrResponse {
 
     private Long githubId;
     private Integer githubPrNumber;
+    private String commitSha;
     private String title;
     private String body;
     private String state;
@@ -48,6 +49,7 @@ public class GithubPrResponse {
             return GithubPrResponse.builder()
                     .githubId(ghPullRequest.getId())
                     .githubPrNumber(ghPullRequest.getNumber())
+                    .commitSha(ghPullRequest.getHead().getSha())
                     .title(ghPullRequest.getTitle())
                     .body(ghPullRequest.getBody())
                     .state(ghPullRequest.getState().name())
