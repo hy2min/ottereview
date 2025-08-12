@@ -3,14 +3,18 @@ package com.ssafy.ottereview.account.service;
 import com.ssafy.ottereview.account.dto.AccountResponse;
 import com.ssafy.ottereview.account.entity.Account;
 import com.ssafy.ottereview.account.entity.UserAccount;
+import com.ssafy.ottereview.account.exception.AccountErrorCode;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,14 +62,13 @@ public class UserAccountServiceImpl implements UserAccountService {
     public Repo validateUserPermission(Long userId, Long repoId) {
         
         User loginUser = userRepository.findById(userId)
-                .orElseThrow(() -> new IllegalArgumentException("User not found with id: " + userId));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
         
         Repo repo = repoRepository.findById(repoId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Repository not found with id: " + repoId));
+                .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
         
         if (!userAccountRepository.existsByUserAndAccount(loginUser, repo.getAccount())) {
-            throw new IllegalArgumentException("유저는 해당 레포지토리의 계정에 속하지 않습니다.");
+            throw new BusinessException(AccountErrorCode.USER_ACCOUNT_NOT_AUTHORIZED);
         }
         
         return repo;
@@ -74,7 +77,7 @@ public class UserAccountServiceImpl implements UserAccountService {
     @Override
     public List<UserResponseDto> getUsersByAccount(Long accountId) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with id: " + accountId));
+                .orElseThrow(() -> new BusinessException(AccountErrorCode.ACCOUNT_NOT_FOUND));
         
         List<UserAccount> userAccountList = userAccountRepository.findAllByAccount(account);
         
@@ -83,7 +86,17 @@ public class UserAccountServiceImpl implements UserAccountService {
                 .map(UserResponseDto::fromEntity)
                 .toList();
     }
-    
+
+    @Override
+    public void saveUserAndAccount(User user, Account account) {
+        if(!userAccountRepository.existsByUserAndAccount(user,account)) {
+            userAccountRepository.save(UserAccount.builder()
+                    .account(account)
+                    .user(user)
+                    .build());
+        }
+    }
+
     private AccountResponse convertToAccountResponse(Account account) {
         return new AccountResponse(
                 account.getId(),
@@ -92,4 +105,6 @@ public class UserAccountServiceImpl implements UserAccountService {
                 account.getType()
         );
     }
+
+
 }

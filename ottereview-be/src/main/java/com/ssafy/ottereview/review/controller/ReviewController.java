@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.review.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.service.ReviewService;
@@ -27,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/accounts/{account-id}/repositories/{repo-id}/pull-requests/{pr-id}/review")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class ReviewController {
 
     private final ReviewService reviewService;

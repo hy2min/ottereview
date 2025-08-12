@@ -1,4 +1,5 @@
-import Box from '../../components/Box'
+import Box from '@/components/Box'
+
 import { useChatStore } from './chatStore'
 
 const ChatRoomDetail = ({ roomId }) => {

@@ -5,6 +5,7 @@ import com.ssafy.ottereview.branch.dto.BranchRoleCreateRequest;
 import com.ssafy.ottereview.branch.entity.Branch;
 import com.ssafy.ottereview.branch.service.BranchService;
 import com.ssafy.ottereview.branch.service.BranchServiceImpl;
+import com.ssafy.ottereview.common.annotation.MvcController;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/repositories/{repo-id}/branches")
+@MvcController
 public class BranchController {
 
     private final BranchServiceImpl branchServiceImpl;

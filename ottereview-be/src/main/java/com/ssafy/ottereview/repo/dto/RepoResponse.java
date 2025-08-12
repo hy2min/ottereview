@@ -26,7 +26,7 @@ public class RepoResponse {
 
     private boolean isPrivate;
 
-    public static RepoResponse of(Repo repo) {
+    public static RepoResponse fromEntity(Repo repo) {
         return RepoResponse.builder()
                 .id(repo.getId())
                 .repoId(repo.getRepoId())

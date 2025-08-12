@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.reviewer.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.reviewer.service.ReviewerService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/reviewers")
+@MvcController
 public class ReviewerController {
 
     private final ReviewerService reviewerService;

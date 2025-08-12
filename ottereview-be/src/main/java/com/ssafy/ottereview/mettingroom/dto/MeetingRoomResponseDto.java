@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.dto;
 
+import com.ssafy.ottereview.mettingroom.entity.MeetingRoomFiles;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,4 +17,5 @@ public class MeetingRoomResponseDto {
     private String roomName;
     private Long ownerId;
     private List<MeetingParticipantDto> participants;
+    private List<MeetingRoomFiles> files;
 }

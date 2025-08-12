@@ -37,7 +37,7 @@ public class ReviewEventDto {
         @JsonProperty("submitted_at")
         private LocalDateTime submittedAt;
         
-        private String state; // "approved", "changes_requested", "commented"
+        private String state;
         
         @JsonProperty("html_url")
         private String htmlUrl;

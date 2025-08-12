@@ -1,7 +1,9 @@
 package com.ssafy.ottereview.reviewer.dto;
 
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,15 +18,15 @@ public class ReviewerResponse {
 
     private Long id;
 
-    private PullRequest pullRequest;
+    private PullRequestResponse pullRequest;
 
-    private User user;
+    private UserResponseDto user;
 
-    public static ReviewerResponse of(Reviewer reviewer) {
+    public static ReviewerResponse fromEntity(Reviewer reviewer) {
         return ReviewerResponse.builder()
                 .id(reviewer.getId())
-                .pullRequest(reviewer.getPullRequest())
-                .user(reviewer.getUser())
+                .pullRequest(PullRequestResponse.fromEntity(reviewer.getPullRequest()))
+                .user(UserResponseDto.fromEntity(reviewer.getUser()))
                 .build();
     }
 }

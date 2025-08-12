@@ -1,13 +1,15 @@
 package com.ssafy.ottereview.ai.controller;
 
 import com.ssafy.ottereview.ai.client.AiClient;
-import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
+import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
+import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
 import com.ssafy.ottereview.ai.dto.response.AiSummaryResponse;
 import com.ssafy.ottereview.ai.dto.response.AiTitleResponse;
+import com.ssafy.ottereview.common.annotation.WebFluxController;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +26,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/ai")
+@WebFluxController
 public class AiController {
 
     private final AiClient aiClient;
@@ -43,7 +46,7 @@ public class AiController {
                 });
     }
 
-    @PostMapping("/recommendation/priority")  // GET → POST 변경
+    @PostMapping("/recommendation/priorities")
     public Mono<ResponseEntity<AiPriorityResponse>> getPriorityRecommendation(@RequestBody AiRequest request) {
 
         log.info("AI 우선순위 추천 요청 - repoId: {}", request.getRepoId());
@@ -92,7 +95,7 @@ public class AiController {
     }
     
     @PostMapping("/conventions/check")
-    public Mono<ResponseEntity<AiConventionResponse>> checkCodingConvention(@RequestBody AiRequest request) {
+    public Mono<ResponseEntity<AiConventionResponse>> checkCodingConvention(@RequestBody AiConventionRequest request) {
         return aiClient.checkCodingConvention(request)
                 .map(ResponseEntity::ok)
                 .doOnSuccess(response -> log.info("컨벤션 체크 완료"))

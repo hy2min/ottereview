@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.webhook.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
@@ -10,6 +11,7 @@ import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.dto.ReviewCommentEventDto;
 import com.ssafy.ottereview.webhook.dto.ReviewCommentEventDto.ReviewCommentInfo;
 import com.ssafy.ottereview.webhook.dto.UserWebhookInfo;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -54,7 +56,7 @@ public class ReviewCommentEventService {
                     log.warn("Unhandled action: {}", event.getAction());
             }
         } catch (Exception e) {
-            log.error("Error processing installation event", e);
+            throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);
         }
     }
     

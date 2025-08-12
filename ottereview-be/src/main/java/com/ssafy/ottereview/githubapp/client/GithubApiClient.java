@@ -1,10 +1,19 @@
 package com.ssafy.ottereview.githubapp.client;
 
+import com.ssafy.ottereview.branch.entity.Branch;
+import com.ssafy.ottereview.branch.repository.BranchRepository;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.dto.GithubAccountResponse;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.githubapp.exception.GithubAppErrorCode;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestCommitDetail;
-import com.ssafy.ottereview.pullrequest.dto.detail.PullRequestFileDetail;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
+import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import jakarta.transaction.Transactional;
 import java.io.IOException;
 import java.util.Arrays;
@@ -35,6 +44,9 @@ import org.springframework.stereotype.Service;
 public class GithubApiClient {
 
     private final GithubAppUtil githubAppUtil;
+    private final PullRequestRepository pullRequestRepository;
+    private final PullRequestMapper pullRequestMapper;
+    private final BranchRepository branchRepository;
 
     public GithubAccountResponse getAccount(Long installationId) {
         try {
@@ -49,13 +61,9 @@ public class GithubApiClient {
                     installation.getAccount().getId()
             );
 
+
         } catch (IOException e) {
-            e.printStackTrace();
-            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
-            throw new RuntimeException("계정 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_ACCOUNT_NOT_FOUND);
         }
     }
 
@@ -68,11 +76,7 @@ public class GithubApiClient {
             return github.getRepository(repositoryName);
 
         } catch (IOException e) {
-            log.error("Repository 정보를 가져오는 데 실패했습니다: {}", e.getMessage(), e);
-            throw new RuntimeException("Repository 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_REPOSITORY_NOT_FOUND);
         }
     }
 
@@ -90,12 +94,7 @@ public class GithubApiClient {
             return repositories;
 
         } catch (IOException e) {
-            e.printStackTrace();
-            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
-            throw new RuntimeException("PR 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_REPOSITORY_NOT_FOUND);
         }
     }
 
@@ -122,45 +121,32 @@ public class GithubApiClient {
                     .collect(Collectors.toList());
 
         } catch (IOException e) {
-            e.printStackTrace();
-            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
-            throw new RuntimeException("PR 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_NOT_FOUND);
         }
     }
+    
+    public PullRequestDetailResponse getPullRequestDetail(Long prId, String repositoryName){
+        
+        PullRequest pullRequest = pullRequestRepository.findById(prId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        
+        Integer githubPrNumber = pullRequest.getGithubPrNumber();
+        
+        Long installationId = pullRequest.getRepo()
+                .getAccount()
+                .getInstallationId();
+        
+        List<PullRequestFileInfo> pullRequestFileChanges = getPullRequestFileChanges(installationId, repositoryName, githubPrNumber);
+        List<PullRequestCommitInfo> pullRequestCommitInfos = getPullRequestCommits(installationId, repositoryName, githubPrNumber);
 
-    public boolean pullRequestExists(Long installationId, String repositoryName, String branchName) {
-        try {
-            GitHub github = githubAppUtil.getGitHub(installationId);
-            GHRepository repo = github.getRepository(repositoryName);
+        Branch baseBranch = branchRepository.findByNameAndRepo(pullRequest.getBase(), pullRequest.getRepo());
+        Branch headBranch = branchRepository.findByNameAndRepo(pullRequest.getHead(), pullRequest.getRepo());
 
-            PagedIterable<GHPullRequest> prs = repo.queryPullRequests()
-                    .state(GHIssueState.OPEN)
-                    .list();
-
-            return StreamSupport.stream(prs.spliterator(), false)
-                    .anyMatch(pr -> {
-                        try {
-                            return branchName.equals(pr.getHead()
-                                    .getRef());
-                        } catch (Exception e) {
-                            log.error("Error checking PR head ref: {}", e.getMessage());
-                            return false;
-                        }
-                    });
-
-        } catch (IOException e) {
-            log.error("PR 존재 여부 확인 실패: {}", e.getMessage(), e);
-            return true; // 에러 시 생성하지 않음
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            return true;
-        }
+        return  pullRequestMapper.pullRequestToDetailResponse(pullRequest, baseBranch, headBranch,pullRequestFileChanges,
+                pullRequestCommitInfos);
     }
 
-    public List<PullRequestFileDetail> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
+    private List<PullRequestFileInfo> getPullRequestFileChanges(Long installationId, String repositoryName, Integer githubPrNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -171,24 +157,12 @@ public class GithubApiClient {
             PagedIterable<GHPullRequestFileDetail> files = pullRequest.listFiles();
 
             return StreamSupport.stream(files.spliterator(), false)
-                    .map(file -> {
-                        try {
-                            return PullRequestFileDetail.from(file);
-                        } catch (Exception e) {
-                            log.error("Error converting file detail to DTO: {}", e.getMessage());
-                            return null;
-                        }
-                    })
+                    .map(PullRequestFileInfo::from)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
         } catch (IOException e) {
-            e.printStackTrace();
-            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
-            throw new RuntimeException("PR 파일 변화 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_FILE_NOT_FOUND);
         }
     }
 
@@ -200,7 +174,7 @@ public class GithubApiClient {
      * @param prNumber       Pull Request 번호
      * @return Pull Request 커밋 정보 리스트
      */
-    public List<PullRequestCommitDetail> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
+    private List<PullRequestCommitInfo> getPullRequestCommits(Long installationId, String repositoryName, Integer prNumber) {
         try {
             GitHub github = githubAppUtil.getGitHub(installationId);
 
@@ -211,24 +185,12 @@ public class GithubApiClient {
             PagedIterable<GHPullRequestCommitDetail> commits = pullRequest.listCommits();
 
             return StreamSupport.stream(commits.spliterator(), false)
-                    .map(commit -> {
-                        try {
-                            return PullRequestCommitDetail.from(commit);
-                        } catch (Exception e) {
-                            log.error("Error converting commit to DTO: {}", e.getMessage());
-                            return null;
-                        }
-                    })
+                    .map(PullRequestCommitInfo::from)
                     .filter(Objects::nonNull) // null 제거
                     .collect(Collectors.toList());
 
         } catch (IOException e) {
-            e.printStackTrace();
-            // 실제 애플리케이션에서는 더 상세한 에러 메시지나 Custom Exception을 던질 수 있습니다.
-            throw new RuntimeException("PR 커밋 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_COMMIT_NOT_FOUND);
         }
     }
 
@@ -248,29 +210,7 @@ public class GithubApiClient {
             return repo.getCompare(baseSha, headSha);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("커밋 비교 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 변경된 파일 목록 가져오기
-     */
-    public List<GHCommit.File> getChangedFiles(Long installationId, String repositoryName, String baseSha, String headSha) {
-        try {
-            log.info("getChangedFiles 호출: installationId={}, repositoryName={}, baseSha={}, headSha={}",
-                    installationId, repositoryName, baseSha, headSha);
-
-            GHCompare compare = getCompare(installationId, repositoryName, baseSha, headSha);
-            return Arrays.stream(compare.getFiles())
-                    .toList();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("변경된 파일 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_COMPARE_NOT_FOUND);
         }
     }
 
@@ -285,30 +225,7 @@ public class GithubApiClient {
             return repo.createPullRequest(title, head, base, body);
 
         } catch (IOException e) {
-            log.error("Pull Request 생성에 실패했습니다: {}", e.getMessage(), e);
-            throw new RuntimeException("Pull Request 생성에 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * 특정 커밋의 상세 정보 가져오기
-     */
-    public GHCommit getCommit(Long installationId, String repositoryName, String sha) {
-        try {
-            GitHub github = githubAppUtil.getGitHub(installationId);
-            GHRepository repo = github.getRepository(repositoryName);
-
-            return repo.getCommit(sha);
-
-        } catch (IOException e) {
-            log.error("커밋 정보를 가져오는 데 실패했습니다: {}", e.getMessage(), e);
-            throw new RuntimeException("커밋 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_CREATE_FAILED);
         }
     }
 
@@ -323,11 +240,7 @@ public class GithubApiClient {
             return repo.getBranch(branchName);
 
         } catch (IOException e) {
-            log.error("브랜치 정보를 가져오는 데 실패했습니다: {}", e.getMessage(), e);
-            throw new RuntimeException("브랜치 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_BRANCH_NOT_FOUND);
         }
     }
 
@@ -340,8 +253,7 @@ public class GithubApiClient {
             return repo.getDefaultBranch();
 
         } catch (Exception e) {
-            log.error("기본 브랜치 정보를 가져오는 데 실패했습니다: {}", e.getMessage(), e);
-            return "main"; // 기본값 반환
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_BRANCH_NOT_FOUND);
         }
     }
 
@@ -370,11 +282,7 @@ public class GithubApiClient {
             return "";
 
         } catch (IOException e) {
-            log.error("파일 diff 정보를 가져오는 데 실패했습니다: {}", e.getMessage(), e);
-            throw new RuntimeException("파일 diff 정보를 가져오는 데 실패했습니다: " + e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("JWT 생성 또는 GitHub API 호출 중 오류 발생: {}", e.getMessage(), e);
-            throw new RuntimeException("JWT 생성 또는 GitHub API 호출 중 오류 발생: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_FILE_DIFF_NOT_FOUND);
         }
     }
 
@@ -391,8 +299,7 @@ public class GithubApiClient {
                     .toList();
 
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("커밋 목록을 가져오는 데 실패했습니다: " + e.getMessage(), e);
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_COMMIT_NOT_FOUND, "커밋 정보 리스트를 가져오는 데 실패했습니다.");
         }
     }
 
