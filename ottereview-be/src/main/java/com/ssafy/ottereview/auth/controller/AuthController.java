@@ -4,6 +4,7 @@ import com.ssafy.ottereview.auth.jwt.dto.AccessTokenResponseDto;
 import com.ssafy.ottereview.auth.jwt.dto.LoginResponseDto;
 import com.ssafy.ottereview.auth.service.AuthService;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import java.time.Duration;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class AuthController {
     @Value("${APP_JWT_REFRESH_EXPMIN}")
     private long refreshExpMin;

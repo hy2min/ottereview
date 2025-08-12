@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.pullrequest.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/repositories/{repo-id}/pull-requests")
 @RequiredArgsConstructor
+@MvcController
 public class PullRequestController {
     
     private final PullRequestService pullRequestService;
@@ -58,7 +60,7 @@ public class PullRequestController {
             description = "특정 Pull Request의 상세 정보를 조회합니다."
     )
     public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequestById(userDetail, repoId, pullRequestId));
+        return ResponseEntity.ok(pullRequestService.getPullRequest(userDetail, repoId, pullRequestId));
     }
     
     @GetMapping()
