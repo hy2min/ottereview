@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.reviewcomment.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
 import com.ssafy.ottereview.reviewcomment.service.ReviewCommentService;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/reviews/{review-id}/comments")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class ReviewCommentController {
 
     private final ReviewCommentService reviewCommentService;

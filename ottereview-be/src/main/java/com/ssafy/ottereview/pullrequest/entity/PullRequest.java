@@ -2,6 +2,7 @@ package com.ssafy.ottereview.pullrequest.entity;
 
 import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
@@ -43,6 +44,9 @@ public class PullRequest extends BaseEntity {
 
     @Column
     private Long githubId;
+    
+    @Column
+    private String commitSha;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id")
@@ -125,6 +129,8 @@ public class PullRequest extends BaseEntity {
 
     public boolean hasChangedFrom(GithubPrResponse githubPr) {
         return !Objects.equals(this.githubPrNumber, githubPr.getGithubPrNumber()) ||
+                !Objects.equals(this.githubId, githubPr.getGithubId()) ||
+                !Objects.equals(this.commitSha, githubPr.getCommitSha()) ||
                 !Objects.equals(this.title, githubPr.getTitle()) ||
                 !Objects.equals(this.state, githubPr.getState()) ||
                 !Objects.equals(this.body, githubPr.getBody()) ||
@@ -146,6 +152,7 @@ public class PullRequest extends BaseEntity {
 
     public void updateFromGithub(GithubPrResponse githubPr) {
         // 기본 PR 정보 업데이트
+        this.commitSha = githubPr.getCommitSha();
         this.githubPrNumber = githubPr.getGithubPrNumber();
         this.title = githubPr.getTitle();
         this.state = PrState.fromGithubState(githubPr.getState(), githubPr.getMerged());
@@ -177,6 +184,7 @@ public class PullRequest extends BaseEntity {
     }
     
     public void synchronizedByWebhook(PullRequestEventDto event){
+        this.commitSha = event.getPullRequest().getHead().getSha();
         this.title = event.getPullRequest().getTitle();
         this.body = event.getPullRequest().getBody();
         this.state = PrState.fromGithubState(event.getPullRequest().getState(), event.getPullRequest().getMerged());
@@ -199,4 +207,44 @@ public class PullRequest extends BaseEntity {
     public void addApproveCnt() {
         this.approveCnt++;
     }
+
+    public static PullRequest to(PullRequestResponse event){
+        Repo repoEntity = null;
+        if (event.getRepo() != null) {
+            repoEntity = Repo.builder()
+                    .id(event.getRepo().getId())
+                    .build();
+        }
+
+        User authorEntity = null;
+        if (event.getAuthor() != null) {
+            authorEntity = User.builder()
+                    .id(event.getAuthor().getId())
+                    .build();
+        }
+
+        return PullRequest.builder()
+                .id(event.getId())
+                .githubPrNumber(event.getGithubPrNumber())
+                .githubId(event.getGithubId())
+                .title(event.getTitle())
+                .body(event.getBody())
+                .summary(event.getSummary())
+                .approveCnt(event.getApproveCnt())
+                .state(PrState.valueOf(event.getState())) // enum 변환
+                .merged(event.getMerged())
+                .mergeable(event.getMergeable())
+                .head(event.getHead())
+                .base(event.getBase())
+                .commitCnt(event.getCommitCnt())
+                .changedFilesCnt(event.getChangedFilesCnt())
+                .commentCnt(event.getCommentCnt())
+                .reviewCommentCnt(event.getReviewCommentCnt())
+                .githubCreatedAt(event.getGithubCreatedAt())
+                .githubUpdatedAt(event.getGithubUpdatedAt())
+                .repo(repoEntity)
+                .author(authorEntity)
+                .build();
+    }
+
 }

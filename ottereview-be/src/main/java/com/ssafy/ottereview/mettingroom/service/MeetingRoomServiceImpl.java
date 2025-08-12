@@ -3,6 +3,7 @@ package com.ssafy.ottereview.mettingroom.service;
 import com.ssafy.ottereview.account.entity.UserAccount;
 import com.ssafy.ottereview.account.repository.UserAccountRepository;
 import com.ssafy.ottereview.common.config.yjs.handler.YjsWebSocketHandler;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.email.dto.EmailRequestDto;
 import com.ssafy.ottereview.email.service.EmailService;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
@@ -11,9 +12,13 @@ import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.entity.MeetingParticipant;
 import com.ssafy.ottereview.mettingroom.entity.MeetingRoom;
+import com.ssafy.ottereview.mettingroom.entity.MeetingRoomFiles;
+import com.ssafy.ottereview.mettingroom.exception.MeetingRoomErrorCode;
 import com.ssafy.ottereview.mettingroom.repository.MeetingParticipantRepository;
+import com.ssafy.ottereview.mettingroom.repository.MeetingRoomFilesRepository;
 import com.ssafy.ottereview.mettingroom.repository.MeetingRoomRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +52,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     private final OpenViduService openViduService;
     private final EmailService emailService;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final MeetingRoomFilesRepository meetingRoomFilesRepository;
+
     @Value("${openvidu.session.ttl-hours}")
     private long sessionTtlHours;
 
@@ -55,13 +62,16 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     public MeetingRoomResponseDto createMeetingRoom(MeetingRoomRequestDto request, User user) {
         // Pull Request 조회
         PullRequest pullRequest = pullRequestRepository.findById(request.getPrId())
-                .orElseThrow(() -> new IllegalArgumentException("PR not found"));
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
 
         // MeetingRoom 생성
         MeetingRoom room = MeetingRoom.builder()
                 .roomName(request.getRoomName())
                 .pullRequest(pullRequest)
                 .build();
+        for(String files: request.getFiles()){
+            meetingRoomFilesRepository.save(MeetingRoomFiles.builder().fileName(files).meetingRoom(room).build());
+        }
 
         // 초대받은 사람 셋
         Set<Long> inviteeIds = request.getInviteeIds() != null
@@ -117,8 +127,10 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .map(MeetingParticipantDto::fromEntity)
                 .collect(Collectors.toList());
 
+        List<MeetingRoomFiles> conflictFiles = meetingRoomFilesRepository.findAllByMeetingRoom(room);
+
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), user.getId(),
-                participantDtos);
+                participantDtos,conflictFiles);
     }
 
     @Override
@@ -126,12 +138,15 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     public MeetingRoomResponseDto getMeetingRoomDetail(Long roomId) {
         // Room 조회
         MeetingRoom room = meetingRoomRepository.findByIdWithParticipantsAndUsers(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+                .orElseThrow(() -> new BusinessException(MeetingRoomErrorCode.MEETING_ROOM_NOT_FOUND));
 
         // 참여자 조회
         List<MeetingParticipantDto> participantDtos = room.getParticipants().stream()
                 .map(MeetingParticipantDto::fromEntity)
                 .toList();
+
+        // conflictFiles 조회
+        List<MeetingRoomFiles> files = meetingRoomFilesRepository.findAllByMeetingRoom(room);
 
         // Owner ID
         Long ownerId = room.getParticipants().stream()
@@ -141,7 +156,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .orElse(null);
 
         return new MeetingRoomResponseDto(room.getId(), room.getRoomName(), ownerId,
-                participantDtos);
+                participantDtos,files);
     }
 
     @Override
@@ -149,7 +164,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     public void closeMeetingRoom(Long userId, Long roomId) {
         // Room 조회
         MeetingRoom room = meetingRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+                .orElseThrow(() -> new BusinessException(MeetingRoomErrorCode.MEETING_ROOM_NOT_FOUND));
 
         // owner 조회
         Long ownerId = room.getParticipants().stream()
@@ -159,7 +174,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .orElse(null);
 
         if (!Objects.equals(ownerId, userId)) {
-            throw new AccessDeniedException("not thㅁe owner of this room.");
+            throw new BusinessException(MeetingRoomErrorCode.MEETING_ROOM_AUTHORIZATION_FAILED);
         }
         // Redis 세션 삭제
         String key = SESSION_KEY_PREFIX + roomId;
@@ -174,7 +189,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
     public JoinMeetingRoomResponseDto joinMeetingRoom(Long roomId, User user) {
         // 방 존재 여부 확인
         MeetingRoom room = meetingRoomRepository.findById(roomId)
-                .orElseThrow(() -> new IllegalArgumentException("Room not found"));
+                .orElseThrow(() -> new BusinessException(MeetingRoomErrorCode.MEETING_ROOM_NOT_FOUND));
 
 //        // 내가 속한 레포의 방인지 확인
 //        boolean isMember = meetingParticipantRepository.existsByMeetingRoomIdAndUserId(roomId,
@@ -189,7 +204,7 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         // 세션 없거나 OpenVidu에 존재하지 않으면 에러 발생
         if (sessionId == null || !openViduService.isSessionActive(sessionId)) {
-            throw new IllegalStateException("Session expired or room closed. Please create a new room.");
+            throw new BusinessException(MeetingRoomErrorCode.MEETING_ROOM_NOT_FOUND, "회의방이 존재하지 않거나 세션이 활성화되어 있지 않습니다.");
         }
         // OpenVidu 토큰 발급
         String token = openViduService.generateToken(sessionId);

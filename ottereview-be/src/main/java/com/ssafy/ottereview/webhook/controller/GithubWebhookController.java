@@ -2,10 +2,14 @@ package com.ssafy.ottereview.webhook.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import com.ssafy.ottereview.webhook.service.BranchProtectionEventService;
 import com.ssafy.ottereview.webhook.service.InstallationEventService;
 import com.ssafy.ottereview.webhook.service.PullRequestEventService;
 import com.ssafy.ottereview.webhook.service.PushEventService;
+import com.ssafy.ottereview.webhook.service.RepoEventService;
 import com.ssafy.ottereview.webhook.service.ReviewCommentEventService;
 import com.ssafy.ottereview.webhook.service.ReviewEventService;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/webhook")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class GithubWebhookController {
 
     private final PushEventService pushEventService;
@@ -30,6 +35,7 @@ public class GithubWebhookController {
     private final ReviewEventService reviewEventService;
     private final ReviewCommentEventService reviewCommentEventService;
     private final BranchProtectionEventService branchProtectionEventService;
+    private final RepoEventService repoEventService;
     private final ObjectMapper objectMapper;
 
     @Hidden
@@ -94,8 +100,13 @@ public class GithubWebhookController {
                 branchProtectionEventService.processBranchProtection(payload);
                 break;
 
+            case "repository":
+                log.info("Handling repository event");
+                repoEventService.processRepo(payload);
+                break;
+
             default:
-                log.info("Unhandled event type: {}", event);
+                throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_EVENT);
         }
 
         return ResponseEntity.ok("OK");

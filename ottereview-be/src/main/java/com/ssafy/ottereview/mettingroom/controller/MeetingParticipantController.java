@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.mettingroom.dto.MeetingParticipantDto;
 import com.ssafy.ottereview.mettingroom.service.MeetingParticipantService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.List;
 @RequestMapping("/api/meetings/{meetingroom-id}/members")
 @Slf4j
 @RequiredArgsConstructor
+@MvcController
 public class MeetingParticipantController {
 
     private final MeetingParticipantService meetingParticipantService;

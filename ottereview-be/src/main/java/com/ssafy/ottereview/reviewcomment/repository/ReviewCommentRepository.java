@@ -2,6 +2,8 @@ package com.ssafy.ottereview.reviewcomment.repository;
 
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -36,4 +38,6 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     @Modifying(clearAutomatically = true)
     @Query("UPDATE ReviewComment c SET c.position = :position WHERE c.id = :id")
     void updatePosition(@Param("id") Long id, @Param("position") Integer position);
+
+    List<ReviewComment> findByReviewId(Long reviewId);
 }

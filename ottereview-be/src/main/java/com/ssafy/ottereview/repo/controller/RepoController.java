@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.repo.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import com.ssafy.ottereview.repo.dto.RepoUpdateRequest;
 import com.ssafy.ottereview.repo.entity.Repo;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
+@MvcController
 public class RepoController {
 
     private final RepoServiceImpl repoService;

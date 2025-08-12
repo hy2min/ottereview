@@ -2,20 +2,25 @@ package com.ssafy.ottereview.merge.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.ai.client.AiClient;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.util.GithubAppUtil;
 import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.dto.MergeResponse;
 import com.ssafy.ottereview.merge.dto.MergedPullRequestInfo;
-import com.ssafy.ottereview.preparation.dto.PrUserInfo;
-import com.ssafy.ottereview.preparation.dto.PriorityInfo;
+import com.ssafy.ottereview.merge.exception.MergeErrorCode;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewerInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.exception.RepoErrorCode;
+import com.ssafy.ottereview.repo.repository.RepoRepository;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
@@ -75,6 +80,7 @@ public class MergeService {
     private final ReviewerRepository reviewerRepository;
     private final PriorityRepository priorityRepository;
     private final PullRequestMapper pullRequestMapper;
+    private final RepoRepository repoRepository;
     
     @Value("${github.app.authentication-jwt-expm}")
     private Long jwtTExpirationMillis;
@@ -89,36 +95,6 @@ public class MergeService {
             }
         }
         dir.delete();
-    }
-    
-    public MergeCheckResponse checkMergeConflict(Repo repo, PullRequest pullRequest) {
-        MergeCheckResponse result = null;
-        try {
-            GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount()
-                    .getInstallationId());
-            GHRepository repository = gitHub.getRepository(repo.getFullName());
-            GHPullRequest ghPullRequest = repository.getPullRequest(pullRequest.getGithubPrNumber());
-            
-            // 머지 가능 여부 확인
-            Boolean mergeable = ghPullRequest.getMergeable();
-            String mergeableState = ghPullRequest.getMergeableState();
-            
-            result = MergeCheckResponse.builder()
-                    .prNumber(pullRequest.getGithubPrNumber())
-                    .title(ghPullRequest.getTitle())
-                    .state(ghPullRequest.getState()
-                            .name())
-                    .mergeAble(mergeable)
-                    .hasConflicts(!mergeable)
-                    .mergeState(mergeableState)
-                    .build();
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
     }
     
     public String getHttpsUrl(Repo repo) {
@@ -479,15 +455,14 @@ public class MergeService {
                 // 머지 성공 시 Python 서버에 관련 정보 저장
                 PullRequestDetailResponse pullRequestDetail = githubApiClient.getPullRequestDetail(prId, repo.getFullName());
                 
-                List<PrUserInfo> reviewers = reviewerRepository.findAllByPullRequest(pullRequest)
+                List<PullRequestReviewerInfo> reviewers = reviewerRepository.findAllByPullRequest(pullRequest)
                         .stream()
-                        .map(Reviewer::getUser)
-                        .map(pullRequestMapper::convertToPrUserInfo)
+                        .map(PullRequestReviewerInfo::fromEntity)
                         .toList();
                 
-                List<PriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
+                List<PullRequestPriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
                         .stream()
-                        .map(PriorityInfo::from)
+                        .map(PullRequestPriorityInfo::fromEntity)
                         .toList();
                 
                 MergedPullRequestInfo mergedPullRequestInfo = MergedPullRequestInfo.from(pullRequestDetail,
@@ -504,6 +479,36 @@ public class MergeService {
         }
         return false;
     }
-    
-    
+
+
+    public MergeCheckResponse checkMergeConflict(Long repoId, PullRequest pullRequest) {
+        Repo repo = repoRepository.findById(repoId)
+                .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
+        MergeCheckResponse result = null;
+        try {
+            GitHub gitHub = githubAppUtil.getGitHub(repo.getAccount()
+                    .getInstallationId());
+            GHRepository repository = gitHub.getRepository(repo.getFullName());
+            GHPullRequest ghPullRequest = repository.getPullRequest(pullRequest.getGithubPrNumber());
+
+            // 머지 가능 여부 확인
+            Boolean mergeable = ghPullRequest.getMergeable();
+            String mergeableState = ghPullRequest.getMergeableState();
+
+            result = MergeCheckResponse.builder()
+                    .prNumber(pullRequest.getGithubPrNumber())
+                    .title(ghPullRequest.getTitle())
+                    .state(ghPullRequest.getState()
+                            .name())
+                    .mergeAble(mergeable)
+                    .hasConflicts(!mergeable)
+                    .mergeState(mergeableState)
+                    .build();
+            return result;
+        } catch (Exception e) {
+            log.error("Failed to check merge conflict for repoId={}, prNumber={}",
+                    repoId, pullRequest.getGithubPrNumber(), e);
+            throw new BusinessException(MergeErrorCode.MERGE_CHECK_FAILED);
+        }
+    }
 }

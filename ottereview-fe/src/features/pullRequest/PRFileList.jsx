@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Box from '@/components/Box'
 import CodeDiff from '@/components/CodeDiff'
 
-const PRFileList = ({ files }) => {
+const PRFileList = ({ files, onAddComment, showDiffHunk = false }) => {
   const [expandedFiles, setExpandedFiles] = useState([]) // 배열로 변경
 
   const toggle = (filename) => {
@@ -26,7 +26,10 @@ const PRFileList = ({ files }) => {
       {files.map((f) => (
         <Box key={f.filename} shadow className="p-2 bg-gray-50 flex flex-col ">
           {/* 파일 정보가 담긴 클릭 가능한 헤더 */}
-          <div className="flex justify-between items-center cursor-pointer" onClick={() => toggle(f.filename)}>
+          <div
+            className="flex justify-between items-center cursor-pointer"
+            onClick={() => toggle(f.filename)}
+          >
             <div className="flex space-x-3">
               <FileText className="w-4 h-4 text-stone-600" />
               <span>{f.filename}</span>
@@ -47,7 +50,12 @@ const PRFileList = ({ files }) => {
                 transition={{ duration: 0.1, ease: 'easeInOut' }}
                 className="min-w-0 overflow-x-auto overflow-y-hidden"
               >
-                <CodeDiff patch={f.patch} />
+                <CodeDiff
+                  patch={f.patch}
+                  filePath={f.filename}
+                  onAddComment={onAddComment}
+                  showDiffHunk={showDiffHunk}
+                />
               </motion.div>
             )}
           </AnimatePresence>
