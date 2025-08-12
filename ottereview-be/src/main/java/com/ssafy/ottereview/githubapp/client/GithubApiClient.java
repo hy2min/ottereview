@@ -306,4 +306,36 @@ public class GithubApiClient {
     public String getOrgName(GHAppInstallation installation){
         return installation.getAccount().getLogin();
     }
+
+    /**
+     * Pull Request 닫기
+     */
+    public void closePullRequest(Long installationId, String repositoryName, Integer prNumber) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+            
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            pullRequest.close();
+            
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_CLOSE_FAILED);
+        }
+    }
+
+    /**
+     * Pull Request 닫기
+     */
+    public void reopenPullRequest(Long installationId, String repositoryName, Integer prNumber) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            pullRequest.reopen();
+
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_CLOSE_FAILED);
+        }
+    }
 }
