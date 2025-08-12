@@ -45,11 +45,11 @@ public class S3ServiceImpl implements S3Service {
     // 파일 검증을 위한 상수
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac"
+            ".mp3", ".wav", ".m4a", ".aac", ".ogg", ".flac", ".webm"
     );
     private static final Set<String> ALLOWED_CONTENT_TYPES = Set.of(
             "audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp4", "audio/aac", 
-            "audio/ogg", "audio/flac", "audio/x-m4a"
+            "audio/ogg", "audio/flac", "audio/x-m4a", "audio/webm"
     );
 
     @Override
