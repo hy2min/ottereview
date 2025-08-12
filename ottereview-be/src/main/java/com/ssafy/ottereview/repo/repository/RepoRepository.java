@@ -30,4 +30,7 @@ public interface RepoRepository extends JpaRepository<Repo, Long> {
     
     void deleteByRepoId(Long repoId);
 
+    // 중복 검사를 위한 메서드
+    boolean existsByRepoIdAndAccount(Long repoId, Account account);
+
 }
