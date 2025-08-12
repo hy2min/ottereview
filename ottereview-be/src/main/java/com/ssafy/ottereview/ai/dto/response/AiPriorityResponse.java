@@ -41,6 +41,9 @@ public class AiPriorityResponse {
         private String priorityLevel;
 
         private String reason;
+
+        @JsonProperty("related_files")
+        private List<String> relatedFiles;
     }
     
     public static AiPriorityResponse createDefaultPriorityResponse() {
@@ -48,6 +51,7 @@ public class AiPriorityResponse {
                 .title("기본 우선순위")
                 .priorityLevel("MEDIUM")
                 .reason("우선순위를 수동으로 설정해주세요")
+                .relatedFiles(List.of())
                 .build();
         
         return AiPriorityResponse.builder()
