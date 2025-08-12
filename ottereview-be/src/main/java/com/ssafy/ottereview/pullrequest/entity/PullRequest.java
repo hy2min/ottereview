@@ -44,6 +44,9 @@ public class PullRequest extends BaseEntity {
 
     @Column
     private Long githubId;
+    
+    @Column
+    private String commitSha;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "repo_id")
@@ -126,6 +129,8 @@ public class PullRequest extends BaseEntity {
 
     public boolean hasChangedFrom(GithubPrResponse githubPr) {
         return !Objects.equals(this.githubPrNumber, githubPr.getGithubPrNumber()) ||
+                !Objects.equals(this.githubId, githubPr.getGithubId()) ||
+                !Objects.equals(this.commitSha, githubPr.getCommitSha()) ||
                 !Objects.equals(this.title, githubPr.getTitle()) ||
                 !Objects.equals(this.state, githubPr.getState()) ||
                 !Objects.equals(this.body, githubPr.getBody()) ||
@@ -147,6 +152,7 @@ public class PullRequest extends BaseEntity {
 
     public void updateFromGithub(GithubPrResponse githubPr) {
         // 기본 PR 정보 업데이트
+        this.commitSha = githubPr.getCommitSha();
         this.githubPrNumber = githubPr.getGithubPrNumber();
         this.title = githubPr.getTitle();
         this.state = PrState.fromGithubState(githubPr.getState(), githubPr.getMerged());
@@ -178,6 +184,7 @@ public class PullRequest extends BaseEntity {
     }
     
     public void synchronizedByWebhook(PullRequestEventDto event){
+        this.commitSha = event.getPullRequest().getHead().getSha();
         this.title = event.getPullRequest().getTitle();
         this.body = event.getPullRequest().getBody();
         this.state = PrState.fromGithubState(event.getPullRequest().getState(), event.getPullRequest().getMerged());

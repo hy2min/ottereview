@@ -98,7 +98,7 @@ public class PreparationService {
         GHCompare compare = githubApiClient.getCompare(repo.getAccount()
                 .getInstallationId(), repo.getFullName(), request.getTarget(), request.getSource());
         
-        PreparationResult preparationResult = convertToPreparePullRequestResponse(author, repo, compare, request, preReviewers);
+        PreparationResult preparationResult = convertToPreparationResult(author, repo, compare, request, preReviewers);
         
         pullRequestRedisService.savePrepareInfo(repoId, preparationResult);
         
@@ -182,7 +182,7 @@ public class PreparationService {
                 .build();
     }
     
-    private PreparationResult convertToPreparePullRequestResponse(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<PrUserInfo> preReviewers) {
+    private PreparationResult convertToPreparationResult(User author, Repo repo, GHCompare compare, PreparationValidationRequest request, List<PrUserInfo> preReviewers) {
         
         return PreparationResult.builder()
                 .source(request.getSource())
