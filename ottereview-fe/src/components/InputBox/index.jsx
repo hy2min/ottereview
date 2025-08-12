@@ -13,10 +13,10 @@ const InputBox = ({
   placeholder,
   ...props
 }) => {
-  const base = 'bg-white border-2 border-black rounded-[8px]'
+  const base = 'soft-input'
 
-  const inputSpecificClasses = 'w-full px-2 py-1'
-  const textareaSpecificClasses = 'w-full px-2 py-1 resize-none'
+  const inputSpecificClasses = 'w-full'
+  const textareaSpecificClasses = 'w-full resize-none min-h-[80px]'
 
   const inputClasses = twMerge(base, inputSpecificClasses, className)
   const textareaClasses = twMerge(base, textareaSpecificClasses, className)
@@ -53,8 +53,8 @@ const InputBox = ({
   }
 
   return (
-    <div className="relative space-y-1">
-      <label className="block font-medium">{label}</label>
+    <div className="relative space-y-2">
+      {label && <label className="block text-sm font-medium theme-text">{label}</label>}
       {renderControl()}
     </div>
   )
