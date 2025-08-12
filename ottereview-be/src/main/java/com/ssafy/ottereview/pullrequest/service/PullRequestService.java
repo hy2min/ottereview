@@ -3,6 +3,7 @@ package com.ssafy.ottereview.pullrequest.service;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestValidationResponse;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.util.List;
 import org.kohsuke.github.GHRepository;
@@ -33,7 +34,7 @@ public interface PullRequestService {
     /**
      * 특정 레포지토리의 브랜치에 대한 Pull Request를 조회합니다.
      */
-    PullRequestResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target);
+    PullRequestValidationResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target);
     
     /**
      *  미디어 파일과 함께 새로운 Pull Request를 생성합니다.
