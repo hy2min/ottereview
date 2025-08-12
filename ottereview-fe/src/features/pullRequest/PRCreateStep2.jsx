@@ -8,11 +8,12 @@ import { requestAIConvention, requestAIOthers } from '@/features/pullRequest/prA
 const PRCreateStep2 = ({
   goToStep,
   repoId,
-  formData,
-  updateFormData,
+  validationBranches,
   aiConvention,
   setAIConvention,
   setAIOthers,
+  conventionRules,
+  setConventionRules,
 }) => {
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -27,13 +28,13 @@ const PRCreateStep2 = ({
 
   const rules = useMemo(() => {
     const picked = {}
-    if (formData.file_names) picked.file_names = formData.file_names
-    if (formData.function_names) picked.function_names = formData.function_names
-    if (formData.variable_names) picked.variable_names = formData.variable_names
-    if (formData.class_names) picked.class_names = formData.class_names
-    if (formData.constant_names) picked.constant_names = formData.constant_names
+    if (conventionRules.file_names) picked.file_names = conventionRules.file_names
+    if (conventionRules.function_names) picked.function_names = conventionRules.function_names
+    if (conventionRules.variable_names) picked.variable_names = conventionRules.variable_names
+    if (conventionRules.class_names) picked.class_names = conventionRules.class_names
+    if (conventionRules.constant_names) picked.constant_names = conventionRules.constant_names
     return picked
-  }, [formData])
+  }, [conventionRules])
 
   const handleRequestAI = async () => {
     try {
@@ -42,14 +43,14 @@ const PRCreateStep2 = ({
       // 두 요청을 동시에 시작
       const conventionPromise = requestAIConvention({
         repoId,
-        source: formData.sourceBranch,
-        target: formData.targetBranch,
+        source: validationBranches.source,
+        target: validationBranches.target,
         rules,
       })
       const othersPromise = requestAIOthers({
         repoId,
-        source: formData.sourceBranch,
-        target: formData.targetBranch,
+        source: validationBranches.source,
+        target: validationBranches.target,
         rules,
       })
 
@@ -104,36 +105,36 @@ const PRCreateStep2 = ({
             label="파일명 규칙"
             as="select"
             options={conventionOptions}
-            value={formData.file_names || ''}
-            onChange={(e) => updateFormData({ file_names: e.target.value })}
+            value={conventionRules.file_names}
+            onChange={(e) => setConventionRules(prev => ({ ...prev, file_names: e.target.value }))}
           />
           <InputBox
             label="함수명 규칙"
             as="select"
             options={conventionOptions}
-            value={formData.function_names || ''}
-            onChange={(e) => updateFormData({ function_names: e.target.value })}
+            value={conventionRules.function_names}
+            onChange={(e) => setConventionRules(prev => ({ ...prev, function_names: e.target.value }))}
           />
           <InputBox
             label="변수명 규칙"
             as="select"
             options={conventionOptions}
-            value={formData.variable_names || ''}
-            onChange={(e) => updateFormData({ variable_names: e.target.value })}
+            value={conventionRules.variable_names}
+            onChange={(e) => setConventionRules(prev => ({ ...prev, variable_names: e.target.value }))}
           />
           <InputBox
             label="클래스명 규칙"
             as="select"
             options={conventionOptions}
-            value={formData.class_names || ''}
-            onChange={(e) => updateFormData({ class_names: e.target.value })}
+            value={conventionRules.class_names}
+            onChange={(e) => setConventionRules(prev => ({ ...prev, class_names: e.target.value }))}
           />
           <InputBox
             label="상수명 규칙"
             as="select"
             options={conventionOptions}
-            value={formData.constant_names || ''}
-            onChange={(e) => updateFormData({ constant_names: e.target.value })}
+            value={conventionRules.constant_names}
+            onChange={(e) => setConventionRules(prev => ({ ...prev, constant_names: e.target.value }))}
           />
         </Box>
         <Box shadow className="w-full md:w-2/3 md:order-1 space-y-3">

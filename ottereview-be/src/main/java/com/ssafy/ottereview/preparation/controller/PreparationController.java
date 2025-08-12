@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.preparation.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.dto.request.AdditionalInfoRequest;
 import com.ssafy.ottereview.preparation.dto.request.PreparationValidationRequest;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/repositories/{repo-id}/pull-requests")
 @RequiredArgsConstructor
+@MvcController
 public class PreparationController {
     
     private final PreparationService preparationService;

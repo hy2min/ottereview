@@ -2,6 +2,7 @@ package com.ssafy.ottereview.chat.controller;
 
 import com.ssafy.ottereview.chat.dto.ChatMessageDto;
 import com.ssafy.ottereview.chat.dto.WhiteBoardDto;
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.service.UserService;
 import java.security.Principal;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 @RequiredArgsConstructor
 @MessageMapping("/meetings/{meetingroom-id}")
 @Slf4j
+@MvcController
 public class ChatController {
     private final SimpMessagingTemplate messagingTemplate;
     private final UserService userService;

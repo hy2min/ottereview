@@ -1,20 +1,34 @@
-import { useEffect, useState } from 'react'
-
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
+import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
+import { useUserStore } from '@/store/userStore'
 
-const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validationBranches }) => {
-  const [showPriorities, setShowPriorities] = useState(true)
+const PRCreateStep3 = ({
+  goToStep,
+  repoId,
+  aiOthers,
+  validationBranches,
+  reviewComments,
+  audioFiles,
+  onAddComment,
+  prTitle,
+  setPrTitle,
+  prBody,
+  setPrBody,
+}) => {
+  // 쿠키로 우선순위 표시 상태 관리
+  const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
 
-  // 로컬 상태로 제목과 설명을 관리
-  const [localTitle, setLocalTitle] = useState('')
-  const [localDescription, setLocalDescription] = useState('')
+  // 유저 정보 가져오기
+  const user = useUserStore((state) => state.user)
+  console.log('현재 유저 정보:', user)
 
-  const candidates = aiOthers?.priority?.result?.candidates || []
+  const candidates = aiOthers?.priority?.result?.priority || []
   const slots = Array.from({ length: 3 }, (_, i) => candidates[i] || null)
   const priorityVariantMap = {
     LOW: 'priorityLow',
@@ -25,24 +39,47 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
   const isAiTitleLoading = !aiOthers?.title?.result
   const loadingDots = useLoadingDots(isAiTitleLoading, 300)
 
-  // 컴포넌트 마운트 시 기존 formData로 로컬 상태 초기화
-  useEffect(() => {
-    setLocalTitle(formData.title || '')
-    setLocalDescription(formData.description || '')
-  }, [formData.title, formData.description])
-
   const handleApplyAiTitle = () => {
-    setLocalTitle(aiOthers?.title?.result || '')
+    setPrTitle(aiOthers?.title?.result || '')
   }
 
-  const handleNextStep = () => {
-    // 다음 단계로 넘어갈 때 로컬 상태를 formData에 반영
-    updateFormData({
-      title: localTitle,
-      description: localDescription,
-    })
-    console.log({ title: localTitle, description: localDescription })
-    goToStep(4)
+  const handleTogglePriorities = () => {
+    setShowPriorities(!showPriorities)
+  }
+
+  const handleNextStep = async () => {
+    try {
+      const formattedDescriptions = reviewComments.map((comment) => ({
+        ...comment,
+        id: user?.id,
+        recordKey: comment.recordKey || '',
+      }))
+
+      // AI 우선순위 데이터를 백엔드 형식으로 변환
+      const aiPriorities = aiOthers?.priority?.result?.priority || []
+      const formattedPriorities = aiPriorities.map(priority => ({
+        level: priority.priority_level,
+        title: priority.title,
+        content: priority.reason,
+      }))
+
+      // 전체 추가 정보 구성
+      const additionalInfo = {
+        source: validationBranches?.source,
+        target: validationBranches?.target,
+        title: prTitle,
+        body: prBody,
+        description: formattedDescriptions,
+        priorities: formattedPriorities,
+      }
+
+      // PR 준비 정보 저장 API 호출
+      await savePRAdditionalInfo(repoId, additionalInfo)
+
+      goToStep(4)
+    } catch (error) {
+      console.error('PR 추가 정보 저장 실패:', error)
+    }
   }
 
   return (
@@ -63,7 +100,7 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
                     </Button>
                   </div>
                   <div className="ml-auto -mt-[16px]">
-                    <Button size="sm" onClick={() => setShowPriorities(!showPriorities)}>
+                    <Button size="sm" onClick={handleTogglePriorities}>
                       {showPriorities ? '우선순위 숨김' : '우선순위 보기'}
                     </Button>
                   </div>
@@ -80,15 +117,15 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
               </div>
               <InputBox
                 label="PR 제목"
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
+                value={prTitle}
+                onChange={(e) => setPrTitle(e.target.value)}
               />
               <InputBox
                 className="h-50"
                 label="PR 설명"
                 as="textarea"
-                value={localDescription}
-                onChange={(e) => setLocalDescription(e.target.value)}
+                value={prBody}
+                onChange={(e) => setPrBody(e.target.value)}
               />
             </div>
           </Box>
@@ -97,22 +134,20 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
         {/* 오른쪽 박스 */}
         {showPriorities && (
           <div className="w-full md:w-1/3 flex flex-col space-y-3 min-h-0">
-            {slots.map((candidate, index) => (
+            {slots.map((priority, index) => (
               <Box key={index} shadow className="flex flex-1">
                 <div className="flex flex-col h-full min-h-0 w-full">
-                  {candidate ? (
+                  {priority ? (
                     <div className="space-y-2 overflow-hidden">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
-                          <Badge
-                            variant={priorityVariantMap[candidate.priority_level] || 'default'}
-                          >
-                            {candidate.priority_level}
+                          <Badge variant={priorityVariantMap[priority.priority_level] || 'default'}>
+                            {priority.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-600 truncate">{candidate.title}</span>
+                          <span className="text-sm text-gray-600 truncate">{priority.title}</span>
                         </div>
                       </div>
-                      <p className="text-gray-500 text-sm line-clamp-5">{candidate.reason}</p>
+                      <p className="text-gray-500 text-sm line-clamp-5">{priority.reason}</p>
                     </div>
                   ) : (
                     <div className="h-full flex items-center justify-center text-sm text-gray-400">
@@ -127,7 +162,11 @@ const PRCreateStep3 = ({ goToStep, formData, updateFormData, aiOthers, validatio
       </div>
 
       <Box shadow>
-        <PRFileList files={validationBranches?.files || []} />
+        <PRFileList
+          files={validationBranches?.files || []}
+          showDiffHunk={true}
+          onAddComment={onAddComment}
+        />
       </Box>
       <div className="mx-auto z-10">
         <div className="flex justify-center items-center space-x-3">

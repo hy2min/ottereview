@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.mettingroom.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.mettingroom.dto.JoinMeetingRoomResponseDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomRequestDto;
 import com.ssafy.ottereview.mettingroom.dto.MeetingRoomResponseDto;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/meetings")
 @Slf4j
 @RequiredArgsConstructor
+@MvcController
 public class MeetingRoomController {
     private final MeetingRoomService meetingRoomService;
 
@@ -33,6 +35,7 @@ public class MeetingRoomController {
         MeetingRoomResponseDto response = meetingRoomService.getMeetingRoomDetail(roomId);
         return ResponseEntity.ok(response);
     }
+
 
     @DeleteMapping("/{meetingroom-id}")
     public ResponseEntity<Void> closeMeetingRoom(@PathVariable("meetingroom-id") Long roomId, @AuthenticationPrincipal CustomUserDetail userDetail) {

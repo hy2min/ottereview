@@ -9,6 +9,7 @@ import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
 import com.ssafy.ottereview.ai.dto.response.AiSummaryResponse;
 import com.ssafy.ottereview.ai.dto.response.AiTitleResponse;
+import com.ssafy.ottereview.common.annotation.WebFluxController;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Slf4j
 @RequestMapping("/api/ai")
+@WebFluxController
 public class AiController {
 
     private final AiClient aiClient;

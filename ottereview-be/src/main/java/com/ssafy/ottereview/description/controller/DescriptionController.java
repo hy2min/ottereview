@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.description.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.description.dto.DescriptionCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
 import com.ssafy.ottereview.description.dto.DescriptionUpdateRequest;
@@ -24,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/pull-requests/{pull-request-id}/descriptions")
 @RequiredArgsConstructor
 @Slf4j
+@MvcController
 public class DescriptionController {
 
     private final DescriptionService descriptionService;

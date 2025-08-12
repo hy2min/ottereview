@@ -1,8 +1,13 @@
 package com.ssafy.ottereview.merge.controller;
 
+import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.merge.dto.MergeCheckResponse;
 import com.ssafy.ottereview.merge.service.MergeService;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
+import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
@@ -22,12 +27,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/repositories/{repo-id}/pull-requests/{pr-id}/merges")
+@MvcController
 public class MergeController {
 
     private static final Logger log = LoggerFactory.getLogger(MergeController.class);
     private final MergeService mergeService;
     private final RepoService repoService;
     private final PullRequestService pullRequestService;
+    private final PullRequestRepository pullRequestRepository;
     private final PullRequestMapper pullRequestMapper;
     
     @GetMapping("/doing")
@@ -35,21 +42,19 @@ public class MergeController {
        return ResponseEntity.ok(mergeService.doMerge(customUserDetail, repoId, prId));
     }
 
-
     @GetMapping()
-    public ResponseEntity<?> getMergeAble(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId, @AuthenticationPrincipal CustomUserDetail customUserDetail){
-        Repo repo = repoService.getById(repoId).orElseThrow();
-        User user = customUserDetail.getUser();
-        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
-        PullRequest pullRequest1 = pullRequestMapper.detailResponseToEntity(pullRequest, repo, user);
-        return ResponseEntity.ok(mergeService.checkMergeConflict(repo,pullRequest1));
+    public ResponseEntity<MergeCheckResponse> getMergeAbleFromGithub(@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id") Long pullRequestId){
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        MergeCheckResponse githubCheck = mergeService.checkMergeConflict(repoId, pullRequest);
+        return ResponseEntity.ok(githubCheck);
     }
 
     @GetMapping("/conflicts")
     public ResponseEntity<?> getMergeConflict(@AuthenticationPrincipal CustomUserDetail customUserDetail,@PathVariable (name = "repo-id") Long repoId, @PathVariable (name = "pr-id")Long pullRequestId) throws Exception {
         Repo repo = repoService.getById(repoId).orElseThrow();
         User user = customUserDetail.getUser();
-        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequestById(customUserDetail, repoId, pullRequestId);
+        PullRequestDetailResponse pullRequest = pullRequestService.getPullRequest(customUserDetail, repoId, pullRequestId);
         PullRequest pullRequest1 = pullRequestMapper.detailResponseToEntity(pullRequest, repo, user);
         String url = mergeService.getHttpsUrl(repo);
         log.info(pullRequest1.getHead() +", " + pullRequest1.getBase());

@@ -4,13 +4,25 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import { submitPR } from '@/features/pullRequest/prApi'
 
-const PRCreateStep5 = ({ goToStep, formData, repoId }) => {
+const PRCreateStep5 = ({ 
+  goToStep, 
+  repoId, 
+  validationBranches,
+  prTitle, 
+  prBody,
+  selectedReviewers,
+}) => {
   const navigate = useNavigate()
 
   const handleSubmit = async () => {
     try {
-      console.log(formData)
-      await submitPR({formData, repoId})
+      const submitData = {
+        source: validationBranches.source,
+        target: validationBranches.target,
+        repoId,
+      }
+      console.log('PR 제출 데이터:', submitData)
+      await submitPR(submitData)
       
       // navigate('/dashboard')
     } catch (err) {
@@ -27,25 +39,25 @@ const PRCreateStep5 = ({ goToStep, formData, repoId }) => {
           <div className="space-y-2">
             <div className="flex">
               <span className="font-medium w-24">PR 제목:</span>
-              <span>{formData.title || '(없음)'}</span>
+              <span>{prTitle || '(없음)'}</span>
             </div>
             <div className="flex">
               <span className="font-medium w-24">설명:</span>
-              <span className="break-words">{formData.description || '(없음)'}</span>
+              <span className="break-words">{prBody || '(없음)'}</span>
             </div>
             <div className="flex">
               <span className="font-medium w-24">소스 브랜치:</span>
-              <span>{formData.source || '(미지정)'}</span>
+              <span>{validationBranches?.source || '(미지정)'}</span>
             </div>
             <div className="flex">
               <span className="font-medium w-24">타겟 브랜치:</span>
-              <span>{formData.target || '(미지정)'}</span>
+              <span>{validationBranches?.target || '(미지정)'}</span>
             </div>
             <div className="flex">
               <span className="font-medium w-24">리뷰어:</span>
               <span>
-                {formData.reviewers && formData.reviewers.length > 0 
-                  ? formData.reviewers.join(', ') 
+                {selectedReviewers.length > 0 
+                  ? selectedReviewers.map(r => r.githubUsername).join(', ')
                   : '(없음)'}
               </span>
             </div>

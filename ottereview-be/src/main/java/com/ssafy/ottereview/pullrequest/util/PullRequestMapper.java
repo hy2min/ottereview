@@ -5,6 +5,7 @@ import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestCommitInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestFileInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.PullRequestUserInfo;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
@@ -25,6 +26,7 @@ public class PullRequestMapper {
         return PullRequestDetailResponse.builder()
                 .id(pr.getId())
                 .githubId(pr.getGithubId())
+                .commitSha(pr.getCommitSha())
                 .githubPrNumber(pr.getGithubPrNumber())
                 .title(pr.getTitle())
                 .body(pr.getBody())
@@ -47,7 +49,7 @@ public class PullRequestMapper {
                 .diffUrl(pr.getDiffUrl())
                 .summary(pr.getSummary())
                 .approveCnt(pr.getApproveCnt())
-                .author(convertToPrUserInfo(pr.getAuthor()))
+                .author(PullRequestUserInfo.fromEntity(pr.getAuthor()))
                 .repo(RepoResponse.fromEntity(pr.getRepo()))
                 .files(pullRequestFileChanges)
                 .commits(pullRequestCommitInfos)
@@ -58,6 +60,7 @@ public class PullRequestMapper {
         return PullRequest.builder()
                 .githubId(githubPrResponse.getGithubId())
                 .githubPrNumber(githubPrResponse.getGithubPrNumber())
+                .commitSha(githubPrResponse.getCommitSha())
                 .author(author)
                 .repo(repo)
                 .title(githubPrResponse.getTitle())
@@ -85,6 +88,7 @@ public class PullRequestMapper {
         return PullRequest.builder()
                 .githubId(resp.getGithubId())
                 .githubPrNumber(resp.getGithubPrNumber())
+                .commitSha(resp.getCommitSha())
                 .title(resp.getTitle())
                 .body(resp.getBody())
                 .state(PrState.fromGithubState(resp.getState(), resp.getMerged()))
@@ -114,6 +118,7 @@ public class PullRequestMapper {
                 .id(pr.getId())
                 .githubId(pr.getGithubId())
                 .githubPrNumber(pr.getGithubPrNumber())
+                .commitSha(pr.getCommitSha())
                 .title(pr.getTitle())
                 .body(pr.getBody())
                 .summary(pr.getSummary())
