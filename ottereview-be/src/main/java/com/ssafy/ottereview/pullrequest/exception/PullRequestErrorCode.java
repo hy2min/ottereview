@@ -13,8 +13,9 @@ public enum PullRequestErrorCode implements ErrorCode {
     PR_INVALID_STATE("PR004", "PullRequest의 상태가 유효하지 않습니다", 400),
     PR_VALIDATION_FAILED("PR005", "PullRequest 검증에 실패했습니다.", 400),
     PR_CREATE_FAILED("PR006", "PullRequest 생성에 실패했습니다", 500),
-    PR_SYNC_FAILED("PR007", "PullRequest 동기화에 실패했습니다", 500);
-    
+    PR_SYNC_FAILED("PR007", "PullRequest 동기화에 실패했습니다", 500),
+    PR_ALREADY_OPEN("PR008", "이미 열려 있는 PullRequest가 존재합니다", 409);
+
     private final String code;
     private final String message;
     private final int httpStatus;

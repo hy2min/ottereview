@@ -24,7 +24,8 @@ public enum GithubAppErrorCode implements ErrorCode {
     GITHUB_APP_PULL_REQUEST_CREATE_FAILED("GITHUB014", "GitHub 앱 풀 리퀘스트 생성에 실패했습니다.", 500),
     GITHUB_APP_BRANCH_NOT_FOUND("GITHUB015", "GitHub 앱 브랜치를 찾을 수 없습니다.", 404),
     GITHUB_APP_FILE_DIFF_NOT_FOUND("GITHUB016", "GitHub 앱 파일 차이 정보를 찾을 수 없습니다.", 404),
-    GITHUB_APP_ORGANIZATION_MEMBER_NOT_FOUND("GITHUB017", "GitHub 앱 조직 멤버 정보를 찾을 수 없습니다.", 404);
+    GITHUB_APP_ORGANIZATION_MEMBER_NOT_FOUND("GITHUB017", "GitHub 앱 조직 멤버 정보를 찾을 수 없습니다.", 404),
+    GITHUB_APP_PULL_REQUEST_CLOSE_FAILED("GITHUB018", "GitHub 풀 리퀘스트 닫기에 실패했습니다.", 500);
 
     private final String code;
     private final String message;
