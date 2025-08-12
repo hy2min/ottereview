@@ -13,12 +13,22 @@ const CommentForm = ({
   disabled = false, 
   size = 'normal',
   onAudioChange, // 음성 파일 변경 콜백
-  enableAudio = true // 음성 기능 활성화 여부
+  enableAudio = true, // 음성 기능 활성화 여부
+  reviewState = 'COMMENT', // 리뷰 상태
+  onReviewStateChange, // 리뷰 상태 변경 콜백
+  showReviewState = false // 리뷰 상태 선택 UI 표시 여부
 }) => {
   const [audioFile, setAudioFile] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [audioChunks, setAudioChunks] = useState([])
+
+  // 리뷰 상태 옵션들
+  const reviewStates = [
+    { value: 'COMMENT', label: '댓글만', description: '승인 없이 의견만 남기기' },
+    { value: 'APPROVE', label: '승인', description: '변경사항을 승인' },
+    { value: 'REQUEST_CHANGES', label: '변경 요청', description: '수정이 필요함' }
+  ]
 
   // size에 따른 클래스 설정
   const sizeConfig = {
@@ -154,6 +164,31 @@ const CommentForm = ({
               </div>
             )}
           </>
+        )}
+
+        {/* 리뷰 상태 선택 - showReviewState가 true일 때만 표시 */}
+        {showReviewState && (
+          <div className="space-y-2">
+            <label className="block font-medium text-sm">리뷰 상태</label>
+            <div className="flex gap-6">
+              {reviewStates.map((state) => (
+                <label key={state.value} className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="reviewState"
+                    value={state.value}
+                    checked={reviewState === state.value}
+                    onChange={(e) => onReviewStateChange?.(e.target.value)}
+                    className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">{state.label}</div>
+                    <div className="text-xs text-gray-500">{state.description}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
         )}
 
         <div className={`flex justify-end ${config.gap} mt-2`}>

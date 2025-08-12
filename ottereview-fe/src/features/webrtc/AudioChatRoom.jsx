@@ -647,7 +647,7 @@ const AudioChatRoom = ({ roomId }) => {
       <div ref={audioContainer} style={{ display: 'none' }}></div>
 
       {/* pulse 애니메이션 스타일 */}
-      <style jsx>{`
+      <style>{`
         @keyframes pulse {
           0%,
           100% {
