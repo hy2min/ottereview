@@ -4,12 +4,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useAuthStore } from '@/features/auth/authStore'
 import { useChatStore } from '@/features/chat/chatStore'
 
-const BACKEND_URL = 'https://i13c108.p.ssafy.io' // Spring 백엔드 주소
+const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
 
 const AudioChatRoom = ({ roomId }) => {
-  // roomId는 이제 방 이름 생성에만 사용됩니다.
-  // OpenVidu 관련 상태
-  const [OV, setOV] = useState(undefined)
   const [session, setSession] = useState(undefined)
   const [publisher, setPublisher] = useState(undefined)
   const [isSessionJoined, setIsSessionJoined] = useState(false)

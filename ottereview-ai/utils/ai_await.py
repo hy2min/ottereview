@@ -31,7 +31,7 @@ class ConventionType(str, Enum):
     SNAKE_CASE = "snake_case"
     KEBAB_CASE = "kebab-case"
     CONSTANT_CASE = "CONSTANT_CASE"
-
+    
 class ConventionRule(BaseModel):
     """코딩 컨벤션 규칙"""
     file_names: Optional[ConventionType] = None

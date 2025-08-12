@@ -70,6 +70,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                 .roomName(request.getRoomName())
                 .pullRequest(pullRequest)
                 .build();
+        for(String files: request.getFiles()){
+            meetingRoomFilesRepository.save(MeetingRoomFiles.builder().fileName(files).meetingRoom(room).build());
+        }
 
         // 초대받은 사람 셋
         Set<Long> inviteeIds = request.getInviteeIds() != null
