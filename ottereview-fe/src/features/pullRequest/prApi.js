@@ -24,6 +24,12 @@ export const fetchPRDetail = async ({ repoId, prId }) => {
   return res.data
 }
 
+// PR descriptions 가져오기
+export const fetchPRDescriptions = async (prId) => {
+  const res = await api.get(`/api/pull-requests/${prId}/descriptions`)
+  return res.data
+}
+
 // PR 생성
 export const submitPR = async ({ source, target, repoId }) => {
   const formDataObj = new FormData()

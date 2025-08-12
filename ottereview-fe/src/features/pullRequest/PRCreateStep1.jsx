@@ -207,7 +207,7 @@ const PRCreateStep1 = ({
         <div className="flex justify-center items-center space-x-3">
           <Button
             onClick={() => {
-              navigate('/dashboard')
+              navigate(`/${repoId}`)
             }}
             variant="secondary"
           >
