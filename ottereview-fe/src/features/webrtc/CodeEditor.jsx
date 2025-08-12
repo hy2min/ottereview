@@ -1,8 +1,8 @@
+import { javascript } from '@codemirror/lang-javascript'
 import { Transaction } from '@codemirror/state'
+import { oneDark } from '@codemirror/theme-one-dark'
 import * as yorkie from '@yorkie-js/sdk'
 import { basicSetup, EditorView } from 'codemirror'
-import { javascript } from '@codemirror/lang-javascript'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { useEffect, useRef, useState } from 'react'
 
 const CodeEditor = ({ roomId, conflictFiles }) => {

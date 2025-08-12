@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
-import { fetchConflictData } from '@/features/chat/chatApi'
 import { useChatStore } from '@/features/chat/chatStore'
+import { fetchConflictData } from '@/features/conflict/conflictApi'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'
@@ -216,34 +216,46 @@ const ChatRoom = () => {
             {room?.conflictFiles?.length > 0 ? (
               <CodeEditor roomId={roomId} conflictFiles={room.conflictFiles} />
             ) : (
-              <div style={{ 
-                height: '100%', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: '1rem',
-                color: '#6b7280',
-                fontSize: '1.125rem'
-              }}>
+              <div
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  gap: '1rem',
+                  color: '#6b7280',
+                  fontSize: '1.125rem',
+                }}
+              >
                 <div>📭 사용 가능한 파일이 없습니다</div>
                 <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
                   Conflict 페이지에서 파일을 선택해주세요.
                 </div>
                 {process.env.NODE_ENV === 'development' && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '0.75rem',
-                    backgroundColor: '#f3f4f6',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    textAlign: 'left',
-                    maxWidth: '400px'
-                  }}>
-                    <p><strong>디버그 정보:</strong></p>
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.75rem',
+                      backgroundColor: '#f3f4f6',
+                      borderRadius: '6px',
+                      fontSize: '0.75rem',
+                      textAlign: 'left',
+                      maxWidth: '400px',
+                    }}
+                  >
+                    <p>
+                      <strong>디버그 정보:</strong>
+                    </p>
                     <p>room.conflictFiles: {JSON.stringify(room?.conflictFiles)}</p>
-                    <p>VITE_YORKIE_API_ADDR: {import.meta.env.VITE_YORKIE_API_ADDR || '설정되지 않음'}</p>
-                    <p>VITE_YORKIE_API_KEY: {import.meta.env.VITE_YORKIE_API_KEY ? '설정됨' : '설정되지 않음'}</p>
+                    <p>
+                      VITE_YORKIE_API_ADDR:{' '}
+                      {import.meta.env.VITE_YORKIE_API_ADDR || '설정되지 않음'}
+                    </p>
+                    <p>
+                      VITE_YORKIE_API_KEY:{' '}
+                      {import.meta.env.VITE_YORKIE_API_KEY ? '설정됨' : '설정되지 않음'}
+                    </p>
                   </div>
                 )}
               </div>
