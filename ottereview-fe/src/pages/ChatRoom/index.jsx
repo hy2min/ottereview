@@ -5,6 +5,7 @@ import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'
 import Whiteboard from '@/features/webrtc/Whiteboard'
+import { useChatStore } from '@/features/chat/chatStore'
 import { api } from '@/lib/api'
 
 const ChatRoom = () => {
@@ -14,6 +15,10 @@ const ChatRoom = () => {
   const [roomInfo, setRoomInfo] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  
+  const addRoom = useChatStore((state) => state.addRoom)
+  const updateRoom = useChatStore((state) => state.updateRoom)
+  const rooms = useChatStore((state) => state.rooms)
 
   // 미팅룸 정보 및 파일 목록 가져오기
   useEffect(() => {
@@ -29,11 +34,25 @@ const ChatRoom = () => {
 
         // 미팅룸 기본 정보 설정
         if (response.data) {
-          setRoomInfo({
-            id: roomId,
+          const roomData = {
+            id: Number(roomId),
             name: response.data.name || response.data.roomName || `Room ${roomId}`,
+            createdBy: response.data.createdBy,
+            ownerId: response.data.ownerId,
+            participants: response.data.participants || [], // 참가자 정보 추가
             // 다른 필요한 정보들도 여기서 설정
-          })
+          }
+          setRoomInfo(roomData)
+          
+          console.log('👥 미팅룸 참가자 정보:', response.data.participants)
+          
+          // chatStore에 방 정보 추가/업데이트
+          const existingRoom = rooms.find((r) => r.id === Number(roomId))
+          if (existingRoom) {
+            updateRoom(Number(roomId), roomData)
+          } else {
+            addRoom(roomData)
+          }
         }
 
         // 파일 목록 추출
@@ -347,7 +366,9 @@ const ChatRoom = () => {
                 overflow: 'auto',
               }}
             >
-              <AudioChatRoom roomId={roomId} />
+              {console.log('🎯 AudioChatRoom 렌더링 직전, roomId:', roomId)}
+              <AudioChatRoom roomId={roomId} roomParticipants={roomInfo?.participants || []} />
+              {console.log('🎯 AudioChatRoom 렌더링 직후')}
             </div>
           </div>
 
