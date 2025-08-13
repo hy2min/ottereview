@@ -7,7 +7,7 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail, fetchPRReviews, submitReview } from '@/features/pullRequest/prApi'
+import { fetchPRDetail, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
@@ -44,17 +44,10 @@ const PRReview = () => {
         console.log('pr:', pr)
         setPrDetail(pr)
 
-        // 리뷰 목록도 함께 가져오기 (아직 미사용, 저장만)
-        try {
-          const reviews = await fetchPRReviews({
-            accountId: pr.repo.accountId,
-            repoId,
-            prId,
-          })
-          setPrReviews(reviews)
-          console.log('reviews:', reviews)
-        } catch (reviewErr) {
-          console.error('❌ PR 리뷰 목록 로딩 실패:', reviewErr)
+        // PR 상세 정보에 포함된 리뷰 목록 사용
+        if (pr.reviews) {
+          setPrReviews(pr.reviews)
+          console.log('reviews from pr detail:', pr.reviews)
         }
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
@@ -167,6 +160,37 @@ const PRReview = () => {
 
   const commits = prDetail?.commits ?? []
 
+  // 리뷰 댓글을 파일별/라인별로 분류
+  const existingReviewComments = {}
+  if (prDetail?.reviews) {
+    prDetail.reviews.forEach((review) => {
+      if (review.reviewComments) {
+        review.reviewComments.forEach((comment) => {
+          const filePath = comment.path
+          const lineIndex =
+            comment.startLine && comment.startLine !== comment.line
+              ? comment.startLine - 1
+              : comment.line - 1 // 0-based index로 변환
+
+          if (!existingReviewComments[filePath]) {
+            existingReviewComments[filePath] = {}
+          }
+          if (!existingReviewComments[filePath][lineIndex]) {
+            existingReviewComments[filePath][lineIndex] = []
+          }
+
+          existingReviewComments[filePath][lineIndex].push({
+            ...comment,
+            reviewState: review.state,
+            reviewer: review.githubUsername || 'Unknown',
+            submittedAt: review.createdAt,
+            id: `${review.id}-${comment.id || Math.random()}`,
+          })
+        })
+      }
+    })
+  }
+
   // 로딩 중일 때 표시
   if (loading) {
     return (
@@ -204,6 +228,12 @@ const PRReview = () => {
           <span>#{prDetail.githubPrNumber}</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{prDetail.title}</h1>
+        {prDetail.author && (
+          <div className="flex items-center gap-2 text-sm text-stone-600">
+            <span>작성자:</span>
+            <span className="font-medium">@{prDetail.author.githubUsername}</span>
+          </div>
+        )}
         {prDetail.body && prDetail.body.trim() && (
           <div className="text-sm text-gray-600 whitespace-pre-wrap">{prDetail.body}</div>
         )}
@@ -323,10 +353,11 @@ const PRReview = () => {
             files={prFiles}
             onAddComment={handleAddFileLineComment}
             fileComments={fileComments}
+            existingReviewComments={existingReviewComments}
             showDiffHunk={false}
           />
         )}
-        {activeTab === 'comments' && <PRCommentList prId={prId} />}
+        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
     </div>

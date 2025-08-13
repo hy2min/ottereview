@@ -1,13 +1,24 @@
 import { Plus } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
+import Badge from '@/components/Badge'
+import Box from '@/components/Box'
 import CommentForm from '@/features/comment/CommentForm'
+
+// 리뷰 댓글 텍스트 정리 함수
+const cleanReviewCommentBody = (body) => {
+  if (!body) return ''
+  
+  // \n을 실제 줄바꿈으로 변환 (백엔드에서 전처리되므로 간단하게)
+  return body.replace(/\\n/g, '\n')
+}
 
 const CodeDiff = ({
   patch,
   onAddComment,
   filePath,
   initialSubmittedComments = {},
+  existingReviewComments = {},
   showDiffHunk = false,
 }) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
@@ -471,29 +482,64 @@ const CodeDiff = ({
                     )}
                   </div>
 
+                  {/* 기존 리뷰 댓글들 표시 */}
+                  {existingReviewComments[idx] &&
+                    existingReviewComments[idx].map((comment) => (
+                      <div key={comment.id} className="mx-2 mb-2 font-sans">
+                        <Box shadow className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                              <span className="text-sm font-medium">
+                                {comment.reviewer?.[0] || 'R'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-stone-900 text-base">{comment.reviewer || 'Unknown'}</span>
+                              <span className="text-sm text-stone-500 ml-2">
+                                {new Date(comment.submittedAt).toLocaleString()}
+                              </span>
+                              <Badge 
+                                variant={
+                                  comment.reviewState === 'APPROVED' ? 'success' :
+                                  comment.reviewState === 'CHANGES_REQUESTED' ? 'danger' :
+                                  'primary'
+                                }
+                                size="md"
+                                className="ml-3"
+                              >
+                                {comment.reviewState === 'APPROVED' ? '승인' :
+                                 comment.reviewState === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-stone-700 whitespace-pre-wrap text-base">{cleanReviewCommentBody(comment.body)}</p>
+                        </Box>
+                      </div>
+                    ))}
+
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
                   {submittedComments[idx] &&
                     submittedComments[idx].map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2">
-                        <div className="p-4 bg-white border border-gray-200 rounded shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
+                      <div key={comment.id} className="mx-2 mb-2 font-sans">
+                        <Box shadow className="space-y-3">
+                          <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
                               <span className="text-sm font-medium">나</span>
                             </div>
                             <div>
-                              <span className="font-medium text-stone-900">내 댓글</span>
+                              <span className="font-medium text-stone-900 text-base">내 댓글</span>
                               <span className="text-sm text-stone-500 ml-2">
                                 {comment.submittedAt}
                               </span>
+                              {comment.audioFile && (
+                                <Badge variant="success" size="md" className="ml-3">
+                                  🎵 음성
+                                </Badge>
+                              )}
                             </div>
-                            {comment.audioFile && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-auto">
-                                🎵 음성
-                              </span>
-                            )}
                           </div>
                           <div className="space-y-2">
-                            <p className="text-stone-700">
+                            <p className="text-stone-700 text-base">
                               {comment.content || (comment.audioFile ? '음성 댓글' : '')}
                             </p>
                             {comment.audioFile && (
@@ -511,13 +557,14 @@ const CodeDiff = ({
                               </div>
                             )}
                           </div>
-                        </div>
+                        </Box>
                       </div>
                     ))}
 
                   {/* 댓글 폼 */}
                   {activeCommentLines.has(idx) && (
                     <div
+                      className="font-sans"
                       onMouseEnter={(e) => e.stopPropagation()}
                       onMouseLeave={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
