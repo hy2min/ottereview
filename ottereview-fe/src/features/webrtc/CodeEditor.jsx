@@ -167,10 +167,12 @@ const CodeEditor = ({ conflictFiles }) => {
 
     initializeYorkie()
 
+    // 🎯 핵심: client.deactivate()만 호출, 개별 문서 detach는 하지 않음
     return () => {
       console.log('🧹 Yorkie 클라이언트 정리 중...')
       if (clientRef.current) {
         clientRef.current.deactivate().catch(console.error)
+        clientRef.current = null
       }
     }
   }, [roomId])
@@ -188,42 +190,30 @@ const CodeEditor = ({ conflictFiles }) => {
 
     console.log('📝 문서 연결 시작:', currentDocumentKey)
 
-    let view
-    let doc
-    let unsubscribeFunctions = []
+    let view = null
+    let doc = null
+    let unsubscribeFunc = null
 
     const initializeEditor = async () => {
       try {
         const client = clientRef.current
-
         if (!client) {
           throw new Error('Yorkie 클라이언트가 준비되지 않았습니다.')
         }
 
-        // 1. 기존 에디터와 문서 정리
+        // 1. 기존 에디터만 정리 (문서 detach는 하지 않음)
         if (viewRef.current) {
           console.log('🧹 기존 에디터 정리 중...')
           viewRef.current.destroy()
           viewRef.current = null
         }
 
-        if (docRef.current) {
-          console.log('🧹 기존 문서 정리 중...')
-          try {
-            await client.detach(docRef.current)
-          } catch (detachError) {
-            console.warn('⚠️ 기존 문서 detach 실패:', detachError)
-          }
-          docRef.current = null
-        }
-
         console.log('🔗 새 Yorkie 문서에 연결 시도:', currentDocumentKey)
 
         // 2. 새 문서 생성 및 연결
         doc = new yorkie.Document(currentDocumentKey)
-
-        // 공식 문서에 따른 올바른 attach 방식
         await client.attach(doc, { initialPresence: {} })
+
         docRef.current = doc
         console.log('✅ Yorkie 문서 연결 완료:', currentDocumentKey)
 
@@ -263,14 +253,13 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         }
 
-        // 5. 문서 이벤트 구독 (공식 문서 방식)
-        const unsubscribeDoc = doc.subscribe((event) => {
+        // 5. 문서 이벤트 구독
+        unsubscribeFunc = doc.subscribe((event) => {
           console.log('📡 Yorkie 문서 이벤트:', event.type)
           if (event.type === 'snapshot' || event.type === 'remote-change') {
             syncText()
           }
         })
-        unsubscribeFunctions.push(unsubscribeDoc)
 
         // 6. 파일 확장자에 따른 언어 설정
         const getLanguageExtension = (fileName) => {
@@ -314,7 +303,7 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         })
 
-        // 8. CodeMirror 에디터 생성 (너비 제한 추가)
+        // 8. CodeMirror 에디터 생성
         view = new EditorView({
           doc: '',
           extensions: [
@@ -357,6 +346,7 @@ const CodeEditor = ({ conflictFiles }) => {
           ],
           parent: editorRef.current,
         })
+
         viewRef.current = view
 
         // 9. 기존 문서 내용을 에디터에 로드
@@ -371,41 +361,41 @@ const CodeEditor = ({ conflictFiles }) => {
 
     initializeEditor()
 
+    // 🎯 핵심: 문서 detach 하지 않음, 에디터와 구독만 정리
     return () => {
-      console.log('🧹 문서 및 에디터 정리 중:', currentDocumentKey)
+      console.log('🧹 에디터 cleanup (문서 detach 없음):', currentDocumentKey)
 
       // 구독 해제
-      unsubscribeFunctions.forEach((unsubscribe) => {
+      if (unsubscribeFunc) {
         try {
-          unsubscribe()
+          unsubscribeFunc()
         } catch (error) {
-          console.error('구독 해제 오류:', error)
+          console.warn('구독 해제 오류:', error.message)
         }
-      })
-
-      // 문서 detach
-      if (doc && clientRef.current) {
-        clientRef.current.detach(doc).catch((detachError) => {
-          console.error('문서 detach 오류:', detachError)
-        })
       }
 
-      // 에디터 정리
+      // 에디터만 정리
       if (view) {
         view.destroy()
       }
+
+      // docRef는 초기화하지만 detach는 하지 않음
+      docRef.current = null
     }
   }, [currentDocumentKey, selectedFileName, status])
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
+      console.log('🧹 컴포넌트 언마운트 정리 (문서 detach 없음)')
+
       if (viewRef.current) {
         viewRef.current.destroy()
+        viewRef.current = null
       }
-      if (docRef.current && clientRef.current) {
-        clientRef.current.detach(docRef.current).catch(console.error)
-      }
+
+      // 문서 detach는 하지 않음 - client.deactivate()가 자동으로 처리
+      docRef.current = null
     }
   }, [])
 
