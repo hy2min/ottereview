@@ -8,7 +8,7 @@ import CommentForm from '@/features/comment/CommentForm'
 // 리뷰 댓글 텍스트 정리 함수
 const cleanReviewCommentBody = (body) => {
   if (!body) return ''
-  
+
   // \n을 실제 줄바꿈으로 변환 (백엔드에서 전처리되므로 간단하게)
   return body.replace(/\\n/g, '\n')
 }
@@ -27,7 +27,6 @@ const CodeDiff = ({
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
-
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
@@ -174,6 +173,7 @@ const CodeDiff = ({
       // 선택된 라인들을 인덱스 순으로 정렬
       const sortedSelectedLines = Array.from(allSelectedLines).sort((a, b) => a - b)
 
+
       // 각 라인의 실제 정보를 수집하기 위해 diff를 다시 파싱
       let tempOldLine = 0
       let tempNewLine = 0
@@ -232,15 +232,15 @@ const CodeDiff = ({
       const bodyText = hasAudioFile ? '' : commentData.content?.trim() || ''
 
       if (selectedLinesInfo.length === 0) {
-        // 선택된 라인 정보가 없으면 원래 댓글 데이터 사용
+        // 선택된 라인 정보가 없으면 원래 댓글 데이터 사용 (단일 라인)
         const reviewCommentData = {
           path: commentData.path,
           body: bodyText,
           position: commentData.position,
           line: commentData.lineNumber,
           side: commentData.side,
-          startLine: commentData.lineNumber,
-          startSide: commentData.side,
+          startLine: undefined, // 단일 라인은 startLine 없음
+          startSide: undefined, // 단일 라인은 startSide 없음
           fileIndex: fileIndex,
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
@@ -251,7 +251,6 @@ const CodeDiff = ({
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-        console.log(reviewCommentData)
 
         // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
@@ -286,19 +285,21 @@ const CodeDiff = ({
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
 
+        // 마지막 선택된 라인의 인덱스 찾기 (임시 댓글 표시 위치)
+        const lastLineIndex = sortedSelectedLines[sortedSelectedLines.length - 1]
+
         // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
-        onAddComment?.(lineIndex, {
+        onAddComment?.(lastLineIndex, {
           ...commentData,
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-        console.log(reviewCommentData)
 
-        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
+        // 로컬 상태에도 추가 (마지막 라인 위치에 표시)
         setSubmittedComments((prev) => ({
           ...prev,
-          [lineIndex]: [
-            ...(prev[lineIndex] || []),
+          [lastLineIndex]: [
+            ...(prev[lastLineIndex] || []),
             {
               ...commentData,
               id: Date.now() + Math.random(), // 임시 ID (두 번째 케이스)
@@ -308,7 +309,7 @@ const CodeDiff = ({
         }))
       }
 
-      // 댓글 제출 성공 후 폼 닫기
+      // 댓글 제출 성공 후 폼 닫기 (+ 버튼이 있던 원래 위치)
       closeCommentForm(lineIndex)
 
       // 선택 상태 초기화
@@ -439,12 +440,17 @@ const CodeDiff = ({
                   }`}
                   onClick={() => handleCodeClick(idx)}
                   onMouseEnter={() => {
-                    canComment && setHoveredLine(idx)
                     if (isDragging) {
                       handleMouseEnter(idx)
+                    } else if (canComment && hoveredLine !== idx) {
+                      setHoveredLine(idx)
                     }
                   }}
-                  onMouseLeave={() => setHoveredLine(null)}
+                  onMouseLeave={() => {
+                    if (!isDragging && hoveredLine === idx) {
+                      setHoveredLine(null)
+                    }
+                  }}
                 >
                   {/* 댓글 추가 버튼 */}
                   {canComment &&
@@ -483,8 +489,18 @@ const CodeDiff = ({
                   </div>
 
                   {/* 기존 리뷰 댓글들 표시 */}
-                  {existingReviewComments[idx] &&
-                    existingReviewComments[idx].map((comment) => (
+                  {(() => {
+                    // 실제 라인 번호와 side를 기반으로 댓글 찾기
+                    const actualLineIndex = currentLineNumber - 1 // 0-based index로 변환
+                    const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT' // context 라인은 RIGHT로 처리
+                    const commentsForLine = existingReviewComments[actualLineIndex]
+                    
+                    // side가 일치하는 댓글만 필터링
+                    const filteredComments = commentsForLine ? commentsForLine.filter(comment => 
+                      comment.side === currentSide
+                    ) : []
+                    
+                    return filteredComments.length > 0 ? filteredComments.map((comment) => (
                       <div key={comment.id} className="mx-2 mb-2 font-sans">
                         <Box shadow className="space-y-3">
                           <div className="flex items-center gap-3">
@@ -494,27 +510,37 @@ const CodeDiff = ({
                               </span>
                             </div>
                             <div>
-                              <span className="font-medium text-stone-900 text-base">{comment.reviewer || 'Unknown'}</span>
+                              <span className="font-medium text-stone-900 text-base">
+                                {comment.reviewer || 'Unknown'}
+                              </span>
                               <span className="text-sm text-stone-500 ml-2">
                                 {new Date(comment.submittedAt).toLocaleString()}
                               </span>
-                              <Badge 
+                              <Badge
                                 variant={
-                                  comment.reviewState === 'APPROVED' ? 'success' :
-                                  comment.reviewState === 'CHANGES_REQUESTED' ? 'danger' :
-                                  'primary'
+                                  comment.reviewState === 'APPROVED'
+                                    ? 'success'
+                                    : comment.reviewState === 'CHANGES_REQUESTED'
+                                      ? 'danger'
+                                      : 'primary'
                                 }
                                 className="ml-3"
                               >
-                                {comment.reviewState === 'APPROVED' ? '승인' :
-                                 comment.reviewState === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                                {comment.reviewState === 'APPROVED'
+                                  ? '승인'
+                                  : comment.reviewState === 'CHANGES_REQUESTED'
+                                    ? '변경 요청'
+                                    : '코멘트'}
                               </Badge>
                             </div>
                           </div>
-                          <p className="text-stone-700 whitespace-pre-wrap text-base">{cleanReviewCommentBody(comment.body)}</p>
+                          <p className="text-stone-700 whitespace-pre-wrap text-base">
+                            {cleanReviewCommentBody(comment.body)}
+                          </p>
                         </Box>
                       </div>
-                    ))}
+                    )) : null
+                  })()}
 
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
                   {submittedComments[idx] &&
@@ -541,9 +567,7 @@ const CodeDiff = ({
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <p className="text-stone-700 text-base">
-                              {comment.content || (comment.audioFile ? '음성 댓글' : '')}
-                            </p>
+                            <p className="text-stone-700 text-base">{comment.content || ''}</p>
                             {comment.audioFile && (
                               <div className="flex items-center gap-2">
                                 <audio
@@ -593,4 +617,4 @@ const CodeDiff = ({
   )
 }
 
-export default CodeDiff
+export default React.memo(CodeDiff)

@@ -1,6 +1,6 @@
 import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -10,12 +10,11 @@ import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import { fetchPRDetail, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import { useCommentManager } from '@/lib/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
-  const navigate = useNavigate()
-  const location = useLocation()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -26,9 +25,17 @@ const PRReview = () => {
   const [activeTab, setActiveTab] = useState('files')
   const [comment, setComment] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
-  const [reviewComments, setReviewComments] = useState([]) // 라인별 댓글들 보관
-  const [files, setFiles] = useState([]) // 녹음 파일들 보관
-  const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
+
+  // 댓글 관리 훅 사용
+  const {
+    reviewComments,
+    audioFiles: files,
+    fileComments,
+    setReviewComments,
+    setFiles,
+    setFileComments,
+    handleAddFileLineComment,
+  } = useCommentManager()
 
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -85,9 +92,7 @@ const PRReview = () => {
       setLoading(true)
       try {
         const pr = await fetchPRDetail({ repoId, prId })
-        console.log('pr:', pr)
         setPrDetail(pr)
-
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
         setPrDetail(null)
@@ -99,50 +104,6 @@ const PRReview = () => {
     load()
   }, [repoId, prId])
 
-  // 라인별 댓글 추가 함수
-  const handleAddLineComment = (commentData) => {
-    // 음성 파일이 있는 경우 (fileIndex가 -1인 경우)
-    if (commentData.audioFile && commentData.fileIndex === -1) {
-      const currentFileIndex = files.length
-      setFiles((prev) => [...prev, commentData.audioFile])
-
-      // fileIndex를 실제 인덱스로 업데이트
-      const updatedCommentData = {
-        ...commentData,
-        fileIndex: currentFileIndex,
-        audioFile: undefined, // API 요청에서는 audioFile 제거
-      }
-      setReviewComments((prev) => [...prev, updatedCommentData])
-    } else {
-      // 텍스트 댓글인 경우 (fileIndex가 null)
-      setReviewComments((prev) => [...prev, commentData])
-    }
-  }
-
-  // 파일별 라인 댓글 추가 함수 (새로 추가)
-  const handleAddFileLineComment = (filePath, lineIndex, commentData) => {
-    setFileComments((prev) => ({
-      ...prev,
-      [filePath]: {
-        ...prev[filePath],
-        submittedComments: {
-          ...prev[filePath]?.submittedComments,
-          [lineIndex]: [
-            ...(prev[filePath]?.submittedComments?.[lineIndex] || []),
-            {
-              ...commentData,
-              id: Date.now() + Math.random(),
-              submittedAt: new Date().toLocaleTimeString(),
-            },
-          ],
-        },
-      },
-    }))
-
-    // 기존 reviewComments에도 추가 (최종 제출을 위해)
-    handleAddLineComment(commentData)
-  }
-
   const handleSubmit = async () => {
     if (!comment.trim() && reviewComments.length === 0) {
       alert('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
@@ -150,21 +111,29 @@ const PRReview = () => {
     }
 
     try {
+      // 백엔드에서 필요한 속성들만 추출
+      const cleanedReviewComments = reviewComments.map((comment) => ({
+        path: comment.path,
+        body: comment.content || '',
+        position: comment.position,
+        line: comment.lineNumber,
+        side: comment.side,
+        startLine: comment.startLine,
+        startSide: comment.startSide,
+        fileIndex: comment.fileIndex,
+      }))
+
       const reviewData = {
         reviewRequest: {
           state: reviewState, // 선택된 리뷰 상태 사용
           body: comment.trim(),
           commitSha: prDetail?.commits?.[0]?.sha || '',
-          reviewComments: reviewComments,
+          reviewComments: cleanedReviewComments,
         },
         files: files, // 녹음 파일들
       }
 
-      console.log('=== 최종 리뷰 제출 데이터 ===')
-      console.log('reviewData:', JSON.stringify(reviewData, null, 2))
-      console.log('reviewComments 개수:', reviewComments.length)
-      console.log('files 개수:', files.length)
-      console.log('===========================')
+      console.log('=== 리뷰 제출 데이터 ===', JSON.stringify(reviewData, null, 2))
 
       const response = await submitReview({
         accountId: prDetail?.repo.accountId,
@@ -173,8 +142,12 @@ const PRReview = () => {
         reviewData,
       })
 
-      console.log('✅ 리뷰 제출 성공!', response)
       alert('리뷰가 성공적으로 제출되었습니다!')
+
+      // 상태 초기화 (beforeunload 이벤트 방지)
+      setReviewComments([])
+      setFiles([])
+      setFileComments({})
 
       // 페이지 새로고침으로 리뷰 목록 갱신
       window.location.reload()
