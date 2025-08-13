@@ -119,8 +119,7 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
         Map<String, Object> requestBody = new HashMap<>();
 
         if (body != null && !body.isBlank()) {
-            String formattedBody = REVIEW_TEMPLATE.formatted(githubUsername, body);
-            requestBody.put("body", formattedBody);
+            requestBody.put("body", REVIEW_TEMPLATE.formatted(githubUsername, body));
         }
 
         requestBody.put("event", state.name());

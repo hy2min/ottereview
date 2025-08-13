@@ -19,7 +19,7 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if not openai_api_key:
     raise ValueError("OPENAI_API_KEY가 환경변수에 설정되지 않았습니다. .env 파일을 확인해주세요.")
 
-# 중요! langchain의 BASE_URL을 GMS로 설정합니다. 
+# 중요! langchain의 BASE_URL을 GMS로 설정합니다.
 os.environ["OPENAI_API_BASE"] = "https://gms.ssafy.io/gmsapi/api.openai.com/v1"
 
 model = init_chat_model("gpt-4o-mini", model_provider="openai")
@@ -77,7 +77,7 @@ def _extract_key_changes_from_patch(patch: str, filename: str) -> str:
         'security': [r'auth', r'token', r'password', r'jwt', r'security', r'permission', r'role'],
         'database': [r'entity', r'repository', r'@Table', r'@Entity', r'@Column', r'migration', r'schema'],
         'api': [r'@RestController', r'@RequestMapping', r'@GetMapping', r'@PostMapping', r'@Controller', r'endpoint'],
-        'config': [r'@Configuration', r'@Bean', r'application\.', r'config', r'properties'],
+        'config': [r'@Configuration', r'application\.', r'config', r'properties'],
         'business_logic': [r'service', r'business', r'logic', r'calculate', r'process', r'validate'],
         'test': [r'@Test', r'test', r'spec', r'mock', r'assert']
     }
@@ -128,7 +128,7 @@ def _analyze_files_for_priority_context(files: List[Any]) -> Dict[str, Any]:
         r'config', r'properties', r'yml', r'yaml'
     ]
     
-    # 중위험 파일 패턴  
+    # 중위험 파일 패턴
     medium_risk_patterns = [
         r'controller', r'service', r'repository', r'entity', r'dto',
         r'api', r'endpoint', r'business'
@@ -191,8 +191,8 @@ def _select_relevant_files_for_candidate(files_analysis: Dict[str, Any], candida
     else:
         # 일반적인 경우: 변경사항이 큰 파일들
         all_files = (files_analysis['high_risk_files'] + 
-                    files_analysis['medium_risk_files'] + 
-                    files_analysis['low_risk_files'])
+                     files_analysis['medium_risk_files'] + 
+                     files_analysis['low_risk_files'])
         all_files.sort(key=lambda x: x['changes'], reverse=True)
         relevant_files = [f['filename'] for f in all_files[:5]]
     
@@ -211,9 +211,18 @@ async def recommend_priority(pr_data: PreparationResult) -> Dict[str, Any]:
         Dict[str, Any]: 3개의 우선순위 추천 결과 (관련 파일 패스 포함)
     """
     try:
-        # 1. 파일 분석을 통한 컨텍스트 생성
-        files_analysis = _analyze_files_for_priority_context(pr_data.files)
-        code_context = _extract_code_context_from_files(pr_data.files)
+        # 🚨 수정된 부분: 분석에서 제외할 파일 확장자 정의
+        IGNORE_EXTENSIONS = ['.txt', '.md', '.log', '.gitignore', '.lock', '.properties', '.yml', '.yaml']
+        
+        # 🚨 수정된 부분: 유의미한 코드 파일만 필터링
+        valid_files = [f for f in pr_data.files if not f.filename.endswith(tuple(IGNORE_EXTENSIONS))]
+
+        if not valid_files:
+            return _get_default_error_response_with_files(pr_data.files)
+
+        # 1. 파일 분석을 통한 컨텍스트 생성 (필터링된 파일 사용)
+        files_analysis = _analyze_files_for_priority_context(valid_files)
+        code_context = _extract_code_context_from_files(valid_files)
         
         # 2. 벡터 DB에서 유사한 우선순위 패턴 검색 (RAG의 Retrieval 단계)
         similar_patterns = await vector_db.get_similar_priority_patterns(pr_data, limit=15)
@@ -227,7 +236,7 @@ async def recommend_priority(pr_data: PreparationResult) -> Dict[str, Any]:
         
         # 4. LLM에게 컨텍스트와 함께 3개의 우선순위 후보 분석 요청 (RAG의 Generation 단계)
         priority_candidates = await _generate_priority_candidates_with_llm(
-            context, pr_data, code_context, files_analysis
+            context, pr_data, code_context, files_analysis, valid_files
         )
         
         # 5. 결과 검증 및 보완
@@ -235,7 +244,8 @@ async def recommend_priority(pr_data: PreparationResult) -> Dict[str, Any]:
         
     except Exception as e:
         logger.error(f"우선순위 추천 전체 과정에서 오류 발생: {str(e)}")
-        return _get_default_error_response_with_files(pr_data.files)
+        # 🚨 수정된 부분: 오류 발생 시 필터링된 파일로 기본 응답 생성
+        return _get_default_error_response_with_files(valid_files if 'valid_files' in locals() else pr_data.files)
 
 
 def _get_default_error_response_with_files(files: List[Any]) -> Dict[str, Any]:
@@ -307,7 +317,6 @@ def _validate_and_complete_candidates(result: Dict[str, Any], pr_data: Preparati
     if len(valid_candidates) < 3:
         try:
             config_candidates = calculate_config_based_priority_candidates(pr_data)['candidates']
-            num_needed = 3 - len(valid_candidates)
             
             # 설정 기반 후보에서 중복되지 않는 것을 추가
             for config_cand in config_candidates:
@@ -384,11 +393,11 @@ def _build_priority_context_from_patterns(patterns: List[Dict[str, Any]]) -> str
         
         context_parts.append(f"""
 {i}. 기능영역: {category}
-   - 평균 유사도: {avg_similarity:.3f}
-   - 주요 우선순위 지표: {priority_indicators}
-   - 일반적 복잡도: {most_common_complexity}
-   - 일반적 변경규모: {most_common_scale}
-   - 관련 PR 수: {len(data['patterns'])}
+    - 평균 유사도: {avg_similarity:.3f}
+    - 주요 우선순위 지표: {priority_indicators}
+    - 일반적 복잡도: {most_common_complexity}
+    - 일반적 변경규모: {most_common_scale}
+    - 관련 PR 수: {len(data['patterns'])}
         """.strip())
     
     return "\n".join(context_parts)
@@ -398,7 +407,8 @@ async def _generate_priority_candidates_with_llm(
     context: str, 
     pr_data: PreparationResult, 
     code_context: str, 
-    files_analysis: Dict[str, Any]
+    files_analysis: Dict[str, Any],
+    valid_files: List[Any]
 ) -> Dict[str, Any]:
     """
     LLM을 활용해 컨텍스트 기반으로 3개의 우선순위 후보 생성 (파일 정보 포함)
@@ -408,18 +418,19 @@ async def _generate_priority_candidates_with_llm(
         pr_data: 현재 PR 데이터
         code_context: 파일별 코드 변경사항 컨텍스트
         files_analysis: 파일 분석 결과
+        valid_files: 분석 대상 파일 목록 (의미 없는 파일 제외)
         
     Returns:
         Dict[str, Any]: 3개의 우선순위 후보 결과 (관련 파일 포함)
     """
-    # 현재 PR 정보 요약
-    commits_summary = ' | '.join([c.message for c in pr_data.commits[:3]])
-    total_changes = sum(f.additions + f.deletions for f in pr_data.files)
+    # 🚨 수정된 부분: 유효한 파일 목록을 기반으로 PR 정보 요약
+    commits_summary = ' | '.join([c.message for c in pr_data.commits[:5]])
+    total_changes = sum(f.additions + f.deletions for f in valid_files)
     
     # 파일 분석 요약
     files_summary = f"""
 고위험 파일: {len(files_analysis['high_risk_files'])}개
-중위험 파일: {len(files_analysis['medium_risk_files'])}개  
+중위험 파일: {len(files_analysis['medium_risk_files'])}개 
 저위험 파일: {len(files_analysis['low_risk_files'])}개
 보안관련: {', '.join(files_analysis['security_related'][:3])}
 DB관련: {', '.join(files_analysis['database_related'][:3])}
@@ -447,6 +458,7 @@ API관련: {', '.join(files_analysis['api_related'][:3])}
 -   각 우선순위 후보와 직접적으로 관련된 파일 패스들을 배열로 제공합니다.
 -   최대 5개까지의 파일 패스를 포함합니다.
 -   가장 중요한 파일부터 순서대로 나열합니다.
+-   관련성이 낮은 파일은 제외합니다.
 
 **응답 형식:**
 -   **반드시 3개의 후보를 생성해야 합니다.**
@@ -483,7 +495,7 @@ API관련: {', '.join(files_analysis['api_related'][:3])}
 - 커밋 메시지: {commits_summary}
 - 브랜치: {pr_data.source} -> {pr_data.target}
 - 총 변경라인: {total_changes}라인
-- 파일 수: {len(pr_data.files)}개
+- 파일 수: {len(valid_files)}개
 
 === 파일 분석 결과 ===
 {files_summary}
@@ -499,7 +511,8 @@ API관련: {', '.join(files_analysis['api_related'][:3])}
             {"role": "user", "content": user_prompt}
         ])
         
-        result = _parse_priority_candidates_response(response.content, pr_data, files_analysis)
+        # 🚨 수정된 부분: valid_files를 함께 전달하여 파싱 및 검증
+        result = _parse_priority_candidates_response(response.content, valid_files, files_analysis)
         logger.info(f"LLM이 {len(result.get('priority', []))}개의 우선순위 후보를 생성했습니다")
         return result
         
@@ -511,7 +524,7 @@ API관련: {', '.join(files_analysis['api_related'][:3])}
 
 def _parse_priority_candidates_response(
     response_text: str, 
-    pr_data: PreparationResult, 
+    valid_files: List[Any], 
     files_analysis: Dict[str, Any]
 ) -> Dict[str, Any]:
     """
@@ -519,7 +532,7 @@ def _parse_priority_candidates_response(
     
     Args:
         response_text: LLM 응답 텍스트
-        pr_data: PR 데이터
+        valid_files: 필터링된 PR 데이터 파일 목록
         files_analysis: 파일 분석 결과
         
     Returns:
@@ -571,32 +584,33 @@ def _parse_priority_candidates_response(
                     related_files = _select_relevant_files_for_candidate(files_analysis, 'general')
             
             # 파일 패스 검증 및 정리
-            valid_files = []
-            all_filenames = [f.filename for f in pr_data.files]
+            final_files = []
+            # 🚨 수정된 부분: 필터링된 valid_files를 사용하여 파일명 목록을 가져옴
+            all_filenames = [f.filename for f in valid_files]
             
             for file_path in related_files[:5]:  # 최대 5개
                 if isinstance(file_path, str):
                     # 실제 PR에 포함된 파일인지 확인
                     if file_path in all_filenames:
-                        valid_files.append(file_path)
+                        final_files.append(file_path)
                     else:
                         # 부분 매칭으로 찾기
                         matching_files = [f for f in all_filenames if file_path.split('/')[-1] in f]
                         if matching_files:
-                            valid_files.append(matching_files[0])
+                            final_files.append(matching_files[0])
             
             # 여전히 related_files가 부족하면 변경사항이 큰 파일들로 보완
-            if len(valid_files) < 3:
-                sorted_files = sorted(pr_data.files, key=lambda f: f.additions + f.deletions, reverse=True)
+            if len(final_files) < 3:
+                sorted_files = sorted(valid_files, key=lambda f: f.additions + f.deletions, reverse=True)
                 for file in sorted_files:
-                    if file.filename not in valid_files and len(valid_files) < 5:
-                        valid_files.append(file.filename)
+                    if file.filename not in final_files and len(final_files) < 5:
+                        final_files.append(file.filename)
             
             valid_candidates.append({
                 'title': title,
                 'priority_level': priority_level,
                 'reason': reason,
-                'related_files': valid_files
+                'related_files': final_files
             })
         
         # 3개 미만인 경우 설정 기반 후보로 채움
@@ -635,4 +649,72 @@ def _parse_priority_candidates_response(
                     candidate['related_files'] = _select_relevant_files_for_candidate(files_analysis, 'general')
             return fallback_result
         except:
-            return _get_default_error_response_with_files(pr_data.files)
+            return _get_default_error_response_with_files(valid_files)
+
+# 이 함수는 수정이 필요하지 않지만, 완전한 코드를 위해 포함합니다.
+def _validate_and_complete_candidates(result: Dict[str, Any], pr_data: PreparationResult, files_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    """결과를 검증하고, 3개가 안되면 설정 기반 또는 기본값으로 채움 (파일 정보 포함)"""
+    
+    candidates = result.get('priority', [])
+    valid_candidates = []
+
+    for i, candidate in enumerate(candidates[:3]):
+        if not isinstance(candidate, dict) or not all(k in candidate for k in ['title', 'priority_level', 'reason']):
+            continue
+        
+        priority_level = candidate.get('priority_level', 'MEDIUM')
+        if priority_level not in ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW']:
+            priority_level = 'MEDIUM'
+        
+        # related_files가 없으면 파일 분석 결과로 추가
+        related_files = candidate.get('related_files', [])
+        if not related_files:
+            # 후보의 내용을 기반으로 관련 파일 추정
+            candidate_content = (candidate.get('title', '') + ' ' + candidate.get('reason', '')).lower()
+            if 'security' in candidate_content or 'auth' in candidate_content:
+                related_files = _select_relevant_files_for_candidate(files_analysis, 'security')
+            elif 'database' in candidate_content or 'entity' in candidate_content:
+                related_files = _select_relevant_files_for_candidate(files_analysis, 'database')
+            elif 'api' in candidate_content or 'controller' in candidate_content:
+                related_files = _select_relevant_files_for_candidate(files_analysis, 'api')
+            else:
+                related_files = _select_relevant_files_for_candidate(files_analysis, 'general')
+        
+        valid_candidates.append({
+            'title': candidate.get('title', f'우선순위 후보 {i+1}'),
+            'priority_level': priority_level,
+            'reason': candidate.get('reason', '분석 결과에 따른 우선순위'),
+            'related_files': related_files[:5]  # 최대 5개로 제한
+        })
+
+    # 3개 미만인 경우, 먼저 설정 기반 후보로 채우고, 그래도 부족하면 기본 오류값으로 채움
+    if len(valid_candidates) < 3:
+        try:
+            config_candidates = calculate_config_based_priority_candidates(pr_data)['candidates']
+            
+            # 설정 기반 후보에서 중복되지 않는 것을 추가
+            for config_cand in config_candidates:
+                if len(valid_candidates) >= 3:
+                    break
+                # 이미 있는 title과 겹치지 않도록
+                if not any(vc['title'] == config_cand['title'] for vc in valid_candidates):
+                    # 설정 기반 후보에 related_files 추가
+                    if 'related_files' not in config_cand:
+                        config_cand['related_files'] = _select_relevant_files_for_candidate(files_analysis, 'general')
+                    valid_candidates.append(config_cand)
+
+        except Exception as e:
+            logger.error(f"설정 기반 후보 생성 중 오류: {str(e)}")
+
+    # 그래도 3개가 안되면 기본 오류 응답으로 채움
+    while len(valid_candidates) < 3:
+        fallback_files = _select_relevant_files_for_candidate(files_analysis, 'general')
+        valid_candidates.append({
+            'title': '우선순위 추천오류',
+            'priority_level': 'MEDIUM',
+            'reason': 'AI 분석 중 일부 결과가 유효하지 않아 기본값으로 대체합니다.',
+            'related_files': fallback_files
+        })
+
+    return {'priority': valid_candidates}
+

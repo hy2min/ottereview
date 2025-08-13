@@ -1,6 +1,8 @@
 package com.ssafy.ottereview.s3.service;
 
-import java.util.Arrays;
+import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.s3.exception.S3ErrorCode;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +18,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
@@ -25,8 +28,6 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
@@ -280,7 +281,7 @@ public class S3ServiceImpl implements S3Service {
             
         } catch (Exception e) {
             log.error("Pre-signed URL 생성 실패 - 파일 키: {}, 오류: {}", fileKey, e.getMessage());
-            throw new RuntimeException("임시 URL 생성에 실패했습니다: " + e.getMessage(), e);
+            throw new BusinessException(S3ErrorCode.S3_PRESIGNED_URL_CREATE_FAILED);
         }
     }
 

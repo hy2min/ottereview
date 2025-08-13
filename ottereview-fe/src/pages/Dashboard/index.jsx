@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import ChatRoomList from '@/features/chat/ChatRoomList'
+import { useAuthStore } from '@/features/auth/authStore'
 import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
 import PRList from '@/features/pullRequest/PRList'
 import { fetchRepoList } from '@/features/repository/repoApi'
@@ -14,6 +15,7 @@ import { useUserStore } from '@/store/userStore'
 const Dashboard = () => {
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
+  const accessToken = useAuthStore((state) => state.accessToken)
 
   // 로컬 상태로 PR 데이터 관리
   const [authoredPRs, setAuthoredPRs] = useState([])
@@ -22,6 +24,36 @@ const Dashboard = () => {
   // 레포는 여전히 zustand 사용 (다른 페이지에서도 사용할 가능성이 있다면)
   const setRepos = useRepoStore((state) => state.setRepos)
 
+  // 공통 fetchData 함수를 분리
+  const fetchData = async () => {
+    try {
+      const fetchedRepos = await fetchRepoList()
+      console.log('📦 레포 응답:', fetchedRepos)
+
+      if (Array.isArray(fetchedRepos)) {
+        setRepos(fetchedRepos)
+      } else {
+        console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
+        setRepos([])
+      }
+
+      const authored = await fetchAuthoredPRs()
+      console.log('📦 내가 작성한 PRs:', authored)
+      setAuthoredPRs(authored)
+
+      const reviewed = await fetchReviewerPRs()
+      console.log('📦 내가 리뷰할 PRs:', reviewed)
+      setReviewerPRs(reviewed)
+    } catch (err) {
+      console.error('📛 대시보드 fetch 실패:', err)
+
+      setRepos([])
+      setAuthoredPRs([])
+      setReviewerPRs([])
+    }
+  }
+
+  // GitHub Install 완료 이벤트 처리
   useEffect(() => {
     const handleMessage = (event) => {
       // 보안: 자신의 도메인에서만 메시지 받기
@@ -29,81 +61,43 @@ const Dashboard = () => {
 
       if (event.data.type === 'GITHUB_INSTALL_COMPLETE') {
         console.log('🔄 GitHub 설치 완료 - 대시보드 데이터 새로고침')
-
-        // 기존 fetchData 로직 재실행
-        const fetchData = async () => {
-          try {
-            const fetchedRepos = await fetchRepoList()
-            console.log('📦 레포 응답:', fetchedRepos)
-
-            if (Array.isArray(fetchedRepos)) {
-              setRepos(fetchedRepos)
-            } else {
-              console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
-              setRepos([])
-            }
-
-            const authored = await fetchAuthoredPRs()
-            console.log('📦 내가 작성한 PRs:', authored)
-            setAuthoredPRs(authored)
-
-            const reviewed = await fetchReviewerPRs()
-            console.log('📦 내가 리뷰할 PRs:', reviewed)
-            setReviewerPRs(reviewed)
-          } catch (err) {
-            console.error('📛 대시보드 fetch 실패:', err)
-
-            setRepos([])
-            setAuthoredPRs([])
-            setReviewerPRs([])
-          }
-        }
-
         fetchData()
       }
     }
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [setRepos])
+  }, [])
 
+  // Dashboard 전용 update 이벤트 (레포지토리 업데이트)
+  useEffect(() => {
+    if (!user?.id || !accessToken) return
+
+    const updateEventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=update`)
+    
+    updateEventSource.addEventListener('update', (event) => {
+      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard):', event.data)
+      fetchData()
+    })
+
+    updateEventSource.onopen = () => console.log('🔌 Update SSE 연결 성공 (Dashboard)')
+    updateEventSource.onerror = (error) => console.error('❌ Update SSE 오류:', error)
+
+    return () => {
+      console.log('🔌 Update SSE 연결 해제 (Dashboard)')
+      updateEventSource.close()
+    }
+  }, [user?.id, accessToken])
+
+  // 초기 데이터 로드
   useEffect(() => {
     if (!user?.id) return
-
-    const fetchData = async () => {
-      try {
-        const fetchedRepos = await fetchRepoList()
-        console.log('📦 레포 응답:', fetchedRepos)
-
-        if (Array.isArray(fetchedRepos)) {
-          setRepos(fetchedRepos)
-        } else {
-          console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
-          setRepos([])
-        }
-
-        const authored = await fetchAuthoredPRs()
-        console.log('📦 내가 작성한 PRs:', authored)
-        setAuthoredPRs(authored)
-
-        const reviewed = await fetchReviewerPRs()
-        console.log('📦 내가 리뷰할 PRs:', reviewed)
-        setReviewerPRs(reviewed)
-      } catch (err) {
-        console.error('📛 대시보드 fetch 실패:', err)
-
-        setRepos([])
-        setAuthoredPRs([])
-        setReviewerPRs([])
-      }
-    }
-
     fetchData()
-  }, [user?.id, setRepos])
+  }, [user?.id])
 
   const handleTest = async () => {
     try {
-      const res = await api.get(`/api/repositories/8/pull-requests/23/merges/conflicts`)
+      const res = await api.post(`/api/meetings/2/join`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)
