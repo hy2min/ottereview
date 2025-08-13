@@ -65,6 +65,7 @@ const AudioChatRoom = ({ roomId }) => {
     try {
       setConnectionStatus('connecting')
       const accessToken = useAuthStore.getState().accessToken
+      console.log('roomId:', roomId)
       if (!accessToken) {
         console.error('음성 채팅 참여 실패: 액세스 토큰이 없습니다.')
         setConnectionStatus('error')
@@ -647,7 +648,7 @@ const AudioChatRoom = ({ roomId }) => {
       <div ref={audioContainer} style={{ display: 'none' }}></div>
 
       {/* pulse 애니메이션 스타일 */}
-      <style jsx>{`
+      <style>{`
         @keyframes pulse {
           0%,
           100% {

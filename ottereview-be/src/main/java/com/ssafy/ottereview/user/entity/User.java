@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.entity;
 
+import com.ssafy.ottereview.user.dto.UserResponseDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -45,4 +46,16 @@ public class User {
 
     @Column(name = "user_grade")
     private String userGrade;
+
+    public static User to(UserResponseDto userResponseDto){
+        return User.builder()
+                .githubEmail(userResponseDto.getGithubEmail())
+                .githubId(userResponseDto.getGithubId())
+                .githubUsername(userResponseDto.getGithubUsername())
+                .profileImageUrl(userResponseDto.getProfileImageUrl())
+                .rewardPoints(userResponseDto.getRewardPoints())
+                .userGrade(userResponseDto.getUserGrade())
+                .type(userResponseDto.getType())
+                .id(userResponseDto.getId()).build();
+    }
 }

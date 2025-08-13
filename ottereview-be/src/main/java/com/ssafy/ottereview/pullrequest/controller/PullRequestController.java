@@ -4,6 +4,7 @@ import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.pullrequest.dto.request.PullRequestCreateRequest;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.dto.response.PullRequestValidationResponse;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -15,6 +16,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -26,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequiredArgsConstructor
 @MvcController
 public class PullRequestController {
-    
+
     private final PullRequestService pullRequestService;
 
     @GetMapping("/github")
@@ -38,31 +40,31 @@ public class PullRequestController {
     public ResponseEntity<List<PullRequestResponse>> getPullRequestsByGithub(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
         return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
     }
-    
+
     @GetMapping("/search")
     @Operation(
             summary = "브랜치 정보를 이용한 Open 상태 Pull Request 단일 조회",
             description = "특정 레포지토리의 소스 브랜치와 타겟 브랜치에 대한 Pull-Request를 조회합니다."
     )
-    public ResponseEntity<PullRequestResponse> getPullRequestByBranch(
+    public ResponseEntity<PullRequestValidationResponse> getPullRequestByBranch(
             @AuthenticationPrincipal CustomUserDetail userDetail,
             @PathVariable("repo-id") Long repoId,
             @RequestParam String source,
             @RequestParam String target
     ) {
-        PullRequestResponse pullRequest = pullRequestService.getPullRequestByBranch(userDetail, repoId, source, target);
-        return ResponseEntity.ok(pullRequest);
+        return ResponseEntity.ok(pullRequestService.getPullRequestByBranch(userDetail, repoId, source, target));
     }
-    
+
     @GetMapping("/{pr-id}")
     @Operation(
             summary = "Pull Request 상세 조회",
             description = "특정 Pull Request의 상세 정보를 조회합니다."
     )
-    public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId, @PathVariable("pr-id") Long pullRequestId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequestById(userDetail, repoId, pullRequestId));
+    public ResponseEntity<PullRequestDetailResponse> getPullRequest(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
+        return ResponseEntity.ok(pullRequestService.getPullRequest(userDetail, repoId, pullRequestId));
     }
-    
+
     @GetMapping()
     @Operation(
             summary = "레포지토리 Pull Request 목록 조회",
@@ -87,4 +89,33 @@ public class PullRequestController {
         return ResponseEntity.ok()
                 .build();
     }
+
+    @PutMapping("/{pr-id}/close")
+    @Operation(
+            summary = "Pull Request 닫기",
+            description = "지정된 Pull Request를 닫습니다. DB의 상태와 GitHub의 상태를 모두 업데이트합니다."
+    )
+    public ResponseEntity<Void> closePullRequest(
+            @AuthenticationPrincipal CustomUserDetail userDetail,
+            @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
+        
+        pullRequestService.closePullRequest(userDetail, repoId, pullRequestId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{pr-id}/reopen")
+    @Operation(
+            summary = "Pull Request 다시 열기",
+            description = "닫힌 Pull Request를 엽니다. DB의 상태와 GitHub의 상태를 모두 업데이트합니다."
+    )
+    public ResponseEntity<Void> reopenPullRequest(
+            @AuthenticationPrincipal CustomUserDetail userDetail,
+            @PathVariable("repo-id") Long repoId,
+            @PathVariable("pr-id") Long pullRequestId) {
+
+        pullRequestService.reopenPullRequest(userDetail, repoId, pullRequestId);
+        return ResponseEntity.ok().build();
+    }
+
 }

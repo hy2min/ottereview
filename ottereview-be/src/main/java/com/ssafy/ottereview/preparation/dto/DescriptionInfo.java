@@ -2,6 +2,7 @@ package com.ssafy.ottereview.preparation.dto;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.ssafy.ottereview.preparation.dto.request.PreparationDescriptionRequest;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,10 +15,9 @@ import lombok.NoArgsConstructor;
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class DescriptionInfo {
     
-    private Long id;
+    private PrUserInfo author;
     private String path;
     private String body;
-    private String recordKey;
     private Integer fileIndex;
     private Integer position;
     private Integer startLine;
@@ -25,4 +25,19 @@ public class DescriptionInfo {
     private Integer line;
     private String side;
     private String diffHunk;
+    
+    public static DescriptionInfo fromRequest(PreparationDescriptionRequest request, PrUserInfo author) {
+        return DescriptionInfo.builder()
+                .author(author)
+                .path(request.getPath())
+                .body(request.getBody())
+                .fileIndex(request.getFileIndex() != null ? request.getFileIndex() : null)
+                .position(request.getPosition())
+                .startLine(request.getStartLine())
+                .startSide(request.getStartSide())
+                .line(request.getLine())
+                .side(request.getSide())
+                .diffHunk(request.getDiffHunk())
+                .build();
+    }
 }

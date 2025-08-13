@@ -12,25 +12,26 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PriorityResponse {
+
     private Long id;
-    private int idx;
+    private String level;
     private String title;
     private String content;
     private PullRequest pullRequest;
 
-    public static Priority of(PriorityResponse priorityResponse){
+    public static Priority of(PriorityResponse priorityResponse) {
         return Priority.builder()
-                .idx(priorityResponse.getIdx())
+                .level(priorityResponse.getLevel())
                 .content(priorityResponse.getContent())
                 .title(priorityResponse.getTitle())
                 .pullRequest(priorityResponse.getPullRequest())
                 .build();
     }
 
-    public static PriorityResponse fromEntity(Priority priority){
+    public static PriorityResponse fromEntity(Priority priority) {
         return PriorityResponse.builder()
                 .id(priority.getId())
-                .idx(priority.getIdx())
+                .level(priority.getLevel())
                 .title(priority.getTitle())
                 .content(priority.getContent())
                 .pullRequest(priority.getPullRequest())

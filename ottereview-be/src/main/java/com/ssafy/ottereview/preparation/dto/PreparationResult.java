@@ -62,4 +62,5 @@ public class PreparationResult {
     public void enrollBody(String body) {
         this.body = body;
     }
+    
 }

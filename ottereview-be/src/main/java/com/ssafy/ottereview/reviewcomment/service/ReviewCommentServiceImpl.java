@@ -17,8 +17,6 @@ import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
-import java.time.Duration;
-import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,14 +24,17 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import reactor.util.function.Tuple2;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -51,79 +52,29 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     @Override
     @Transactional
     public List<ReviewCommentResponse> createComments(Long reviewId,
-            ReviewCommentCreateRequest reviewCommentCreateRequest,
-            MultipartFile[] files,
-            Long userId) {
+                                                      ReviewCommentCreateRequest request,
+                                                      MultipartFile[] files,
+                                                      Long userId) {
 
         log.info("댓글 일괄 작성 시작 - Review: {}, User: {}, 댓글 수: {}, 파일 수: {}",
-                reviewId, userId, reviewCommentCreateRequest.getComments().size(),
+                reviewId, userId, request.getComments().size(),
                 files != null ? files.length : 0);
 
         List<String> uploadedFileKeys = Collections.synchronizedList(new ArrayList<>());
 
         try {
-            // 엔티티 조회
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
             Review review = reviewRepository.findById(reviewId)
                     .orElseThrow(() -> new BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND));
 
-            // 모든 댓글을 병렬로 처리 후 .block()으로 결과 기다림
-            List<ReviewComment> comments = Flux.fromIterable(reviewCommentCreateRequest.getComments())
-                    .flatMap(commentItem -> {
-                        // 파일이 있으면 AI 처리 + S3 업로드, 없으면 바로 댓글 생성
-                        if (commentItem.getFileIndex() != null && files != null &&
-                                commentItem.getFileIndex() < files.length) {
-
-                            MultipartFile file = files[commentItem.getFileIndex()];
-                            if (file != null && !file.isEmpty()) {
-                                // AI 처리와 S3 업로드를 병렬로
-                                Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
-                                Mono<String> s3Upload = Mono.fromCallable(() -> {
-                                    String key = s3Service.uploadFile(file, reviewId);
-                                    uploadedFileKeys.add(key);
-                                    return key;
-                                }).subscribeOn(Schedulers.boundedElastic());
-
-                                return Mono.zip(aiProcessing, s3Upload)
-                                        .map(tuple -> ReviewComment.builder()
-                                                .user(user)
-                                                .review(review)
-                                                .path(commentItem.getPath())
-                                                .body(tuple.getT1()) // AI 처리된 텍스트
-                                                .recordKey(tuple.getT2()) // S3 키
-                                                .position(commentItem.getPosition())
-                                                .line(commentItem.getLine())
-                                                .startLine(commentItem.getStartLine())
-                                                .startSide(commentItem.getStartSide())
-                                                .side(commentItem.getSide())
-                                                .githubCreatedAt(LocalDateTime.now())
-                                                .githubUpdatedAt(LocalDateTime.now())
-                                                .build());
-                            }
-                        }
-
-                        // 파일이 없는 경우 바로 댓글 생성
-                        return Mono.just(ReviewComment.builder()
-                                .user(user)
-                                .review(review)
-                                .path(commentItem.getPath())
-                                .body(commentItem.getBody())
-                                .recordKey(null)
-                                .position(commentItem.getPosition())
-                                .line(commentItem.getLine())
-                                .startLine(commentItem.getStartLine())
-                                .startSide(commentItem.getStartSide())
-                                .side(commentItem.getSide())
-                                .githubCreatedAt(LocalDateTime.now())
-                                .githubUpdatedAt(LocalDateTime.now())
-                                .build());
-                    }, 5) // 최대 5개 동시 처리
+            List<ReviewComment> comments = Flux.fromIterable(request.getComments())
+                    .flatMap(item -> createCommentMono(item, files, user, review, uploadedFileKeys), 5)
                     .collectList()
-                    .block(Duration.ofMinutes(10)); // 최대 10분 대기
+                    .block(Duration.ofMinutes(10));
 
-            // DB 저장
             List<ReviewComment> savedComments = reviewCommentRepository.saveAll(comments);
+
             log.info("댓글 일괄 작성 완료 - 생성된 댓글 수: {}", savedComments.size());
 
             return savedComments.stream()
@@ -131,15 +82,73 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     .collect(Collectors.toList());
 
         } catch (Exception e) {
-            log.error("댓글 일괄 작성 중 오류 발생: {}", e.getMessage());
-            // 에러 시 업로드된 파일 정리
-            if (!uploadedFileKeys.isEmpty()) {
-                s3Service.cleanupUploadedFiles(uploadedFileKeys);
-            }
+            log.error("댓글 일괄 작성 중 오류 발생", e);
+            cleanupUploadedFiles(uploadedFileKeys);
             throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_CREATE_FAILED);
         }
     }
 
+    private boolean hasFile(ReviewCommentCreateRequest.CommentItem item, MultipartFile[] files) {
+        return item.getFileIndex() != null &&
+                files != null &&
+                item.getFileIndex() < files.length &&
+                files[item.getFileIndex()] != null &&
+                !files[item.getFileIndex()].isEmpty();
+    }
+
+    private Mono<ReviewComment> createCommentMono(ReviewCommentCreateRequest.CommentItem item,
+                                                  MultipartFile[] files,
+                                                  User user,
+                                                  Review review,
+                                                  List<String> uploadedFileKeys) {
+        if (hasFile(item, files)) {
+            MultipartFile file = files[item.getFileIndex()];
+            return processFile(file, review.getId(), uploadedFileKeys)
+                    .map(tuple -> buildComment(item, user, review, tuple.getT1(), tuple.getT2()));
+        } else {
+            return Mono.just(buildComment(item, user, review, item.getBody(), null));
+        }
+    }
+
+    private Mono<Tuple2<String, String>> processFile(MultipartFile file,
+                                                     Long referenceId,
+                                                     List<String> uploadedFileKeys) {
+        Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
+        Mono<String> s3Upload = Mono.fromCallable(() -> {
+            String key = s3Service.uploadFile(file, referenceId);
+            uploadedFileKeys.add(key);
+            return key;
+        }).subscribeOn(Schedulers.boundedElastic());
+
+        return Mono.zip(aiProcessing, s3Upload);
+    }
+
+    private ReviewComment buildComment(ReviewCommentCreateRequest.CommentItem item,
+                                       User user,
+                                       Review review,
+                                       String body,
+                                       String recordKey) {
+        return ReviewComment.builder()
+                .user(user)
+                .review(review)
+                .path(item.getPath())
+                .body(body)
+                .recordKey(recordKey)
+                .position(item.getPosition())
+                .line(item.getLine())
+                .startLine(item.getStartLine())
+                .startSide(item.getStartSide())
+                .side(item.getSide())
+                .githubCreatedAt(LocalDateTime.now())
+                .githubUpdatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    private void cleanupUploadedFiles(List<String> uploadedFileKeys) {
+        if (!uploadedFileKeys.isEmpty()) {
+            s3Service.cleanupUploadedFiles(uploadedFileKeys);
+        }
+    }
 
     @Override
     @Transactional
@@ -148,128 +157,73 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
         ReviewComment existingComment = reviewCommentRepository.findById(commentId)
                 .orElseThrow(() -> new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_NOT_FOUND));
 
-        // 작성자 검증
         if (!existingComment.getUser().getId().equals(userId)) {
-            throw new BusinessException(
-                    ReviewCommentErrorCode.REVIEW_COMMENT_NOT_AUTHORIZED);
+            throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_NOT_AUTHORIZED);
         }
 
-        String newBody = existingComment.getBody();
-        String newRecordKey = existingComment.getRecordKey();
-        String oldRecordKey = existingComment.getRecordKey(); // 롤백용 백업
+        String oldRecordKey = existingComment.getRecordKey();
+        List<String> uploadedFileKeys = Collections.synchronizedList(new ArrayList<>());
 
-        // 파일이 있으면 파일 처리, 없으면 텍스트만 처리
-        if (file != null && !file.isEmpty()) {
-            try {
-                // 1단계: 새 파일 먼저 업로드
-                log.info("댓글 수정 - 새 파일 업로드 시작: CommentId: {}, File: {}",
-                        commentId, file.getOriginalFilename());
+        try {
+            Mono<ReviewComment> commentMono;
 
-                newRecordKey = s3Service.uploadFile(file, commentId);
-                newBody = aiAudioProcessingService.processAudioFile(file).block();  // aiService.convertWithWhisper(file);
+            // 파일이 있으면 processFile → buildComment
+            if (file != null && !file.isEmpty()) {
+                commentMono = processFile(file, commentId, uploadedFileKeys)
+                        .map(tuple -> buildComment(
+                                        ReviewCommentCreateRequest.CommentItem.builder()
+                                                .path(existingComment.getPath())
+                                                .position(existingComment.getPosition())
+                                                .line(existingComment.getLine())
+                                                .startLine(existingComment.getStartLine())
+                                                .startSide(existingComment.getStartSide())
+                                                .side(existingComment.getSide())
+                                                .body(tuple.getT1())
+                                                .build(),
+                                        existingComment.getUser(),
+                                        existingComment.getReview(),
+                                        tuple.getT1(),
+                                        tuple.getT2()
+                                ).toBuilder()
+                                        .id(existingComment.getId())
+                                        .githubId(existingComment.getGithubId())
+                                        .diffHunk(existingComment.getDiffHunk())
+                                        .githubCreatedAt(existingComment.getGithubCreatedAt())
+                                        .githubUpdatedAt(LocalDateTime.now())
+                                        .build()
+                        );
+            } else {
+                // 텍스트만 수정
+                String body = commentUpdateRequest.getBody() != null
+                        ? commentUpdateRequest.getBody()
+                        : existingComment.getBody();
 
-                log.info("댓글 수정 - 새 파일 업로드 완료: CommentId: {}, NewRecordKey: {}",
-                        commentId, newRecordKey);
-
-                // 2단계: DB 업데이트 시도
-                ReviewComment updatedComment = ReviewComment.builder()
-                        .id(existingComment.getId())
-                        .user(existingComment.getUser())
-                        .githubId(existingComment.getGithubId())
-                        .review(existingComment.getReview())
-                        .path(existingComment.getPath())
-                        .side(existingComment.getSide())
-                        .diffHunk(existingComment.getDiffHunk())
-                        .body(newBody)
-                        .line(existingComment.getLine())
-                        .startLine(existingComment.getStartLine())
-                        .startLine(existingComment.getStartLine())
-                        .recordKey(newRecordKey)
-                        .position(existingComment.getPosition())
-                        .githubCreatedAt(existingComment.getGithubCreatedAt())
-                        .githubUpdatedAt(LocalDateTime.now())
-                        .build();
-
-                try {
-                    reviewCommentRepository.save(updatedComment);
-                    log.info("댓글 수정 - DB 업데이트 완료: CommentId: {}", commentId);
-
-                    // GitHub API 호출
-                    githubUpdateComment(updatedComment, newBody);
-
-                    // 3단계: DB 업데이트 성공 후 기존 파일 삭제
-                    if (oldRecordKey != null && !oldRecordKey.isEmpty() && !oldRecordKey.equals(
-                            newRecordKey)) {
-                        try {
-                            s3Service.deleteFile(oldRecordKey);
-                            log.info("댓글 수정 - 기존 파일 삭제 완료: CommentId: {}, OldRecordKey: {}",
-                                    commentId, oldRecordKey);
-                        } catch (Exception oldFileDeleteException) {
-                            // 기존 파일 삭제 실패는 로그만 남기고 계속 진행 (데이터 정합성에는 영향 없음)
-                            log.error(
-                                    "댓글 수정 - 기존 파일 삭제 실패 (데이터 정합성 유지됨): CommentId: {}, OldRecordKey: {}, 오류: {}",
-                                    commentId, oldRecordKey, oldFileDeleteException.getMessage());
-                         
-                        }
-                    }
-
-                    return ReviewCommentResponse.from(updatedComment);
-
-                } catch (Exception dbException) {
-                    log.error("댓글 수정 - DB 업데이트 실패, 새 파일 정리 시작: CommentId: {}, 오류: {}",
-                            commentId, dbException.getMessage());
-
-                    // DB 업데이트 실패 시 새로 업로드한 파일 정리
-                    try {
-                        s3Service.deleteFile(newRecordKey);
-                        log.info("댓글 수정 - 보상 트랜잭션 완료: 새 파일 정리됨: {}", newRecordKey);
-                    } catch (Exception cleanupException) {
-                        log.error("댓글 수정 - 보상 트랜잭션 실패: 새 파일 정리 실패: {}, 오류: {}",
-                                newRecordKey, cleanupException.getMessage());
-                    }
-
-                    throw new RuntimeException(
-                            "댓글 수정 중 DB 업데이트에 실패했습니다: " + dbException.getMessage(), dbException);
-                }
-
-            } catch (Exception fileUploadException) {
-                log.error("댓글 수정 - 파일 업로드 실패: CommentId: {}, 오류: {}",
-                        commentId, fileUploadException.getMessage());
-                throw new RuntimeException(
-                        "댓글 수정 중 파일 업로드에 실패했습니다: " + fileUploadException.getMessage(),
-                        fileUploadException);
+                commentMono = Mono.just(
+                        existingComment.toBuilder()
+                                .body(body)
+                                .githubUpdatedAt(LocalDateTime.now())
+                                .build()
+                );
             }
 
-        } else if (commentUpdateRequest.getBody() != null) {
-            // 텍스트만 수정 (파일 변경 없음)
-            newBody = commentUpdateRequest.getBody();
+            ReviewComment updated = commentMono.block(Duration.ofMinutes(2));
+            reviewCommentRepository.save(updated);
 
-            ReviewComment updatedComment = ReviewComment.builder()
-                    .id(existingComment.getId())
-                    .user(existingComment.getUser())
-                    .review(existingComment.getReview())
-                    .githubId(existingComment.getGithubId())
-                    .path(existingComment.getPath())
-                    .body(newBody)
-                    .recordKey(newRecordKey) // 기존 recordKey 유지
-                    .position(existingComment.getPosition())
-                    .startLine(existingComment.getStartLine())
-                    .line(existingComment.getLine())
-                    .side(existingComment.getSide())
-                    .startSide(existingComment.getStartSide())
-                    .diffHunk(existingComment.getDiffHunk())
-                    .githubCreatedAt(existingComment.getGithubCreatedAt())
-                    .githubUpdatedAt(LocalDateTime.now())
-                    .build();
+            // GitHub 동기화
+            githubUpdateComment(updated, updated.getBody());
 
-            reviewCommentRepository.save(updatedComment);
+            // 기존 파일 삭제 (변경 시)
+            if (file != null && !file.isEmpty()
+                    && oldRecordKey != null
+                    && !oldRecordKey.equals(updated.getRecordKey())) {
+                s3Service.deleteFile(oldRecordKey);
+            }
 
-            // 깃허브 동기화
-            githubUpdateComment(updatedComment, newBody);
-            return ReviewCommentResponse.from(updatedComment);
-        } else {
-            // 변경사항 없음
-            return ReviewCommentResponse.from(existingComment);
+            return ReviewCommentResponse.from(updated);
+
+        } catch (Exception e) {
+            cleanupUploadedFiles(uploadedFileKeys);
+            throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_UPDATE_FAILED);
         }
     }
 
@@ -346,6 +300,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
         }
     }
 
+
     @Override
     @Transactional(readOnly = true)
     public List<ReviewCommentResponse> getCommentsByReviewId(Long reviewId) {
@@ -392,7 +347,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
      */
     private ReviewCommentResponse createResponseWithVoiceUrl(ReviewComment comment) {
         ReviewCommentResponse response = ReviewCommentResponse.from(comment);
-        
+
         // recordKey가 있으면 Pre-signed URL 생성
         if (comment.getRecordKey() != null && !comment.getRecordKey().trim().isEmpty()) {
             try {
@@ -401,12 +356,12 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                         .voiceFileUrl(voiceUrl)
                         .build();
             } catch (Exception e) {
-                log.warn("음성 파일 URL 생성 실패 - commentId: {}, recordKey: {}, error: {}", 
-                    comment.getId(), comment.getRecordKey(), e.getMessage());
+                log.warn("음성 파일 URL 생성 실패 - commentId: {}, recordKey: {}, error: {}",
+                        comment.getId(), comment.getRecordKey(), e.getMessage());
                 // URL 생성 실패해도 응답은 반환
             }
         }
-        
+
         return response;
     }
 }

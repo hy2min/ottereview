@@ -35,7 +35,6 @@ const Chat = ({ roomId }) => {
       },
       () => {
         setIsConnected(true)
-        console.log('채팅 연결 성공')
 
         if (stompClientRef.current?.connected) {
           stompClientRef.current.unsubscribe('chat-sub')

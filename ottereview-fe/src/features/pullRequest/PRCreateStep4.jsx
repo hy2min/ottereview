@@ -1,33 +1,69 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 
+import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 
-const PRCreateStep4 = ({ goToStep, formData, updateFormData, validationBranches }) => {
-  const [selectedReviewers, setSelectedReviewers] = useState([])
+const PRCreateStep4 = ({
+  goToStep,
+  repoId,
+  validationBranches,
+  aiOthers,
+  selectedReviewers,
+  setSelectedReviewers,
+}) => {
+  const reviewers = useMemo(() => validationBranches?.preReviewers || [], [validationBranches])
+  const aiRecommendedReviewers = useMemo(
+    () => aiOthers?.reviewers?.result?.reviewers || [],
+    [aiOthers]
+  )
 
-  const reviewers = validationBranches?.preReviewers || []
+  // AI 추천 리뷰어인지 확인하는 함수
+  const isAIRecommended = (githubUsername) => {
+    return aiRecommendedReviewers.some((aiReviewer) => aiReviewer.githubUsername === githubUsername)
+  }
 
-  // 컴포넌트 마운트 시 기존 formData의 reviewers로 초기화
+  // 컴포넌트 마운트 시 초기화 (이미 선택된 것이 있으면 유지)
   useEffect(() => {
     console.log('reviewers:', reviewers)
-    setSelectedReviewers(formData.reviewers || [])
-  }, [formData.reviewers, reviewers])
+    console.log('selectedReviewers:', selectedReviewers)
+  }, [reviewers, selectedReviewers])
 
   const handleSelect = (githubUsername) => {
-    if (!selectedReviewers.includes(githubUsername)) {
-      setSelectedReviewers([...selectedReviewers, githubUsername])
+    // 이미 선택된 리뷰어인지 확인 (객체 배열에서)
+    const isAlreadySelected = selectedReviewers.some((r) => r.githubUsername === githubUsername)
+    if (!isAlreadySelected) {
+      const reviewerToAdd = reviewers.find((r) => r.githubUsername === githubUsername)
+      if (reviewerToAdd) {
+        setSelectedReviewers([...selectedReviewers, reviewerToAdd])
+      }
     }
   }
 
   const handleDeselect = (githubUsername) => {
-    setSelectedReviewers(selectedReviewers.filter((r) => r !== githubUsername))
+    setSelectedReviewers(selectedReviewers.filter((r) => r.githubUsername !== githubUsername))
   }
 
-  const handleNextStep = () => {
-    updateFormData({ reviewers: selectedReviewers })
-    console.log(formData)
-    goToStep(5)
+  const handleNextStep = async () => {
+    try {
+      // 객체 배열에서 ID만 추출 (find 불필요!)
+      const selectedReviewerIds = selectedReviewers.map((reviewer) => reviewer.id)
+
+      // 추가 정보 저장 API 호출
+      const additionalInfo = {
+        source: validationBranches?.source,
+        target: validationBranches?.target,
+        reviewers: selectedReviewerIds,
+      }
+
+      await savePRAdditionalInfo(repoId, additionalInfo)
+
+      console.log('선택된 리뷰어 IDs:', selectedReviewerIds)
+      goToStep(5)
+    } catch (error) {
+      console.error('리뷰어 정보 저장 실패:', error)
+    }
   }
 
   return (
@@ -38,13 +74,30 @@ const PRCreateStep4 = ({ goToStep, formData, updateFormData, validationBranches 
           <div className="flex-1 overflow-y-auto">
             {reviewers.length > 0 ? (
               reviewers
-                .filter((reviewer) => !selectedReviewers.includes(reviewer.githubUsername))
+                .filter(
+                  (reviewer) =>
+                    !selectedReviewers.some(
+                      (selected) => selected.githubUsername === reviewer.githubUsername
+                    )
+                )
                 .map((reviewer) => (
-                  <div key={reviewer.githubUsername} className="flex justify-between my-4 mr-2">
-                    <span>{reviewer.githubUsername}</span>
+                  <div
+                    key={reviewer.githubUsername}
+                    className="flex justify-between items-center my-4 mr-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span>{reviewer.githubUsername}</span>
+                      {isAIRecommended(reviewer.githubUsername) && (
+                        <Badge variant="primary" size="md">
+                          AI 추천
+                        </Badge>
+                      )}
+                    </div>
                     <Button
                       onClick={() => handleSelect(reviewer.githubUsername)}
-                      disabled={selectedReviewers.includes(reviewer.githubUsername)}
+                      disabled={selectedReviewers.some(
+                        (selected) => selected.githubUsername === reviewer.githubUsername
+                      )}
                       variant=""
                       size="sm"
                     >
@@ -62,10 +115,24 @@ const PRCreateStep4 = ({ goToStep, formData, updateFormData, validationBranches 
           <h3 className="mb-2 flex-shrink-0">선택된 리뷰어</h3>
           <div className="flex-1 overflow-y-auto">
             {selectedReviewers.length > 0 ? (
-              selectedReviewers.map((githubUsername) => (
-                <div key={githubUsername} className="flex justify-between my-4 mr-2">
-                  <span>{githubUsername}</span>
-                  <Button onClick={() => handleDeselect(githubUsername)} variant="" size="sm">
+              selectedReviewers.map((reviewer) => (
+                <div
+                  key={reviewer.githubUsername}
+                  className="flex justify-between items-center my-4 mr-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <span>{reviewer.githubUsername}</span>
+                    {isAIRecommended(reviewer.githubUsername) && (
+                      <Badge variant="primary" size="xs">
+                        AI
+                      </Badge>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => handleDeselect(reviewer.githubUsername)}
+                    variant=""
+                    size="sm"
+                  >
                     제거
                   </Button>
                 </div>

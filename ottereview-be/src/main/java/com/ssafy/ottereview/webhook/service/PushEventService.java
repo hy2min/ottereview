@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.preparation.service.PreparationService;
+import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.PushEventDto;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @Slf4j
@@ -21,7 +23,8 @@ public class PushEventService {
     private final ObjectMapper objectMapper;
     private final GithubApiClient githubApiClient;
     private final PreparationService prPreparationService;
-    
+    private final EventSendController eventSendController;
+
     public void processPushEvent(String payload) {
         log.info("Push Event 프로세스 실행");
         try {
@@ -33,6 +36,8 @@ public class PushEventService {
             
             // Push 이벤트 기본 정보 추출
             PushEventDto pushInfo = extractPushEventInfo(json);
+
+            eventSendController.push("push", pushInfo);
             
         } catch (Exception e) {
             throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);

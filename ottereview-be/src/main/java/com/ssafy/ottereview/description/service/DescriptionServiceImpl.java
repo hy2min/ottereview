@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.description.service;
 
 import com.ssafy.ottereview.ai.service.AiAudioProcessingService;
+import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
@@ -8,9 +9,11 @@ import com.ssafy.ottereview.description.dto.DescriptionUpdateRequest;
 import com.ssafy.ottereview.description.entity.Description;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -53,12 +56,14 @@ public class DescriptionServiceImpl implements DescriptionService {
         if (file != null && !file.isEmpty()) {
             // AI 처리와 S3 업로드를 병렬로 수행
             Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
-            Mono<String> s3Upload = Mono.fromCallable(() -> 
-                s3Service.uploadFile(file, request.getPullRequestId())
-            ).subscribeOn(Schedulers.boundedElastic());
+            Mono<String> s3Upload = Mono.fromCallable(() ->
+                            s3Service.uploadFile(file, request.getPullRequestId())
+                    )
+                    .subscribeOn(Schedulers.boundedElastic());
 
-            var result = Mono.zip(aiProcessing, s3Upload).block();
-            
+            var result = Mono.zip(aiProcessing, s3Upload)
+                    .block();
+
             description = Description.builder()
                     .pullRequest(pullRequest)
                     .user(user)
@@ -97,12 +102,14 @@ public class DescriptionServiceImpl implements DescriptionService {
     @Transactional(propagation = Propagation.MANDATORY)
     public List<DescriptionResponse> createDescriptionsBulk(DescriptionBulkCreateRequest request, Long userId, MultipartFile[] files) {
         log.info("Description 일괄 생성 시작 - PullRequest: {}, User: {}, 설명 수: {}, 파일 수: {}",
-                request.getPullRequestId(), userId, 
-                request.getDescriptions() != null ? request.getDescriptions().size() : 0,
+                request.getPullRequestId(), userId,
+                request.getDescriptions() != null ? request.getDescriptions()
+                        .size() : 0,
                 files != null ? files.length : 0);
 
         // null이나 빈 리스트 처리
-        if (request.getDescriptions() == null || request.getDescriptions().isEmpty()) {
+        if (request.getDescriptions() == null || request.getDescriptions()
+                .isEmpty()) {
             log.info("Description 목록이 비어있음 - 빈 리스트 반환");
             return Collections.emptyList();
         }
@@ -112,9 +119,9 @@ public class DescriptionServiceImpl implements DescriptionService {
         try {
             // 엔티티 조회
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
             PullRequest pullRequest = pullRequestRepository.findById(request.getPullRequestId())
-                    .orElseThrow(() -> new IllegalArgumentException("PullRequest not found: " + request.getPullRequestId()));
+                    .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
 
             // 모든 설명을 병렬로 처리 (ReviewCommentService 패턴을 따름)
             List<Description> descriptions = Flux.fromIterable(request.getDescriptions())
@@ -128,10 +135,11 @@ public class DescriptionServiceImpl implements DescriptionService {
                                 // AI 처리와 S3 업로드를 병렬로
                                 Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
                                 Mono<String> s3Upload = Mono.fromCallable(() -> {
-                                    String key = s3Service.uploadDesFile(file, request.getPullRequestId());
-                                    uploadedFileKeys.add(key);
-                                    return key;
-                                }).subscribeOn(Schedulers.boundedElastic());
+                                            String key = s3Service.uploadDesFile(file, request.getPullRequestId());
+                                            uploadedFileKeys.add(key);
+                                            return key;
+                                        })
+                                        .subscribeOn(Schedulers.boundedElastic());
 
                                 return Mono.zip(aiProcessing, s3Upload)
                                         .map(tuple -> Description.builder()
@@ -187,7 +195,10 @@ public class DescriptionServiceImpl implements DescriptionService {
     @Override
     @Transactional(readOnly = true)
     public List<DescriptionResponse> getDescriptionsByPullRequestId(Long pullRequestId) {
-        List<Description> descriptions = descriptionRepository.findByPullRequestId(pullRequestId);
+
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        List<Description> descriptions = descriptionRepository.findAllByPullRequest(pullRequest);
         return descriptions.stream()
                 .map(this::createResponseWithVoiceUrl)
                 .collect(Collectors.toList());
@@ -209,7 +220,9 @@ public class DescriptionServiceImpl implements DescriptionService {
         Description description = descriptionRepository.findById(descriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Description not found: " + descriptionId));
 
-        if (!description.getUser().getId().equals(userId)) {
+        if (!description.getUser()
+                .getId()
+                .equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
 
@@ -224,11 +237,14 @@ public class DescriptionServiceImpl implements DescriptionService {
 
             // AI 처리와 S3 업로드를 병렬로 수행
             Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
-            Mono<String> s3Upload = Mono.fromCallable(() -> 
-                s3Service.uploadDesFile(file, description.getPullRequest().getId())
-            ).subscribeOn(Schedulers.boundedElastic());
+            Mono<String> s3Upload = Mono.fromCallable(() ->
+                            s3Service.uploadDesFile(file, description.getPullRequest()
+                                    .getId())
+                    )
+                    .subscribeOn(Schedulers.boundedElastic());
 
-            var result = Mono.zip(aiProcessing, s3Upload).block();
+            var result = Mono.zip(aiProcessing, s3Upload)
+                    .block();
             newBody = result.getT1();
             newRecordKey = result.getT2();
         }
@@ -248,7 +264,9 @@ public class DescriptionServiceImpl implements DescriptionService {
         Description description = descriptionRepository.findById(descriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Description not found: " + descriptionId));
 
-        if (!description.getUser().getId().equals(userId)) {
+        if (!description.getUser()
+                .getId()
+                .equals(userId)) {
             throw new IllegalArgumentException("권한이 없습니다.");
         }
 
