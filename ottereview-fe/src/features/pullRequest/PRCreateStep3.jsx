@@ -24,6 +24,29 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
+  
+  // 템플릿 정의
+  const templates = [
+    {
+      value: 'basic',
+      label: '기본 템플릿',
+      content: `## PR 유형
+- [ ] 기능 추가
+- [ ] 기능 삭제
+- [ ] 버그 수정
+- [ ] 리팩토링
+- [ ] 의존성, 환경 변수, 빌드 관련 코드 업데이트
+
+## 작업 내용 및 변경 사항
+작업 내용 및 변경사항 작성
+
+## 이슈 링크
+close #이슈번호
+
+## 참고사항
+참고사항. 없을 시 삭제`
+    }
+  ]
 
   // 유저 정보 가져오기
   const user = useUserStore((state) => state.user)
@@ -54,6 +77,20 @@ const PRCreateStep3 = ({
 
   const handleTogglePriorities = () => {
     setShowPriorities(!showPriorities)
+  }
+
+  // 템플릿 선택 처리
+  const handleTemplateChange = (selectedValue) => {
+    if (selectedValue === 'remove') {
+      // 템플릿 제거 - 내용 전체 초기화
+      setPrBody('')
+    } else if (selectedValue) {
+      // 템플릿 적용
+      const template = templates.find(t => t.value === selectedValue)
+      if (template) {
+        setPrBody(template.content)
+      }
+    }
   }
 
   const handleNextStep = async () => {
@@ -138,14 +175,31 @@ const PRCreateStep3 = ({
                 />
               </div>
               <div className="flex-1 flex flex-col min-h-0">
-                <InputBox
-                  className="flex-1 resize-none"
-                  label="PR 설명"
-                  as="textarea"
-                  markdown={true}
-                  value={prBody}
-                  onChange={(e) => setPrBody(e.target.value)}
-                />
+                <div className="flex items-center mb-1 space-x-4">
+                  <label className="block font-medium">PR 설명</label>
+                  <div className="flex items-center gap-2">
+                    <InputBox
+                      as="select"
+                      value=""
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      className="text-sm -mt-[4px]"
+                      options={[
+                        { value: '', label: '템플릿 선택' },
+                        ...templates.map(t => ({ value: t.value, label: t.label })),
+                        { value: 'remove', label: '템플릿 제거' }
+                      ]}
+                    />
+                  </div>
+                </div>
+                <div className="flex-1 min-h-0">
+                  <InputBox
+                    className="flex-1 resize-none"
+                    as="textarea"
+                    markdown={true}
+                    value={prBody}
+                    onChange={(e) => setPrBody(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           </Box>
