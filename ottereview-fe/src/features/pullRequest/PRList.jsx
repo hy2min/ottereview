@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import Box from '../../components/Box'
-import InputBox from '../../components/InputBox'
+import CustomSelect from '../../components/InputBox/CustomSelect'
 import PRCardCompact from './PRCardCompact'
 
 const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
@@ -19,14 +19,11 @@ const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
 
   return (
     <Box shadow className="w-full h-[70vh] flex flex-col">
-      <div className="flex mb-2 space-x-8">
-        <div className="flex-1">
-          <h2 className="text-xl">진행중인 PR</h2>
-        </div>
-
-        <div className="w-40 -mt-[9px] mr-4">
-          <InputBox
-            as="select"
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl">진행중인 PR</h2>
+        
+        <div className="w-48">
+          <CustomSelect
             options={[
               { label: '전체 PR', value: 'all' },
               { label: '내가 작성한 PR', value: 'authored' },
@@ -34,6 +31,7 @@ const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
             ]}
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
+            placeholder="PR 유형 선택"
           />
         </div>
       </div>
