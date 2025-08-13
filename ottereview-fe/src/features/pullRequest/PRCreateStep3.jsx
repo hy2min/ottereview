@@ -17,6 +17,7 @@ const PRCreateStep3 = ({
   validationBranches,
   reviewComments,
   onAddComment,
+  onRemoveComment,
   fileComments = {},
   prTitle,
   setPrTitle,
@@ -254,6 +255,7 @@ close #이슈번호
           files={validationBranches?.files || []}
           showDiffHunk={true}
           onAddComment={onAddComment}
+          onRemoveComment={onRemoveComment}
           fileComments={fileComments}
         />
       </Box>

@@ -12,9 +12,15 @@ export const fetchReviewerPRs = async () => {
   return res.data
 }
 
-// 레포에 있는 전체 PR 목록
-export const fetchRepoPRList = async (repoId) => {
-  const res = await api.get(`/api/repositories/${repoId}/pull-requests`)
+// 레포의 PR 목록 (커서 기반)
+export const fetchRepoPRList = async (repoId, { limit = 20, cursor = '' } = {}) => {
+  const res = await api.get(`/api/repositories/${repoId}/pull-requests`, {
+    params: {
+      limit,
+      size: limit,
+      cursor, // null이면 첫 페이지
+    },
+  })
   return res.data
 }
 
@@ -24,19 +30,20 @@ export const fetchPRDetail = async ({ repoId, prId }) => {
   return res.data
 }
 
-// PR descriptions 가져오기
-export const fetchPRDescriptions = async (prId) => {
-  const res = await api.get(`/api/pull-requests/${prId}/descriptions`)
-  return res.data
-}
-
 // PR 생성
-export const submitPR = async ({ source, target, repoId }) => {
+export const submitPR = async ({
+  source,
+  target,
+  repoId,
+  reviewComments = [],
+  audioFiles = [],
+}) => {
   const formDataObj = new FormData()
 
   const pullRequestData = {
     source,
     target,
+    reviewComments,
   }
 
   // Blob으로 JSON 데이터 생성
@@ -45,6 +52,13 @@ export const submitPR = async ({ source, target, repoId }) => {
   })
 
   formDataObj.append('pullRequest', pullRequestBlob)
+
+  // 음성 파일들을 mediaFiles로 추가
+  if (audioFiles && audioFiles.length > 0) {
+    audioFiles.forEach((file) => {
+      formDataObj.append('mediaFiles', file)
+    })
+  }
 
   const res = await api.post(`/api/repositories/${repoId}/pull-requests`, formDataObj, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -105,7 +119,7 @@ export const submitReview = async ({ accountId, repoId, prId, reviewData }) => {
 
   // 음성 파일들을 추가
   if (reviewData.files && reviewData.files.length > 0) {
-    reviewData.files.forEach((file, index) => {
+    reviewData.files.forEach((file) => {
       formData.append('files', file)
     })
   }
@@ -132,6 +146,17 @@ export const savePRAdditionalInfo = async (repoId, formData) => {
   return res.data
 }
 
+// AI 요약 생성
+export const generateAISummary = async ({ source, target, repoId }) => {
+  const payload = {
+    source,
+    target,
+    repo_id: repoId,
+  }
+  const res = await api.post(`/api/ai/summary`, payload)
+  return res.data
+}
+
 // PR 리뷰 목록 가져오기
 export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
   const res = await api.get(
@@ -150,12 +175,18 @@ export const doMerge = async ({ repoId, prId }) => {
   return res.data
 }
 
-export const closePR = async ({repoId, prId}) => {
+export const closePR = async ({ repoId, prId }) => {
   const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/close`)
   return res.data
 }
 
-export const reopenPR = async ({repoId, prId}) => {
+export const reopenPR = async ({ repoId, prId }) => {
   const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/reopen`)
+  return res.data
+}
+
+// PR descriptions 가져오기
+export const fetchPRDescriptions = async (prId) => {
+  const res = await api.get(`/api/pull-requests/${prId}/descriptions`)
   return res.data
 }
