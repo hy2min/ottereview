@@ -133,29 +133,16 @@ const ChatRoom = () => {
 
   return (
     <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#f8f9fa',
-        position: 'relative',
-      }}
+      className="h-screen flex flex-col theme-bg-tertiary relative"
     >
       {/* 헤더 */}
       <div
-        style={{
-          padding: '1rem 2rem',
-          borderBottom: '1px solid #e5e7eb',
-          backgroundColor: 'white',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          zIndex: 10,
-          flexShrink: 0,
-        }}
+        className="p-4 md:px-8 border-b theme-border theme-bg-secondary theme-shadow z-10 flex-shrink-0"
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="flex justify-between items-center">
           <div>
-            <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1f2937' }}>🧪 협업 개발실</h2>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#6b7280' }}>
+            <h2 className="m-0 text-2xl theme-text">🧪 협업 개발실</h2>
+            <p className="mt-1 mb-0 text-sm theme-text-secondary">
               🔒 Room ID: <strong>{roomId}</strong>
               {roomInfo && (
                 <>
@@ -167,20 +154,14 @@ const ChatRoom = () => {
           </div>
 
           {/* 도구 버튼들 */}
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="flex gap-2">
             <button
               onClick={() => setShowWhiteboard(!showWhiteboard)}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: showWhiteboard ? '#3b82f6' : 'white',
-                color: showWhiteboard ? 'white' : '#374151',
-                border: '1px solid #d1d5db',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                transition: 'all 0.2s',
-              }}
+              className={`px-4 py-2 border theme-border rounded-md cursor-pointer text-sm font-medium transition-all duration-200 ${
+                showWhiteboard 
+                  ? 'bg-blue-600 text-white' 
+                  : 'theme-bg-primary theme-text hover:theme-bg-tertiary'
+              }`}
             >
               {showWhiteboard ? '📝 코드편집기' : '🎨 화이트보드'}
             </button>
@@ -188,18 +169,11 @@ const ChatRoom = () => {
         </div>
 
         {/* 상태 표시 */}
-        <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        <div className="mt-3 flex gap-2 flex-wrap">
           {/* 로딩 상태 */}
           {loading && (
             <div
-              style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: '#dbeafe',
-                border: '1px solid #3b82f6',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                color: '#1e40af',
-              }}
+              className="px-3 py-2 bg-blue-100 dark:bg-blue-900 border border-blue-500 dark:border-blue-400 rounded-md text-sm text-blue-700 dark:text-blue-300"
             >
               🔄 미팅룸 정보 로딩 중...
             </div>
@@ -208,14 +182,7 @@ const ChatRoom = () => {
           {/* 에러 상태 */}
           {error && (
             <div
-              style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: '#fee2e2',
-                border: '1px solid #ef4444',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                color: '#dc2626',
-              }}
+              className="px-3 py-2 bg-red-100 dark:bg-red-900 border border-red-500 dark:border-red-400 rounded-md text-sm text-red-700 dark:text-red-300"
             >
               ❌ {error}
             </div>
@@ -224,13 +191,7 @@ const ChatRoom = () => {
           {/* 충돌 파일 정보 */}
           {!loading && conflictFiles.length > 0 && (
             <div
-              style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: '#fef3c7',
-                border: '1px solid #f59e0b',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-              }}
+              className="px-3 py-2 bg-yellow-100 dark:bg-yellow-900 border border-yellow-500 dark:border-yellow-400 rounded-md text-sm text-yellow-700 dark:text-yellow-300"
             >
               ⚡ <strong>충돌 파일 ({conflictFiles.length}개):</strong> {conflictFiles.join(', ')}
             </div>
@@ -239,14 +200,7 @@ const ChatRoom = () => {
           {/* 파일 없음 상태 */}
           {!loading && !error && conflictFiles.length === 0 && (
             <div
-              style={{
-                padding: '0.5rem 0.75rem',
-                backgroundColor: '#f3f4f6',
-                border: '1px solid #9ca3af',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                color: '#6b7280',
-              }}
+              className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded-md text-sm text-gray-600 dark:text-gray-300"
             >
               📭 편집할 파일이 없습니다
             </div>
@@ -256,27 +210,13 @@ const ChatRoom = () => {
 
       {/* 메인 컨텐츠 영역 */}
       <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          overflow: 'hidden',
-          minHeight: 0,
-        }}
+        className="flex-1 flex overflow-hidden min-h-0"
       >
         {/* 중앙 메인 영역 - 코드편집기 */}
         <div
-          style={{
-            flex: 1,
-            position: 'relative',
-            backgroundColor: 'white',
-            margin: '1rem 0 1rem 1rem',
-            borderRadius: '8px',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-            minHeight: 0,
-          }}
+          className="flex-1 relative theme-bg-secondary m-4 ml-4 mr-0 rounded-lg theme-shadow overflow-hidden min-h-0"
         >
-          <div style={{ height: '100%' }}>
+          <div className="h-full">
             {!loading && conflictFiles.length > 0 ? (
               <CodeEditor
                 conflictFiles={conflictFiles}
@@ -284,37 +224,27 @@ const ChatRoom = () => {
               />
             ) : (
               <div
-                style={{
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  gap: '1rem',
-                  color: '#6b7280',
-                  fontSize: '1.125rem',
-                  padding: '2rem',
-                }}
+                className="h-full flex items-center justify-center flex-col gap-4 theme-text-secondary text-lg p-8"
               >
                 {loading ? (
                   <>
-                    <div style={{ fontSize: '2rem' }}>📁</div>
+                    <div className="text-4xl">📁</div>
                     <div>미팅룸 정보를 불러오는 중...</div>
-                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                    <div className="text-sm theme-text-muted">
                       미팅룸 API에서 충돌 파일 정보를 가져오고 있습니다.
                     </div>
                   </>
                 ) : error ? (
                   <>
-                    <div style={{ fontSize: '2rem' }}>❌</div>
+                    <div className="text-4xl">❌</div>
                     <div>미팅룸 정보를 불러올 수 없습니다</div>
-                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>{error}</div>
+                    <div className="text-sm theme-text-muted">{error}</div>
                   </>
                 ) : (
                   <>
-                    <div style={{ fontSize: '2rem' }}>📭</div>
+                    <div className="text-4xl">📭</div>
                     <div>편집할 파일이 없습니다</div>
-                    <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                    <div className="text-sm theme-text-muted">
                       이 미팅룸에는 충돌 파일이 설정되어 있지 않습니다.
                     </div>
                   </>
@@ -326,45 +256,19 @@ const ChatRoom = () => {
 
         {/* 오른쪽 사이드바 - 채팅 & 음성 */}
         <div
-          style={{
-            width: '350px',
-            display: 'flex',
-            flexDirection: 'column',
-            margin: '1rem 1rem 1rem 0',
-            gap: '1rem',
-            minHeight: 0,
-            flexShrink: 0,
-          }}
+          className="w-80 flex flex-col m-4 mr-4 ml-0 gap-4 min-h-0 flex-shrink-0"
         >
           {/* 음성 채팅 - 고정 높이 */}
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              overflow: 'hidden',
-              height: '250px',
-              flexShrink: 0,
-            }}
+            className="theme-bg-secondary rounded-lg theme-shadow overflow-hidden h-64 flex-shrink-0"
           >
             <div
-              style={{
-                padding: '1rem',
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: '#f8f9fa',
-                height: '60px',
-                boxSizing: 'border-box',
-                flexShrink: 0,
-              }}
+              className="p-4 border-b theme-border theme-bg-tertiary h-15 box-border flex-shrink-0"
             >
-              <h3 style={{ margin: 0, fontSize: '1rem', color: '#374151' }}>🎤 음성 채팅</h3>
+              <h3 className="m-0 text-base theme-text">🎤 음성 채팅</h3>
             </div>
             <div
-              style={{
-                padding: '1rem',
-                height: 'calc(100% - 60px)',
-                overflow: 'auto',
-              }}
+              className="p-4 h-[calc(100%-60px)] overflow-auto"
             >
               {console.log('🎯 AudioChatRoom 렌더링 직전, roomId:', roomId)}
               <AudioChatRoom roomId={roomId} roomParticipants={roomInfo?.participants || []} />
@@ -374,35 +278,15 @@ const ChatRoom = () => {
 
           {/* 텍스트 채팅 - 나머지 공간 모두 사용 */}
           <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              minHeight: 0,
-            }}
+            className="theme-bg-secondary rounded-lg theme-shadow flex-1 flex flex-col overflow-hidden min-h-0"
           >
             <div
-              style={{
-                padding: '1rem',
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: '#f8f9fa',
-                flexShrink: 0,
-              }}
+              className="p-4 border-b theme-border theme-bg-tertiary flex-shrink-0"
             >
-              <h3 style={{ margin: 0, fontSize: '1rem', color: '#374151' }}>💬 채팅</h3>
+              <h3 className="m-0 text-base theme-text">💬 채팅</h3>
             </div>
             <div
-              style={{
-                flex: 1,
-                display: 'flex',
-                flexDirection: 'column',
-                overflow: 'hidden',
-                minHeight: 0,
-              }}
+              className="flex-1 flex flex-col overflow-hidden min-h-0"
             >
               <Chat roomId={roomId} />
             </div>
@@ -413,18 +297,7 @@ const ChatRoom = () => {
       {/* 화이트보드 전체화면 모달 */}
       {showWhiteboard && (
         <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            zIndex: 1000,
-            display: 'flex',
-            padding: '20px',
-            boxSizing: 'border-box',
-          }}
+          className="fixed inset-0 bg-black bg-opacity-70 z-[1000] flex p-5 box-border"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setShowWhiteboard(false)
@@ -432,78 +305,30 @@ const ChatRoom = () => {
           }}
         >
           <div
-            style={{
-              width: '100%',
-              height: '100%',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden',
-              position: 'relative',
-            }}
+            className="w-full h-full theme-bg-secondary rounded-xl shadow-2xl flex flex-col overflow-hidden relative"
           >
             <button
               onClick={() => setShowWhiteboard(false)}
-              style={{
-                position: 'absolute',
-                top: '15px',
-                right: '15px',
-                zIndex: 10,
-                padding: '8px 12px',
-                backgroundColor: '#ef4444',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '600',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
+              className="absolute top-4 right-4 z-10 px-3 py-2 bg-red-500 dark:bg-red-600 text-white border-none rounded-md cursor-pointer text-sm font-semibold shadow-md flex items-center gap-1 hover:bg-red-600 dark:hover:bg-red-700 transition-colors"
             >
               ✕ 닫기
             </button>
 
             <div
-              style={{
-                padding: '20px 20px 15px 20px',
-                borderBottom: '1px solid #e5e7eb',
-                backgroundColor: '#f8f9fa',
-              }}
+              className="px-5 py-4 pb-3 border-b theme-border theme-bg-tertiary"
             >
               <h3
-                style={{
-                  margin: 0,
-                  fontSize: '1.25rem',
-                  color: '#374151',
-                  fontWeight: '600',
-                  paddingRight: '100px',
-                }}
+                className="m-0 text-xl theme-text font-semibold pr-24"
               >
                 🎨 화이트보드 - Room {roomId}
               </h3>
             </div>
 
             <div
-              style={{
-                flex: 1,
-                position: 'relative',
-                overflow: 'auto',
-                padding: '10px',
-                minHeight: 0,
-              }}
+              className="flex-1 relative overflow-auto p-3 min-h-0"
             >
               <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  minHeight: '600px',
-                  position: 'relative',
-                }}
+                className="w-full h-full min-h-[600px] relative"
               >
                 <Whiteboard roomId={roomId} />
               </div>
