@@ -26,8 +26,6 @@ const PRCreateStep4 = ({
 
   // 컴포넌트 마운트 시 초기화 (이미 선택된 것이 있으면 유지)
   useEffect(() => {
-    console.log('reviewers:', reviewers)
-    console.log('selectedReviewers:', selectedReviewers)
   }, [reviewers, selectedReviewers])
 
   const handleSelect = (githubUsername) => {
@@ -54,12 +52,11 @@ const PRCreateStep4 = ({
       const additionalInfo = {
         source: validationBranches?.source,
         target: validationBranches?.target,
-        reviewers: selectedReviewerIds,
+        reviewers: selectedReviewerIds || [], // null 방지
       }
 
       await savePRAdditionalInfo(repoId, additionalInfo)
 
-      console.log('선택된 리뷰어 IDs:', selectedReviewerIds)
       goToStep(5)
     } catch (error) {
       console.error('리뷰어 정보 저장 실패:', error)
