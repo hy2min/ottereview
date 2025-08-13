@@ -214,7 +214,7 @@ const PRReview = () => {
   // 로딩 중일 때 표시
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-2xl">PR 정보를 불러오는 중{loadingDots}</p>
       </div>
     )
@@ -223,7 +223,7 @@ const PRReview = () => {
   // PR 정보가 없을 때 표시
   if (!prDetail) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-lg">PR 정보를 찾을 수 없습니다.</p>
       </div>
     )

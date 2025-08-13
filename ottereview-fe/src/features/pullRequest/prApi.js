@@ -139,3 +139,13 @@ export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
   )
   return res.data
 }
+
+export const IsMergable = async ({ repoId, prId }) => {
+  const res = await api.get(`/api/repositories/${repoId}/pull-requests/${prId}/merges`)
+  return res.data
+}
+
+export const doMerge = async ({ repoId, prId }) => {
+  const res = await api.get(`/api/repositories/${repoId}/pull-requests/${prId}/merges/doing`)
+  return res.data
+}
