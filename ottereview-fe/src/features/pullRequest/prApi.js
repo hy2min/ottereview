@@ -13,10 +13,11 @@ export const fetchReviewerPRs = async () => {
 }
 
 // 레포의 PR 목록 (커서 기반)
-export const fetchRepoPRList = async (repoId, { limit = 20, cursor = null } = {}) => {
+export const fetchRepoPRList = async (repoId, { limit = 20, cursor = '' } = {}) => {
   const res = await api.get(`/api/repositories/${repoId}/pull-requests`, {
     params: {
       limit,
+      size: limit,
       cursor, // null이면 첫 페이지
     },
   })
