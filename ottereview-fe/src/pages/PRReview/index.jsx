@@ -8,9 +8,9 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail, submitReview } from '@/features/pullRequest/prApi'
+import { closePR, fetchPRDetail, reopenPR, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
-import { useCommentManager } from '@/lib/hooks/useCommentManager'
+import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRReview = () => {
@@ -40,8 +40,10 @@ const PRReview = () => {
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
   const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
+  const [closingPR, setClosingPR] = useState(false) // PR 닫기 로딩
+  const [reopeningPR, setReopeningPR] = useState(false) // PR 재오픈 로딩
 
-  const loadingDots = useLoadingDots(loading)
+  const loadingDots = useLoadingDots(loading, loading ? 300 : 0) // 로딩 중일 때만 애니메이션
 
   // 페이지 이탈 방지 (새로고침, 브라우저 닫기 등)
   useEffect(() => {
@@ -61,9 +63,7 @@ const PRReview = () => {
   useEffect(() => {
     const handlePopState = (event) => {
       if (reviewComments.length > 0) {
-        const confirmed = window.confirm(
-          '작성 중인 임시 댓글이 있습니다.\n페이지를 나가면 댓글이 모두 사라집니다.\n정말 나가시겠습니까?'
-        )
+        const confirmed = window.confirm('작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?')
         if (!confirmed) {
           // 현재 페이지로 다시 이동
           window.history.pushState(null, '', window.location.pathname)
@@ -92,6 +92,7 @@ const PRReview = () => {
       setLoading(true)
       try {
         const pr = await fetchPRDetail({ repoId, prId })
+        console.log('pr', pr)
         setPrDetail(pr)
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
@@ -116,7 +117,7 @@ const PRReview = () => {
         path: comment.path,
         body: comment.content || '',
         position: comment.position,
-        line: comment.lineNumber,
+        line: comment.line || comment.lineNumber, // reviewCommentData.line을 우선 사용
         side: comment.side,
         startLine: comment.startLine,
         startSide: comment.startSide,
@@ -142,15 +143,27 @@ const PRReview = () => {
         reviewData,
       })
 
-      alert('리뷰가 성공적으로 제출되었습니다!')
+      console.log('=== 리뷰 제출 응답 ===', response)
 
       // 상태 초기화 (beforeunload 이벤트 방지)
       setReviewComments([])
       setFiles([])
       setFileComments({})
+      setComment('') // 리뷰 텍스트도 초기화
+      setShowCommentForm(false) // 제출폼 닫기
+      setReviewState('COMMENT') // 리뷰 상태도 초기화
 
-      // 페이지 새로고침으로 리뷰 목록 갱신
-      window.location.reload()
+      alert('리뷰가 성공적으로 제출되었습니다!')
+
+      // 새로고침 대신 PR 데이터만 다시 불러오기
+      try {
+        const pr = await fetchPRDetail({ repoId, prId })
+        setPrDetail(pr)
+      } catch (err) {
+        console.error('PR 데이터 새로고침 실패:', err)
+        // 실패하면 페이지 새로고침
+        window.location.reload()
+      }
     } catch (error) {
       console.error('❌ 리뷰 제출 실패:', error)
     }
@@ -160,6 +173,42 @@ const PRReview = () => {
     setComment('')
     setShowCommentForm(false)
     setReviewState('COMMENT') // 리뷰 상태도 초기화
+  }
+
+  const handleClosePR = async () => {
+    if (!confirm('PR을 닫으시겠습니까?')) return
+
+    setClosingPR(true)
+    try {
+      await closePR({ repoId, prId })
+
+      // PR 데이터 새로고침
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ PR 닫기 실패:', error)
+      alert('PR 닫기에 실패했습니다.')
+    } finally {
+      setClosingPR(false)
+    }
+  }
+
+  const handleReopenPR = async () => {
+    if (!confirm('PR을 다시 여시겠습니까?')) return
+
+    setReopeningPR(true)
+    try {
+      await reopenPR({ repoId, prId })
+
+      // PR 데이터 새로고침
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ PR 재오픈 실패:', error)
+      alert('PR 재오픈에 실패했습니다.')
+    } finally {
+      setReopeningPR(false)
+    }
   }
 
   const prFiles =
@@ -179,19 +228,16 @@ const PRReview = () => {
       if (review.reviewComments) {
         review.reviewComments.forEach((comment) => {
           const filePath = comment.path
-          const lineIndex =
-            comment.startLine && comment.startLine !== comment.line
-              ? comment.startLine - 1
-              : comment.line - 1 // 0-based index로 변환
+          const lineNumber = comment.line // 실제 라인 번호를 키로 사용
 
           if (!existingReviewComments[filePath]) {
             existingReviewComments[filePath] = {}
           }
-          if (!existingReviewComments[filePath][lineIndex]) {
-            existingReviewComments[filePath][lineIndex] = []
+          if (!existingReviewComments[filePath][lineNumber]) {
+            existingReviewComments[filePath][lineNumber] = []
           }
 
-          existingReviewComments[filePath][lineIndex].push({
+          existingReviewComments[filePath][lineNumber].push({
             ...comment,
             reviewState: review.state,
             reviewer: review.githubUsername || 'Unknown',
@@ -206,7 +252,7 @@ const PRReview = () => {
   // 로딩 중일 때 표시
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-2xl">PR 정보를 불러오는 중{loadingDots}</p>
       </div>
     )
@@ -215,7 +261,7 @@ const PRReview = () => {
   // PR 정보가 없을 때 표시
   if (!prDetail) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-lg">PR 정보를 찾을 수 없습니다.</p>
       </div>
     )
@@ -232,23 +278,49 @@ const PRReview = () => {
   return (
     <div className="pt-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
-      <Box shadow className="space-y-3">
+      <Box shadow className="flex justify-between">
         {/* 레포지토리 정보 */}
-        <div className="flex items-center space-x-1 text-sm text-stone-600">
-          <FolderCode className="w-4 h-4 mb-[2px]" />
-          <span className="font-medium">{prDetail.repo?.fullName}</span>
-          <span>#{prDetail.githubPrNumber}</span>
-        </div>
-        <h1 className="text-2xl font-bold text-gray-900">{prDetail.title}</h1>
-        {prDetail.author && (
-          <div className="flex items-center gap-2 text-sm text-stone-600">
-            <span>작성자:</span>
-            <span className="font-medium">@{prDetail.author.githubUsername}</span>
+        <div className="space-y-3">
+          <div className="flex items-center space-x-1 text-sm text-stone-600">
+            <FolderCode className="w-4 h-4 mb-[2px]" />
+            <span className="font-medium">{prDetail.repo?.fullName}</span>
+            <span>#{prDetail.githubPrNumber}</span>
           </div>
-        )}
-        {prDetail.body && prDetail.body.trim() && (
-          <div className="text-sm text-gray-600 whitespace-pre-wrap">{prDetail.body}</div>
-        )}
+          <h1 className="text-2xl font-bold text-gray-900">{prDetail.title}</h1>
+          {prDetail.author && (
+            <div className="flex items-center gap-2 text-sm text-stone-600">
+              <span>작성자:</span>
+              <span className="font-medium">@{prDetail.author.githubUsername}</span>
+            </div>
+          )}
+          {prDetail.body && prDetail.body.trim() && (
+            <div className="text-sm text-gray-600 whitespace-pre-wrap">{prDetail.body}</div>
+          )}
+        </div>
+        {/* PR 상태별 버튼 */}
+        <div>
+          {prDetail.state === 'OPEN' ? (
+            <Button 
+              variant="danger" 
+              size="sm" 
+              className="flex px-4 py-2" 
+              onClick={handleClosePR}
+              disabled={closingPR}
+            >
+              {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
+            </Button>
+          ) : prDetail.state === 'CLOSED' ? (
+            <Button 
+              variant="success" 
+              size="sm" 
+              className="flex px-4 py-2" 
+              onClick={handleReopenPR}
+              disabled={reopeningPR}
+            >
+              {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
+            </Button>
+          ) : null}
+        </div>
       </Box>
 
       <div className="flex flex-col md:flex-row items-stretch gap-4">
@@ -339,6 +411,7 @@ const PRReview = () => {
             {reviewComments.length > 0 && (
               <Badge variant="warning">임시 댓글 {reviewComments.length}개</Badge>
             )}
+
             <Button
               variant="primary"
               size="sm"

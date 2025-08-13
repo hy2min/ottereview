@@ -24,6 +24,27 @@ const Header = () => {
     navigate('/')
   }
 
+  const handleImportRepo = () => {
+    const importUrl = import.meta.env.VITE_GITHUB_IMPORT_URL
+    const width = 600
+    const height = 700
+
+    const popup = window.open(
+      importUrl,
+      '_blank',
+      `width=${width},height=${height},left=${(screen.width - width) / 2},top=${(screen.height - height) / 2},scrollbars=yes,resizable=yes`
+    )
+
+    // 팝업 완료 후 대시보드에 메시지 전송
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed)
+        // Dashboard에 업데이트 알림
+        window.postMessage({ type: 'GITHUB_INSTALL_COMPLETE' }, window.location.origin)
+      }
+    }, 1000)
+  }
+
   return (
     <header className="bg-transparent pb-1 pt-2">
       <div className="max-w-7xl mx-auto px-4">
@@ -35,7 +56,10 @@ const Header = () => {
             🦦 Ottereview
           </button>
           <div className="text-xl text-gray-800 justify-self-center">{title}</div>
-          <div className="justify-self-end">
+          <div className="justify-self-end flex gap-2">
+            <Button onClick={handleImportRepo} variant="" className="bg-white">
+              레포지토리 연결
+            </Button>
             <Button onClick={handleLogout} variant="" className="bg-white">
               로그아웃
             </Button>

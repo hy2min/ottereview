@@ -10,15 +10,20 @@ import {
   ThumbsUp,
   User,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { doMerge, IsMergable } from '@/features/pullRequest/prApi'
 import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const PRCardDetail = ({ pr }) => {
   const navigate = useNavigate()
+
+  // API 응답에서 받은 mergeable 상태를 관리
+  const [apiMergeable, setApiMergeable] = useState(null)
 
   const title = pr.title
   const description = pr.body || '(내용 없음)'
@@ -42,6 +47,34 @@ const PRCardDetail = ({ pr }) => {
       CLOSED: 'danger',
       MERGED: 'success',
     }[state] || 'default'
+
+  const handleIsMergable = async () => {
+    try {
+      const mergeState = await IsMergable({ repoId, prId })
+      console.log('mergeState:', mergeState)
+
+      // API 응답의 mergeable 값을 저장 (우선순위가 높음)
+      setApiMergeable(mergeState.mergeable)
+
+      if (mergeState.mergeable) {
+        console.log('머지 가능, doMerge 실행')
+        await handleMerge()
+      } else {
+        console.log('머지 불가능')
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
+  const handleMerge = async () => {
+    try {
+      const data = await doMerge({ repoId, prId })
+      console.log(data)
+    } catch (err) {
+      console.log(err)
+    }
+  }
 
   return (
     <Box shadow>
@@ -103,15 +136,26 @@ const PRCardDetail = ({ pr }) => {
               <Eye className="w-4 h-4 mr-1 mb-[2px]" />
               리뷰하기
             </Button>
-            <Button
-              onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
-              variant="primary"
-              size="sm"
-              disabled={mergeable || state !== 'OPEN'}
-            >
-              <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-              충돌해결
-            </Button>
+            {state === 'OPEN' &&
+              (() => {
+                // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
+                const effectiveMergeable = apiMergeable !== null ? apiMergeable : mergeable
+
+                return effectiveMergeable ? (
+                  <Button variant="primary" size="sm" onClick={handleIsMergable}>
+                    <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
+                    머지
+                  </Button>
+                ) : (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                  >
+                    충돌 해결
+                  </Button>
+                )
+              })()}
           </div>
         </div>
       </div>
