@@ -37,10 +37,10 @@ services:
     ports:
       - "4443:4443"
     environment:
-      - DOMAIN_OR_PUBLIC_IP: i13c108.p.ssafy.io
-      - OPENVIDU_SECRET: ${OPENVIDU_SECRET}
-      - HTTP_PORT: 4443
-      - HTTPS_PORT: 4443
+      DOMAIN_OR_PUBLIC_IP: i13c108.p.ssafy.io
+      OPENVIDU_SECRET: ${OPENVIDU_SECRET}
+      HTTP_PORT: 4443
+      HTTPS_PORT: 4443
     networks:
       - springboot-mysql-net
 
