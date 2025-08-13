@@ -54,4 +54,10 @@ public interface PullRequestService {
      */
     void createPullRequestFromGithub(List<GHRepository> GHRepositories);
     
+    /**
+     * Pull Request를 닫습니다 (DB와 GitHub 동시에).
+     */
+    void closePullRequest(CustomUserDetail userDetail, Long repoId, Long pullRequestId);
+
+    void reopenPullRequest(CustomUserDetail userDetail, Long repoId, Long pullRequestId);
 }

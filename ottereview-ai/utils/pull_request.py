@@ -169,7 +169,7 @@ async def recommend_reviewers(pr_data: PreparationResult, limit: int = ReviewerR
         
         if not similar_patterns:
             logger.warning("유사한 리뷰어 패턴을 찾을 수 없습니다")
-            context = "과거 유사한 PR 패턴이 없습니다. 현재 정보만을 바탕으로 추천해주세요."
+            context = "과거 유사한 PR 패턴이 없습니다. 주어진 후보 목록에서만 선택하세요."
         else:
         
             # 2. 검색된 패턴들을 LLM용 컨텍스트로 변환
@@ -186,7 +186,7 @@ async def recommend_reviewers(pr_data: PreparationResult, limit: int = ReviewerR
 
 def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PreparationResult) -> str:
     """
-    벡터 검색 결과를 LLM용 컨텍스트로 변환
+    벡터 검색 결과를 LLM용 컨텍스트로 변환 - 개선된 정보 활용
     
     Args:
         patterns: 벡터 DB에서 검색된 유사 패턴들
@@ -197,7 +197,7 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
     """
     context_parts = []
     
-    # 리뷰어별로 그룹화
+    # 리뷰어별로 그룹화 및 확장된 정보 수집
     reviewer_data = {}
     for pattern in patterns:
         reviewer = pattern['reviewer']
@@ -207,14 +207,30 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
                 'patterns': [],
                 'total_similarity': 0,
                 'file_categories': set(),
-                'review_count': 0
+                'functional_categories': set(),
+                'commit_patterns': set(),
+                'change_scales': [],
+                'complexity_levels': [],
+                'review_count': 0,
+                'has_test_experience': False,
+                'has_config_experience': False
             }
         
-        reviewer_data[reviewer]['patterns'].append(pattern)
-        reviewer_data[reviewer]['total_similarity'] += pattern['similarity_score']
-        reviewer_data[reviewer]['file_categories'].update(pattern['file_categories'])
+        data = reviewer_data[reviewer]
+        data['patterns'].append(pattern)
+        data['total_similarity'] += pattern['similarity_score']
+        data['file_categories'].update(pattern['file_categories'])
+        data['functional_categories'].add(pattern.get('functional_category', ''))
+        data['commit_patterns'].add(pattern.get('commit_pattern', ''))
+        data['change_scales'].append(pattern.get('change_scale', ''))
+        data['complexity_levels'].append(pattern.get('complexity_level', ''))
+        
+        if pattern.get('has_tests'):
+            data['has_test_experience'] = True
+        if pattern.get('has_config'):
+            data['has_config_experience'] = True
         if pattern['review_provided']:
-            reviewer_data[reviewer]['review_count'] += 1
+            data['review_count'] += 1
     
     # 상위 N명만 컨텍스트에 포함
     sorted_reviewers = sorted(
@@ -227,14 +243,21 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
     
     for i, (reviewer, data) in enumerate(sorted_reviewers, 1):
         avg_similarity = data['total_similarity'] / len(data['patterns'])
-        file_types = ', '.join(list(data['file_categories'])[:ReviewerRecommendationConfig.MAX_FILE_TYPES_DISPLAY])
-        similarity_score = f"{avg_similarity:.3f}"
+        file_types = ', '.join(list(data['file_categories'])[:3])
+        functional_areas = ', '.join([cat for cat in data['functional_categories'] if cat][:3])
+        most_common_scale = max(set(data['change_scales']), key=data['change_scales'].count) if data['change_scales'] else '소규모'
+        most_common_complexity = max(set(data['complexity_levels']), key=data['complexity_levels'].count) if data['complexity_levels'] else '단순'
         
         context_parts.append(f"""
 {i}. 리뷰어: {reviewer}
    - 이메일: {data['email']}
-   - 평균 유사도: {similarity_score}
+   - 평균 유사도: {avg_similarity:.3f}
    - 전문 파일타입: {file_types}
+   - 주요 기능영역: {functional_areas}
+   - 주로 다루는 변경규모: {most_common_scale}
+   - 주로 다루는 복잡도: {most_common_complexity}
+   - 테스트 경험: {'있음' if data['has_test_experience'] else '없음'}
+   - 설정 파일 경험: {'있음' if data['has_config_experience'] else '없음'}
    - 리뷰 제공 횟수: {data['review_count']}/{len(data['patterns'])}
         """.strip())
     
@@ -268,10 +291,12 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
 **`reason` 작성 가이드:**
 -   **구체적인 근거 제시**: "유사한 PR 경험"과 같은 모호한 표현 대신, "과거 '인증' 기능 관련 PR 리뷰 경험과 Java 파일에 대한 높은 전문성을 보유하고 있습니다."와 같이 구체적인 기능 영역과 기술 스택을 명시하세요.
 -   **수치 언급 금지**: `평균 유사도`, `리뷰 제공 횟수`와 같은 수치는 내부 분석용이므로 `reason`에 절대 포함하지 마세요.
+-   **추측이나 가정으로 리뷰어를 추천하지 마세요.**
 
 **응답 형식:**
 -   다른 설명 없이, 반드시 아래 명시된 JSON 형식으로만 응답하세요.
 -   추천할 리뷰어가 없는 경우, 빈 배열 `[]`을 반환하세요.
+-   추천할 리뷰어가 있는 경우, 아래 형식에 맞춰 작성하세요.
 
 [
   {
@@ -298,7 +323,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ])
-        
+        logger.info(response.content)
         result = _parse_llm_response(response.content, limit)
         logger.info(f"LLM이 {len(result)}명의 리뷰어를 추천했습니다")
         return result
