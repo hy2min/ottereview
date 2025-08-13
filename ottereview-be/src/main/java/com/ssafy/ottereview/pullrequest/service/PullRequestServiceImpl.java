@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.pullrequest.service;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.common.config.utils.CursorUtils;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
@@ -44,6 +45,8 @@ import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -81,14 +85,23 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final S3Service s3Service;
 
     @Override
-    public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
+    public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId, Integer limit, String cursor) {
         // 1. 사용자 권한 검증 및 레포지토리 조회
         Repo targetRepo = userAccountService.validateUserPermission(customUserDetail.getUser()
                 .getId(), repoId);
 
+        Instant cUpdated = null; Long cId = null;
+        if (cursor != null && !cursor.isBlank()) {
+            var c = CursorUtils.decode(cursor);
+            cUpdated = c.updatedAt();
+            cId = c.id();
+        }
+
+        int pageSize = (limit != null && limit > 0) ? Math.min(limit, 100) : 20;
+
         // 2. 해당 레포지토리의 Pull Request 목록 조회
 //        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-        List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
+        List<PullRequest> pullRequests = pullRequestRepository.findSlice(targetRepo, cUpdated, cId, PageRequest.of(0, pageSize));
 
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
