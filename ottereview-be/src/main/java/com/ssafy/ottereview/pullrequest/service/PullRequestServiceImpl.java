@@ -101,7 +101,7 @@ public class PullRequestServiceImpl implements PullRequestService {
 
         // 2. 해당 레포지토리의 Pull Request 목록 조회
 //        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-        List<PullRequest> pullRequests = pullRequestRepository.findSlice(targetRepo, cUpdated, cId, PageRequest.of(0, pageSize));
+        List<PullRequest> pullRequests = pullRequestRepository.findSlice(targetRepo.getRepoId(), cUpdated, cId, PageRequest.of(0, pageSize));
 
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()

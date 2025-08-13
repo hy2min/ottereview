@@ -35,11 +35,11 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
   SELECT p FROM PullRequest p
   WHERE p.repo.repoId = :repoId
     AND (:cursorUpdatedAt IS NULL OR p.githubUpdatedAt < :cursorUpdatedAt
-         OR (p.githubUpdatedAt= :cursorUpdatedAt AND p.id < :id))
+         OR (p.githubUpdatedAt= :cursorUpdatedAt AND p.id < :cursorId))
   ORDER BY p.githubUpdatedAt DESC, p.id DESC
 """)
     List<PullRequest> findSlice(
-            @Param("repo") Repo repo,
+            @Param("repoId") Long repoId,
             @Param("cursorUpdatedAt") Instant cursorUpdatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable);
