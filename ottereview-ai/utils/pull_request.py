@@ -280,26 +280,31 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
     files_summary = ', '.join([f.filename for f in pr_data.files[:ReviewerRecommendationConfig.MAX_FILES_IN_SUMMARY]])
     commits_summary = ' | '.join([c.message for c in pr_data.commits[:ReviewerRecommendationConfig.MAX_COMMITS_IN_SUMMARY]])
     
-    system_prompt = """당신은 주어진 Pull Request(PR)의 리뷰어 후보 목록 중에서, 과거 리뷰 패턴을 근거로 최적의 리뷰어를 추천하는 AI 기술 분석가입니다.
+    system_prompt = """당신은 주어진 Pull Request(PR)의 리뷰어 후보 목록 중에서, 최적의 리뷰어를 추천하는 AI 기술 분석가입니다.
 
 **추천 핵심 원칙:**
 1.  **후보 내에서 선택**: 반드시 '현재 PR 정보'에 주어진 `리뷰어` 후보 목록 중에서만 추천해야 합니다.
 2.  **기술적 전문성**: 현재 PR의 변경사항(파일, 기능 영역)과 가장 관련 높은 기술적 경험을 가진 후보를 선택합니다.
 3.  **과거 경험**: '과거 유사 PR 패턴'을 참고하여, 후보가 유사한 기능 영역의 코드를 리뷰했거나 작성한 경험이 있는지 확인합니다.
-4.  **리뷰 참여도**: 과거에 리뷰 요청 시 실제로 리뷰를 성실히 수행했는지(리뷰 제공 횟수)를 긍정적 신호로 간주합니다.
+4.  **구체적인 이유**: 추천 이유는 반드시 과거 경험에 기반해야 하며, 추측이나 가정은 금지합니다. 구체적이고 명확한 이유를 작성하세요.
 
 **`reason` 작성 가이드:**
 -   **구체적인 근거 제시**: "유사한 PR 경험"과 같은 모호한 표현 대신, "과거 '인증' 기능 관련 PR 리뷰 경험과 Java 파일에 대한 높은 전문성을 보유하고 있습니다."와 같이 구체적인 기능 영역과 기술 스택을 명시하세요.
 -   **수치 언급 금지**: `평균 유사도`, `리뷰 제공 횟수`와 같은 수치는 내부 분석용이므로 `reason`에 절대 포함하지 마세요.
--   **추측이나 가정으로 리뷰어를 추천하지 마세요.**
+-   **추측이나 가정으로 리뷰어를 추천하지 마세요. 이유는 반드시 과거 경험을 바탕으로 해야 합니다. 이유가 마땅하지 않다면 적지 마세요.**
+-   **랜덤 추천**: 과거 경험이 전혀 없는 리뷰어를 추천해야 하는 경우, 랜덤으로 1명을 추천하세요 이유는 "정보 없음"으로 작성하세요.
 
 **응답 형식:**
 -   다른 설명 없이, 반드시 아래 명시된 JSON 형식으로만 응답하세요.
--   추천할 리뷰어가 없는 경우, 빈 배열 `[]`을 반환하세요.
+-   추천할 리뷰어가 없는 경우, 랜덤으로 1명을 추천하세요.
 -   추천할 리뷰어가 있는 경우, 아래 형식에 맞춰 작성하세요.
+-   반드시 코드블럭 없이 JSON 형식으로 작성하세요.
+-   기본적으로 최소 1명 이상의 리뷰어를 추천해야 합니다.
+-   리뷰어 정보가 없으면 []을 반환하세요.
 
 [
   {
+    "github_id" : "추천할 사용자의 GitHub ID",
     "github_username": "추천할 사용자명",
     "github_email": "추천할 사용자의 이메일",
     "reason": "작성 가이드에 따라 구체적으로 작성된 추천 이유"
@@ -307,14 +312,14 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
 ]
 """
 
-    user_prompt = f"""{context}
+    user_prompt = f"""과거 경험 {context}
 
 === 현재 PR 정보 ===
 - 제목: {pr_data.title}
 - 파일들: {files_summary}
 - 커밋 메시지: {commits_summary}
 - 브랜치: {pr_data.source} -> {pr_data.target}
-- 리뷰어: {[user.githubUsername for user in (pr_data.preReviewers or [])]}
+- 리뷰어: {[user for user in (pr_data.preReviewers or [])]}
 
 위 정보를 종합하여 가장 적합한 리뷰어 {limit}명을 추천해주세요."""
 
@@ -323,7 +328,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ])
-        logger.info(response.content)
+        logger.info("리뷰어 응답 " + response.content)
         result = _parse_llm_response(response.content, limit)
         logger.info(f"LLM이 {len(result)}명의 리뷰어를 추천했습니다")
         return result
@@ -345,13 +350,11 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
         List[Dict]: 파싱된 리뷰어 목록
     """
     try:
-        # 1단계: 텍스트 정리
+        # ... (이전 단계 코드는 동일) ...
+        # 1단계, 2단계, 3단계 생략
         cleaned_text = response_text.strip()
         
-        # 2단계: 여러 방법으로 JSON 추출 시도
         json_candidates = []
-        
-        # 방법 1: 전체 텍스트가 JSON인지 확인
         try:
             parsed = json.loads(cleaned_text)
             if isinstance(parsed, list):
@@ -359,7 +362,6 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
         except:
             pass
         
-        # 방법 2: 대괄호로 감싸진 JSON 찾기 (기존 방법)
         json_matches = re.findall(r'\[.*?\]', cleaned_text, re.DOTALL)
         for match in json_matches:
             try:
@@ -369,7 +371,6 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
             except:
                 continue
         
-        # 방법 3: 코드 블록 안의 JSON 찾기
         code_block_matches = re.findall(r'```(?:json)?\s*(\[.*?\])\s*```', cleaned_text, re.DOTALL)
         for match in code_block_matches:
             try:
@@ -379,37 +380,52 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
             except:
                 continue
         
-        # 3단계: 가장 적합한 JSON 선택
         best_candidate = None
         for candidate in json_candidates:
-            if candidate and isinstance(candidate, list):
-                # 첫 번째 요소가 올바른 구조인지 확인
-                if (len(candidate) > 0 and 
-                    isinstance(candidate[0], dict) and 
-                    'github_username' in candidate[0]):
+            if isinstance(candidate, list):
+                if len(candidate) == 0:
+                    best_candidate = candidate
+                    break
+                elif (len(candidate) > 0 and 
+                      isinstance(candidate[0], dict) and 
+                      'github_username' in candidate[0]):
                     best_candidate = candidate
                     break
         
-        if not best_candidate:
+        if best_candidate is None:
             raise ValueError("유효한 JSON 형식을 찾을 수 없습니다")
-        
+
         # 4단계: 검증 및 정리
         valid_recommendations = []
+        
+        if len(best_candidate) == 0:
+            return []
+        
         for rec in best_candidate[:limit]:
             if isinstance(rec, dict) and 'github_username' in rec:
-                # 필수 필드 검증
                 username = rec.get('github_username', '').strip()
                 if not username:
                     continue
-                    
+                
+                # ----- 수정된 부분 시작 -----
+                
+                # github_id 값을 안전하게 int로 변환 (Long 타입 처리)
+                github_id = None
+                raw_github_id = rec.get('github_id')
+                if raw_github_id is not None:
+                    try:
+                        github_id = int(raw_github_id)
+                    except (ValueError, TypeError):
+                        # 값이 있으나 int로 변환할 수 없는 경우 None으로 처리
+                        github_id = None
+
                 valid_recommendations.append({
                     'github_username': username,
+                    'github_id': github_id,  # int 또는 None으로 처리된 값
                     'github_email': rec.get('github_email', '').strip(),
                     'reason': rec.get('reason', ReviewerRecommendationConfig.DEFAULT_REASON).strip()
                 })
-        
-        if not valid_recommendations:
-            raise ValueError("유효한 리뷰어 정보가 없습니다")
+                # ----- 수정된 부분 끝 -----
         
         return valid_recommendations
         
