@@ -9,10 +9,10 @@ const Button = ({ children, variant = 'primary', size = 'md', className, onClick
     'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:pointer-events-none'
 
   const variants = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm hover:shadow-md',
+    primary: 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 shadow-sm hover:shadow-md',
     secondary: 'theme-bg-secondary theme-text hover:theme-bg-tertiary border theme-border shadow-sm hover:shadow-md',
-    success: 'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 shadow-sm hover:shadow-md',
-    danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 shadow-sm hover:shadow-md',
+    success: 'bg-green-600 dark:bg-green-700 text-white hover:bg-green-700 dark:hover:bg-green-600 active:bg-green-800 dark:active:bg-green-500 shadow-sm hover:shadow-md',
+    danger: 'bg-red-600 dark:bg-red-700 text-white hover:bg-red-700 dark:hover:bg-red-600 active:bg-red-800 dark:active:bg-red-500 shadow-sm hover:shadow-md',
     outline: 'border-2 theme-border theme-bg-primary theme-text hover:theme-bg-tertiary',
     ghost: 'theme-text hover:theme-bg-tertiary rounded-md',
   }
