@@ -28,7 +28,11 @@ const PRCreateStep5 = ({
       // PR 생성 완료 시 댓글 상태 초기화
       resetCommentStates?.()
       
-      // navigate('/dashboard')
+      // 성공 알림 표시
+      alert('PR이 성공적으로 생성되었습니다!')
+      
+      // 레포 상세 페이지로 이동
+      navigate(`/${repoId}`)
     } catch (err) {
       console.error(err)
       alert('제출 실패')

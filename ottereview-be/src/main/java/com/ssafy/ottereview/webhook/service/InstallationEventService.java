@@ -161,6 +161,7 @@ public class InstallationEventService {
                 .repo(repo)
                 .minApproveCnt(0)
                 .build());
+        eventSendController.push("push", event.getName());
     }
     // B
 

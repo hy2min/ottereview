@@ -22,7 +22,7 @@ const PRCardCompact = ({ pr, type }) => {
     <Box
       shadow
       pixelHover
-      className="m-3 cursor-pointer"
+      className="m-3"
       onClick={() => navigate(`/${pr.repo.id}/pr/${pr.id}/review`)}
     >
       <div className="flex justify-between overflow-hidden items-center space-x-2">

@@ -1,18 +1,21 @@
 import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
+import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail, fetchPRReviews, submitReview } from '@/features/pullRequest/prApi'
+import { fetchPRDetail, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -25,13 +28,55 @@ const PRReview = () => {
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [reviewComments, setReviewComments] = useState([]) // 라인별 댓글들 보관
   const [files, setFiles] = useState([]) // 녹음 파일들 보관
-  const [prReviews, setPrReviews] = useState([]) // 기존 리뷰 목록 (아직 미사용, 저장만)
   const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
 
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
 
   const loadingDots = useLoadingDots(loading)
+
+  // 페이지 이탈 방지 (새로고침, 브라우저 닫기 등)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (reviewComments.length > 0) {
+        e.preventDefault()
+        e.returnValue = '작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?'
+        return e.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [reviewComments.length])
+
+  // 브라우저 뒤로가기 방지
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (reviewComments.length > 0) {
+        const confirmed = window.confirm(
+          '작성 중인 임시 댓글이 있습니다.\n페이지를 나가면 댓글이 모두 사라집니다.\n정말 나가시겠습니까?'
+        )
+        if (!confirmed) {
+          // 현재 페이지로 다시 이동
+          window.history.pushState(null, '', window.location.pathname)
+          event.preventDefault()
+          return
+        }
+      }
+    }
+
+    // 임시 댓글이 있을 때만 이벤트 리스너 추가
+    if (reviewComments.length > 0) {
+      // 브라우저 히스토리에 현재 상태 추가 (뒤로가기 감지용)
+      window.history.pushState(null, '', window.location.pathname)
+      window.addEventListener('popstate', handlePopState)
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [reviewComments.length])
 
   useEffect(() => {
     const load = async () => {
@@ -43,18 +88,6 @@ const PRReview = () => {
         console.log('pr:', pr)
         setPrDetail(pr)
 
-        // 리뷰 목록도 함께 가져오기 (아직 미사용, 저장만)
-        try {
-          const reviews = await fetchPRReviews({
-            accountId: pr.repo.accountId,
-            repoId,
-            prId,
-          })
-          setPrReviews(reviews)
-          console.log('reviews:', reviews)
-        } catch (reviewErr) {
-          console.error('❌ PR 리뷰 목록 로딩 실패:', reviewErr)
-        }
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
         setPrDetail(null)
@@ -119,7 +152,7 @@ const PRReview = () => {
     try {
       const reviewData = {
         reviewRequest: {
-          state: 'COMMENT',
+          state: reviewState, // 선택된 리뷰 상태 사용
           body: comment.trim(),
           commitSha: prDetail?.commits?.[0]?.sha || '',
           reviewComments: reviewComments,
@@ -153,6 +186,7 @@ const PRReview = () => {
   const handleCancel = () => {
     setComment('')
     setShowCommentForm(false)
+    setReviewState('COMMENT') // 리뷰 상태도 초기화
   }
 
   const prFiles =
@@ -164,6 +198,37 @@ const PRReview = () => {
     })) ?? []
 
   const commits = prDetail?.commits ?? []
+
+  // 리뷰 댓글을 파일별/라인별로 분류
+  const existingReviewComments = {}
+  if (prDetail?.reviews) {
+    prDetail.reviews.forEach((review) => {
+      if (review.reviewComments) {
+        review.reviewComments.forEach((comment) => {
+          const filePath = comment.path
+          const lineIndex =
+            comment.startLine && comment.startLine !== comment.line
+              ? comment.startLine - 1
+              : comment.line - 1 // 0-based index로 변환
+
+          if (!existingReviewComments[filePath]) {
+            existingReviewComments[filePath] = {}
+          }
+          if (!existingReviewComments[filePath][lineIndex]) {
+            existingReviewComments[filePath][lineIndex] = []
+          }
+
+          existingReviewComments[filePath][lineIndex].push({
+            ...comment,
+            reviewState: review.state,
+            reviewer: review.githubUsername || 'Unknown',
+            submittedAt: review.createdAt,
+            id: `${review.id}-${comment.id || Math.random()}`,
+          })
+        })
+      }
+    })
+  }
 
   // 로딩 중일 때 표시
   if (loading) {
@@ -202,6 +267,12 @@ const PRReview = () => {
           <span>#{prDetail.githubPrNumber}</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">{prDetail.title}</h1>
+        {prDetail.author && (
+          <div className="flex items-center gap-2 text-sm text-stone-600">
+            <span>작성자:</span>
+            <span className="font-medium">@{prDetail.author.githubUsername}</span>
+          </div>
+        )}
         {prDetail.body && prDetail.body.trim() && (
           <div className="text-sm text-gray-600 whitespace-pre-wrap">{prDetail.body}</div>
         )}
@@ -291,14 +362,19 @@ const PRReview = () => {
               </Button>
             )
           })}
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex ml-auto px-4 py-2"
-            onClick={() => setShowCommentForm(!showCommentForm)}
-          >
-            리뷰 작성
-          </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {reviewComments.length > 0 && (
+              <Badge variant="warning">임시 댓글 {reviewComments.length}개</Badge>
+            )}
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex px-4 py-2"
+              onClick={() => setShowCommentForm(!showCommentForm)}
+            >
+              리뷰 작성
+            </Button>
+          </div>
 
           {showCommentForm && (
             <div className="absolute top-full -mt-6 -right-12 z-10 w-120">
@@ -308,6 +384,9 @@ const PRReview = () => {
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 enableAudio={false}
+                reviewState={reviewState}
+                onReviewStateChange={setReviewState}
+                showReviewState={true}
               />
             </div>
           )}
@@ -318,10 +397,11 @@ const PRReview = () => {
             files={prFiles}
             onAddComment={handleAddFileLineComment}
             fileComments={fileComments}
+            existingReviewComments={existingReviewComments}
             showDiffHunk={false}
           />
         )}
-        {activeTab === 'comments' && <PRCommentList prId={prId} />}
+        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
     </div>
