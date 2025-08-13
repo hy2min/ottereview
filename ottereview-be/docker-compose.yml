@@ -41,7 +41,8 @@ services:
       OPENVIDU_SECRET: ${OPENVIDU_SECRET}
       CERTIFICATE_TYPE: owncert
     volumes:
-      - /etc/letsencrypt/live/i13c108.p.ssafy.io:/opt/openvidu/certificates:ro
+        - /etc/letsencrypt/live/i13c108.p.ssafy.io:/opt/openvidu/certificates:ro
+        - /etc/letsencrypt/archive:/etc/letsencrypt/archive:ro
     networks:
       - springboot-mysql-net
 
