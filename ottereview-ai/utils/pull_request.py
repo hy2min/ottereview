@@ -186,7 +186,7 @@ async def recommend_reviewers(pr_data: PreparationResult, limit: int = ReviewerR
 
 def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: PreparationResult) -> str:
     """
-    벡터 검색 결과를 LLM용 컨텍스트로 변환
+    벡터 검색 결과를 LLM용 컨텍스트로 변환 - 개선된 정보 활용
     
     Args:
         patterns: 벡터 DB에서 검색된 유사 패턴들
@@ -197,7 +197,7 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
     """
     context_parts = []
     
-    # 리뷰어별로 그룹화
+    # 리뷰어별로 그룹화 및 확장된 정보 수집
     reviewer_data = {}
     for pattern in patterns:
         reviewer = pattern['reviewer']
@@ -207,14 +207,30 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
                 'patterns': [],
                 'total_similarity': 0,
                 'file_categories': set(),
-                'review_count': 0
+                'functional_categories': set(),
+                'commit_patterns': set(),
+                'change_scales': [],
+                'complexity_levels': [],
+                'review_count': 0,
+                'has_test_experience': False,
+                'has_config_experience': False
             }
         
-        reviewer_data[reviewer]['patterns'].append(pattern)
-        reviewer_data[reviewer]['total_similarity'] += pattern['similarity_score']
-        reviewer_data[reviewer]['file_categories'].update(pattern['file_categories'])
+        data = reviewer_data[reviewer]
+        data['patterns'].append(pattern)
+        data['total_similarity'] += pattern['similarity_score']
+        data['file_categories'].update(pattern['file_categories'])
+        data['functional_categories'].add(pattern.get('functional_category', ''))
+        data['commit_patterns'].add(pattern.get('commit_pattern', ''))
+        data['change_scales'].append(pattern.get('change_scale', ''))
+        data['complexity_levels'].append(pattern.get('complexity_level', ''))
+        
+        if pattern.get('has_tests'):
+            data['has_test_experience'] = True
+        if pattern.get('has_config'):
+            data['has_config_experience'] = True
         if pattern['review_provided']:
-            reviewer_data[reviewer]['review_count'] += 1
+            data['review_count'] += 1
     
     # 상위 N명만 컨텍스트에 포함
     sorted_reviewers = sorted(
@@ -227,14 +243,21 @@ def _build_context_from_patterns(patterns: List[Dict[str, Any]], current_pr: Pre
     
     for i, (reviewer, data) in enumerate(sorted_reviewers, 1):
         avg_similarity = data['total_similarity'] / len(data['patterns'])
-        file_types = ', '.join(list(data['file_categories'])[:ReviewerRecommendationConfig.MAX_FILE_TYPES_DISPLAY])
-        similarity_score = f"{avg_similarity:.3f}"
+        file_types = ', '.join(list(data['file_categories'])[:3])
+        functional_areas = ', '.join([cat for cat in data['functional_categories'] if cat][:3])
+        most_common_scale = max(set(data['change_scales']), key=data['change_scales'].count) if data['change_scales'] else '소규모'
+        most_common_complexity = max(set(data['complexity_levels']), key=data['complexity_levels'].count) if data['complexity_levels'] else '단순'
         
         context_parts.append(f"""
 {i}. 리뷰어: {reviewer}
    - 이메일: {data['email']}
-   - 평균 유사도: {similarity_score}
+   - 평균 유사도: {avg_similarity:.3f}
    - 전문 파일타입: {file_types}
+   - 주요 기능영역: {functional_areas}
+   - 주로 다루는 변경규모: {most_common_scale}
+   - 주로 다루는 복잡도: {most_common_complexity}
+   - 테스트 경험: {'있음' if data['has_test_experience'] else '없음'}
+   - 설정 파일 경험: {'있음' if data['has_config_experience'] else '없음'}
    - 리뷰 제공 횟수: {data['review_count']}/{len(data['patterns'])}
         """.strip())
     
