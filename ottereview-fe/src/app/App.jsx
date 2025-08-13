@@ -7,6 +7,7 @@ import { useAuthStore } from '@/features/auth/authStore'
 import InstallComplete from '@/features/auth/InstallComplete'
 import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
 import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
+import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Landing from '@/pages/Landing'
@@ -51,6 +52,9 @@ const App = () => {
   if (pathname === '/install-complete') return <InstallComplete />
 
   const isLoggedIn = !!user
+  
+  // 로그인된 사용자에게 전역 SSE 연결 제공
+  useSSE(isLoggedIn)
 
   if (!isLoggedIn) {
     return (

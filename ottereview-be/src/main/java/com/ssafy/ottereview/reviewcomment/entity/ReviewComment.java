@@ -24,7 +24,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @AllArgsConstructor
 @Getter
 @Entity
-@Builder
+@Builder(toBuilder = true)
 @Table(name = "review_comment")
 public class ReviewComment extends BaseEntity {
 

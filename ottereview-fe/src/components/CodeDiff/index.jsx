@@ -1,12 +1,29 @@
 import { Plus } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
+import Badge from '@/components/Badge'
+import Box from '@/components/Box'
 import CommentForm from '@/features/comment/CommentForm'
 
-const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
+// 리뷰 댓글 텍스트 정리 함수
+const cleanReviewCommentBody = (body) => {
+  if (!body) return ''
+  
+  // \n을 실제 줄바꿈으로 변환 (백엔드에서 전처리되므로 간단하게)
+  return body.replace(/\\n/g, '\n')
+}
+
+const CodeDiff = ({
+  patch,
+  onAddComment,
+  filePath,
+  initialSubmittedComments = {},
+  existingReviewComments = {},
+  showDiffHunk = false,
+}) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
   const [comments, setComments] = useState({})
-  const [submittedComments, setSubmittedComments] = useState({})
+  const [submittedComments, setSubmittedComments] = useState(initialSubmittedComments)
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
@@ -15,6 +32,11 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
+
+  // initialSubmittedComments가 변경될 때 submittedComments 업데이트
+  useEffect(() => {
+    setSubmittedComments(initialSubmittedComments)
+  }, [initialSubmittedComments])
 
   if (!patch) return null
 
@@ -223,10 +245,15 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
 
-        onAddComment?.(reviewCommentData)
+        // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
+        onAddComment?.(lineIndex, {
+          ...commentData,
+          ...reviewCommentData, // reviewCommentData 정보도 포함
+        })
+
         console.log(reviewCommentData)
 
-        // 제출된 댓글을 배열에 추가
+        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
           ...prev,
           [lineIndex]: [
@@ -259,10 +286,15 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
 
-        onAddComment?.(reviewCommentData)
+        // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
+        onAddComment?.(lineIndex, {
+          ...commentData,
+          ...reviewCommentData, // reviewCommentData 정보도 포함
+        })
+
         console.log(reviewCommentData)
 
-        // 제출된 댓글을 배열에 추가
+        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
           ...prev,
           [lineIndex]: [
@@ -450,37 +482,91 @@ const CodeDiff = ({ patch, onAddComment, filePath, showDiffHunk = false }) => {
                     )}
                   </div>
 
+                  {/* 기존 리뷰 댓글들 표시 */}
+                  {existingReviewComments[idx] &&
+                    existingReviewComments[idx].map((comment) => (
+                      <div key={comment.id} className="mx-2 mb-2 font-sans">
+                        <Box shadow className="space-y-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                              <span className="text-sm font-medium">
+                                {comment.reviewer?.[0] || 'R'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-stone-900 text-base">{comment.reviewer || 'Unknown'}</span>
+                              <span className="text-sm text-stone-500 ml-2">
+                                {new Date(comment.submittedAt).toLocaleString()}
+                              </span>
+                              <Badge 
+                                variant={
+                                  comment.reviewState === 'APPROVED' ? 'success' :
+                                  comment.reviewState === 'CHANGES_REQUESTED' ? 'danger' :
+                                  'primary'
+                                }
+                                className="ml-3"
+                              >
+                                {comment.reviewState === 'APPROVED' ? '승인' :
+                                 comment.reviewState === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-stone-700 whitespace-pre-wrap text-base">{cleanReviewCommentBody(comment.body)}</p>
+                        </Box>
+                      </div>
+                    ))}
+
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
                   {submittedComments[idx] &&
                     submittedComments[idx].map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2">
-                        <div className="p-4 bg-white border border-gray-200 rounded shadow-sm">
-                          <div className="flex items-center gap-2 mb-2">
+                      <div key={comment.id} className="mx-2 mb-2 font-sans">
+                        <Box shadow className="space-y-3 bg-sky-50">
+                          <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
                               <span className="text-sm font-medium">나</span>
                             </div>
                             <div>
-                              <span className="font-medium text-stone-900">내 댓글</span>
+                              <span className="font-medium text-stone-900 text-base">내 댓글</span>
                               <span className="text-sm text-stone-500 ml-2">
                                 {comment.submittedAt}
                               </span>
+                              <Badge variant="warning" className="ml-2">
+                                임시
+                              </Badge>
+                              {comment.audioFile && (
+                                <Badge variant="success" className="ml-2">
+                                  🎵 음성
+                                </Badge>
+                              )}
                             </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-stone-700 text-base">
+                              {comment.content || (comment.audioFile ? '음성 댓글' : '')}
+                            </p>
                             {comment.audioFile && (
-                              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded ml-auto">
-                                🎵 음성
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <audio
+                                  controls
+                                  className="h-8 rounded-full border border-gray-300 "
+                                >
+                                  <source
+                                    src={URL.createObjectURL(comment.audioFile)}
+                                    type={comment.audioFile.type}
+                                  />
+                                  브라우저가 오디오를 지원하지 않습니다.
+                                </audio>
+                              </div>
                             )}
                           </div>
-                          <p className="text-stone-700">
-                            {comment.content || (comment.audioFile ? '음성 댓글' : '')}
-                          </p>
-                        </div>
+                        </Box>
                       </div>
                     ))}
 
                   {/* 댓글 폼 */}
                   {activeCommentLines.has(idx) && (
                     <div
+                      className="font-sans"
                       onMouseEnter={(e) => e.stopPropagation()}
                       onMouseLeave={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}

@@ -35,6 +35,8 @@ public class MeetingRoom extends BaseEntity {
     @Builder.Default
     private List<MeetingParticipant> participants = new ArrayList<>();
 
+
+
     public void addParticipant(MeetingParticipant participant) {
         participants.add(participant);
         participant.assignMeetingRoom(this);

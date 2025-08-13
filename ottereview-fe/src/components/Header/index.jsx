@@ -14,7 +14,7 @@ const Header = () => {
   const logout = useUserStore((state) => state.logout)
   const clearUser = useUserStore((state) => state.clearUser)
   const clearTokens = useAuthStore((state) => state.clearTokens)
-  
+
   const { theme, toggleTheme } = useThemeStore()
 
   const matches = matchRoutes(protectedRoutes, location)
@@ -38,7 +38,12 @@ const Header = () => {
           >
             🦦 Ottereview
           </button>
-          <div className="text-xl justify-self-center font-medium" style={{color: 'var(--text-primary)'}}>{title}</div>
+          <div
+            className="text-xl justify-self-center font-medium"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            {title}
+          </div>
           <div className="justify-self-end flex items-center gap-3">
             <button
               onClick={toggleTheme}
