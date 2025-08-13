@@ -169,7 +169,7 @@ async def recommend_reviewers(pr_data: PreparationResult, limit: int = ReviewerR
         
         if not similar_patterns:
             logger.warning("유사한 리뷰어 패턴을 찾을 수 없습니다")
-            context = "과거 유사한 PR 패턴이 없습니다. 현재 정보만을 바탕으로 추천해주세요."
+            context = "과거 유사한 PR 패턴이 없습니다. 주어진 후보 목록에서만 선택하세요."
         else:
         
             # 2. 검색된 패턴들을 LLM용 컨텍스트로 변환
@@ -268,10 +268,12 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
 **`reason` 작성 가이드:**
 -   **구체적인 근거 제시**: "유사한 PR 경험"과 같은 모호한 표현 대신, "과거 '인증' 기능 관련 PR 리뷰 경험과 Java 파일에 대한 높은 전문성을 보유하고 있습니다."와 같이 구체적인 기능 영역과 기술 스택을 명시하세요.
 -   **수치 언급 금지**: `평균 유사도`, `리뷰 제공 횟수`와 같은 수치는 내부 분석용이므로 `reason`에 절대 포함하지 마세요.
+-   **추측이나 가정으로 리뷰어를 추천하지 마세요.**
 
 **응답 형식:**
 -   다른 설명 없이, 반드시 아래 명시된 JSON 형식으로만 응답하세요.
 -   추천할 리뷰어가 없는 경우, 빈 배열 `[]`을 반환하세요.
+-   추천할 리뷰어가 있는 경우, 아래 형식에 맞춰 작성하세요.
 
 [
   {
@@ -298,7 +300,7 @@ async def _generate_recommendations_with_llm(context: str, pr_data: PreparationR
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_prompt}
         ])
-        
+        logger.info(response.content)
         result = _parse_llm_response(response.content, limit)
         logger.info(f"LLM이 {len(result)}명의 리뷰어를 추천했습니다")
         return result
