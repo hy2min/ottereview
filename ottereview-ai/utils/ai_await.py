@@ -84,7 +84,7 @@ async def check_single_file_convention(filename: str, patch: str, rules_str: str
     1.  **정확성**: 명시된 규칙만을 기반으로 검사하고, 규칙에 없는 내용은 절대 지적하지 마세요.
     2.  **구체성**: 어떤 요소(파일명, 함수명, 변수명 등)가 문제인지 명확히 하고, 현재 이름과 권장하는 이름을 반드시 제시해야 합니다.
     3.  **형식 준수**: 아래의 출력 형식을 **반드시** 지켜야 합니다. 다른 설명이나 서론, 결론을 추가하지 마세요.
-
+    4.  **규칙 준수**: 적용할 네이밍 컨벤션 규칙에 있는 요소만 검사합니다.
     **출력 형식:**
 
     *   **위반사항이 있는 경우:**
@@ -135,10 +135,15 @@ async def check_single_file_convention(filename: str, patch: str, rules_str: str
         logger.error(f"파일 '{filename}' LLM 호출 중 오류: {str(e)}")
         return f"- 파일: {filename}\n  분석 중 오류 발생: {str(e)}"
 
+SUPPORTED_EXTENSIONS = {'.py', '.js', '.ts', '.java'}
+
 async def check_pr_conventions(pr_data: Any, rules: ConventionRule) -> str:
     """
     PR의 모든 파일을 병렬로 분석하여 코딩 컨벤션 위반사항을 검사합니다.
     """
+    if not rules or not rules.dict(exclude_none=True):
+        return "코딩 컨벤션 규칙이 설정되지 않았습니다. 검사를 수행하지 않습니다."
+
     rules_str = rules.to_prompt_string() if isinstance(rules, ConventionRule) else rules
     tasks = []
 
@@ -147,6 +152,15 @@ async def check_pr_conventions(pr_data: Any, rules: ConventionRule) -> str:
         for file_info in files:
             filename = getattr(file_info, 'filename', '')
             patch = getattr(file_info, 'patch', '')
+
+            # 파일 확장자 추출 및 소문자 변환
+            _, file_extension = os.path.splitext(filename.lower())
+            
+            # 지원하는 확장자인지 확인
+            if file_extension not in SUPPORTED_EXTENSIONS:
+                logger.info(f"파일 '{filename}'은(는) 지원되지 않는 확장자({file_extension})입니다. 컨벤션 검사에서 제외합니다.")
+                continue
+
             if filename and patch:
                 tasks.append(check_single_file_convention(filename, patch, rules_str))
     except Exception as e:
@@ -154,7 +168,7 @@ async def check_pr_conventions(pr_data: Any, rules: ConventionRule) -> str:
         return "PR 데이터 처리 중 오류가 발생했습니다."
 
     if not tasks:
-        return "분석할 파일이 없습니다."
+        return "분석할 코드가 없습니다."
 
     # 모든 비동기 작업을 병렬로 실행하고 결과를 기다립니다.
     results = await asyncio.gather(*tasks)
