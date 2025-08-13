@@ -9,7 +9,7 @@ public class MergeCheckResponse {
     int prNumber;
     String title;
     String state; //OPEN, CLOSED, MERGED
-    boolean mergeAble;
+    boolean mergeable;
     String mergeState; // CLEAN, DIRTY, BLOCKED
     boolean hasConflicts;
 }
