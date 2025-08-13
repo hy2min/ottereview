@@ -160,6 +160,7 @@ public class PreparationService {
             pullRequestRedisService.updatePrepareInfo(repoId, prepareInfo);
             
         } catch (Exception e) {
+            e.printStackTrace();
             throw new BusinessException(PreparationErrorCode.PREPARATION_UPDATE_FAILED);
         }
     }
@@ -177,6 +178,7 @@ public class PreparationService {
         
         return PrUserInfo.builder()
                 .id(reviewer.getId())
+                .githubId(reviewer.getGithubId())
                 .githubUsername(reviewer.getGithubUsername())
                 .githubEmail(reviewer.getGithubEmail())
                 .build();

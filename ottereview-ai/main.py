@@ -198,6 +198,7 @@ async def check_coding_conventions(request: ConventionRequest):
         logger.info(f"PR data retrieved: {type(pr_data)}")
         
         analysis_result = await check_pr_conventions(pr_data, request.rules)
+        logger.info(f"Convention analysis result: {analysis_result}")
         return {"result": analysis_result}
     except Exception as e:
         logger.error(f"Convention check error: {str(e)}")

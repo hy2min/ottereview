@@ -4,6 +4,7 @@ import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
 import com.ssafy.ottereview.description.dto.DescriptionResponse;
+import com.ssafy.ottereview.description.exception.DescriptionErrorCde;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
 import com.ssafy.ottereview.description.service.DescriptionService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
@@ -31,11 +32,13 @@ import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
+import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
+import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
+import com.ssafy.ottereview.s3.service.S3Service;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
@@ -53,10 +56,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GHUser;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,7 +78,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionService descriptionService;
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
-
+    private final S3Service s3Service;
     
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId) {
@@ -90,16 +89,15 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 2. 해당 레포지토리의 Pull Request 목록 조회
 //        Pageable pageable = PageRequest.of(page,size, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
         List<PullRequest> pullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
         
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
                 .map(pullRequest -> {
-                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest,checkMergeStatus(pullRequest));
+                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest, checkMergeStatus(pullRequest));
                 })
                 .toList();
     }
-
+    
     private Boolean checkMergeStatus(PullRequest pullRequest) {
         // Reviewer 모두 APPROVED인지 확인
         List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
@@ -128,7 +126,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
 //        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-
+        
         List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
         
         return finalPullRequests.stream()
@@ -144,9 +142,10 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         List<PullRequest> pullRequests = pullRequestRepository.findAllByAuthor(loginUser)
                 .stream()
-                .filter(pr -> pr.getState().equals(PrState.OPEN))
+                .filter(pr -> pr.getState()
+                        .equals(PrState.OPEN))
                 .toList();
-
+        
         return pullRequests.stream()
                 .map(pullRequestMapper::PullRequestToResponse)
                 .toList();
@@ -183,7 +182,18 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .map(review -> {
                     List<PullRequestReviewCommentInfo> reviewComments = reviewCommentRepository.findAllByReview(review)
                             .stream()
-                            .map(PullRequestReviewCommentInfo::fromEntity)
+                            .map(reviewComment -> {
+                                String voiceFileUrl = null;
+                                if (reviewComment.getRecordKey() != null) {
+                                    try {
+                                        voiceFileUrl = s3Service.generatePresignedUrl(reviewComment.getRecordKey(), 60);
+                                    } catch (Exception e) {
+                                        // URL 생성 실패 시 null 처리
+                                        log.debug("음성 파일 URL 생성 실패: null 반환 {}", e.getMessage());
+                                    }
+                                }
+                                return PullRequestReviewCommentInfo.fromEntity(reviewComment, voiceFileUrl);
+                            })
                             .toList();
                     return PullRequestReviewInfo.fromEntityAndReviewComment(review, reviewComments);
                 })
@@ -203,19 +213,19 @@ public class PullRequestServiceImpl implements PullRequestService {
         return pullRequestDetailResponse;
     }
 
-
     @Override
     public PullRequestValidationResponse getPullRequestByBranch(CustomUserDetail userDetail, Long repoId, String source, String target) {
-
+        
         Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
                 .getId(), repoId);
-
+        
         Optional<PullRequest> existPullRequest = pullRequestRepository.findByRepoAndBaseAndHeadAndState(repo, target, source, PrState.OPEN);
-
+        
         if (existPullRequest.isPresent()) {
-            return new PullRequestValidationResponse(true, existPullRequest.get().getId());
+            return new PullRequestValidationResponse(true, existPullRequest.get()
+                    .getId());
         }
-
+        
         return new PullRequestValidationResponse(false, null);
     }
     
@@ -223,70 +233,92 @@ public class PullRequestServiceImpl implements PullRequestService {
     public void createPullRequestWithMediaFiles(CustomUserDetail customUserDetail, Long repoId,
             PullRequestCreateRequest request, MultipartFile[] mediaFiles) {
         
-        Repo repo = userAccountService.validateUserPermission(customUserDetail.getUser()
-                .getId(), repoId);
+        GithubPrResponse prResponse = null;
         
-        // redis 캐시에서 PR 생성 가능 여부 확인
-        PreparationResult prepareInfo = preparationRedisRepository.getPrepareInfo(repoId, request.getSource(), request.getTarget());
-        
-        if (prepareInfo == null || !prepareInfo.getIsPossible()) {
-            throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
+        try {
+            Repo repo = userAccountService.validateUserPermission(customUserDetail.getUser()
+                    .getId(), repoId);
+            
+            // redis 캐시에서 PR 생성 가능 여부 확인
+            PreparationResult prepareInfo = preparationRedisRepository.getPrepareInfo(repoId, request.getSource(), request.getTarget());
+            
+            if (prepareInfo == null || !prepareInfo.getIsPossible()) {
+                throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
+            }
+            
+            // PR 생성 검증
+            validatePullRequestCreation(prepareInfo, repo);
+            
+            // PR 생성
+            prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
+                    .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), request.getSource(), request.getTarget())
+            );
+            
+            // PR 저장
+            PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
+            PrUserInfo prepareAuthor = prepareInfo.getAuthor();
+            User author = userRepository.findById(prepareAuthor.getId())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+            
+            pullRequest.enrollAuthor(author);
+            
+            pullRequest.enrollSummary(prepareInfo.getSummary());
+            PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
+            
+            // 리뷰어 저장
+            List<PrUserInfo> reviewers = prepareInfo.getReviewers();
+            
+            List<User> userList = reviewers.stream()
+                    .map(this::getUserFromUserInfo)
+                    .toList();
+
+            if(prepareInfo.getReviewers() != null) {
+                List<Reviewer> reviewerList = userList.stream()
+                        .map(user -> Reviewer.builder()
+                                .pullRequest(savePullRequest)
+                                .user(user)
+                                .status(ReviewStatus.NONE)
+                                .build())
+                        .toList();
+
+                reviewerRepository.saveAll(reviewerList);
+                log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
+            }
+            // 우선 순위 저장
+            if(prepareInfo.getPriorities() != null) {
+
+                List<Priority> priorityList = prepareInfo.getPriorities()
+                        .stream()
+                        .map((priorityInfo) -> Priority.builder()
+                                .pullRequest(savePullRequest)
+                                .title(priorityInfo.getTitle())
+                                .level(priorityInfo.getLevel())
+                                .content(priorityInfo.getContent())
+                                .build())
+                        .toList();
+
+                priorityRepository.saveAll(priorityList);
+                log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
+            }
+            // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
+            createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()
+                    .getId(), mediaFiles);
+        } catch (Exception e) {
+            log.error("Pull Request 생성 중 오류 발생: {}", e.getMessage(), e);
+            // 오류 발생 시 Github PR 삭제
+            try {
+                if (prResponse != null) {
+                    Repo repo = repoRepository.findById(repoId)
+                            .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
+                    
+                    githubApiClient.closePullRequest(repo.getAccount()
+                            .getInstallationId(), repo.getFullName(), prResponse.getGithubPrNumber());
+                }
+            } catch (Exception deleteEx) {
+                log.error("Pull Request 삭제 중 오류 발생: {}", deleteEx.getMessage(), deleteEx);
+                throw new BusinessException(PullRequestErrorCode.PR_CREATE_FAILED, "PR 생성 중 오류가 발생하였고, PR 삭제에도 실패하였습니다.");
+            }
         }
-        
-        // PR 생성 검증
-        validatePullRequestCreation(prepareInfo, repo);
-        
-        // PR 생성
-        GithubPrResponse prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
-                .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), request.getSource(), request.getTarget())
-        );
-        
-        // PR 저장
-        PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
-        PrUserInfo prepareAuthor = prepareInfo.getAuthor();
-        User author = userRepository.findById(prepareAuthor.getId())
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-
-        pullRequest.enrollAuthor(author);
-
-        pullRequest.enrollSummary(prepareInfo.getSummary());
-        PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
-        
-        // 리뷰어 저장
-        List<PrUserInfo> reviewers = prepareInfo.getReviewers();
-        
-        List<User> userList = reviewers.stream()
-                .map(this::getUserFromUserInfo)
-                .toList();
-        
-        List<Reviewer> reviewerList = userList.stream()
-                .map(user -> Reviewer.builder()
-                        .pullRequest(savePullRequest)
-                        .user(user)
-                        .status(ReviewStatus.NONE)
-                        .build())
-                .toList();
-        
-        reviewerRepository.saveAll(reviewerList);
-        log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
-        
-        // 우선 순위 저장
-        List<Priority> priorityList = prepareInfo.getPriorities()
-                .stream()
-                .map((priorityInfo) -> Priority.builder()
-                        .pullRequest(savePullRequest)
-                        .title(priorityInfo.getTitle())
-                        .level(priorityInfo.getLevel())
-                        .content(priorityInfo.getContent())
-                        .build())
-                .toList();
-        
-        priorityRepository.saveAll(priorityList);
-        log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
-        
-        // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
-        createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()
-                .getId(), mediaFiles);
     }
     
     /**
@@ -320,14 +352,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         
         // 파일만 있고 description 정보가 없는 경우를 위한 처리
         if (descriptionItems.isEmpty() && files != null && files.length > 0) {
-            // 파일 수만큼 기본 description 항목 생성
-            descriptionItems = IntStream.range(0, files.length)
-                    .mapToObj(i -> DescriptionBulkCreateRequest.DescriptionItemRequest.builder()
-                            .path("media-file-" + i) // 미디어 파일 기본 경로
-                            .body(null) // AI가 처리할 예정
-                            .fileIndex(i)
-                            .build())
-                    .toList();
+            throw new BusinessException(DescriptionErrorCde.DESCRIPTION_CREATE_FAILED, "설명 정보가 없고, 파일만 있는 경우는 허용되지 않습니다.");
         }
         
         if (!descriptionItems.isEmpty()) {
@@ -503,5 +528,51 @@ public class PullRequestServiceImpl implements PullRequestService {
             pullRequestRepository.saveAll(pullRequestsToSave);
             log.info("총 {}개의 PR이 동기화되었습니다.", pullRequestsToSave.size());
         }
+    }
+    
+    @Override
+    @Transactional
+    public void closePullRequest(CustomUserDetail userDetail, Long repoId, Long pullRequestId) {
+        Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
+                .getId(), repoId);
+        
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        
+        // 1. GitHub에서도 PR을 닫음
+        Long installationId = repo.getAccount()
+                .getInstallationId();
+        String repositoryName = repo.getFullName();
+        Integer githubPrNumber = pullRequest.getGithubPrNumber();
+        
+        githubApiClient.closePullRequest(installationId, repositoryName, githubPrNumber);
+        
+        // 2. DB에서 PR 상태를 CLOSED로 변경
+        pullRequest.updateState(PrState.CLOSED);
+    }
+    
+    @Override
+    @Transactional
+    public void reopenPullRequest(CustomUserDetail userDetail, Long repoId, Long pullRequestId) {
+        Repo repo = userAccountService.validateUserPermission(userDetail.getUser()
+                .getId(), repoId);
+        
+        PullRequest pullRequest = pullRequestRepository.findById(pullRequestId)
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
+        
+        if (pullRequestRepository.existsByRepoAndBaseAndHeadAndState(repo, pullRequest.getBase(), pullRequest.getHead(), PrState.OPEN)) {
+            throw new BusinessException(PullRequestErrorCode.PR_ALREADY_OPEN);
+        }
+        
+        // 1. GitHub에서도 PR을 다시 염
+        Long installationId = repo.getAccount()
+                .getInstallationId();
+        String repositoryName = repo.getFullName();
+        Integer githubPrNumber = pullRequest.getGithubPrNumber();
+        
+        githubApiClient.reopenPullRequest(installationId, repositoryName, githubPrNumber);
+        
+        // 2. DB에서 PR 상태를 OPEN 변경
+        pullRequest.updateState(PrState.OPEN);
     }
 }

@@ -137,7 +137,7 @@ public class ReviewServiceImpl implements ReviewService {
     public List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId) {
         List<Review> reviews = reviewRepository.findByPullRequestId(prId);
         return reviews.stream()
-                .map(ReviewResponse::from)
+                .map(this::buildReviewResponse)
                 .collect(Collectors.toList());
     }
 
@@ -146,7 +146,7 @@ public class ReviewServiceImpl implements ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
 
-        return ReviewResponse.from(review);
+        return buildReviewResponse(review);
     }
 
     private User findUser(Long userId) {
@@ -254,7 +254,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private ReviewResponse buildReviewResponse(Review savedReview) {
         List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId()).stream()
-                .map(ReviewCommentResponse::from)
+                .map(this::buildReviewCommentWithVoiceUrl)
                 .toList();
 
         return new ReviewResponse(
@@ -270,6 +270,30 @@ public class ReviewServiceImpl implements ReviewService {
                 savedReview.getCreatedAt(),
                 savedReview.getModifiedAt()
         );
+    }
+
+    private ReviewCommentResponse buildReviewCommentWithVoiceUrl(ReviewComment comment) {
+        ReviewCommentResponse response = ReviewCommentResponse.from(comment);
+        
+        log.debug("Processing review comment id: {}, recordKey: '{}'", comment.getId(), comment.getRecordKey());
+        
+        if (comment.getRecordKey() != null && !comment.getRecordKey().isEmpty()) {
+            try {
+                log.info("Generating presigned URL for recordKey: {}", comment.getRecordKey());
+                String presignedUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60);
+                log.info("Generated presigned URL successfully for recordKey: {}", comment.getRecordKey());
+                response = response.toBuilder()
+                        .voiceFileUrl(presignedUrl)
+                        .build();
+            } catch (Exception e) {
+                log.error("Failed to generate presigned URL for recordKey: {}, error: {}", 
+                        comment.getRecordKey(), e.getMessage(), e);
+            }
+        } else {
+            log.debug("RecordKey is null or empty for comment id: {}", comment.getId());
+        }
+        
+        return response;
     }
 
 
