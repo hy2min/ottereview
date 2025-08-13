@@ -22,7 +22,6 @@ const PRCreateStep5 = ({
         target: validationBranches.target,
         repoId,
       }
-      console.log('PR 제출 데이터:', submitData)
       await submitPR(submitData)
       
       // PR 생성 완료 시 댓글 상태 초기화
