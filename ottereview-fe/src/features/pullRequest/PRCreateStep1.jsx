@@ -11,7 +11,6 @@ const PRCreateStep1 = ({
   repoId,
   selectedBranches,
   updateSelectedBranches,
-  setValidationPR,
   setValidationBranches,
   validationBranches,
   branches,
@@ -71,8 +70,6 @@ const PRCreateStep1 = ({
             target,
           })
 
-          setValidationPR(data)
-
           // isExist가 true면 기존 PR 존재
           if (data.isExist) {
             setPrCheckResult('exists')
@@ -101,7 +98,7 @@ const PRCreateStep1 = ({
 
       return () => clearTimeout(timeoutId)
     }
-  }, [source, target, repoId, setValidationPR, setValidationBranches])
+  }, [source, target, repoId, setValidationBranches])
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
