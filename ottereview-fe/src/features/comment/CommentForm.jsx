@@ -3,7 +3,6 @@ import { useState } from 'react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import InputBox from '@/components/InputBox'
 
 const CommentForm = ({
   value,
@@ -21,7 +20,6 @@ const CommentForm = ({
   const [audioFile, setAudioFile] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
-  const [audioChunks, setAudioChunks] = useState([])
 
   // 리뷰 상태 옵션들
   const reviewStates = [
@@ -35,17 +33,14 @@ const CommentForm = ({
     small: {
       textareaHeight: 'h-16',
       gap: 'gap-1',
-      buttonSize: 'xs',
     },
     normal: {
       textareaHeight: 'h-30',
       gap: 'gap-2',
-      buttonSize: 'md',
     },
     large: {
       textareaHeight: 'h-40',
       gap: 'gap-3',
-      buttonSize: 'md',
     },
   }
 
@@ -91,7 +86,6 @@ const CommentForm = ({
         recorder.start()
         setMediaRecorder(recorder)
         setIsRecording(true)
-        setAudioChunks(chunks)
 
         // 텍스트 입력 초기화
         onChange?.({ target: { value: '' } })
@@ -102,17 +96,19 @@ const CommentForm = ({
     }
   }
 
-  // 음성 파일 삭제
-  const handleRemoveAudio = () => {
+  // 음성 관련 상태 초기화
+  const resetAudioState = () => {
     setAudioFile(null)
     setIsRecording(false)
     setMediaRecorder(null)
-    setAudioChunks([])
+  }
+
+  // 음성 파일 삭제
+  const handleRemoveAudio = () => {
+    resetAudioState()
     onAudioChange?.(null)
   }
 
-  // 텍스트 입력이 비활성화되어야 하는지 확인
-  const isTextDisabled = disabled || (enableAudio && (audioFile || isRecording))
 
   return (
     <div

@@ -1,7 +1,8 @@
 import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 
+import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
@@ -13,6 +14,8 @@ import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -25,7 +28,6 @@ const PRReview = () => {
   const [showCommentForm, setShowCommentForm] = useState(false)
   const [reviewComments, setReviewComments] = useState([]) // 라인별 댓글들 보관
   const [files, setFiles] = useState([]) // 녹음 파일들 보관
-  const [prReviews, setPrReviews] = useState([]) // 기존 리뷰 목록 (아직 미사용, 저장만)
   const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
 
   const [prDetail, setPrDetail] = useState(null)
@@ -33,6 +35,48 @@ const PRReview = () => {
   const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
 
   const loadingDots = useLoadingDots(loading)
+
+  // 페이지 이탈 방지 (새로고침, 브라우저 닫기 등)
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (reviewComments.length > 0) {
+        e.preventDefault()
+        e.returnValue = '작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?'
+        return e.returnValue
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [reviewComments.length])
+
+  // 브라우저 뒤로가기 방지
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (reviewComments.length > 0) {
+        const confirmed = window.confirm(
+          '작성 중인 임시 댓글이 있습니다.\n페이지를 나가면 댓글이 모두 사라집니다.\n정말 나가시겠습니까?'
+        )
+        if (!confirmed) {
+          // 현재 페이지로 다시 이동
+          window.history.pushState(null, '', window.location.pathname)
+          event.preventDefault()
+          return
+        }
+      }
+    }
+
+    // 임시 댓글이 있을 때만 이벤트 리스너 추가
+    if (reviewComments.length > 0) {
+      // 브라우저 히스토리에 현재 상태 추가 (뒤로가기 감지용)
+      window.history.pushState(null, '', window.location.pathname)
+      window.addEventListener('popstate', handlePopState)
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [reviewComments.length])
 
   useEffect(() => {
     const load = async () => {
@@ -44,11 +88,6 @@ const PRReview = () => {
         console.log('pr:', pr)
         setPrDetail(pr)
 
-        // PR 상세 정보에 포함된 리뷰 목록 사용
-        if (pr.reviews) {
-          setPrReviews(pr.reviews)
-          console.log('reviews from pr detail:', pr.reviews)
-        }
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
         setPrDetail(null)
@@ -323,14 +362,19 @@ const PRReview = () => {
               </Button>
             )
           })}
-          <Button
-            variant="primary"
-            size="sm"
-            className="flex ml-auto px-4 py-2"
-            onClick={() => setShowCommentForm(!showCommentForm)}
-          >
-            리뷰 작성
-          </Button>
+          <div className="flex items-center gap-2 ml-auto">
+            {reviewComments.length > 0 && (
+              <Badge variant="warning">임시 댓글 {reviewComments.length}개</Badge>
+            )}
+            <Button
+              variant="primary"
+              size="sm"
+              className="flex px-4 py-2"
+              onClick={() => setShowCommentForm(!showCommentForm)}
+            >
+              리뷰 작성
+            </Button>
+          </div>
 
           {showCommentForm && (
             <div className="absolute top-full -mt-6 -right-12 z-10 w-120">
