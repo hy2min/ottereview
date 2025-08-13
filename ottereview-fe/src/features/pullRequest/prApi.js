@@ -151,11 +151,11 @@ export const doMerge = async ({ repoId, prId }) => {
 }
 
 export const closePR = async ({repoId, prId}) => {
-  const res = await api.get(`/api/repositories/${repoId}/pull-requests/${prId}/close`)
+  const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/close`)
   return res.data
 }
 
-export const openPR = async ({repoId, prId}) => {
-  const res = await api.get(`/api/repositories/${repoId}/pull-requests/${prId}/reopen`)
+export const reopenPR = async ({repoId, prId}) => {
+  const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/reopen`)
   return res.data
 }
