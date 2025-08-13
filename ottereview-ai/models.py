@@ -39,8 +39,7 @@ class DescriptionInfo(BaseModel):
     """설명 정보 - 자바 DescriptionInfo 기반"""
     id: Optional[int] = None
     path: Optional[str] = None
-    body: str
-    recordKey: str
+    body: Optional[str] = None
     fileIndex: Optional[int] = None
     position: Optional[int] = None
     startLine: Optional[int] = None
@@ -76,14 +75,20 @@ class RepoInfo(BaseModel):
 class PrUserInfo(BaseModel):
     """사용자 정보 - 자바 PrUserInfo 기반"""
     id: int
+    githubId: int
     githubUsername: str
     githubEmail: str
 
-
 class PriorityInfo(BaseModel):
-    """우선순위 정보 - 자바 PriorityInfo 기반"""
+    """우선순위 정보 - 머지용"""
     id: int
-    idx: int
+    level: str
+    title: str
+    content: str
+
+class PriorityInfoPre(BaseModel):
+    """우선순위 정보 - 자바 PriorityInfo 기반"""
+    level: str
     title: str
     content: str
 
@@ -110,7 +115,7 @@ class PreparationResult(BaseModel):
     preReviewers: Optional[List[PrUserInfo]] = None
     reviewers: Optional[List[PrUserInfo]] = None
     descriptions: Optional[List[DescriptionInfo]] = None
-    priorities: Optional[List[PriorityInfo]] = None
+    priorities: Optional[List[PriorityInfoPre]] = None
     author: Optional[PrUserInfo] = None
     repository: Optional[RepoInfo] = None
     title: Optional[str] = None

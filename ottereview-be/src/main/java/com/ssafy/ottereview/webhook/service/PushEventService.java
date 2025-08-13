@@ -37,7 +37,7 @@ public class PushEventService {
             // Push 이벤트 기본 정보 추출
             PushEventDto pushInfo = extractPushEventInfo(json);
 
-            eventSendController.push("push",pushInfo);
+            eventSendController.push("push", pushInfo);
             
         } catch (Exception e) {
             throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);

@@ -1,3 +1,5 @@
+import React from 'react'
+
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -14,7 +16,6 @@ const PRCreateStep3 = ({
   aiOthers,
   validationBranches,
   reviewComments,
-  audioFiles,
   onAddComment,
   fileComments = {},
   prTitle,
@@ -24,7 +25,7 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
-  
+
   // 템플릿 정의
   const templates = [
     {
@@ -44,13 +45,12 @@ const PRCreateStep3 = ({
 close #이슈번호
 
 ## 참고사항
-참고사항. 없을 시 삭제`
-    }
+참고사항. 없을 시 삭제`,
+    },
   ]
 
   // 유저 정보 가져오기
   const user = useUserStore((state) => state.user)
-  console.log('현재 유저 정보:', user)
 
   const candidates = aiOthers?.priority?.result?.priority || []
   const slots = Array.from({ length: 3 }, (_, i) => candidates[i] || null)
@@ -61,6 +61,7 @@ close #이슈번호
   }
 
   const isAiTitleLoading = !aiOthers?.title?.result
+  // 로딩 중일 때만 애니메이션 활성화
   const loadingDots = useLoadingDots(isAiTitleLoading, 300)
   const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
 
@@ -86,7 +87,7 @@ close #이슈번호
       setPrBody('')
     } else if (selectedValue) {
       // 템플릿 적용
-      const template = templates.find(t => t.value === selectedValue)
+      const template = templates.find((t) => t.value === selectedValue)
       if (template) {
         setPrBody(template.content)
       }
@@ -96,12 +97,19 @@ close #이슈번호
   const handleNextStep = async () => {
     try {
       const formattedDescriptions = reviewComments.map((comment) => ({
-        ...comment,
-        id: user?.id,
-        recordKey: comment.recordKey || '',
+        author_id: user?.id,
+        path: comment.path,
+        body: comment.content || '',
+        position: comment.position,
+        start_line: comment.startLine,
+        start_side: comment.startSide,
+        line: comment.lineNumber,
+        side: comment.side,
+        diff_hunk: comment.diffHunk,
+        file_index: comment.fileIndex,
       }))
 
-      // AI 우선순위 데이터를 백엔드 형식으로 변환
+      // AI 우선순위 데이터를 백엔드 형식으로 변환 (aiOthers가 없어도 빈 배열로 처리)
       const aiPriorities = aiOthers?.priority?.result?.priority || []
       const formattedPriorities = aiPriorities.map((priority) => ({
         level: priority.priority_level,
@@ -115,7 +123,7 @@ close #이슈번호
         target: validationBranches?.target,
         title: prTitle,
         body: prBody,
-        description: formattedDescriptions,
+        descriptions: formattedDescriptions,
         priorities: formattedPriorities,
       }
 
@@ -185,8 +193,8 @@ close #이슈번호
                       className="text-sm -mt-[4px]"
                       options={[
                         { value: '', label: '템플릿 선택' },
-                        ...templates.map(t => ({ value: t.value, label: t.label })),
-                        { value: 'remove', label: '템플릿 제거' }
+                        ...templates.map((t) => ({ value: t.value, label: t.label })),
+                        { value: 'remove', label: '템플릿 제거' },
                       ]}
                     />
                   </div>
@@ -212,7 +220,7 @@ close #이슈번호
               <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
-                  <Box key={index} className='p-3'>
+                  <Box key={index} className="p-3">
                     {priority ? (
                       <div className="space-y-2 min-h-22">
                         <div className="flex flex-wrap items-center gap-2">
@@ -226,10 +234,7 @@ close #이슈번호
                             {priority.title}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm leading-relaxed">
-                          {priority.reason}
-                          
-                        </p>
+                        <p className="text-gray-600 text-sm leading-relaxed">{priority.reason}</p>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-22 text-sm text-gray-400">
@@ -272,4 +277,4 @@ close #이슈번호
   )
 }
 
-export default PRCreateStep3
+export default React.memo(PRCreateStep3)

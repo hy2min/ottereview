@@ -18,7 +18,6 @@ public class DescriptionInfo {
     private PrUserInfo author;
     private String path;
     private String body;
-    private String recordKey;
     private Integer fileIndex;
     private Integer position;
     private Integer startLine;
@@ -32,8 +31,7 @@ public class DescriptionInfo {
                 .author(author)
                 .path(request.getPath())
                 .body(request.getBody())
-                .recordKey(request.getRecordKey())
-                .fileIndex(request.getFileIndex())
+                .fileIndex(request.getFileIndex() != null ? request.getFileIndex() : null)
                 .position(request.getPosition())
                 .startLine(request.getStartLine())
                 .startSide(request.getStartSide())
