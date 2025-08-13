@@ -123,29 +123,55 @@ class PineconeVectorDB:
     
     
     async def _store_priority_patterns_from_detail(self, pr_detail: PRDetailData):
-        """PRDetailData로부터 우선순위 패턴 저장"""
+        """PRDetailData로부터 우선순위 패턴 저장 - 실제 데이터 기반 개선"""
         commit_messages = [c.message for c in pr_detail.commits]
         functional_groups = self._group_detail_files_by_function(pr_detail.files, commit_messages)
+        
+        # PR 전체 정보 분석
+        pr_analysis = self._analyze_pr_characteristics(pr_detail)
+        priority_analysis = self._analyze_priority_characteristics(pr_detail)
         
         # 각 기능 그룹별로 패턴 저장
         for i, group in enumerate(functional_groups):
             context_parts = [
                 f"기능 영역: {group['category']}",
-                f"관련 파일: {', '.join(group['files'])}",
+                f"파일 확장자: {', '.join(group['file_types'])}",
                 f"변경 규모: {group['change_scale']}",
-                f"커밋 메시지: {group['related_commits']}"
+                f"복잡도: {group['complexity_level']}",
+                f"커밋 패턴: {group['commit_pattern']}",
+                f"작성자: {pr_detail.author.githubUsername}",
+                f"위험도 지표: {', '.join(priority_analysis['risk_indicators'])}",
+                f"커밋 메시지: {group['related_commits'][:100]}"  # 길이 제한
             ]
             
             context = " ".join(context_parts)
             context_vector = await self.embeddings.aembed_query(context)
             
+            # 우선순위 결정에 도움이 되는 메타데이터
             metadata = {
                 "pr_id": str(pr_detail.id),
                 "repository_id": str(pr_detail.repo.id),
+                "repository_name": pr_detail.repo.fullName,
+                "pr_author": pr_detail.author.githubUsername,
                 "functional_category": group['category'],
+                "file_extensions": ",".join(group['file_types']),
                 "change_scale": group['change_scale'],
                 "complexity_level": group['complexity_level'],
+                "related_files": ",".join(group['files'][:5]),
+                "file_count": str(len(group['files'])),
+                "total_changes": str(group['total_changes']),
+                "commit_count": str(pr_detail.commitCnt),
+                "changed_files_count": str(pr_detail.changedFilesCnt),
+                "commit_pattern": group['commit_pattern'],
                 "priority_indicators": ",".join(group['priority_indicators']),
+                "risk_level": priority_analysis['risk_level'],
+                "business_impact": priority_analysis['business_impact'],
+                "has_security_changes": str(priority_analysis['has_security_changes']).lower(),
+                "has_breaking_changes": str(priority_analysis['has_breaking_changes']).lower(),
+                "has_tests": str(pr_analysis['has_tests']).lower(),
+                "has_docs": str(pr_analysis['has_docs']).lower(),
+                "has_config": str(pr_analysis['has_config']).lower(),
+                "related_commits": group['related_commits'][:200],  # 길이 제한
                 "timestamp": datetime.now().isoformat()
             }
             
@@ -156,35 +182,60 @@ class PineconeVectorDB:
             }])
     
     async def _store_reviewer_patterns_from_detail(self, pr_detail: PRDetailData):
-        """PRDetailData로부터 리뷰어 추천을 위한 패턴 저장"""
+        """PRDetailData로부터 리뷰어 추천을 위한 패턴 저장 - 실제 데이터 기반 개선"""
         if not pr_detail.reviewers:
             return
             
         functional_groups = self._group_detail_files_by_function(pr_detail.files, [c.message for c in pr_detail.commits])
         
+        # PR 전체 정보 분석
+        pr_analysis = self._analyze_pr_characteristics(pr_detail)
+        
         # 각 리뷰어별로 패턴 저장
         for i, reviewer_info in enumerate(pr_detail.reviewers):
-            for group in functional_groups:
+            for j, group in enumerate(functional_groups):
+                # 컨텍스트에 실제 데이터 기반 정보 포함
                 context_parts = [
                     f"리뷰어: {reviewer_info.githubUsername}",
                     f"기능 영역: {group['category']}",
-                    f"파일들: {', '.join(group['files'])}"
+                    f"파일 확장자: {', '.join(group['file_types'])}",
+                    f"변경 규모: {group['change_scale']}",
+                    f"복잡도: {group['complexity_level']}",
+                    f"커밋 패턴: {group['commit_pattern']}",
+                    f"작성자: {pr_detail.author.githubUsername}"
                 ]
                 
                 context = " ".join(context_parts)
                 context_vector = await self.embeddings.aembed_query(context)
                 
+                # 실제 패턴 학습에 도움이 되는 메타데이터만 저장
                 metadata = {
                     "pr_id": str(pr_detail.id),
                     "repository_id": str(pr_detail.repo.id),
+                    "repository_name": pr_detail.repo.fullName,
                     "reviewer": reviewer_info.githubUsername,
                     "reviewer_email": reviewer_info.githubEmail,
+                    "pr_author": pr_detail.author.githubUsername,
                     "functional_category": group['category'],
+                    "file_extensions": ",".join(group['file_types']),
+                    "change_scale": group['change_scale'],
+                    "complexity_level": group['complexity_level'],
+                    "files_reviewed": ",".join(group['files'][:5]),
+                    "file_count": str(len(group['files'])),
+                    "total_changes": str(group['total_changes']),
+                    "commit_count": str(pr_detail.commitCnt),
+                    "changed_files_count": str(pr_detail.changedFilesCnt),
+                    "branch_name": pr_detail.head,
+                    "commit_pattern": group['commit_pattern'],
+                    "has_tests": str(pr_analysis['has_tests']).lower(),
+                    "has_docs": str(pr_analysis['has_docs']).lower(),
+                    "has_config": str(pr_analysis['has_config']).lower(),
+                    "review_provided": "true",
                     "timestamp": datetime.now().isoformat()
                 }
                 
                 self.reviewer_patterns_index.upsert(vectors=[{
-                    "id": f"{pr_detail.id}_reviewer_{i}_{group['category']}",
+                    "id": f"{pr_detail.id}_reviewer_{i}_{j}",
                     "values": context_vector,
                     "metadata": metadata
                 }])
@@ -206,11 +257,100 @@ class PineconeVectorDB:
         
         return functional_groups
     
+    def _analyze_pr_characteristics(self, pr_detail: PRDetailData) -> Dict[str, Any]:
+        """PR의 전반적인 특성 분석"""
+        analysis = {
+            'has_tests': False,
+            'has_docs': False,
+            'has_config': False,
+            'main_languages': [],
+            'directory_spread': 0
+        }
+        
+        directories = set()
+        extensions = defaultdict(int)
+        
+        for file in pr_detail.files:
+            # 디렉토리 분산도 계산
+            directories.add(os.path.dirname(file.filename))
+            
+            # 파일 확장자별 통계
+            ext = os.path.splitext(file.filename)[1].lower()
+            if ext:
+                extensions[ext] += 1
+            
+            filename_lower = file.filename.lower()
+            
+            # 테스트 파일 검사
+            if any(test_pattern in filename_lower for test_pattern in ['test', 'spec', '__test__']):
+                analysis['has_tests'] = True
+            
+            # 문서 파일 검사
+            if ext in ['.md', '.txt', '.rst', '.doc']:
+                analysis['has_docs'] = True
+            
+            # 설정 파일 검사
+            if ext in ['.yml', '.yaml', '.json', '.xml', '.properties', '.toml'] or 'config' in filename_lower:
+                analysis['has_config'] = True
+        
+        analysis['directory_spread'] = len(directories)
+        analysis['main_languages'] = [ext for ext, count in extensions.most_common(3)]
+        
+        return analysis
+    
+    def _analyze_priority_characteristics(self, pr_detail: PRDetailData) -> Dict[str, Any]:
+        """우선순위 결정을 위한 PR 특성 분석"""
+        analysis = {
+            'risk_level': 'LOW',
+            'business_impact': 'LOW',
+            'has_security_changes': False,
+            'has_breaking_changes': False,
+            'risk_indicators': []
+        }
+        
+        security_patterns = ['auth', 'security', 'token', 'password', 'jwt', 'permission', 'role']
+        breaking_patterns = ['migration', 'schema', 'api', 'interface', 'contract']
+        high_impact_patterns = ['controller', 'service', 'entity', 'repository', 'config']
+        
+        total_changes = sum(f.additions + f.deletions for f in pr_detail.files)
+        
+        for file in pr_detail.files:
+            filename_lower = file.filename.lower()
+            
+            # 보안 관련 변경 검사
+            if any(pattern in filename_lower for pattern in security_patterns):
+                analysis['has_security_changes'] = True
+                analysis['risk_indicators'].append('보안관련')
+            
+            # 브레이킹 체인지 검사
+            if any(pattern in filename_lower for pattern in breaking_patterns):
+                analysis['has_breaking_changes'] = True
+                analysis['risk_indicators'].append('호환성영향')
+            
+            # 비즈니스 임팩트 검사
+            if any(pattern in filename_lower for pattern in high_impact_patterns):
+                analysis['business_impact'] = 'HIGH'
+                analysis['risk_indicators'].append('핵심로직')
+        
+        # 변경 규모에 따른 위험도 조정
+        if total_changes > 500:
+            analysis['risk_level'] = 'HIGH'
+            analysis['risk_indicators'].append('대규모변경')
+        elif total_changes > 100:
+            analysis['risk_level'] = 'MEDIUM'
+            analysis['risk_indicators'].append('중간규모변경')
+        
+        # 보안 변경이 있으면 위험도 상향
+        if analysis['has_security_changes']:
+            analysis['risk_level'] = 'CRITICAL'
+        
+        return analysis
+
     def _create_detail_functional_group(self, files: List[FileChangeInfo], category: str, 
                                commit_messages: List[str], priority_indicators: List[str]) -> Dict[str, Any]:
-        """PRDetailFileInfo로부터 기능 그룹 생성"""
+        """PRDetailFileInfo로부터 기능 그룹 생성 - 커밋 패턴 분석 추가"""
         total_changes = sum(f.additions + f.deletions for f in files)
-        file_types = list(set([os.path.splitext(f.filename)[1].lower() for f in files]))
+        file_types = list(set([os.path.splitext(f.filename)[1].lower() for f in files if os.path.splitext(f.filename)[1]]))
         
         # 변경 규모 계산
         if total_changes > 200:
@@ -235,6 +375,9 @@ class PineconeVectorDB:
         related_commits = " ".join([msg for msg in commit_messages 
                                   if any(keyword in msg.lower() for keyword in category.lower().split('/'))])
         
+        # 커밋 패턴 분석
+        commit_pattern = self._analyze_commit_pattern(commit_messages)
+        
         return {
             "category": category,
             "files": [f.filename for f in files],
@@ -243,8 +386,41 @@ class PineconeVectorDB:
             "total_changes": total_changes,
             "file_types": file_types,
             "priority_indicators": priority_indicators,
-            "related_commits": related_commits or " ".join(commit_messages)
+            "related_commits": related_commits or " ".join(commit_messages),
+            "commit_pattern": commit_pattern
         }
+    
+    def _analyze_commit_pattern(self, commit_messages: List[str]) -> str:
+        """커밋 메시지 패턴 분석"""
+        if not commit_messages:
+            return "일반"
+        
+        all_messages = " ".join(commit_messages).lower()
+        
+        # 패턴별 키워드 정의
+        patterns = {
+            "기능추가": ["feat", "feature", "add", "implement", "새로운", "추가"],
+            "버그수정": ["fix", "bug", "error", "수정", "버그", "오류"],
+            "리팩토링": ["refactor", "refactoring", "개선", "정리", "구조변경"],
+            "테스트": ["test", "testing", "spec", "테스트"],
+            "문서": ["docs", "doc", "documentation", "문서", "readme"],
+            "설정": ["config", "configuration", "설정", "환경"],
+            "스타일": ["style", "formatting", "스타일", "포맷"],
+            "성능": ["perf", "performance", "optimize", "성능", "최적화"]
+        }
+        
+        # 각 패턴별로 매칭 점수 계산
+        pattern_scores = {}
+        for pattern_name, keywords in patterns.items():
+            score = sum(1 for keyword in keywords if keyword in all_messages)
+            if score > 0:
+                pattern_scores[pattern_name] = score
+        
+        # 가장 높은 점수의 패턴 반환
+        if pattern_scores:
+            return max(pattern_scores.items(), key=lambda x: x[1])[0]
+        
+        return "일반"
     
     def _group_files_by_function(self, files: List[FileChangeInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
         """파일들을 상위 디렉토리 기준으로 그룹화"""
@@ -266,9 +442,9 @@ class PineconeVectorDB:
     
     def _create_functional_group(self, files: List[FileChangeInfo], category: str, 
                                commit_messages: List[str], priority_indicators: List[str]) -> Dict[str, Any]:
-        """기능 그룹 생성"""
+        """기능 그룹 생성 - 커밋 패턴 분석 추가"""
         total_changes = sum(f.additions + f.deletions for f in files)
-        file_types = list(set([os.path.splitext(f.filename)[1].lower() for f in files]))
+        file_types = list(set([os.path.splitext(f.filename)[1].lower() for f in files if os.path.splitext(f.filename)[1]]))
         
         # 변경 규모 계산
         if total_changes > 200:
@@ -293,6 +469,9 @@ class PineconeVectorDB:
         related_commits = " ".join([msg for msg in commit_messages 
                                   if any(keyword in msg.lower() for keyword in category.lower().split('/'))])
         
+        # 커밋 패턴 분석
+        commit_pattern = self._analyze_commit_pattern(commit_messages)
+        
         return {
             "category": category,
             "files": [f.filename for f in files],
@@ -301,7 +480,8 @@ class PineconeVectorDB:
             "total_changes": total_changes,
             "file_types": file_types,
             "priority_indicators": priority_indicators,
-            "related_commits": related_commits or " ".join(commit_messages)
+            "related_commits": related_commits or " ".join(commit_messages),
+            "commit_pattern": commit_pattern
         }
     
     async def get_similar_reviewer_patterns(self, pr_data: PreparationResult, limit: int = 10) -> List[Dict[str, Any]]:
@@ -349,8 +529,16 @@ class PineconeVectorDB:
                     "repository_name": metadata.get("repository_name"),
                     "reviewer": metadata.get("reviewer"),
                     "reviewer_email": metadata.get("reviewer_email"),
-                    "file_categories": metadata.get("file_categories", "").split(",") if metadata.get("file_categories") else [],
+                    "pr_author": metadata.get("pr_author"),
+                    "functional_category": metadata.get("functional_category"),
+                    "file_categories": metadata.get("file_extensions", "").split(",") if metadata.get("file_extensions") else [],
                     "files_reviewed": metadata.get("files_reviewed", "").split(",") if metadata.get("files_reviewed") else [],
+                    "change_scale": metadata.get("change_scale"),
+                    "complexity_level": metadata.get("complexity_level"),
+                    "commit_pattern": metadata.get("commit_pattern"),
+                    "has_tests": metadata.get("has_tests") == "true",
+                    "has_docs": metadata.get("has_docs") == "true",
+                    "has_config": metadata.get("has_config") == "true",
                     "review_provided": metadata.get("review_provided") == "true",
                     "similarity_score": float(match.score)
                 })
@@ -406,13 +594,22 @@ class PineconeVectorDB:
                     "pr_id": metadata.get("pr_id"),
                     "repository_id": metadata.get("repository_id"),
                     "repository_name": metadata.get("repository_name"),
+                    "pr_author": metadata.get("pr_author"),
                     "functional_category": metadata.get("functional_category"),
                     "related_files": metadata.get("related_files", "").split(",") if metadata.get("related_files") else [],
                     "change_scale": metadata.get("change_scale"),
-                    "file_types": metadata.get("file_types", "").split(",") if metadata.get("file_types") else [],
+                    "file_types": metadata.get("file_extensions", "").split(",") if metadata.get("file_extensions") else [],
                     "total_changes": int(metadata.get("total_changes", "0")),
                     "complexity_level": metadata.get("complexity_level"),
+                    "commit_pattern": metadata.get("commit_pattern"),
                     "priority_indicators": metadata.get("priority_indicators", "").split(",") if metadata.get("priority_indicators") else [],
+                    "risk_level": metadata.get("risk_level"),
+                    "business_impact": metadata.get("business_impact"),
+                    "has_security_changes": metadata.get("has_security_changes") == "true",
+                    "has_breaking_changes": metadata.get("has_breaking_changes") == "true",
+                    "has_tests": metadata.get("has_tests") == "true",
+                    "has_docs": metadata.get("has_docs") == "true",
+                    "has_config": metadata.get("has_config") == "true",
                     "related_commits": metadata.get("related_commits"),
                     "similarity_score": float(match.score)
                 })
