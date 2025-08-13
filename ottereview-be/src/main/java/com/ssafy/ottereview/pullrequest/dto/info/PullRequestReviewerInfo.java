@@ -24,7 +24,7 @@ public class PullRequestReviewerInfo {
                 .userId(reviewer.getUser().getId())
                 .githubUsername(reviewer.getUser().getGithubUsername())
                 .githubEmail(reviewer.getUser().getGithubEmail())
-                .state("상태추가")
+                .state(reviewer.getStatus().toString())
                 .build();
 
     }
