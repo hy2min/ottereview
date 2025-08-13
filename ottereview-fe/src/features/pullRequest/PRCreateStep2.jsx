@@ -11,6 +11,7 @@ const PRCreateStep2 = ({
   validationBranches,
   aiConvention,
   setAIConvention,
+  aiOthers,
   setAIOthers,
   conventionRules,
   setConventionRules,
@@ -41,41 +42,20 @@ const PRCreateStep2 = ({
       setAiLoading(true)
 
       // 두 요청을 동시에 시작
-      const conventionPromise = requestAIConvention({
+      // AI 컨벤션 요청만 수행
+      const conventionData = await requestAIConvention({
         repoId,
         source: validationBranches.source,
         target: validationBranches.target,
         rules,
       })
-      const othersPromise = requestAIOthers({
-        repoId,
-        source: validationBranches.source,
-        target: validationBranches.target,
-        rules,
-      })
-
-      // AI 컨벤션 요청이 완료될 때까지 기다림
-      const conventionData = await conventionPromise
 
       console.log('AI 컨벤션 응답:', conventionData)
       setAIConvention(conventionData)
-
-      // 주요 요청이 끝났으므로 로딩 상태 해제
-      setAiLoading(false)
-
-      // AI 기타 요청은 백그라운드에서 완료되면 스토어에 저장
-      othersPromise
-        .then((othersData) => {
-          console.log('AI 기타 응답:', othersData)
-          setAIOthers(othersData)
-        })
-        .catch((e) => {
-          console.error('AI 기타 요청 에러:', e)
-        })
     } catch (e) {
       console.error('AI 컨벤션 요청 에러:', e)
     } finally {
-      // 로딩 상태는 컨벤션 요청 직후 해제되므로 이 블록은 필요 없음
+      setAiLoading(false)
     }
   }
 
@@ -93,9 +73,27 @@ const PRCreateStep2 = ({
     ))
   }
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    // AI Others 요청을 백그라운드에서 시작
+    console.log('Step2에서 AI Others 요청 시작...')
+    requestAIOthers({
+      repoId,
+      source: validationBranches.source,
+      target: validationBranches.target,
+      rules,
+    })
+      .then((othersData) => {
+        console.log('AI Others 응답:', othersData)
+        setAIOthers(othersData)
+      })
+      .catch((e) => {
+        console.error('AI Others 요청 에러:', e)
+      })
+    
+    // 즉시 다음 단계로 이동
     goToStep(3)
   }
+
 
   return (
     <div className="space-y-4">
