@@ -4,6 +4,7 @@ import ChatRoom from '@/pages/ChatRoom'
 import Conflict from '@/pages/Conflict'
 import Dashboard from '@/pages/Dashboard'
 import Guide from '@/pages/Guide'
+import NotFound from '@/pages/NotFound'
 import PRCreate from '@/pages/PRCreate'
 import PRreview from '@/pages/PRReview'
 import RepositoryDetail from '@/pages/RepositoryDetail'
@@ -19,3 +20,5 @@ export const protectedRoutes = [
   { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
   { path: '/install-complete', element: <InstallComplete />, title: 'Ottereview 설치' },
 ]
+
+export { NotFound }

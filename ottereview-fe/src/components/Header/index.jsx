@@ -34,9 +34,13 @@ const Header = () => {
         <div className="soft-container grid grid-cols-3 items-center">
           <button
             onClick={() => navigate('/dashboard')}
-            className="text-xl justify-self-start cursor-pointer text-blue-600 font-semibold hover:text-blue-700 transition-colors"
+            className="justify-self-start cursor-pointer flex items-center hover:opacity-80 transition-opacity"
           >
-            🦦 Ottereview
+            <img 
+              src="/otter_logo.png" 
+              alt="Ottereview" 
+              className="h-12 w-auto"
+            />
           </button>
           <div
             className="text-xl justify-self-center font-medium"

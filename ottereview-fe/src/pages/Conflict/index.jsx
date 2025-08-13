@@ -6,6 +6,7 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import { createChat } from '@/features/chat/chatApi'
 import useConflictStore from '@/features/conflict/conflictStore'
+import { useUserStore } from '@/store/userStore'
 
 const Conflict = () => {
   const { repoId, prId } = useParams()
@@ -32,6 +33,9 @@ const Conflict = () => {
     getFileConflictContent,
     reset,
   } = useConflictStore()
+
+  // 현재 로그인한 사용자 정보
+  const user = useUserStore((state) => state.user)
 
   // fetchConflictData를 useCallback으로 메모이제이션
   const memoizedFetchConflictData = useCallback(fetchConflictData, [])
@@ -65,6 +69,18 @@ const Conflict = () => {
       setActiveFile(selectedFiles.length > 0 ? selectedFiles[0] : null)
     }
   }, [selectedFiles, activeFile])
+
+  // 현재 사용자 자동 선택 로직
+  useEffect(() => {
+    if (user && members.length > 0 && !selectedMembers.includes(user.githubUsername)) {
+      const currentUserInMembers = members.find(
+        (member) => member.githubUsername === user.githubUsername
+      )
+      if (currentUserInMembers) {
+        toggleMember(user.githubUsername)
+      }
+    }
+  }, [user, members, selectedMembers, toggleMember])
 
   const toggleReviewer = useCallback(
     (member) => {
@@ -183,10 +199,11 @@ function hello() {
         return
       }
 
-      if (selectedMembers.length === 0) {
-        alert('참여자를 최소 1명 이상 선택해주세요.')
-        return
-      }
+      // 현재 사용자는 항상 포함되므로 추가 참여자 체크는 선택사항
+      // if (selectedMembers.length === 0) {
+      //   alert('참여자를 최소 1명 이상 선택해주세요.')
+      //   return
+      // }
 
       if (selectedFiles.length === 0) {
         alert('충돌 파일을 최소 1개 이상 선택해주세요.')
@@ -194,12 +211,13 @@ function hello() {
       }
       console.log(selectedFiles)
 
-      // 선택된 멤버들의 ID 추출
+      // 현재 사용자를 포함한 선택된 멤버들의 ID 추출
+      const allSelectedMembers = user ? [user.githubUsername, ...selectedMembers] : selectedMembers
       const selectedMemberIds = members
-        .filter((member) => selectedMembers.includes(member.githubUsername))
+        .filter((member) => allSelectedMembers.includes(member.githubUsername))
         .map((member) => member.id)
 
-      if (selectedMemberIds.length !== selectedMembers.length) {
+      if (selectedMemberIds.length !== allSelectedMembers.length) {
         console.warn('일부 멤버의 ID를 찾을 수 없습니다.')
       }
 
@@ -207,7 +225,7 @@ function hello() {
         prId: Number(prId),
         roomName: trimmedRoomName,
         inviteeIds: selectedMemberIds,
-        selectedMemberUsernames: selectedMembers,
+        selectedMemberUsernames: allSelectedMembers,
       })
 
       // 채팅방 생성 API 호출
@@ -237,7 +255,7 @@ function hello() {
         repoId,
         prId,
         conflictFiles: selectedFiles,
-        members: selectedMembers,
+        members: allSelectedMembers,
         yorkieDocs,
         createdAt: Date.now(),
       }
@@ -260,13 +278,9 @@ function hello() {
     }
   }
 
-  // 생성 버튼 활성화 조건
+  // 생성 버튼 활성화 조건 (현재 사용자는 항상 포함되므로 멤버 수 체크 제거)
   const isCreateButtonDisabled =
-    selectedMembers.length === 0 ||
-    !roomName.trim() ||
-    selectedFiles.length === 0 ||
-    yorkieInitializing ||
-    loading
+    !roomName.trim() || selectedFiles.length === 0 || yorkieInitializing || loading
 
   if (loading && !conflictData) {
     return (
@@ -327,41 +341,57 @@ function hello() {
 
           {/* 참여자 선택 */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-2 font-medium text-gray-700">참여자 선택 (필수)</div>
+            <div className="mb-2 font-medium text-gray-700">참여자 선택</div>
 
             {loading && !members.length && (
               <div className="text-sm text-gray-500 mb-2">멤버 목록을 불러오는 중...</div>
             )}
 
             {members.length > 0 ? (
-              <div className="flex gap-4 flex-wrap">
-                {members.map((member) => (
-                  <label
-                    key={member.githubUsername}
-                    className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
-                      selectedMembers.includes(member.githubUsername)
-                        ? 'bg-blue-50 border-blue-300'
-                        : 'border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedMembers.includes(member.githubUsername)}
-                      onChange={() => toggleReviewer(member)}
-                      disabled={loading || yorkieInitializing}
-                      className="rounded"
-                    />
-                    <span className="text-sm">{member.githubUsername}</span>
-                  </label>
-                ))}
+              <div className="space-y-3">
+                {/* 현재 사용자 표시 (항상 포함) */}
+                {user && (
+                  <div className="flex items-center gap-2 border px-3 py-2 bg-green-50 border-green-300 rounded-md">
+                    <input type="checkbox" checked={true} disabled={true} className="rounded" />
+                    <span className="text-sm font-medium">{user.githubUsername} (나)</span>
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                      항상 포함
+                    </span>
+                  </div>
+                )}
+
+                {/* 다른 멤버들 */}
+                <div className="flex gap-4 flex-wrap">
+                  {members
+                    .filter((member) => member.githubUsername !== user?.githubUsername)
+                    .map((member) => (
+                      <label
+                        key={member.githubUsername}
+                        className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
+                          selectedMembers.includes(member.githubUsername)
+                            ? 'bg-blue-50 border-blue-300'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedMembers.includes(member.githubUsername)}
+                          onChange={() => toggleReviewer(member)}
+                          disabled={loading || yorkieInitializing}
+                          className="rounded"
+                        />
+                        <span className="text-sm">{member.githubUsername}</span>
+                      </label>
+                    ))}
+                </div>
               </div>
             ) : (
               <div className="text-sm text-gray-500">사용 가능한 멤버가 없습니다.</div>
             )}
 
-            {selectedMembers.length > 0 && (
+            {(user || selectedMembers.length > 0) && (
               <div className="mt-3 text-sm text-blue-600 bg-blue-50 rounded-md p-2">
-                선택된 참여자: {selectedMembers.join(', ')}
+                선택된 참여자: {user ? [...selectedMembers].join(', ') : selectedMembers.join(', ')}
               </div>
             )}
           </div>
