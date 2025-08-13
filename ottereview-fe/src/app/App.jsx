@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import { protectedRoutes } from '@/app/routes'
+import { NotFound, protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
 import { useAuthStore } from '@/features/auth/authStore'
 import InstallComplete from '@/features/auth/InstallComplete'
@@ -52,7 +52,7 @@ const App = () => {
   if (pathname === '/install-complete') return <InstallComplete />
 
   const isLoggedIn = !!user
-  
+
   // 로그인된 사용자에게 전역 SSE 연결 제공
   useSSE(isLoggedIn)
 
@@ -62,7 +62,7 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     )
@@ -76,7 +76,7 @@ const App = () => {
           {protectedRoutes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
           ))}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
     </div>
