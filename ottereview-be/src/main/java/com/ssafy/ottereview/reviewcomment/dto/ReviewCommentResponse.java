@@ -2,8 +2,6 @@ package com.ssafy.ottereview.reviewcomment.dto;
 
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
 
