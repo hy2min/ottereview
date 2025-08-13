@@ -62,7 +62,7 @@ close #이슈번호
 
   const isAiTitleLoading = !aiOthers?.title?.result
   // 로딩 중일 때만 애니메이션 활성화
-  const loadingDots = useLoadingDots(isAiTitleLoading, 300)
+  const loadingDots = useLoadingDots(isAiTitleLoading, isAiTitleLoading ? 300 : 0)
   const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
 
   // 따옴표 제거 함수

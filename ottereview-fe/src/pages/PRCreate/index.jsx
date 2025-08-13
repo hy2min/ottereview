@@ -8,7 +8,7 @@ import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
 import PRCreateStep5 from '@/features/pullRequest/PRCreateStep5'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
-import { useCommentManager } from '@/lib/hooks/useCommentManager'
+import { useCommentManager } from '@/hooks/useCommentManager'
 
 const PRCreate = () => {
   const { repoId } = useParams()
