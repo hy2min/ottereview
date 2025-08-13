@@ -97,10 +97,42 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       const ov = new OpenVidu()
       const mySession = ov.initSession()
 
-      // 연결 생성 이벤트 로깅
+      // 연결 생성 이벤트 - 참여자 정보 추가
       mySession.on('connectionCreated', (event) => {
         console.log('🔗 새 연결 생성됨:', event.connection.connectionId)
-        // 참가자 정보는 streamCreated에서 처리
+        
+        // 내가 아닌 다른 사용자의 연결인 경우
+        if (event.connection !== mySession.connection && event.connection.data) {
+          try {
+            const connectionData = JSON.parse(event.connection.data)
+            console.log('👤 새 참가자 정보 (연결에서):', connectionData)
+            
+            setConnectedParticipants((prev) => {
+              // 중복 체크 (connectionId로)
+              const exists = prev.some(
+                (p) => p.connectionId === event.connection.connectionId
+              )
+              if (exists) {
+                console.log('👤 이미 존재하는 참가자:', connectionData.username)
+                return prev
+              }
+              
+              console.log('👤 새 참가자 추가 (연결):', connectionData.username)
+              return [
+                ...prev,
+                {
+                  connectionId: event.connection.connectionId,
+                  username: connectionData.username,
+                  userId: connectionData.userId,
+                  isOwner: connectionData.isOwner,
+                  isMe: false,
+                },
+              ]
+            })
+          } catch (error) {
+            console.error('연결 데이터 파싱 에러:', error)
+          }
+        }
       })
 
       // 연결 삭제 이벤트 - 참가자 제거
@@ -148,32 +180,42 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
             audioContainer.current.appendChild(audio)
           }
 
-          // 스트림이 생성될 때 참가자 정보 추가 (더 안전함)
+          // 스트림이 생성될 때 참가자 정보 확인 (이미 connectionCreated에서 처리했지만 추가 체크)
           if (event.stream.connection.data) {
             const connectionData = JSON.parse(event.stream.connection.data)
-            console.log('👤 새 참가자 정보 (스트림에서):', connectionData)
+            console.log('👤 스트림 참가자 정보 확인:', connectionData)
 
+            // 연결은 있지만 스트림에서 추가 정보가 필요한 경우를 위한 보완
             setConnectedParticipants((prev) => {
-              // 중복 체크 (connectionId로)
-              const exists = prev.some(
+              // 이미 존재하는지 체크
+              const existingIndex = prev.findIndex(
                 (p) => p.connectionId === event.stream.connection.connectionId
               )
-              if (exists) {
-                console.log('👤 이미 존재하는 참가자:', connectionData.username)
-                return prev
+              
+              if (existingIndex !== -1) {
+                // 기존 참가자 정보 업데이트 (스트림 정보 추가)
+                const updated = [...prev]
+                updated[existingIndex] = {
+                  ...updated[existingIndex],
+                  hasAudioStream: true
+                }
+                console.log('👤 기존 참가자 스트림 정보 업데이트:', connectionData.username)
+                return updated
+              } else {
+                // 새 참가자 추가 (연결 이벤트에서 놓친 경우를 위한 백업)
+                console.log('👤 새 참가자 추가 (스트림 백업):', connectionData.username)
+                return [
+                  ...prev,
+                  {
+                    connectionId: event.stream.connection.connectionId,
+                    username: connectionData.username,
+                    userId: connectionData.userId,
+                    isOwner: connectionData.isOwner,
+                    isMe: false,
+                    hasAudioStream: true
+                  },
+                ]
               }
-
-              console.log('👤 새 참가자 추가:', connectionData.username)
-              return [
-                ...prev,
-                {
-                  connectionId: event.stream.connection.connectionId,
-                  username: connectionData.username,
-                  userId: connectionData.userId,
-                  isOwner: connectionData.isOwner,
-                  isMe: false,
-                },
-              ]
             })
           }
 
@@ -246,13 +288,16 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       // 내 자신을 참가자 목록에 추가
       setConnectedParticipants([
         {
-          connectionId: 'me',
+          connectionId: mySession.connection.connectionId,
           username: myUserInfo.username,
           userId: myUserInfo.id,
           isOwner: isOwner,
           isMe: true,
+          hasAudioStream: true
         },
       ])
+      
+      console.log('👤 내 정보가 참가자 목록에 추가됨:', myUserInfo.username)
 
       // 퍼블리셔 생성
       const myPublisher = await ov.initPublisherAsync(undefined, {
@@ -454,6 +499,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
 
           {isSessionJoined && (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
+              {/* Owner가 아닌 경우: 나가기 버튼 */}
               {!isOwner && (
                 <button
                   onClick={leaveSession}
@@ -474,24 +520,44 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
                 </button>
               )}
 
+              {/* Owner인 경우: 나가기 + 세션 종료 버튼 */}
               {isOwner && (
-                <button
-                  onClick={() => setShowCloseConfirm(true)}
-                  style={{
-                    padding: '0.25rem 0.5rem',
-                    fontSize: '0.75rem',
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                  }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = '#dc2626')}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#ef4444')}
-                >
-                  🛑 세션 종료
-                </button>
+                <>
+                  <button
+                    onClick={leaveSession}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.75rem',
+                      backgroundColor: '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                    }}
+                    onMouseEnter={(e) => (e.target.style.backgroundColor = '#4b5563')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#6b7280')}
+                  >
+                    🚪 나가기
+                  </button>
+                  <button
+                    onClick={() => setShowCloseConfirm(true)}
+                    style={{
+                      padding: '0.25rem 0.5rem',
+                      fontSize: '0.75rem',
+                      backgroundColor: '#ef4444',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                    }}
+                    onMouseEnter={(e) => (e.target.style.backgroundColor = '#dc2626')}
+                    onMouseLeave={(e) => (e.target.style.backgroundColor = '#ef4444')}
+                  >
+                    🛑 세션 종료
+                  </button>
+                </>
               )}
             </div>
           )}
