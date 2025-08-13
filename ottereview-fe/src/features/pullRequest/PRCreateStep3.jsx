@@ -97,7 +97,7 @@ close #이슈번호
     try {
       const formattedDescriptions = reviewComments.map((comment) => ({
         ...comment,
-        id: user?.id,
+        author_id: user?.id,
         recordKey: comment.recordKey || '',
       }))
 
@@ -115,7 +115,7 @@ close #이슈번호
         target: validationBranches?.target,
         title: prTitle,
         body: prBody,
-        description: formattedDescriptions,
+        descriptions: formattedDescriptions,
         priorities: formattedPriorities,
       }
 
