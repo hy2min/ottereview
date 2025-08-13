@@ -1,8 +1,9 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
+import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
 import InstallComplete from '@/features/auth/InstallComplete'
 import OAuthCallbackPage from '@/features/auth/OAuthCallbackPage'
@@ -21,6 +22,14 @@ const App = () => {
   const accessToken = useAuthStore((state) => state.accessToken)
   const { pathname } = useLocation()
   const attemptedFetch = useRef(false)
+  
+  // 토스트 상태 관리
+  const [toasts, setToasts] = useState([])
+  
+  // 푸시 이벤트 핸들러
+  const handlePushEvent = useCallback((pushData) => {
+    setToasts((prev) => [...prev, pushData])
+  }, [])
 
   // user 복원 로직
   useEffect(() => {
@@ -46,8 +55,13 @@ const App = () => {
 
   const isLoggedIn = !!user
   
+  // 토스트 닫기 핸들러
+  const handleCloseToast = useCallback((toastId) => {
+    setToasts((prev) => prev.filter(toast => toast.id !== toastId))
+  }, [])
+  
   // 로그인된 사용자에게 전역 SSE 연결 제공
-  useSSE(isLoggedIn)
+  useSSE(isLoggedIn, handlePushEvent)
 
   if (!isLoggedIn) {
     return (
@@ -72,6 +86,9 @@ const App = () => {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </main>
+      
+      {/* 전역 토스트 */}
+      <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
     </div>
   )
 }
