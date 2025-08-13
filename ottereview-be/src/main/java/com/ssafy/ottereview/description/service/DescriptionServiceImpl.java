@@ -13,6 +13,7 @@ import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -118,9 +119,9 @@ public class DescriptionServiceImpl implements DescriptionService {
         try {
             // 엔티티 조회
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
             PullRequest pullRequest = pullRequestRepository.findById(request.getPullRequestId())
-                    .orElseThrow(() -> new IllegalArgumentException("PullRequest not found: " + request.getPullRequestId()));
+                    .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
 
             // 모든 설명을 병렬로 처리 (ReviewCommentService 패턴을 따름)
             List<Description> descriptions = Flux.fromIterable(request.getDescriptions())

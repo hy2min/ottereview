@@ -28,8 +28,9 @@ public class PullRequestReviewCommentInfo {
     private LocalDateTime githubUpdatedAt;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
+    private String voiceFileUrl;
 
-    public static PullRequestReviewCommentInfo fromEntity(ReviewComment reviewComment) {
+    public static PullRequestReviewCommentInfo fromEntity(ReviewComment reviewComment, String voiceFileUrl) {
         return PullRequestReviewCommentInfo.builder()
                 .id(reviewComment.getId())
                 .path(reviewComment.getPath())
@@ -46,6 +47,7 @@ public class PullRequestReviewCommentInfo {
                 .githubUpdatedAt(reviewComment.getGithubUpdatedAt())
                 .createdAt(reviewComment.getCreatedAt())
                 .modifiedAt(reviewComment.getModifiedAt())
+                .voiceFileUrl(voiceFileUrl)
                 .build();
     }
 }
