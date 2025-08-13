@@ -444,6 +444,8 @@ const PRReview = () => {
             onAddComment={handleAddFileLineComment}
             fileComments={fileComments}
             existingReviewComments={existingReviewComments}
+            descriptions={prDetail?.descriptions || []}
+            prAuthor={prDetail?.author || {}}
             showDiffHunk={false}
           />
         )}

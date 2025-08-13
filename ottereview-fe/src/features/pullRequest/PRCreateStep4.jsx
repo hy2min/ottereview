@@ -3,7 +3,7 @@ import { useEffect, useMemo } from 'react'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import { generateAISummary, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 
 const PRCreateStep4 = ({
   goToStep,
@@ -12,6 +12,7 @@ const PRCreateStep4 = ({
   aiOthers,
   selectedReviewers,
   setSelectedReviewers,
+  setAISummary
 }) => {
   const reviewers = useMemo(() => validationBranches?.preReviewers || [], [validationBranches])
   const aiRecommendedReviewers = useMemo(
@@ -25,8 +26,7 @@ const PRCreateStep4 = ({
   }
 
   // 컴포넌트 마운트 시 초기화 (이미 선택된 것이 있으면 유지)
-  useEffect(() => {
-  }, [reviewers, selectedReviewers])
+  useEffect(() => {}, [reviewers, selectedReviewers])
 
   const handleSelect = (githubUsername) => {
     // 이미 선택된 리뷰어인지 확인 (객체 배열에서)
@@ -56,6 +56,21 @@ const PRCreateStep4 = ({
       }
 
       await savePRAdditionalInfo(repoId, additionalInfo)
+
+      // AI 요약 생성 호출
+      try {
+        const AISummary = await generateAISummary({
+          source: validationBranches?.source,
+          target: validationBranches?.target,
+          repoId,
+        })
+        setAISummary(AISummary?.result)
+        console.log('AI 요약 생성 완료')
+        console.log(AISummary)
+      } catch (summaryError) {
+        console.error('AI 요약 생성 실패:', summaryError)
+        // AI 요약 실패해도 다음 단계로 진행
+      }
 
       goToStep(5)
     } catch (error) {
