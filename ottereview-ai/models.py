@@ -39,8 +39,7 @@ class DescriptionInfo(BaseModel):
     """설명 정보 - 자바 DescriptionInfo 기반"""
     id: Optional[int] = None
     path: Optional[str] = None
-    body: str
-    recordKey: str
+    body: Optional[str] = None
     fileIndex: Optional[int] = None
     position: Optional[int] = None
     startLine: Optional[int] = None

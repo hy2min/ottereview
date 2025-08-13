@@ -201,15 +201,21 @@ public class AiClient {
                     log.debug("AI 분석 결과 생성 완료");
                     return analysisResult;
                 })
-                // 6. 캐시 저장을 비동기로 수행 (결과 반환에 영향 없음)
-                .flatMap(result ->
-                        saveToCache(request, result)
+                // 6. 의미있는 값일 때만 캐시 저장을 비동기로 수행
+                .flatMap(result -> {
+                    if (isValidForCaching(result)) {
+                        log.info("의미있는 AI 분석 결과 - 캐시에 저장합니다");
+                        return saveToCache(request, result)
                                 .thenReturn(result)
                                 .onErrorResume(cacheError -> {
                                     log.warn("캐시 저장 실패, 결과는 정상 반환", cacheError);
                                     return Mono.just(result);
-                                })
-                );
+                                });
+                    } else {
+                        log.info("기본값이 포함된 AI 분석 결과 - 캐시에 저장하지 않습니다");
+                        return Mono.just(result);
+                    }
+                });
     }
     
     
@@ -287,5 +293,67 @@ public class AiClient {
                 .hasErrors(true)  // 에러 플래그 추가
                 .errorMessage(error.getMessage())
                 .build());
+    }
+    
+    /**
+     * AI 분석 결과가 캐시에 저장할 가치가 있는지 검증
+     * 모든 응답이 의미있는 값을 포함해야 함 (기본값/폴백값 제외)
+     */
+    private boolean isValidForCaching(AiResult result) {
+        // null 체크
+        if (result == null || result.getTitle() == null ||
+            result.getReviewers() == null || result.getPriority() == null) {
+            return false;
+        }
+        
+        // Title 검증: 기본 에러 메시지가 아닌지 확인
+        if (isDefaultTitleResponse(result.getTitle())) {
+            log.debug("Title이 기본값입니다 - 캐시 저장 제외");
+            return false;
+        }
+        
+        // Reviewers 검증: 빈 리스트가 아닌지 확인
+        if (isDefaultReviewersResponse(result.getReviewers())) {
+            log.debug("Reviewers가 기본값입니다 - 캐시 저장 제외");
+            return false;
+        }
+        
+        // Priority 검증: 기본 우선순위가 아닌지 확인
+        if (isDefaultPriorityResponse(result.getPriority())) {
+            log.debug("Priority가 기본값입니다 - 캐시 저장 제외");
+            return false;
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Title 응답이 기본값인지 검증
+     */
+    private boolean isDefaultTitleResponse(AiTitleResponse title) {
+        return title.getResult() == null ||
+               "분석 중 오류 발생".equals(title.getResult().trim());
+    }
+    
+    /**
+     * Reviewers 응답이 기본값인지 검증
+     */
+    private boolean isDefaultReviewersResponse(AiReviewerResponse reviewers) {
+        return reviewers.getResult() == null || reviewers.getResult().isEmpty();
+    }
+    
+    /**
+     * Priority 응답이 기본값인지 검증
+     */
+    private boolean isDefaultPriorityResponse(AiPriorityResponse priority) {
+        if (priority.getResult() == null || priority.getResult().getPriority() == null ||
+            priority.getResult().getPriority().isEmpty()) {
+            return true;
+        }
+        
+        // 첫 번째 우선순위 항목이 기본값인지 확인
+        AiPriorityResponse.PriorityItem firstItem = priority.getResult().getPriority().get(0);
+        return "기본 우선순위".equals(firstItem.getTitle()) &&
+               "우선순위를 수동으로 설정해주세요".equals(firstItem.getReason());
     }
 }
