@@ -27,6 +27,7 @@ const CodeDiff = ({
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
+  
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
@@ -79,7 +80,7 @@ const CodeDiff = ({
             id: lineId,
             position: currentPosition,
             diffHunk: patch,
-            side: isNew ? 'RIGHT' : 'LEFT',
+            side: isNew ? 'RIGHT' : (lineType === 'removed' ? 'LEFT' : 'RIGHT'),
             path: filePath,
             fileIndex: null,
           },
@@ -165,13 +166,19 @@ const CodeDiff = ({
     // 텍스트나 음성 중 하나라도 있어야 제출 가능
     if (hasTextContent || hasAudioFile) {
       // 선택된 라인들 정보 수집
-      const allSelectedLines = new Set([...selectedLines, lineIndex])
+      const allSelectedLines = new Set([...selectedLines])
       if (clickedLine !== null) {
         allSelectedLines.add(clickedLine)
+      }
+      
+      // 선택된 라인이 없으면 + 버튼을 누른 라인만 사용 (단일 라인 댓글)
+      if (allSelectedLines.size === 0) {
+        allSelectedLines.add(lineIndex)
       }
 
       // 선택된 라인들을 인덱스 순으로 정렬
       const sortedSelectedLines = Array.from(allSelectedLines).sort((a, b) => a - b)
+      
 
 
       // 각 라인의 실제 정보를 수집하기 위해 diff를 다시 파싱
@@ -284,6 +291,7 @@ const CodeDiff = ({
           fileIndex: fileIndex,
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
+        
 
         // 마지막 선택된 라인의 인덱스 찾기 (임시 댓글 표시 위치)
         const lastLineIndex = sortedSelectedLines[sortedSelectedLines.length - 1]
@@ -491,14 +499,16 @@ const CodeDiff = ({
                   {/* 기존 리뷰 댓글들 표시 */}
                   {(() => {
                     // 실제 라인 번호와 side를 기반으로 댓글 찾기
-                    const actualLineIndex = currentLineNumber - 1 // 0-based index로 변환
+                    const actualLineNumber = currentLineNumber // 실제 소스 파일의 라인 번호
                     const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT' // context 라인은 RIGHT로 처리
-                    const commentsForLine = existingReviewComments[actualLineIndex]
+                    const commentsForLine = existingReviewComments[actualLineNumber] || []
+                    
                     
                     // side가 일치하는 댓글만 필터링
                     const filteredComments = commentsForLine ? commentsForLine.filter(comment => 
                       comment.side === currentSide
                     ) : []
+                    
                     
                     return filteredComments.length > 0 ? filteredComments.map((comment) => (
                       <div key={comment.id} className="mx-2 mb-2 font-sans">
