@@ -27,7 +27,7 @@ public class EventSendController {
         return emitter;
     }
 
-    public void push(String action , String payload){
+    public void push(String action , Object payload){
         log.info("SSE 전송 시도: action={}, 클라이언트 수={}", action, clients.size());
         SseEmitter e = clients.get(action);
         if( e != null) {
