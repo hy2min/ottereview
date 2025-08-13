@@ -84,16 +84,18 @@ const Conflict = () => {
 
   const toggleReviewer = useCallback(
     (member) => {
+      console.log('🔄 토글 멤버:', member.githubUsername, '현재 선택:', selectedMembers)
       toggleMember(member.githubUsername)
     },
-    [toggleMember]
+    [toggleMember, selectedMembers]
   )
 
   const handleToggleFile = useCallback(
     (filename) => {
+      console.log('📁 토글 파일:', filename, '현재 선택:', selectedFiles)
       toggleFile(filename)
     },
-    [toggleFile]
+    [toggleFile, selectedFiles]
   )
 
   // Yorkie 문서 생성 및 초기 코드 설정 함수
@@ -352,7 +354,7 @@ function hello() {
                 {/* 현재 사용자 표시 (항상 포함) */}
                 {user && (
                   <div className="flex items-center gap-2 border px-3 py-2 bg-green-50 border-green-300 rounded-md">
-                    <input type="checkbox" checked={true} disabled={true} className="rounded" />
+                    <input type="checkbox" checked={true} disabled={true} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
                     <span className="text-sm font-medium">{user.githubUsername} (나)</span>
                     <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                       항상 포함
@@ -376,9 +378,13 @@ function hello() {
                         <input
                           type="checkbox"
                           checked={selectedMembers.includes(member.githubUsername)}
-                          onChange={() => toggleReviewer(member)}
+                          onChange={(e) => {
+                            e.stopPropagation()
+                            console.log('🔄 체크박스 클릭:', member.githubUsername, 'checked:', e.target.checked)
+                            toggleReviewer(member)
+                          }}
                           disabled={loading || yorkieInitializing}
-                          className="rounded"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
                         />
                         <span className="text-sm">{member.githubUsername}</span>
                       </label>
@@ -391,7 +397,10 @@ function hello() {
 
             {(user || selectedMembers.length > 0) && (
               <div className="mt-3 text-sm text-blue-600 bg-blue-50 rounded-md p-2">
-                선택된 참여자: {user ? [...selectedMembers].join(', ') : selectedMembers.join(', ')}
+                선택된 참여자: {user ? `${user.githubUsername} (나)${selectedMembers.length > 0 ? `, ${selectedMembers.join(', ')}` : ''}` : selectedMembers.join(', ')}
+                <div className="text-xs text-gray-600 mt-1">
+                  디버그: selectedMembers = {JSON.stringify(selectedMembers)}
+                </div>
               </div>
             )}
           </div>
@@ -414,9 +423,13 @@ function hello() {
                     <input
                       type="checkbox"
                       checked={selectedFiles.includes(file)}
-                      onChange={() => handleToggleFile(file)}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        console.log('📁 파일 체크박스 클릭:', file, 'checked:', e.target.checked)
+                        handleToggleFile(file)
+                      }}
                       disabled={loading || yorkieInitializing}
-                      className="rounded"
+                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 disabled:opacity-50"
                     />
                     <span className="text-sm font-mono">{file}</span>
                   </label>
@@ -426,15 +439,22 @@ function hello() {
               <div className="text-sm text-gray-500">충돌 파일이 없습니다.</div>
             )}
 
-            {selectedFiles.length > 0 ? (
-              <div className="mt-3 text-sm text-green-600 bg-green-50 rounded-md p-2">
-                선택된 파일: {selectedFiles.join(', ')}
+            <div className="mt-3">
+              {selectedFiles.length > 0 ? (
+                <div className="text-sm text-green-600 bg-green-50 rounded-md p-2">
+                  선택된 파일: {selectedFiles.join(', ')}
+                </div>
+              ) : (
+                <div className="text-sm text-red-600 bg-red-50 rounded-md p-2">
+                  충돌 파일을 최소 1개 이상 선택해주세요.
+                </div>
+              )}
+              <div className="text-xs text-gray-600 bg-gray-50 rounded-md p-2 mt-2">
+                디버그: selectedFiles = {JSON.stringify(selectedFiles)}<br/>
+                conflictFiles = {JSON.stringify(conflictFiles)}<br/>
+                loading = {String(loading)}, yorkieInitializing = {String(yorkieInitializing)}
               </div>
-            ) : (
-              <div className="mt-3 text-sm text-red-600 bg-red-50 rounded-md p-2">
-                충돌 파일을 최소 1개 이상 선택해주세요.
-              </div>
-            )}
+            </div>
           </div>
 
           {/* 선택된 파일들의 내용 표시 */}

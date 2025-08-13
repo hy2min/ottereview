@@ -1,12 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css');
 @import 'tailwindcss';
 
 /* ===== 전역 폰트 적용 ===== */
 body {
   font-family:
-    'Pretendard',
+    'DM Sans',
     'Inter',
+    'Pretendard',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',
@@ -19,14 +21,19 @@ body {
   min-height: 100vh;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.014em;
   color: var(--text-primary);
   transition:
-    background-color 0.3s ease,
-    color 0.3s ease;
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 html {
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
 }
 
 @theme {
@@ -144,34 +151,34 @@ html {
 
 [data-theme='light'] {
   --bg-primary: #ffffff;
-  --bg-secondary: #fdfdfd;
-  --bg-tertiary: #f7f8f9;
-  --text-primary: #0d1117;
-  --text-secondary: #656d76;
-  --text-muted: #8b949e;
-  --border-primary: #d0d7de;
-  --border-secondary: #afb8c1;
-  --shadow-color: rgba(0, 0, 0, 0.12);
-  --accent-primary: #0969da;
-  --accent-secondary: #1f2328;
-  --success-color: #1a7f37;
-  --warning-color: #bf8700;
-  --danger-color: #cf222e;
+  --bg-secondary: #fafbfc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --shadow-color: rgba(15, 23, 42, 0.04);
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1e293b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
 }
 
 [data-theme='dark'] {
-  --bg-primary: #1a1d29;
-  --bg-secondary: #232530;
-  --bg-tertiary: #2d3142;
-  --text-primary: #ffffff;
-  --text-secondary: #b8bcc8;
-  --text-muted: #9ca3af;
-  --border-primary: #484c5a;
-  --border-secondary: #3d4354;
-  --shadow-color: rgba(0, 0, 0, 0.2);
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --shadow-color: rgba(0, 0, 0, 0.3);
   --accent-primary: #60a5fa;
-  --accent-secondary: #ffffff;
-  --success-color: #4ade80;
+  --accent-secondary: #f8fafc;
+  --success-color: #34d399;
   --warning-color: #fbbf24;
   --danger-color: #f87171;
 }
@@ -293,7 +300,7 @@ html {
   --font-bmjua: 'BMJUA', sans-serif;
   --font-pixel: 'Press Start 2P', monospace;
   --font-minecraft: 'Minecraft', monospace;
-  --font-sans: 'BMJUA', 'Inter', system-ui, sans-serif;
+  --font-sans: 'DM Sans', 'Inter', system-ui, sans-serif;
 
   /* =======================================================
      📦 Box Shadows
@@ -358,10 +365,11 @@ html {
 
 /* Logo Typography */
 .pixel-logo {
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  color: var(--color-primary-600);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  color: var(--accent-primary);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-optical-sizing: auto;
 }
 
 .minecraft-container {
@@ -540,8 +548,66 @@ html {
   }
 }
 
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 .animate-fade-in-up {
   animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }
 
 .animate-delay-200 {
@@ -550,6 +616,14 @@ html {
 
 .animate-delay-400 {
   animation-delay: 0.4s;
+}
+
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+
+.animate-delay-800 {
+  animation-delay: 0.8s;
 }
 
 /* 스크롤 기반 애니메이션을 위한 초기 상태 */
@@ -564,33 +638,301 @@ html {
   transform: translateY(0);
 }
 
+/* 페이지 전환 애니메이션 */
+.page-transition {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* 로딩 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 텍스트 그라데이션 애니메이션 */
+@keyframes gradient {
+  0%, 100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.text-gradient-animated {
+  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 4s ease-in-out infinite;
+}
+
+/* 고급 애니메이션과 효과 */
+@keyframes morphing {
+  0%, 100% {
+    border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
+  }
+  34% {
+    border-radius: 70% 30% 50% 50% / 30% 70% 70% 30%;
+  }
+  67% {
+    border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
+  }
+}
+
+.morphing-blob {
+  animation: morphing 8s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.floating {
+  animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* 3D 카드 효과 */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card-3d:hover {
+  transform: rotateX(5deg) rotateY(-10deg) translateZ(50px);
+}
+
+.card-3d::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+  transform: translateZ(-1px);
+}
+
+/* 고급 그라데이션 효과 */
+.gradient-mesh {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* 매끄러운 스크롤 애니메이션 */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+/* 호버 시 글로우 효과 */
+.glow-on-hover {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.3),
+    0 0 60px rgba(59, 130, 246, 0.2),
+    0 0 80px rgba(59, 130, 246, 0.1);
+}
+
+/* 동적 배경 패턴 */
+.dynamic-bg {
+  background-image: 
+    radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+  background-size: 20px 20px;
+  animation: move-bg 20s linear infinite;
+}
+
+@keyframes move-bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
+/* 정교한 카드 호버 효과 */
+.premium-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.premium-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(-10px) scale(1.02);
+}
+
+[data-theme='dark'] .premium-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .premium-card:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 초염췜 인터랙션 효과 */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes levitate {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes sparkle-animation {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.wiggle { animation: wiggle 0.5s ease-in-out; }
+.heartbeat { animation: heartbeat 1.5s ease-in-out infinite; }
+.rainbow { animation: rainbow 3s linear infinite; }
+.levitate { animation: levitate 3s ease-in-out infinite; }
+.sparkle-anim { animation: sparkle-animation 1.5s ease-in-out infinite; }
+
+/* 자연스러운 스크롤 애니메이션 */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(60px) scale(0.95);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 카운터 애니메이션 */
+@keyframes countUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.counter-animation {
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* 연속 애니메이션 지연 */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
 /* ===== 개선된 타이포그래피 ===== */
 .text-display {
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.032em;
   line-height: 1.1;
+  font-optical-sizing: auto;
 }
 
 .text-headline {
-  font-family: 'Inter', 'Pretendard', sans-serif;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
   line-height: 1.2;
+  font-optical-sizing: auto;
 }
 
 .text-body {
-  font-family: 'Pretendard', 'Inter', sans-serif;
+  font-family: 'DM Sans', 'Inter', sans-serif;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.014em;
   line-height: 1.6;
+  font-optical-sizing: auto;
 }
 
 .text-caption {
-  font-family: 'Inter', 'Pretendard', sans-serif;
+  font-family: 'DM Sans', 'Inter', sans-serif;
   font-weight: 500;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-size: 0.875rem;
+  font-optical-sizing: auto;
 }
 
 /* 다크모드 호환 유틸리티 클래스 */
@@ -702,4 +1044,67 @@ html {
 /* 호버 스케일 효과 */
 .hover\:scale-102:hover {
   transform: scale(1.02);
+}
+
+/* 글래스모피즘 효과 */
+.glass-effect {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+[data-theme='dark'] .glass-effect {
+  background-color: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* 부드러운 그라데이션 오버레이 */
+.gradient-overlay {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+}
+
+[data-theme='dark'] .gradient-overlay {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+}
+
+/* 인터랙티브 버튼 효과 */
+.btn-interactive {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-interactive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-interactive:hover::before {
+  left: 100%;
+}
+
+/* 카드 호버 효과 개선 */
+.card-hover-effect {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-8px) rotateX(2deg);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .card-hover-effect:hover {
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
