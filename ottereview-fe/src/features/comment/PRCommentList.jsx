@@ -34,7 +34,6 @@ const PRCommentList = ({ reviews = [] }) => {
                     review.state === 'CHANGES_REQUESTED' ? 'danger' :
                     'primary'
                   }
-                  size="md"
                   className="ml-3"
                 >
                   {review.state === 'APPROVED' ? '승인' :

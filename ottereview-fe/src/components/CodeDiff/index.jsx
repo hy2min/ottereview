@@ -504,7 +504,6 @@ const CodeDiff = ({
                                   comment.reviewState === 'CHANGES_REQUESTED' ? 'danger' :
                                   'primary'
                                 }
-                                size="md"
                                 className="ml-3"
                               >
                                 {comment.reviewState === 'APPROVED' ? '승인' :
@@ -521,7 +520,7 @@ const CodeDiff = ({
                   {submittedComments[idx] &&
                     submittedComments[idx].map((comment) => (
                       <div key={comment.id} className="mx-2 mb-2 font-sans">
-                        <Box shadow className="space-y-3">
+                        <Box shadow className="space-y-3 bg-sky-50">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
                               <span className="text-sm font-medium">나</span>
@@ -531,8 +530,11 @@ const CodeDiff = ({
                               <span className="text-sm text-stone-500 ml-2">
                                 {comment.submittedAt}
                               </span>
+                              <Badge variant="warning" className="ml-2">
+                                임시
+                              </Badge>
                               {comment.audioFile && (
-                                <Badge variant="success" size="md" className="ml-3">
+                                <Badge variant="success" className="ml-2">
                                   🎵 음성
                                 </Badge>
                               )}
