@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import Badge from '@/components/Badge'
@@ -16,9 +16,12 @@ const cleanReviewCommentBody = (body) => {
 const CodeDiff = ({
   patch,
   onAddComment,
+  onRemoveComment,
   filePath,
   initialSubmittedComments = {},
   existingReviewComments = {},
+  descriptions = [],
+  prAuthor = {},
   showDiffHunk = false,
 }) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
@@ -496,6 +499,58 @@ const CodeDiff = ({
                     )}
                   </div>
 
+                  {/* PR 작성자 설명(Descriptions) 표시 - 댓글보다 위에 */}
+                  {(() => {
+                    const actualLineNumber = currentLineNumber
+                    const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT'
+                    
+                    // 현재 라인에 해당하는 descriptions 필터링
+                    const descriptionsForLine = descriptions.filter(desc => {
+                      // path가 현재 파일과 일치해야 함
+                      if (desc.path !== filePath) return false
+                      
+                      // 단일 라인 description인 경우
+                      if (!desc.startLine || desc.startLine === desc.line) {
+                        return desc.line === actualLineNumber && desc.side === currentSide
+                      }
+                      
+                      // 멀티 라인 description인 경우 - 범위 내에 있는지 확인
+                      const startLine = Math.min(desc.startLine, desc.line)
+                      const endLine = Math.max(desc.startLine, desc.line)
+                      return actualLineNumber >= startLine && actualLineNumber <= endLine && desc.side === currentSide
+                    })
+                    
+                    return descriptionsForLine.length > 0 ? descriptionsForLine.map((desc, index) => (
+                      <div key={`desc-${desc.line}-${desc.position}-${index}`} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 bg-amber-50 max-w-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-600 flex items-center justify-center">
+                              <span className="text-sm font-medium text-amber-800">
+                                {prAuthor.githubUsername?.[0] || 'A'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-amber-900 text-base">
+                                {prAuthor.githubUsername || 'PR 작성자'}
+                              </span>
+                              {desc.startLine && desc.startLine !== desc.line && (
+                                <span className="text-sm text-amber-700 ml-2">
+                                  (라인 {Math.min(desc.startLine, desc.line)}-{Math.max(desc.startLine, desc.line)})
+                                </span>
+                              )}
+                              <Badge variant="warning" className="ml-2">
+                                📝 설명
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-amber-900 whitespace-pre-wrap text-base font-medium">
+                            {desc.body}
+                          </p>
+                        </Box>
+                      </div>
+                    )) : null
+                  })()}
+
                   {/* 기존 리뷰 댓글들 표시 */}
                   {(() => {
                     // 실제 라인 번호와 side를 기반으로 댓글 찾기
@@ -511,8 +566,8 @@ const CodeDiff = ({
                     
                     
                     return filteredComments.length > 0 ? filteredComments.map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2 font-sans">
-                        <Box shadow className="space-y-3">
+                      <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 max-w-xl">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
                               <span className="text-sm font-medium">
@@ -555,26 +610,38 @@ const CodeDiff = ({
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
                   {submittedComments[idx] &&
                     submittedComments[idx].map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2 font-sans">
-                        <Box shadow className="space-y-3 bg-sky-50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
-                              <span className="text-sm font-medium">나</span>
-                            </div>
-                            <div>
-                              <span className="font-medium text-stone-900 text-base">내 댓글</span>
-                              <span className="text-sm text-stone-500 ml-2">
-                                {comment.submittedAt}
-                              </span>
-                              <Badge variant="warning" className="ml-2">
-                                임시
-                              </Badge>
-                              {comment.audioFile && (
-                                <Badge variant="success" className="ml-2">
-                                  🎵 음성
+                      <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 bg-sky-50 max-w-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                                <span className="text-sm font-medium">나</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-stone-900 text-base">내 댓글</span>
+                                <span className="text-sm text-stone-500 ml-2">
+                                  {comment.submittedAt}
+                                </span>
+                                <Badge variant="warning" className="ml-2">
+                                  임시
                                 </Badge>
-                              )}
+                                {comment.audioFile && (
+                                  <Badge variant="success" className="ml-2">
+                                    🎵 음성
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
+                            {/* 삭제 버튼 */}
+                            {onRemoveComment && (
+                              <button
+                                onClick={() => onRemoveComment(idx, comment.id)}
+                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                title="댓글 삭제"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                           <div className="space-y-2">
                             <p className="text-stone-700 text-base">{comment.content || ''}</p>
@@ -600,7 +667,7 @@ const CodeDiff = ({
                   {/* 댓글 폼 */}
                   {activeCommentLines.has(idx) && (
                     <div
-                      className="font-sans"
+                      className="font-sans mx-2 mb-2"
                       onMouseEnter={(e) => e.stopPropagation()}
                       onMouseLeave={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
