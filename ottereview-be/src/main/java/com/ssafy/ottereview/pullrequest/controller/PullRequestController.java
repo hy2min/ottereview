@@ -70,8 +70,13 @@ public class PullRequestController {
             summary = "레포지토리 Pull Request 목록 조회",
             description = "특정 레포지토리에 대한 Pull Request 목록을 조회합니다."
     )
-    public ResponseEntity<List<PullRequestResponse>> getPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repoId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequests(userDetail, repoId));
+    public ResponseEntity<List<PullRequestResponse>> getPullRequests(@AuthenticationPrincipal CustomUserDetail userDetail,
+                                                                     @PathVariable("repo-id") Long repoId,
+                                                                     @RequestParam Integer limit,
+                                                                     @RequestParam Integer size,
+                                                                     @RequestParam String cursor) {
+        Integer effectiveLimit = (limit != null) ? limit : size;
+        return ResponseEntity.ok(pullRequestService.getPullRequests(userDetail, repoId, effectiveLimit, cursor));
     }
 
     @PostMapping(value = "", consumes = "multipart/form-data")
