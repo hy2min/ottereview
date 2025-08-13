@@ -31,12 +31,19 @@ export const fetchPRDescriptions = async (prId) => {
 }
 
 // PR 생성
-export const submitPR = async ({ source, target, repoId }) => {
+export const submitPR = async ({
+  source,
+  target,
+  repoId,
+  reviewComments = [],
+  audioFiles = [],
+}) => {
   const formDataObj = new FormData()
 
   const pullRequestData = {
     source,
     target,
+    reviewComments,
   }
 
   // Blob으로 JSON 데이터 생성
@@ -45,6 +52,13 @@ export const submitPR = async ({ source, target, repoId }) => {
   })
 
   formDataObj.append('pullRequest', pullRequestBlob)
+
+  // 음성 파일들을 mediaFiles로 추가
+  if (audioFiles && audioFiles.length > 0) {
+    audioFiles.forEach((file) => {
+      formDataObj.append('mediaFiles', file)
+    })
+  }
 
   const res = await api.post(`/api/repositories/${repoId}/pull-requests`, formDataObj, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -132,6 +146,17 @@ export const savePRAdditionalInfo = async (repoId, formData) => {
   return res.data
 }
 
+// AI 요약 생성
+export const generateAISummary = async ({ source, target, repoId }) => {
+  const payload = {
+    source,
+    target,
+    repo_id: repoId,
+  }
+  const res = await api.post(`/api/ai/summary`, payload)
+  return res.data
+}
+
 // PR 리뷰 목록 가져오기
 export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
   const res = await api.get(
@@ -150,12 +175,12 @@ export const doMerge = async ({ repoId, prId }) => {
   return res.data
 }
 
-export const closePR = async ({repoId, prId}) => {
+export const closePR = async ({ repoId, prId }) => {
   const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/close`)
   return res.data
 }
 
-export const reopenPR = async ({repoId, prId}) => {
+export const reopenPR = async ({ repoId, prId }) => {
   const res = await api.put(`/api/repositories/${repoId}/pull-requests/${prId}/reopen`)
   return res.data
 }
