@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Box from '@/components/Box'
 import CodeDiff from '@/components/CodeDiff'
 
-const PRFileList = ({ files, onAddComment, fileComments = {}, showDiffHunk = false }) => {
+const PRFileList = ({ files, onAddComment, fileComments = {}, existingReviewComments = {}, showDiffHunk = false }) => {
   const [expandedFiles, setExpandedFiles] = useState([]) // 배열로 변경
 
   const toggle = (filename) => {
@@ -55,6 +55,7 @@ const PRFileList = ({ files, onAddComment, fileComments = {}, showDiffHunk = fal
                   filePath={f.filename}
                   onAddComment={(lineIndex, commentData) => onAddComment(f.filename, lineIndex, commentData)}
                   initialSubmittedComments={fileComments[f.filename]?.submittedComments || {}}
+                  existingReviewComments={existingReviewComments[f.filename] || {}}
                   showDiffHunk={showDiffHunk}
                 />
               </motion.div>
