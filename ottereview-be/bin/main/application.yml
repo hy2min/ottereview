@@ -58,9 +58,9 @@ github:
 
 app:
   front:
-    url: http://localhost:5173
+    url: http://i13c108.p.ssafy.io:8082
   ai:
-    url: http://localhost:8000
+    url: http://i13c108.p.ssafy.io:8080
 
   jwt:
     secret: ${APP_JWT_SECRET}
@@ -123,9 +123,9 @@ spring:
 
 app:
   front:
-    url: http://localhost:5173
+    url: http://i13c108.p.ssafy.io:8082
   ai:
-    url: http://localhost:8000
+    url: http://i13c108.p.ssafy.io:8000
 
 ---
 # application-docker.yml - Docker Compose 환경
@@ -141,7 +141,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
 
   sql:

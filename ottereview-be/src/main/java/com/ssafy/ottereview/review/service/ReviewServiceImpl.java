@@ -57,7 +57,7 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional
     public ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
-                                                ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
+            ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
         User user = findUser(userId);
         PullRequest pullRequest = findPullRequest(prId);
 
@@ -82,11 +82,11 @@ public class ReviewServiceImpl implements ReviewService {
         if (reviewer == null) return;
 
         reviewer.updateStatus(
-            switch (state) {
-                case APPROVE -> ReviewStatus.APPROVED;
-                case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
-                default -> reviewer.getStatus();
-            }
+                switch (state) {
+                    case APPROVE -> ReviewStatus.APPROVED;
+                    case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
+                    default -> reviewer.getStatus();
+                }
         );
     }
 
@@ -171,9 +171,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private List<ReviewCommentResponse> createReviewCommentsIfExists(Long reviewId,
-                                                                     ReviewRequest reviewRequest,
-                                                                     MultipartFile[] files,
-                                                                     Long userId) {
+            ReviewRequest reviewRequest,
+            MultipartFile[] files,
+            Long userId) {
         if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments().isEmpty()) {
             return new ArrayList<>();
         }
@@ -186,11 +186,11 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private GithubReviewResponse createReviewOnGithub(Long accountId,
-                                                      Long repoId,
-                                                      PullRequest pullRequest,
-                                                      ReviewRequest reviewRequest,
-                                                      User user,
-                                                      Long reviewId) {
+            Long repoId,
+            PullRequest pullRequest,
+            ReviewRequest reviewRequest,
+            User user,
+            Long reviewId) {
         String repoFullName = repoRepository.findById(repoId)
                 .orElseThrow(() -> new RuntimeException("Repository not found"))
                 .getFullName();
@@ -227,9 +227,9 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void updateGithubIdsForComments(Review savedReview,
-                                            List<ReviewCommentResponse> createdComments,
-                                            GithubReviewResponse githubResult,
-                                            User user) {
+            List<ReviewCommentResponse> createdComments,
+            GithubReviewResponse githubResult,
+            User user) {
 
         savedReview.updateGithubId(githubResult.getReviewId());
 

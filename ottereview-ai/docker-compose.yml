@@ -17,7 +17,7 @@ services:
       - ./models:/app/models              # AI 모델 캐시
     restart: always
     networks:
-      - ottereview-be_springboot-mysql-net
+      - springboot-mysql-net
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
@@ -26,6 +26,6 @@ services:
       start_period: 30s
 
 networks:
-  ottereview-be_springboot-mysql-net:
-    external: true
+  springboot-mysql-net:
     driver: bridge
+    external: true
