@@ -14,7 +14,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   const [errorMessage, setErrorMessage] = useState('')
   const [retryCount, setRetryCount] = useState(0)
   const [needsUserInteraction, setNeedsUserInteraction] = useState(true)
-  const [audioContext, setAudioContext] = useState(null)
+  const [audioContextInitialized, setAudioContextInitialized] = useState(false)
   const audioContainer = useRef(null)
 
   // 컴포넌트 언마운트 시 정리
@@ -28,52 +28,48 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           console.warn('세션 정리 중 오류:', error)
         }
       }
-      if (audioContext) {
-        audioContext.close()
-      }
     }
-  }, [session, audioContext])
+  }, [session])
 
-  // 오디오 컨텍스트 초기화
-  const initializeAudioContext = async () => {
-    if (!audioContext && (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined')) {
-      try {
-        const AudioContextClass = AudioContext || webkitAudioContext
-        const newAudioContext = new AudioContextClass()
-        
-        if (newAudioContext.state === 'suspended') {
-          await newAudioContext.resume()
-        }
-        
-        setAudioContext(newAudioContext)
-        console.log('✅ 오디오 컨텍스트 초기화됨:', newAudioContext.state)
-        return newAudioContext
-      } catch (error) {
-        console.error('오디오 컨텍스트 초기화 실패:', error)
-      }
-    }
-    return audioContext
-  }
-
-  // 사용자 상호작용 처리
+  // 사용자 상호작용 처리 (OpenVidu 2.x 호환)
   const handleUserInteraction = async () => {
     try {
       console.log('👆 사용자 상호작용 감지됨')
       
-      await initializeAudioContext()
+      // AudioContext 초기화 (브라우저 자동재생 정책 대응)
+      if (!audioContextInitialized) {
+        try {
+          const AudioContext = window.AudioContext || window.webkitAudioContext
+          if (AudioContext) {
+            const audioContext = new AudioContext()
+            if (audioContext.state === 'suspended') {
+              await audioContext.resume()
+            }
+            setAudioContextInitialized(true)
+            console.log('✅ 오디오 컨텍스트 초기화됨:', audioContext.state)
+          }
+        } catch (error) {
+          console.warn('오디오 컨텍스트 초기화 실패:', error)
+        }
+      }
       
+      // 기존 오디오 요소들 재생 시도
       const audioElements = audioContainer.current?.querySelectorAll('audio')
-      if (audioElements) {
+      if (audioElements && audioElements.length > 0) {
+        console.log(`🔊 ${audioElements.length}개의 오디오 요소 재생 시도`)
+        
         for (const audio of audioElements) {
           if (audio.paused) {
             try {
               await audio.play()
-              console.log('✅ 오디오 재생 시작됨 (사용자 상호작용)')
+              console.log('✅ 기존 오디오 재생 시작됨')
             } catch (error) {
-              console.warn('⚠️ 오디오 재생 실패:', error.message)
+              console.warn('⚠️ 기존 오디오 재생 실패:', error.message)
             }
           }
         }
+      } else {
+        console.log('📭 재생할 오디오 요소가 없음')
       }
       
       setNeedsUserInteraction(false)
@@ -96,6 +92,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         throw new Error('로그인이 필요합니다. 다시 로그인해주세요.')
       }
 
+      // 백엔드에서 OpenVidu 토큰 받기
       const response = await fetch(`${BACKEND_URL}/api/meetings/${currentRoomId}/join`, {
         method: 'POST',
         headers: {
@@ -119,11 +116,8 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
       console.log('✅ OpenVidu 토큰 받음')
 
-      // OpenVidu 초기화 - 9001 포트 사용
-      const ov = new OpenVidu({
-        wsUrl: 'wss://i13c108.p.ssafy.io:9001'
-      })
-      
+      // OpenVidu 2.x 방식 초기화
+      const ov = new OpenVidu()
       const mySession = ov.initSession()
 
       setupSessionEventListeners(mySession)
@@ -133,7 +127,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         username: myUserInfo.username,
         userId: myUserInfo.id,
         isOwner: isOwner,
-        timestamp: Date.now(), // 고유성을 위한 타임스탬프 추가
+        timestamp: Date.now(),
       }
 
       console.log('🔗 보낼 연결 데이터:', connectionData)
@@ -144,12 +138,8 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           try {
             console.log(`🔗 OpenVidu 세션 연결 시도... (${i + 1}/${retries})`)
             
-            const connectPromise = mySession.connect(openviduToken, JSON.stringify(connectionData))
-            const timeoutPromise = new Promise((_, reject) => {
-              setTimeout(() => reject(new Error('연결 시간 초과')), 15000) // 15초로 증가
-            })
-
-            await Promise.race([connectPromise, timeoutPromise])
+            // OpenVidu 2.x에서는 connect 메서드 사용
+            await mySession.connect(openviduToken, JSON.stringify(connectionData))
             console.log('✅ OpenVidu 세션 연결 성공!')
             break
           } catch (error) {
@@ -178,57 +168,67 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         },
       ])
 
-      // 기존 연결들 안전하게 확인
+      // 기존 연결들 확인 (OpenVidu 2.x)
       setTimeout(() => {
         try {
           const existingConnections = mySession.remoteConnections
           console.log('🔍 기존 연결들 확인:', Object.keys(existingConnections).length)
 
-          if (Object.keys(existingConnections).length > 0) {
-            Object.values(existingConnections).forEach((connection) => {
-              if (connection && connection.data) {
-                try {
-                  const connectionData = JSON.parse(connection.data)
-                  console.log('👤 기존 참가자 정보:', connectionData)
+          Object.values(existingConnections).forEach((connection) => {
+            if (connection && connection.data) {
+              try {
+                const connectionData = JSON.parse(connection.data)
+                console.log('👤 기존 참가자 정보:', connectionData)
 
-                  setConnectedParticipants((prev) => {
-                    const exists = prev.some((p) => p.connectionId === connection.connectionId)
-                    if (!exists) {
-                      return [
-                        ...prev,
-                        {
-                          connectionId: connection.connectionId,
-                          username: connectionData.username || `User-${connection.connectionId.slice(-6)}`,
-                          userId: connectionData.userId,
-                          isOwner: connectionData.isOwner || false,
-                          isMe: false,
-                          hasAudioStream: false,
-                        },
-                      ]
-                    }
-                    return prev
-                  })
-                } catch (parseError) {
-                  console.error('기존 연결 데이터 파싱 에러:', parseError)
-                }
+                setConnectedParticipants((prev) => {
+                  const exists = prev.some((p) => p.connectionId === connection.connectionId)
+                  if (!exists) {
+                    return [
+                      ...prev,
+                      {
+                        connectionId: connection.connectionId,
+                        username: connectionData.username || `User-${connection.connectionId.slice(-6)}`,
+                        userId: connectionData.userId,
+                        isOwner: connectionData.isOwner || false,
+                        isMe: false,
+                        hasAudioStream: false,
+                      },
+                    ]
+                  }
+                  return prev
+                })
+              } catch (parseError) {
+                console.error('기존 연결 데이터 파싱 에러:', parseError)
               }
-            })
-          }
+            }
+          })
         } catch (error) {
           console.error('기존 연결 확인 중 오류:', error)
         }
       }, 2000)
 
-      // 퍼블리셔 생성 및 발행
+      // 퍼블리셔 생성 및 발행 (OpenVidu 2.x)
       console.log('🎤 마이크 퍼블리셔 생성 중...')
       try {
-        const myPublisher = await ov.initPublisherAsync(undefined, {
+        // OpenVidu 2.x에서는 initPublisher 사용
+        const myPublisher = ov.initPublisher(undefined, {
           audioSource: undefined,
           videoSource: false,
           publishAudio: true,
           publishVideo: false,
           insertMode: 'APPEND',
           mirror: false,
+        })
+
+        // 퍼블리셔가 준비되면 발행
+        myPublisher.on('accessAllowed', () => {
+          console.log('✅ 마이크 접근 허용됨')
+        })
+
+        myPublisher.on('accessDenied', () => {
+          console.error('❌ 마이크 접근 거부됨')
+          setErrorMessage('마이크 접근 권한을 확인해주세요.')
+          setConnectionStatus('error')
         })
 
         await mySession.publish(myPublisher)
@@ -257,35 +257,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   }
 
   const setupSessionEventListeners = (mySession) => {
-    // participantEvicted 이벤트 안전하게 처리
-    mySession.on('participantEvicted', (event) => {
-      console.log('👮 참가자 강제 퇴장:', event)
-      
-      try {
-        // event.connection이 undefined일 수 있음을 대비
-        const connectionId = event.connection?.connectionId || event.connectionId
-        
-        if (connectionId) {
-          console.log(`🚪 강제 퇴장된 연결: ${connectionId}`)
-          
-          setConnectedParticipants((prev) => {
-            return prev.filter((p) => p.connectionId !== connectionId)
-          })
-          
-          // 만약 내가 강제 퇴장당했다면
-          if (connectionId === mySession.connection?.connectionId) {
-            console.log('😱 내가 강제 퇴장당했습니다!')
-            alert('세션에서 강제 퇴장되었습니다.')
-            handleSessionEnd()
-          }
-        } else {
-          console.warn('⚠️ 강제 퇴장 이벤트에 연결 정보가 없음:', event)
-        }
-      } catch (error) {
-        console.error('참가자 퇴장 처리 중 오류:', error)
-      }
-    })
-
     // 연결 생성 이벤트
     mySession.on('connectionCreated', (event) => {
       console.log('🔗 새 연결 생성됨:', event.connection?.connectionId)
@@ -299,14 +270,14 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
             // 연결 데이터 안전하게 파싱
             let username = `User-${event.connection.connectionId.slice(-6)}`
             let userId = null
-            let isOwner = false
+            let isOwnerFlag = false
 
             if (event.connection.data) {
               try {
                 const connectionData = JSON.parse(event.connection.data)
                 username = connectionData.username || username
                 userId = connectionData.userId
-                isOwner = connectionData.isOwner || false
+                isOwnerFlag = connectionData.isOwner || false
               } catch (error) {
                 console.warn('연결 데이터 파싱 실패:', error)
               }
@@ -318,7 +289,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
                 connectionId: event.connection.connectionId,
                 username,
                 userId,
-                isOwner,
+                isOwner: isOwnerFlag,
                 isMe: false,
                 hasAudioStream: false,
               },
@@ -356,17 +327,46 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
       }
     })
 
-    // 스트림 생성 이벤트 - 자동재생 정책 대응
+    // 스트림 생성 이벤트 (OpenVidu 2.x 호환)
     mySession.on('streamCreated', async (event) => {
       console.log('📺 새 스트림 생성됨:', event.stream.streamId)
 
       try {
-        // 스트림 유효성 검사
-        if (!event.stream || !event.stream.getMediaStream()) {
-          console.warn('⚠️ 유효하지 않은 스트림')
+        // OpenVidu 2.x에서 스트림 유효성 검사
+        if (!event.stream) {
+          console.warn('⚠️ 스트림 객체가 없음')
           return
         }
 
+        // 잠시 대기 후 MediaStream 확인 (OpenVidu 2.x에서는 초기화 시간이 필요할 수 있음)
+        await new Promise(resolve => setTimeout(resolve, 300))
+
+        let mediaStream
+        try {
+          mediaStream = event.stream.getMediaStream()
+        } catch (error) {
+          console.warn('⚠️ MediaStream 가져오기 실패:', error)
+          return
+        }
+
+        if (!mediaStream) {
+          console.warn('⚠️ MediaStream이 준비되지 않음')
+          return
+        }
+
+        const audioTracks = mediaStream.getAudioTracks()
+        if (audioTracks.length === 0) {
+          console.warn('⚠️ 오디오 트랙이 없음')
+          return
+        }
+
+        console.log('✅ 유효한 스트림 확인됨:', {
+          streamId: event.stream.streamId,
+          connectionId: event.stream.connection.connectionId,
+          audioTracks: audioTracks.length
+        })
+
+        // OpenVidu 2.x 구독 방식
         const subscriber = mySession.subscribe(event.stream, undefined)
         setSubscribers((prev) => [...prev, subscriber])
 
@@ -375,24 +375,20 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         audio.controls = false
         audio.playsInline = true
         audio.autoplay = false // 자동재생 비활성화
+        audio.muted = false // 기본적으로 음소거 해제
         
-        const mediaStream = event.stream.getMediaStream()
+        // MediaStream 연결
         audio.srcObject = mediaStream
 
         if (audioContainer.current) {
           audioContainer.current.appendChild(audio)
         }
 
-        // 사용자 상호작용 후 재생 시도
-        const playAudio = async () => {
+        // 사용자 상호작용이 있었다면 바로 재생 시도
+        if (!needsUserInteraction) {
           try {
-            if (!needsUserInteraction) {
-              await audio.play()
-              console.log('✅ 오디오 재생 시작됨')
-            } else {
-              console.log('⚠️ 사용자 상호작용 필요')
-              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
-            }
+            await audio.play()
+            console.log('✅ 오디오 재생 시작됨 (자동)')
           } catch (error) {
             console.warn('⚠️ 자동 재생 차단됨:', error.message)
             if (error.name === 'NotAllowedError') {
@@ -400,9 +396,10 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
               setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
             }
           }
+        } else {
+          console.log('⚠️ 사용자 상호작용 필요 - 재생 대기 중')
+          setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
         }
-
-        await playAudio()
 
         // 참가자 스트림 정보 업데이트
         if (event.stream.connection?.data) {
@@ -416,7 +413,11 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
               if (existingIndex !== -1) {
                 const updated = [...prev]
-                updated[existingIndex] = { ...updated[existingIndex], hasAudioStream: true }
+                updated[existingIndex] = { 
+                  ...updated[existingIndex], 
+                  hasAudioStream: true,
+                  username: connectionData.username || updated[existingIndex].username
+                }
                 return updated
               } else {
                 return [
@@ -431,6 +432,11 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
                   },
                 ]
               }
+            })
+
+            console.log('✅ 참가자 정보 업데이트됨:', {
+              username: connectionData.username,
+              connectionId: event.stream.connection.connectionId
             })
           } catch (error) {
             console.error('스트림 연결 데이터 파싱 에러:', error)
@@ -471,7 +477,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
       handleSessionEnd()
     })
 
-    // 에러 이벤트 처리
+    // 예외 이벤트 처리
     mySession.on('exception', (event) => {
       console.error('🚨 OpenVidu 세션 에러:', event)
       setErrorMessage('음성 채팅 중 오류가 발생했습니다.')
@@ -530,13 +536,16 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
     // 퍼블리셔 정리
     if (publisher) {
       try {
-        publisher.stream.getMediaStream().getTracks().forEach((track) => {
-          try {
-            track.stop()
-          } catch (trackError) {
-            console.warn('퍼블리셔 트랙 정지 실패:', trackError)
-          }
-        })
+        const stream = publisher.stream
+        if (stream && stream.getMediaStream) {
+          stream.getMediaStream().getTracks().forEach((track) => {
+            try {
+              track.stop()
+            } catch (trackError) {
+              console.warn('퍼블리셔 트랙 정지 실패:', trackError)
+            }
+          })
+        }
       } catch (error) {
         console.warn('퍼블리셔 정리 실패:', error)
       }
@@ -549,6 +558,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
     setConnectionStatus('connecting')
     setErrorMessage('')
     setNeedsUserInteraction(true)
+    setAudioContextInitialized(false)
   }
 
   const leaveSession = () => {
@@ -637,10 +647,6 @@ const getErrorMessage = (status, error) => {
     return '마이크 접근 권한이 거부되었습니다. 브라우저 설정을 확인해주세요.'
   } else if (error?.message.includes('NOT_SUPPORTED')) {
     return '브라우저에서 음성 채팅을 지원하지 않습니다.'
-  } else if (error?.code === 204 || error?.message.includes('Media Node')) {
-    return '음성 서버가 일시적으로 사용할 수 없습니다. 잠시 후 다시 시도해주세요.'
-  } else if (error?.code && error.code >= 500) {
-    return '서버에 문제가 있습니다. 관리자에게 문의하세요.'
   }
 
   return error?.message || '음성 채팅 연결에 실패했습니다.'
