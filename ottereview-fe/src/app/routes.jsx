@@ -1,5 +1,3 @@
-import { Navigate } from 'react-router-dom'
-
 import InstallComplete from '@/features/auth/InstallComplete'
 import Whiteboard from '@/features/webrtc/Whiteboard'
 import ChatRoom from '@/pages/ChatRoom'

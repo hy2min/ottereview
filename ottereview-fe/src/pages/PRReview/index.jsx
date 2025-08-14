@@ -1,5 +1,13 @@
 import MDEditor from '@uiw/react-md-editor'
-import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
+import {
+  ArrowRight,
+  FileText,
+  FolderCode,
+  GitBranch,
+  GitCommit,
+  MessageCircle,
+  Users,
+} from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -43,6 +51,7 @@ const PRReview = () => {
     setFiles,
     setFileComments,
     handleAddFileLineComment,
+    handleRemoveComment,
   } = useCommentManager()
 
   const [prDetail, setPrDetail] = useState(null)
@@ -314,66 +323,77 @@ const PRReview = () => {
   return (
     <div className="pt-1 pb-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
-      <Box shadow className="space-y-4 p-4">
+      <Box shadow className="flex space-y-4 p-4">
         {/* 레포지토리 정보 */}
-        <div className="flex items-center space-x-2 text-sm text-stone-600">
-          <FolderCode className="w-4 h-4" />
-          <span className="font-medium">{prDetail.repo?.fullName}</span>
-          <Badge variant="default" size="xs" className="font-mono">
-            #{prDetail.githubPrNumber}
-          </Badge>
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
-            {prDetail.title}
-          </h1>
-          {prDetail.author && (
-            <div className="flex items-center gap-2 text-sm theme-text-secondary">
-              <span>작성자:</span>
-              <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
-                @{prDetail.author.githubUsername}
-              </span>
+        <div>
+          <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 text-sm text-stone-600">
+              <FolderCode className="w-4 h-4" />
+              <span className="font-medium">{prDetail.repo?.fullName}</span>
+              <Badge variant="default" size="xs" className="font-mono">
+                #{prDetail.githubPrNumber}
+              </Badge>
             </div>
-          )}
-          {prDetail.body && prDetail.body.trim() && (
-            <div className="rounded-lg border-l-4 border-blue-500 overflow-hidden">
-              <MDEditor.Markdown 
-                source={prDetail.body} 
-                style={{ 
-                  backgroundColor: 'transparent',
-                  padding: '12px',
-                  fontSize: '14px',
-                  lineHeight: '1.6'
-                }}
-                className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
-              />
-            </div>
-          )}
-
-          {/* PR 상태별 버튼 */}
-          <div className="flex-shrink-0 ml-4">
-            {prDetail.state === 'OPEN' ? (
-              <Button
-                variant="danger"
-                size="sm"
-                className="px-4 py-2"
-                onClick={handleClosePR}
-                disabled={closingPR}
-              >
-                {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
-              </Button>
-            ) : prDetail.state === 'CLOSED' ? (
-              <Button
-                variant="success"
-                size="sm"
-                className="px-4 py-2"
-                onClick={handleReopenPR}
-                disabled={reopeningPR}
-              >
-                {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
-              </Button>
-            ) : null}
+            <Badge variant="sky">
+              <div className="flex items-center space-x-1">
+                <GitBranch className="w-4 h-4 mb-[2px]" />
+                <span>{prDetail.headBranch?.name || 'unknown'}</span>
+                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <span>{prDetail.baseBranch?.name || 'unknown'}</span>
+              </div>
+            </Badge>
           </div>
+          <div className="space-y-3">
+            <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
+              {prDetail.title}
+            </h1>
+            {prDetail.author && (
+              <div className="flex items-center gap-2 text-sm theme-text-secondary">
+                <span>작성자:</span>
+                <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
+                  {prDetail.author.githubUsername}
+                </span>
+              </div>
+            )}
+            {prDetail.body && prDetail.body.trim() && (
+              <div className="rounded-lg border-l-4 border-blue-500 overflow-hidden">
+                <MDEditor.Markdown
+                  source={prDetail.body}
+                  style={{
+                    backgroundColor: 'transparent',
+                    padding: '12px',
+                    fontSize: '14px',
+                    lineHeight: '1.6',
+                  }}
+                  className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
+                />
+              </div>
+            )}
+            {/* PR 상태별 버튼 */}
+          </div>
+        </div>
+        <div className="ml-auto">
+          {prDetail.state === 'OPEN' ? (
+            <Button
+              variant="danger"
+              size="sm"
+              className="px-4 py-2"
+              onClick={handleClosePR}
+              disabled={closingPR}
+            >
+              {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
+            </Button>
+          ) : prDetail.state === 'CLOSED' ? (
+            <Button
+              variant="success"
+              size="sm"
+              className="px-4 py-2"
+              onClick={handleReopenPR}
+              disabled={reopeningPR}
+            >
+              {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
+            </Button>
+          ) : null}
         </div>
       </Box>
 
@@ -499,7 +519,7 @@ const PRReview = () => {
           </div>
 
           {showCommentForm && (
-            <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border theme-border">
+            <div className="absolute top-full right-0 z-50 mt-2 w-120">
               <CommentForm
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -518,6 +538,7 @@ const PRReview = () => {
           <PRFileList
             files={prFiles}
             onAddComment={handleAddFileLineComment}
+            onRemoveComment={handleRemoveComment}
             fileComments={fileComments}
             existingReviewComments={existingReviewComments}
             descriptions={prDetail?.descriptions || []}
