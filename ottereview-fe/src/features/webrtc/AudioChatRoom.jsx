@@ -19,13 +19,66 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
   const [myUserInfo, setMyUserInfo] = useState(null)
   const [connectedParticipants, setConnectedParticipants] = useState([])
-  const [errorMessage, setErrorMessage] = useState('') // 에러 메시지 상태 추가
-  const [retryCount, setRetryCount] = useState(0) // 재시도 카운트 추가
+  const [errorMessage, setErrorMessage] = useState('')
+  const [retryCount, setRetryCount] = useState(0)
+  const [needsUserInteraction, setNeedsUserInteraction] = useState(true) // 사용자 상호작용 필요 여부
+  const [audioContext, setAudioContext] = useState(null) // 오디오 컨텍스트
   const audioContainer = useRef(null)
 
   // Zustand 스토어 구독
   const user = useUserStore((state) => state.user)
   const rooms = useChatStore((state) => state.rooms)
+
+  // 오디오 컨텍스트 초기화 함수
+  const initializeAudioContext = async () => {
+    if (!audioContext && (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined')) {
+      try {
+        const AudioContextClass = AudioContext || webkitAudioContext
+        const newAudioContext = new AudioContextClass()
+        
+        if (newAudioContext.state === 'suspended') {
+          await newAudioContext.resume()
+        }
+        
+        setAudioContext(newAudioContext)
+        console.log('✅ 오디오 컨텍스트 초기화됨:', newAudioContext.state)
+        return newAudioContext
+      } catch (error) {
+        console.error('오디오 컨텍스트 초기화 실패:', error)
+      }
+    }
+    return audioContext
+  }
+
+  // 사용자 상호작용 처리 함수
+  const handleUserInteraction = async () => {
+    try {
+      console.log('👆 사용자 상호작용 감지됨')
+      
+      // 오디오 컨텍스트 활성화
+      await initializeAudioContext()
+      
+      // 모든 오디오 요소에 대해 재생 시도
+      const audioElements = audioContainer.current?.querySelectorAll('audio')
+      if (audioElements) {
+        for (const audio of audioElements) {
+          if (!isSpeakerMuted && audio.paused) {
+            try {
+              await audio.play()
+              console.log('✅ 오디오 재생 시작됨 (사용자 상호작용)')
+            } catch (error) {
+              console.warn('⚠️ 오디오 재생 실패:', error.message)
+            }
+          }
+        }
+      }
+      
+      setNeedsUserInteraction(false)
+      setErrorMessage('') // 에러 메시지 클리어
+    } catch (error) {
+      console.error('사용자 상호작용 처리 실패:', error)
+    }
+  }
 
   // 현재 사용자 정보와 Owner 여부 확인
   useEffect(() => {
@@ -62,17 +115,19 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       if (session) {
         leaveSession()
       }
+      // 오디오 컨텍스트 정리
+      if (audioContext) {
+        audioContext.close()
+      }
     }
   }, [roomId, myUserInfo])
-
-  // 서버 상태 확인 함수 제거 - 실제 API 호출로 대체
 
   const joinSession = async (currentRoomId) => {
     console.log('🎯 joinSession 시작 - roomId:', currentRoomId)
 
     try {
       setConnectionStatus('connecting')
-      setErrorMessage('') // 에러 메시지 초기화
+      setErrorMessage('')
 
       const accessToken = useAuthStore.getState().accessToken
 
@@ -84,7 +139,6 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
         return
       }
 
-      // 서버 상태 확인 제거하고 바로 토큰 요청
       console.log('📞 백엔드 서버에 OpenVidu 토큰 요청 중...')
       const response = await fetch(`${BACKEND_URL}/api/meetings/${currentRoomId}/join`, {
         method: 'POST',
@@ -178,7 +232,6 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       setTimeout(() => {
         const existingConnections = mySession.remoteConnections
         console.log('🔍 기존 연결들 확인:', Object.keys(existingConnections).length)
-        console.log('🔍 기존 연결 객체:', existingConnections)
 
         if (Object.keys(existingConnections).length > 0) {
           Object.values(existingConnections).forEach((connection, index) => {
@@ -193,8 +246,6 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
                 console.log('👤 기존 참가자 정보:', connectionData)
 
                 setConnectedParticipants((prev) => {
-                  console.log('👥 현재 참가자 목록 (기존 연결 추가 전):', prev.map(p => `${p.username}(${p.isMe ? '나' : '다른사람'})`))
-                  
                   const exists = prev.some((p) => p.connectionId === connection.connectionId)
                   if (!exists) {
                     const newList = [
@@ -209,22 +260,15 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
                       },
                     ]
                     console.log('👤 기존 참가자 추가됨:', connectionData.username)
-                    console.log('👥 업데이트된 참가자 목록:', newList.map(p => `${p.username}(${p.isMe ? '나' : '다른사람'})`))
                     return newList
-                  } else {
-                    console.log('👤 기존 참가자 이미 존재함:', connectionData.username)
                   }
                   return prev
                 })
               } catch (error) {
                 console.error('기존 연결 데이터 파싱 에러:', error)
               }
-            } else {
-              console.log('👤 기존 연결에 데이터가 없음:', connection.connectionId)
             }
           })
-        } else {
-          console.log('🔍 기존 연결이 없음')
         }
       }, 1000)
 
@@ -253,7 +297,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
         setPublisher(myPublisher)
         setIsSessionJoined(true)
         setConnectionStatus('connected')
-        setRetryCount(0) // 성공시 재시도 카운트 리셋
+        setRetryCount(0)
 
         console.log('🎉 OpenVidu 연결 완료!')
       } catch (publishError) {
@@ -285,13 +329,10 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
 
   // 세션 이벤트 리스너 설정 함수
   const setupSessionEventListeners = (mySession) => {
-    // 연결 생성 이벤트 - 참여자 정보 추가
+    // 연결 생성 이벤트
     mySession.on('connectionCreated', (event) => {
       console.log('🔗 새 연결 생성됨:', event.connection.connectionId)
-      console.log('🔗 내 연결 ID:', mySession.connection?.connectionId)
-      console.log('🔗 연결 데이터:', event.connection.data)
 
-      // 다른 사용자 연결인 경우만 처리
       if (event.connection.connectionId !== mySession.connection?.connectionId) {
         console.log('👤 다른 사용자 연결됨!')
         
@@ -301,7 +342,6 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
             return prev
           }
 
-          console.log('👤 새 참가자 추가')
           return [
             ...prev,
             {
@@ -342,23 +382,51 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       }
     })
 
-    // 스트림 생성 이벤트
-    mySession.on('streamCreated', (event) => {
+    // 스트림 생성 이벤트 - 자동재생 정책 대응
+    mySession.on('streamCreated', async (event) => {
       console.log('📺 새 스트림 생성됨:', event.stream.streamId)
 
       try {
         const subscriber = mySession.subscribe(event.stream, undefined)
         setSubscribers((prev) => [...prev, subscriber])
 
+        // 오디오 요소 생성 및 설정
         const audio = document.createElement('audio')
-        audio.autoplay = true
         audio.controls = false
         audio.muted = isSpeakerMuted
-        audio.srcObject = event.stream.getMediaStream()
+        audio.playsInline = true // iOS 대응
+        audio.autoplay = false // 자동재생 비활성화
+        
+        // 스트림 연결
+        const mediaStream = event.stream.getMediaStream()
+        audio.srcObject = mediaStream
 
+        // DOM에 추가
         if (audioContainer.current) {
           audioContainer.current.appendChild(audio)
         }
+
+        // 사용자 상호작용 후 재생 시도
+        const playAudio = async () => {
+          try {
+            if (!needsUserInteraction && !isSpeakerMuted) {
+              await audio.play()
+              console.log('✅ 오디오 재생 시작됨')
+            } else if (needsUserInteraction) {
+              console.log('⚠️ 사용자 상호작용 필요 - 음성 활성화 버튼을 클릭해주세요')
+              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
+            }
+          } catch (error) {
+            console.warn('⚠️ 자동 재생 차단됨:', error.message)
+            if (error.name === 'NotAllowedError') {
+              setNeedsUserInteraction(true)
+              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
+            }
+          }
+        }
+
+        // 재생 시도
+        await playAudio()
 
         // 참가자 스트림 정보 업데이트
         if (event.stream.connection.data) {
@@ -443,7 +511,6 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
   // 재시도 함수
   const retryConnection = () => {
     if (retryCount < 3) {
-      // 최대 3번 재시도
       console.log(`🔄 연결 재시도 중... (${retryCount + 1}/3)`)
       setConnectionStatus('connecting')
       joinSession(roomId)
@@ -478,6 +545,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
     setSubscribers([])
     setConnectionStatus('connecting')
     setErrorMessage('')
+    setNeedsUserInteraction(true) // 사용자 상호작용 다시 필요
   }
 
   const leaveSession = () => {
@@ -526,12 +594,33 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
     }
   }
 
-  const toggleSpeaker = () => {
-    setIsSpeakerMuted(!isSpeakerMuted)
+  // 스피커 토글 함수 - 자동재생 정책 대응
+  const toggleSpeaker = async () => {
+    const newMutedState = !isSpeakerMuted
+    setIsSpeakerMuted(newMutedState)
+    
     const audioElements = audioContainer.current?.querySelectorAll('audio')
-    audioElements?.forEach((audio) => {
-      audio.muted = !isSpeakerMuted
-    })
+    
+    if (audioElements) {
+      for (const audio of audioElements) {
+        audio.muted = newMutedState
+        
+        // 음소거 해제 시 재생 시도
+        if (!newMutedState && audio.paused) {
+          try {
+            await handleUserInteraction() // 사용자 상호작용 처리
+            await audio.play()
+            console.log('✅ 오디오 재생 시작됨 (스피커 켜짐)')
+          } catch (error) {
+            console.warn('⚠️ 오디오 재생 실패:', error.message)
+            if (error.name === 'NotAllowedError') {
+              setNeedsUserInteraction(true)
+              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
+            }
+          }
+        }
+      }
+    }
   }
 
   const getStatusColor = () => {
@@ -697,6 +786,48 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
           Room ID: {roomId}
         </div>
 
+        {/* 사용자 상호작용 안내 메시지 */}
+        {needsUserInteraction && isSessionJoined && (
+          <div
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.75rem',
+              backgroundColor: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '4px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.75rem',
+                color: '#92400e',
+                marginBottom: '0.5rem',
+                fontWeight: '500',
+              }}
+            >
+              🔊 음성을 듣기 위해 아래 버튼을 클릭해주세요.
+            </div>
+            <button
+              onClick={handleUserInteraction}
+              style={{
+                padding: '0.5rem 0.75rem',
+                fontSize: '0.75rem',
+                backgroundColor: '#f59e0b',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+              }}
+            >
+              🎵 음성 활성화
+            </button>
+          </div>
+        )}
+
         {/* 에러 메시지 및 재시도 버튼 */}
         {connectionStatus === 'error' && errorMessage && (
           <div
@@ -860,7 +991,10 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
             </button>
 
             <button
-              onClick={toggleSpeaker}
+              onClick={async () => {
+                await handleUserInteraction() // 사용자 상호작용 처리
+                toggleSpeaker() // 스피커 토글
+              }}
               style={{
                 padding: '0.5rem 0.75rem',
                 fontSize: '0.75rem',
