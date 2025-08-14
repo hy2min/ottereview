@@ -126,6 +126,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
       console.log('✅ OpenVidu 토큰 받음')
 
       const ov = new OpenVidu()
+      ov.setOpenViduUrl('https://i13c108.p.ssafy.io:9001/')
       const mySession = ov.initSession()
 
       // 세션 이벤트 리스너들 설정
