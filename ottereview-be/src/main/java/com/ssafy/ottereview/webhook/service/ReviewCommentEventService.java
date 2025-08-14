@@ -12,6 +12,8 @@ import com.ssafy.ottereview.webhook.dto.ReviewCommentEventDto;
 import com.ssafy.ottereview.webhook.dto.ReviewCommentEventDto.ReviewCommentInfo;
 import com.ssafy.ottereview.webhook.dto.UserWebhookInfo;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class ReviewCommentEventService {
     private final ReviewRepository reviewRepository;
     private final UserRepository userRepository;
     private final UserEventService userEventService;
+
 
     public void processReviewCommentEvent(String payload) {
         try {
@@ -82,9 +85,31 @@ public class ReviewCommentEventService {
 
     }
 
+    public static String extractContentAfterReviewer(String comment) {
+        if (comment == null || comment.trim().isEmpty()) {
+            return null;
+        }
+
+        // @사용자명** 패턴 뒤의 모든 내용을 찾는 정규식
+        Pattern pattern = Pattern.compile("@\\w+\\*\\*\\s*(.*)", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(comment);
+
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return null;
+    }
+
     private void updateReviewComment(ReviewCommentEventDto event, ReviewComment reviewComment) {
         log.debug("업데이트 리뷰 호출");
         ReviewCommentInfo comment = event.getComment();
+
+        log.info(comment.getBody());
+
+        comment.changeBody(extractContentAfterReviewer(event.getComment().getBody()));
+
+        log.info(comment.getBody());
 
         reviewComment.updateBodyAndTime(comment.getBody(), comment.getCreatedAt(), comment.getUpdatedAt());
     }
@@ -97,6 +122,15 @@ public class ReviewCommentEventService {
                 .orElseThrow(() -> new RuntimeException("리뷰를 찾을 수 없습니다"));
 
         ReviewCommentInfo comment = event.getComment();
+
+        log.info(comment.getBody());
+
+
+        // 바디에 적용된 내용 수정돼서 가져오는 코드
+        comment.changeBody(extractContentAfterReviewer(event.getComment().getBody()));
+
+        log.info(event.getComment().getBody());
+
         UserWebhookInfo user = event.getComment()
                 .getUser();
 

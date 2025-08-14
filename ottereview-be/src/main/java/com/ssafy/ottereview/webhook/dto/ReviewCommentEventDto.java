@@ -44,6 +44,10 @@ public class ReviewCommentEventDto {
         private UserWebhookInfo user;
 
         private String body;
+
+        public void changeBody(String body){
+            this.body = body;
+        }
         
         @JsonProperty("created_at")
         @JsonDeserialize(using = GitHubTimeDeserializer.class)
