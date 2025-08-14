@@ -44,12 +44,10 @@ public class GithubWebhookController {
     @Hidden
     @PostMapping
     public ResponseEntity<String> handleWebhook(
-            @AuthenticationPrincipal CustomUserDetail customUserDetail,
             @RequestBody String payload,
             @RequestHeader("X-GitHub-Event") String event,
             @RequestHeader("X-GitHub-Delivery") String delivery,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature) {
-        User user = customUserDetail.getUser();
         try {
             JsonNode jsonNode = objectMapper.readTree(payload);
             String action = jsonNode.path("action").asText();
@@ -61,7 +59,7 @@ public class GithubWebhookController {
         // 이벤트별 처리
         switch (event) {
             case "push":
-                pushEventService.processPushEvent(user,payload);
+                pushEventService.processPushEvent(payload);
                 break;
 
             case "pull_request":
@@ -86,7 +84,7 @@ public class GithubWebhookController {
 
             case "installation_repositories":
                 log.info("Handling installation repositories event");
-                installationEventService.processInstallationRepositoriesEvent(user,payload);
+                installationEventService.processInstallationRepositoriesEvent(payload);
                 break;
 
             case "create":
