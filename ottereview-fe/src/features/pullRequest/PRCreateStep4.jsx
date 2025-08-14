@@ -48,33 +48,39 @@ const PRCreateStep4 = ({
       // 객체 배열에서 ID만 추출 (find 불필요!)
       const selectedReviewerIds = selectedReviewers.map((reviewer) => reviewer.id)
 
-      // 추가 정보 저장 API 호출
+      // AI 요약 생성 호출
+      const aiSummaryResult = await (async () => {
+        try {
+          const AISummary = await generateAISummary({
+            source: validationBranches?.source,
+            target: validationBranches?.target,
+            repoId,
+          })
+          const result = AISummary?.result
+          setAISummary(result)
+          console.log('AI 요약 생성 완료')
+          console.log(AISummary)
+          return result
+        } catch (summaryError) {
+          console.error('AI 요약 생성 실패:', summaryError)
+          // AI 요약 실패해도 다음 단계로 진행
+          return null
+        }
+      })()
+
+      // 추가 정보 저장 API 호출 (summary 포함)
       const additionalInfo = {
         source: validationBranches?.source,
         target: validationBranches?.target,
         reviewers: selectedReviewerIds || [], // null 방지
+        summary: aiSummaryResult || null, // AI 요약 결과 포함
       }
 
       await savePRAdditionalInfo(repoId, additionalInfo)
 
-      // AI 요약 생성 호출
-      try {
-        const AISummary = await generateAISummary({
-          source: validationBranches?.source,
-          target: validationBranches?.target,
-          repoId,
-        })
-        setAISummary(AISummary?.result)
-        console.log('AI 요약 생성 완료')
-        console.log(AISummary)
-      } catch (summaryError) {
-        console.error('AI 요약 생성 실패:', summaryError)
-        // AI 요약 실패해도 다음 단계로 진행
-      }
-
       goToStep(5)
     } catch (error) {
-      console.error('리뷰어 정보 저장 실패:', error)
+      console.error('추가 정보 저장 실패:', error)
     }
   }
 
