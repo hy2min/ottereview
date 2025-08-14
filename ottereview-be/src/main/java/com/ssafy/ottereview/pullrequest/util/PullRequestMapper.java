@@ -69,7 +69,7 @@ public class PullRequestMapper {
                 .merged(githubPrResponse.getMerged())
                 .base(githubPrResponse.getBase())
                 .head(githubPrResponse.getHead())
-                .mergeable(githubPrResponse.getMergeable() != null && githubPrResponse.getMergeable())
+                .mergeable(true)
                 .githubCreatedAt(githubPrResponse.getGithubCreatedAt())
                 .githubUpdatedAt(githubPrResponse.getGithubUpdatedAt())
                 .commitCnt(githubPrResponse.getCommitCnt())

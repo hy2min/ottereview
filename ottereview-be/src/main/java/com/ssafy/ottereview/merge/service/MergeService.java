@@ -16,12 +16,11 @@ import com.ssafy.ottereview.pullrequest.dto.response.PullRequestDetailResponse;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
+import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.pullrequest.util.PullRequestMapper;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
-import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
-import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.io.File;
@@ -81,6 +80,7 @@ public class MergeService {
     private final PriorityRepository priorityRepository;
     private final PullRequestMapper pullRequestMapper;
     private final RepoRepository repoRepository;
+    private final PullRequestService pullRequestService;
     
     @Value("${github.app.authentication-jwt-expm}")
     private Long jwtTExpirationMillis;
@@ -480,7 +480,7 @@ public class MergeService {
         return false;
     }
 
-
+    @Transactional
     public MergeCheckResponse checkMergeConflict(Long repoId, PullRequest pullRequest) {
         Repo repo = repoRepository.findById(repoId)
                 .orElseThrow(() -> new BusinessException(RepoErrorCode.REPO_NOT_FOUND));
@@ -495,12 +495,16 @@ public class MergeService {
             Boolean mergeable = ghPullRequest.getMergeable();
             String mergeableState = ghPullRequest.getMergeableState();
 
+            // pr 업데이트 동기화 로직
+            pullRequest.changeMergeable(mergeable);
+            pullRequestRepository.save(pullRequest);
+
             result = MergeCheckResponse.builder()
                     .prNumber(pullRequest.getGithubPrNumber())
                     .title(ghPullRequest.getTitle())
                     .state(ghPullRequest.getState()
                             .name())
-                    .mergeAble(mergeable)
+                    .mergeable(mergeable)
                     .hasConflicts(!mergeable)
                     .mergeState(mergeableState)
                     .build();

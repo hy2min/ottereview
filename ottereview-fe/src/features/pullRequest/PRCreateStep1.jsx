@@ -11,7 +11,6 @@ const PRCreateStep1 = ({
   repoId,
   selectedBranches,
   updateSelectedBranches,
-  setValidationPR,
   setValidationBranches,
   validationBranches,
   branches,
@@ -71,8 +70,6 @@ const PRCreateStep1 = ({
             target,
           })
 
-          setValidationPR(data)
-          
           // isExist가 true면 기존 PR 존재
           if (data.isExist) {
             setPrCheckResult('exists')
@@ -101,7 +98,7 @@ const PRCreateStep1 = ({
 
       return () => clearTimeout(timeoutId)
     }
-  }, [source, target, repoId, setValidationPR, setValidationBranches])
+  }, [source, target, repoId, setValidationBranches])
 
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
@@ -137,7 +134,7 @@ const PRCreateStep1 = ({
   const existingPR = prCheckResult === 'exists'
   const hasError = prCheckResult === 'error'
   const canGoNext = validationBranches?.isPossible === true
-  
+
   // 브랜치 검증 버튼 활성화 조건: PR이 존재하지 않을 때만
   const canValidateBranches = canCreatePR && !isSameBranch && !hasError
 
@@ -172,11 +169,16 @@ const PRCreateStep1 = ({
             </div>
           )}
 
-          {source && target && !isSameBranch && !existingPR && !hasError && (
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800 break-words w-full">
-              <strong>{source}</strong> 에서 <strong>{target}</strong> 로의 변경을 생성합니다.
-            </div>
-          )}
+          {source &&
+            target &&
+            !isSameBranch &&
+            !existingPR &&
+            !hasError &&
+            (!validationBranches || validationBranches.isPossible === true) && (
+              <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800 break-words w-full">
+                <strong>{source}</strong> 에서 <strong>{target}</strong> 로의 변경을 생성합니다.
+              </div>
+            )}
 
           {existingPR && (
             <div className="bg-green-50 border border-green-200 p-3 rounded-md w-full">
@@ -187,6 +189,12 @@ const PRCreateStep1 = ({
           {hasError && (
             <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
               {errorMessage}
+            </div>
+          )}
+
+          {validationBranches && validationBranches.isPossible === false && (
+            <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
+              PR을 생성할 수 없습니다. 브랜치 정보를 확인해주세요.
             </div>
           )}
         </div>

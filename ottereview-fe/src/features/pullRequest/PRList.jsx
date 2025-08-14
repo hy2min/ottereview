@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import Box from '../../components/Box'
-import InputBox from '../../components/InputBox'
+import CustomSelect from '../../components/InputBox/CustomSelect'
 import PRCardCompact from './PRCardCompact'
 
 const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
@@ -39,6 +39,7 @@ const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
             ]}
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value)}
+            placeholder="PR 유형 선택"
           />
         </div>
       </div>

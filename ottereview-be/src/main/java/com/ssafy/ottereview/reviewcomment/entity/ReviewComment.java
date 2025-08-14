@@ -95,6 +95,19 @@ public class ReviewComment extends BaseEntity {
     @Column(name = "github_updated_at")
     private LocalDateTime githubUpdatedAt;
 
+    /**
+     * 답글의 부모 댓글 ID (null이면 최상위 댓글)
+     */
+    @ManyToOne(fetch = jakarta.persistence.FetchType.LAZY)
+    @JoinColumn(name = "parent_comment_id")
+    private ReviewComment parentComment;
+
+    /**
+     * GitHub in_reply_to ID (GitHub 답글 시 사용)
+     */
+    @Column(name = "github_in_reply_to_id")
+    private Long githubInReplyToId;
+
     public void updateBodyAndTime(String body, LocalDateTime createAt, LocalDateTime updatedAt) {
         this.body = body;
         this.githubCreatedAt = createAt;

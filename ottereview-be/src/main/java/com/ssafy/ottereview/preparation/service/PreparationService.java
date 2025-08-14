@@ -89,6 +89,7 @@ public class PreparationService {
                         .equals(author.getId())) // author 제외
                 .map(user -> PrUserInfo.builder()
                         .id(user.getId())
+                        .githubId(user.getGithubId())
                         .githubUsername(user.getGithubUsername())
                         .githubEmail(user.getGithubEmail())
                         .build()

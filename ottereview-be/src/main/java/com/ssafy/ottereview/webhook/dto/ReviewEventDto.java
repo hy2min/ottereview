@@ -1,6 +1,8 @@
 package com.ssafy.ottereview.webhook.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.ssafy.ottereview.common.util.GitHubTimeDeserializer;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +37,7 @@ public class ReviewEventDto {
         private String commitId;
         
         @JsonProperty("submitted_at")
+        @JsonDeserialize(using = GitHubTimeDeserializer.class)
         private LocalDateTime submittedAt;
         
         private String state;

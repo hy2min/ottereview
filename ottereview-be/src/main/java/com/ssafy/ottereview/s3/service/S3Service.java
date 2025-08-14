@@ -22,6 +22,13 @@ public interface S3Service {
 
     void deleteFiles(Long reviewId);
 
+    /**
+     * Pull Request ID로 description 음성 파일들을 삭제합니다.
+     *
+     * @param pullRequestId Pull Request ID
+     */
+    void deleteDescriptionFiles(Long pullRequestId);
+
     void deleteFile(String fileKey);
 
     void cleanupUploadedFiles(List<String> uploadedFileKeys);

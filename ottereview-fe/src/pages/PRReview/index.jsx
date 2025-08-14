@@ -1,6 +1,6 @@
 import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -8,14 +8,13 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { fetchPRDetail, submitReview } from '@/features/pullRequest/prApi'
+import { closePR, fetchPRDetail, reopenPR, submitReview } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
+import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
-  const navigate = useNavigate()
-  const location = useLocation()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -26,15 +25,25 @@ const PRReview = () => {
   const [activeTab, setActiveTab] = useState('files')
   const [comment, setComment] = useState('')
   const [showCommentForm, setShowCommentForm] = useState(false)
-  const [reviewComments, setReviewComments] = useState([]) // 라인별 댓글들 보관
-  const [files, setFiles] = useState([]) // 녹음 파일들 보관
-  const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
+
+  // 댓글 관리 훅 사용
+  const {
+    reviewComments,
+    audioFiles: files,
+    fileComments,
+    setReviewComments,
+    setFiles,
+    setFileComments,
+    handleAddFileLineComment,
+  } = useCommentManager()
 
   const [prDetail, setPrDetail] = useState(null)
   const [loading, setLoading] = useState(false)
   const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
+  const [closingPR, setClosingPR] = useState(false) // PR 닫기 로딩
+  const [reopeningPR, setReopeningPR] = useState(false) // PR 재오픈 로딩
 
-  const loadingDots = useLoadingDots(loading)
+  const loadingDots = useLoadingDots(loading, loading ? 300 : 0) // 로딩 중일 때만 애니메이션
 
   // 페이지 이탈 방지 (새로고침, 브라우저 닫기 등)
   useEffect(() => {
@@ -54,9 +63,7 @@ const PRReview = () => {
   useEffect(() => {
     const handlePopState = (event) => {
       if (reviewComments.length > 0) {
-        const confirmed = window.confirm(
-          '작성 중인 임시 댓글이 있습니다.\n페이지를 나가면 댓글이 모두 사라집니다.\n정말 나가시겠습니까?'
-        )
+        const confirmed = window.confirm('작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?')
         if (!confirmed) {
           // 현재 페이지로 다시 이동
           window.history.pushState(null, '', window.location.pathname)
@@ -85,9 +92,8 @@ const PRReview = () => {
       setLoading(true)
       try {
         const pr = await fetchPRDetail({ repoId, prId })
-        console.log('pr:', pr)
+        console.log('pr', pr)
         setPrDetail(pr)
-
       } catch (err) {
         console.error('❌ PR 상세 정보 로딩 실패:', err)
         setPrDetail(null)
@@ -99,50 +105,6 @@ const PRReview = () => {
     load()
   }, [repoId, prId])
 
-  // 라인별 댓글 추가 함수
-  const handleAddLineComment = (commentData) => {
-    // 음성 파일이 있는 경우 (fileIndex가 -1인 경우)
-    if (commentData.audioFile && commentData.fileIndex === -1) {
-      const currentFileIndex = files.length
-      setFiles((prev) => [...prev, commentData.audioFile])
-
-      // fileIndex를 실제 인덱스로 업데이트
-      const updatedCommentData = {
-        ...commentData,
-        fileIndex: currentFileIndex,
-        audioFile: undefined, // API 요청에서는 audioFile 제거
-      }
-      setReviewComments((prev) => [...prev, updatedCommentData])
-    } else {
-      // 텍스트 댓글인 경우 (fileIndex가 null)
-      setReviewComments((prev) => [...prev, commentData])
-    }
-  }
-
-  // 파일별 라인 댓글 추가 함수 (새로 추가)
-  const handleAddFileLineComment = (filePath, lineIndex, commentData) => {
-    setFileComments((prev) => ({
-      ...prev,
-      [filePath]: {
-        ...prev[filePath],
-        submittedComments: {
-          ...prev[filePath]?.submittedComments,
-          [lineIndex]: [
-            ...(prev[filePath]?.submittedComments?.[lineIndex] || []),
-            {
-              ...commentData,
-              id: Date.now() + Math.random(),
-              submittedAt: new Date().toLocaleTimeString(),
-            },
-          ],
-        },
-      },
-    }))
-
-    // 기존 reviewComments에도 추가 (최종 제출을 위해)
-    handleAddLineComment(commentData)
-  }
-
   const handleSubmit = async () => {
     if (!comment.trim() && reviewComments.length === 0) {
       alert('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
@@ -150,21 +112,29 @@ const PRReview = () => {
     }
 
     try {
+      // 백엔드에서 필요한 속성들만 추출
+      const cleanedReviewComments = reviewComments.map((comment) => ({
+        path: comment.path,
+        body: comment.content || '',
+        position: comment.position,
+        line: comment.line || comment.lineNumber, // reviewCommentData.line을 우선 사용
+        side: comment.side,
+        startLine: comment.startLine,
+        startSide: comment.startSide,
+        fileIndex: comment.fileIndex,
+      }))
+
       const reviewData = {
         reviewRequest: {
           state: reviewState, // 선택된 리뷰 상태 사용
           body: comment.trim(),
           commitSha: prDetail?.commits?.[0]?.sha || '',
-          reviewComments: reviewComments,
+          reviewComments: cleanedReviewComments,
         },
         files: files, // 녹음 파일들
       }
 
-      console.log('=== 최종 리뷰 제출 데이터 ===')
-      console.log('reviewData:', JSON.stringify(reviewData, null, 2))
-      console.log('reviewComments 개수:', reviewComments.length)
-      console.log('files 개수:', files.length)
-      console.log('===========================')
+      console.log('=== 리뷰 제출 데이터 ===', JSON.stringify(reviewData, null, 2))
 
       const response = await submitReview({
         accountId: prDetail?.repo.accountId,
@@ -173,11 +143,27 @@ const PRReview = () => {
         reviewData,
       })
 
-      console.log('✅ 리뷰 제출 성공!', response)
+      console.log('=== 리뷰 제출 응답 ===', response)
+
+      // 상태 초기화 (beforeunload 이벤트 방지)
+      setReviewComments([])
+      setFiles([])
+      setFileComments({})
+      setComment('') // 리뷰 텍스트도 초기화
+      setShowCommentForm(false) // 제출폼 닫기
+      setReviewState('COMMENT') // 리뷰 상태도 초기화
+
       alert('리뷰가 성공적으로 제출되었습니다!')
 
-      // 페이지 새로고침으로 리뷰 목록 갱신
-      window.location.reload()
+      // 새로고침 대신 PR 데이터만 다시 불러오기
+      try {
+        const pr = await fetchPRDetail({ repoId, prId })
+        setPrDetail(pr)
+      } catch (err) {
+        console.error('PR 데이터 새로고침 실패:', err)
+        // 실패하면 페이지 새로고침
+        window.location.reload()
+      }
     } catch (error) {
       console.error('❌ 리뷰 제출 실패:', error)
     }
@@ -187,6 +173,42 @@ const PRReview = () => {
     setComment('')
     setShowCommentForm(false)
     setReviewState('COMMENT') // 리뷰 상태도 초기화
+  }
+
+  const handleClosePR = async () => {
+    if (!confirm('PR을 닫으시겠습니까?')) return
+
+    setClosingPR(true)
+    try {
+      await closePR({ repoId, prId })
+
+      // PR 데이터 새로고침
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ PR 닫기 실패:', error)
+      alert('PR 닫기에 실패했습니다.')
+    } finally {
+      setClosingPR(false)
+    }
+  }
+
+  const handleReopenPR = async () => {
+    if (!confirm('PR을 다시 여시겠습니까?')) return
+
+    setReopeningPR(true)
+    try {
+      await reopenPR({ repoId, prId })
+
+      // PR 데이터 새로고침
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ PR 재오픈 실패:', error)
+      alert('PR 재오픈에 실패했습니다.')
+    } finally {
+      setReopeningPR(false)
+    }
   }
 
   const prFiles =
@@ -206,19 +228,16 @@ const PRReview = () => {
       if (review.reviewComments) {
         review.reviewComments.forEach((comment) => {
           const filePath = comment.path
-          const lineIndex =
-            comment.startLine && comment.startLine !== comment.line
-              ? comment.startLine - 1
-              : comment.line - 1 // 0-based index로 변환
+          const lineNumber = comment.line // 실제 라인 번호를 키로 사용
 
           if (!existingReviewComments[filePath]) {
             existingReviewComments[filePath] = {}
           }
-          if (!existingReviewComments[filePath][lineIndex]) {
-            existingReviewComments[filePath][lineIndex] = []
+          if (!existingReviewComments[filePath][lineNumber]) {
+            existingReviewComments[filePath][lineNumber] = []
           }
 
-          existingReviewComments[filePath][lineIndex].push({
+          existingReviewComments[filePath][lineNumber].push({
             ...comment,
             reviewState: review.state,
             reviewer: review.githubUsername || 'Unknown',
@@ -233,7 +252,7 @@ const PRReview = () => {
   // 로딩 중일 때 표시
   if (loading) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-2xl">PR 정보를 불러오는 중{loadingDots}</p>
       </div>
     )
@@ -242,7 +261,7 @@ const PRReview = () => {
   // PR 정보가 없을 때 표시
   if (!prDetail) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex items-center justify-center py-20">
         <p className="text-stone-600 text-lg">PR 정보를 찾을 수 없습니다.</p>
       </div>
     )
@@ -264,18 +283,26 @@ const PRReview = () => {
         <div className="flex items-center space-x-2 text-sm text-stone-600">
           <FolderCode className="w-4 h-4" />
           <span className="font-medium">{prDetail.repo?.fullName}</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">#{prDetail.githubPrNumber}</span>
+          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+            #{prDetail.githubPrNumber}
+          </span>
         </div>
         <div className="space-y-3">
-          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">{prDetail.title}</h1>
+          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
+            {prDetail.title}
+          </h1>
           {prDetail.author && (
             <div className="flex items-center gap-2 text-sm theme-text-secondary">
               <span>작성자:</span>
-              <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">@{prDetail.author.githubUsername}</span>
+              <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
+                @{prDetail.author.githubUsername}
+              </span>
             </div>
           )}
           {prDetail.body && prDetail.body.trim() && (
-            <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">{prDetail.body}</div>
+            <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
+              {prDetail.body}
+            </div>
           )}
         </div>
       </Box>
@@ -289,7 +316,9 @@ const PRReview = () => {
               </div>
               <div className="min-w-0 flex-1">
                 <h4 className="font-medium theme-text mb-2">AI 요약</h4>
-                <p className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}>
+                <p
+                  className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
+                >
                   {getSummaryContent()}
                 </p>
               </div>
@@ -306,7 +335,9 @@ const PRReview = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 {prDetail.headBranch?.minApproveCnt === 0 ? (
-                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">승인 불필요</span>
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    승인 불필요
+                  </span>
                 ) : (
                   <span className="text-sm theme-text-secondary font-medium">
                     {prDetail.approveCnt || 0} / {prDetail.headBranch?.minApproveCnt || 0}
@@ -323,7 +354,8 @@ const PRReview = () => {
                       width: `${
                         prDetail.headBranch?.minApproveCnt
                           ? Math.min(
-                              ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) * 100,
+                              ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) *
+                                100,
                               100
                             )
                           : 0
@@ -418,6 +450,8 @@ const PRReview = () => {
             onAddComment={handleAddFileLineComment}
             fileComments={fileComments}
             existingReviewComments={existingReviewComments}
+            descriptions={prDetail?.descriptions || []}
+            prAuthor={prDetail?.author || {}}
             showDiffHunk={false}
           />
         )}

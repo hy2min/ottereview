@@ -14,7 +14,7 @@ const OAuthCallbackPage = () => {
   const clearTokens = useAuthStore((state) => state.clearTokens)
 
   const [loading, setLoading] = useState(true)
-  const loadingDots = useLoadingDots(loading)
+  const loadingDots = useLoadingDots(loading, loading ? 300 : 0)
 
   useEffect(() => {
     const code = new URL(window.location.href).searchParams.get('code')
