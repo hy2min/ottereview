@@ -86,95 +86,79 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
 
       // 서버 상태 확인 제거하고 바로 토큰 요청
       console.log('📞 백엔드 서버에 OpenVidu 토큰 요청 중...')
-        const response = await fetch(`${BACKEND_URL}/api/meetings/${currentRoomId}/join`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        })
+      const response = await fetch(`${BACKEND_URL}/api/meetings/${currentRoomId}/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
 
-        if (!response.ok) {
-          const errorBody = await response.text()
-          console.error('서버 응답 에러:', { status: response.status, body: errorBody })
+      if (!response.ok) {
+        const errorBody = await response.text()
+        console.error('서버 응답 에러:', { status: response.status, body: errorBody })
 
-          let errorMsg = '음성 채팅 연결에 실패했습니다.'
-          if (response.status === 404) {
-            errorMsg = '음성 채팅방을 찾을 수 없습니다.'
-          } else if (response.status === 403) {
-            errorMsg = '음성 채팅 참여 권한이 없습니다.'
-          } else if (response.status === 500) {
-            errorMsg = 'OpenVidu 서버에 문제가 있습니다. 관리자에게 문의하세요.'
-          }
-
-          setConnectionStatus('error')
-          setErrorMessage(errorMsg)
-          return
+        let errorMsg = '음성 채팅 연결에 실패했습니다.'
+        if (response.status === 404) {
+          errorMsg = '음성 채팅방을 찾을 수 없습니다.'
+        } else if (response.status === 403) {
+          errorMsg = '음성 채팅 참여 권한이 없습니다.'
+        } else if (response.status === 500) {
+          errorMsg = 'OpenVidu 서버에 문제가 있습니다. 관리자에게 문의하세요.'
         }
 
-        const responseData = await response.json()
-        const { openviduToken } = responseData
+        setConnectionStatus('error')
+        setErrorMessage(errorMsg)
+        return
+      }
 
-        if (!openviduToken) {
-          const error = 'OpenVidu 토큰을 받지 못했습니다.'
-          console.error(error)
-          setConnectionStatus('error')
-          setErrorMessage(error)
-          return
-        }
+      const responseData = await response.json()
+      const { openviduToken } = responseData
 
-        console.log('✅ OpenVidu 토큰 받음:', openviduToken)
+      if (!openviduToken) {
+        const error = 'OpenVidu 토큰을 받지 못했습니다.'
+        console.error(error)
+        setConnectionStatus('error')
+        setErrorMessage(error)
+        return
+      }
 
-        // 🎯 WebSocket URL에서 실제 토큰 추출
-        let actualToken = openviduToken
-        try {
-          if (openviduToken.startsWith('wss://')) {
-            const url = new URL(openviduToken.replace('wss://', 'https://'))
-            const sessionId = url.searchParams.get('sessionId')
-            const tokenParam = url.searchParams.get('token')
-            
-            console.log('🌐 서버:', url.origin)
-            console.log('📺 세션 ID:', sessionId)
-            console.log('🎫 추출된 토큰:', tokenParam)
-            
-            actualToken = tokenParam || openviduToken
-          }
-        } catch (parseError) {
-          console.log('⚠️ 토큰 파싱 실패, 원본 사용:', parseError)
-        }
+      console.log('✅ OpenVidu 토큰 받음')
 
-        const ov = new OpenVidu()
-        const mySession = ov.initSession()
+      const ov = new OpenVidu({
+          wsUrl: 'wss://i13c108.p.ssafy.io:9001'
+      })
+      
+      const mySession = ov.initSession()
 
-        // 세션 이벤트 리스너들 설정
-        setupSessionEventListeners(mySession)
+      // 세션 이벤트 리스너들 설정
+      setupSessionEventListeners(mySession)
 
-        setSession(mySession)
+      setSession(mySession)
 
-        // 연결 데이터 준비
-        const connectionData = {
-          username: myUserInfo.username,
-          userId: myUserInfo.id,
-          isOwner: isOwner,
-        }
+      // 연결 데이터 준비
+      const connectionData = {
+        username: myUserInfo.username,
+        userId: myUserInfo.id,
+        isOwner: isOwner,
+      }
 
-        console.log('🔗 보낼 연결 데이터:', connectionData)
-        console.log('🔗 JSON 문자열:', JSON.stringify(connectionData))
-        console.log('🔗 사용할 토큰:', actualToken)
-        console.log('🔗 OpenVidu 세션 연결 시도...')
+      console.log('🔗 보낼 연결 데이터:', connectionData)
+      console.log('🔗 JSON 문자열:', JSON.stringify(connectionData))
+      console.log('🔗 OpenVidu 세션 연결 시도...')
 
-        // 세션 연결 - 타임아웃 설정
-        const connectPromise = mySession.connect(actualToken, JSON.stringify(connectionData))
+      // 세션 연결 - 타임아웃 설정
+      const connectPromise = mySession.connect(openviduToken, JSON.stringify(connectionData))
 
-        // 10초 타임아웃 설정
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('연결 시간 초과')), 10000)
-        })
+      // 10초 타임아웃 설정
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('연결 시간 초과')), 10000)
+      })
 
-        await Promise.race([connectPromise, timeoutPromise])
+      await Promise.race([connectPromise, timeoutPromise])
 
-        console.log('✅ OpenVidu 세션 연결 성공!')
-        console.log('✅ 내 연결 ID:', mySession.connection.connectionId)
+      console.log('✅ OpenVidu 세션 연결 성공!')
+      console.log('✅ 내 연결 ID:', mySession.connection.connectionId)
 
       // 참가자 목록 초기화 - 나만 추가
       setConnectedParticipants([
