@@ -13,12 +13,12 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
           return (
             <div key={label} className="flex-1 text-center">
               <span
-                className={`inline-block px-2 py-1 border-2 border-black rounded-pixel shadow-pixel ${
+                className={`inline-block px-3 py-2 border rounded-lg transition-colors duration-200 font-medium ${
                   isActive
-                    ? 'bg-purple-600 text-white'
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm'
                     : isCompleted
-                      ? 'bg-white text-black'
-                      : 'bg-white text-black'
+                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      : 'theme-bg-secondary theme-text-secondary border-gray-200 dark:border-gray-700'
                 }`}
               >
                 {step}. {label}
@@ -28,11 +28,11 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
         })}
       </div>
 
-      {/* 픽셀 스타일 진행 바 */}
-      <div className="relative h-5 border-2 border-black bg-white rounded-[8px] shadow-pixel overflow-hidden">
+      {/* 모던 스타일 진행 바 */}
+      <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className={
-            'absolute top-0 left-0 h-full bg-purple-600 transition-all duration-500 ease-out'
+            'absolute top-0 left-0 h-full bg-blue-600 dark:bg-blue-500 transition-all duration-500 ease-out rounded-full'
           }
           style={{ width: `${progressPercent}%` }}
         />

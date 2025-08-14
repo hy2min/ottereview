@@ -50,7 +50,7 @@ const Header = () => {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-gray-200/50 dark:border-slate-700/50">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-md theme-bg-primary border-b border-gray-200/50 dark:border-gray-700/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
@@ -87,7 +87,7 @@ const Header = () => {
               <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover:opacity-30 blur-lg transition-all duration-500 rounded-xl animate-pulse" />
 
               {/* Logo container with enhanced effects */}
-              <div className="relative w-12 h-12 bg-white dark:bg-slate-800 rounded-xl p-1.5 shadow-lg group-hover:shadow-2xl transition-all duration-500 border-2 border-gray-200/50 dark:border-slate-700/50 group-hover:border-blue-400/50 dark:group-hover:border-blue-500/50">
+              <div className="relative w-12 h-12 bg-white dark:bg-gray-800 rounded-xl p-1.5 shadow-lg group-hover:shadow-2xl transition-all duration-500 border-2 border-gray-200/50 dark:border-gray-600/50 group-hover:border-blue-400/50 dark:group-hover:border-blue-500/50">
                 <img
                   src="/OtteReview.png"
                   alt="OtteReview Logo"
@@ -149,7 +149,7 @@ const Header = () => {
           {/* Page Title */}
           {title && (
             <div className="absolute left-1/2 transform -translate-x-1/2 hidden md:block">
-              <div className="px-4 py-2 bg-gray-100/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-slate-700/50">
+              <div className="px-4 py-2 bg-gray-100/50 dark:bg-gray-800/80 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-gray-600/50">
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {title}
                 </span>
