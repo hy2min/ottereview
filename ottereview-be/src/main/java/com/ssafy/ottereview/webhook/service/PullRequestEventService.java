@@ -42,10 +42,14 @@ public class PullRequestEventService {
     public void processPullRequestEvent(String payload) {
         try {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
+//            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
+//                    .writeValueAsString(event);
+//            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
+            JsonNode json = objectMapper.readTree(payload);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(event);
-            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
+                    .writeValueAsString(json);
 
+            log.debug("전체 페이로드 출력:\n{}", formattedPayload);
             switch (event.getAction()) {
                 case "opened":
                     // mergeable 값 null
