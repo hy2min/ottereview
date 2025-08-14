@@ -745,13 +745,17 @@ const CodeDiff = ({
                       ? commentsForLine.filter((comment) => comment.side === currentSide)
                       : []
 
-                    // body가 null이 아닌 댓글만 필터링
-                    const commentsWithBody = filteredComments.filter((comment) => 
-                      comment.body !== null && comment.body !== undefined && comment.body !== ''
+                    // body나 voiceFileUrl이 있는 댓글만 필터링
+                    const validComments = filteredComments.filter(
+                      (comment) =>
+                        (comment.body !== null &&
+                          comment.body !== undefined &&
+                          comment.body !== '') ||
+                        comment.voiceFileUrl
                     )
-                    
-                    return commentsWithBody.length > 0
-                      ? commentsWithBody.map((comment) => (
+
+                    return validComments.length > 0
+                      ? validComments.map((comment) => (
                           <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
                             <Box shadow className="space-y-3 max-w-xl">
                               <div className="flex items-center gap-3">
@@ -785,9 +789,19 @@ const CodeDiff = ({
                                   </Badge>
                                 </div>
                               </div>
-                              <p className="theme-text whitespace-pre-wrap text-base">
-                                {cleanReviewCommentBody(comment.body)}
-                              </p>
+                              {comment.voiceFileUrl ? (
+                                <audio
+                                  controls
+                                  src={comment.voiceFileUrl}
+                                  className="h-8 rounded-full border border-gray-300 "
+                                >
+                                  브라우저가 오디오를 지원하지 않습니다.
+                                </audio>
+                              ) : (
+                                <p className="theme-text whitespace-pre-wrap text-base">
+                                  {cleanReviewCommentBody(comment.body)}
+                                </p>
+                              )}
                             </Box>
                           </div>
                         ))
