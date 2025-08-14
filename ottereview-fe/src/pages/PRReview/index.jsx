@@ -283,9 +283,9 @@ const PRReview = () => {
         <div className="flex items-center space-x-2 text-sm text-stone-600">
           <FolderCode className="w-4 h-4" />
           <span className="font-medium">{prDetail.repo?.fullName}</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+          <Badge variant="default" size="xs" className="font-mono">
             #{prDetail.githubPrNumber}
-          </span>
+          </Badge>
         </div>
         <div className="space-y-3">
           <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">

@@ -1,4 +1,5 @@
 import React from 'react'
+import Box from '@/components/Box'
 
 const ConflictFileViewer = ({ conflictFiles, selectedFiles, toggleFile }) => {
   if (!conflictFiles || conflictFiles.length === 0) {
@@ -8,9 +9,10 @@ const ConflictFileViewer = ({ conflictFiles, selectedFiles, toggleFile }) => {
   return (
     <div className="space-y-2">
       {conflictFiles.map((file) => (
-        <label
+        <Box
           key={file}
-          className="flex items-center gap-2 border px-3 py-1 cursor-pointer rounded-md"
+          className="flex items-center gap-2 p-3 cursor-pointer hover:theme-bg-tertiary transition-colors"
+          as="label"
         >
           <input
             type="checkbox"
@@ -18,7 +20,7 @@ const ConflictFileViewer = ({ conflictFiles, selectedFiles, toggleFile }) => {
             onChange={() => toggleFile(file)}
           />
           <span>{file}</span>
-        </label>
+        </Box>
       ))}
     </div>
   )

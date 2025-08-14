@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { useAuthStore } from '@/features/auth/authStore'
+import Button from '@/components/Button'
+import Badge from '@/components/Badge'
 
 import { fetchChat } from './chatApi'
 import ChatRoomCard from './ChatRoomCard'
@@ -100,29 +102,33 @@ const ChatRoomList = () => {
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-medium theme-text">💬 실시간 채팅방</h3>
         <div className="flex items-center gap-2">
-          <span className="text-xs theme-text-muted theme-bg-tertiary px-2 py-1 rounded-full border theme-border">
+          <Badge variant="default" size="sm">
             {rooms.length}개 활성
-          </span>
+          </Badge>
           {needsSlide && (
             <div className="flex items-center gap-1">
-              <button
+              <Button
                 onClick={slideLeft}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                variant="ghost"
+                size="sm"
                 disabled={currentIndex === 0}
+                className="p-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={slideRight}
-                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                variant="ghost"
+                size="sm"
                 disabled={currentIndex >= rooms.length - Math.floor(scrollRef.current?.offsetWidth / (window.innerWidth < 640 ? 192 : 212) || 1)}
+                className="p-1"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </button>
+              </Button>
             </div>
           )}
         </div>
