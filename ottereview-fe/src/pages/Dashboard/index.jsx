@@ -72,7 +72,7 @@ const Dashboard = () => {
     if (!user?.id || !accessToken) return
 
     const updateEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=update`
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
     )
 
     updateEventSource.addEventListener('update', (event) => {
