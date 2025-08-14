@@ -78,7 +78,7 @@ const App = () => {
           <Route path="/" element={<Guide />} />
           <Route path="/landing" element={<Landing />} />
           <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
-          <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<Navigate to="/Landing" replace />} />
         </Routes>
       </main>
     )

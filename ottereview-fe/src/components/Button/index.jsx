@@ -6,7 +6,7 @@ const Button = ({ children, variant = 'primary', size = 'md', className, onClick
   const buttonRef = useRef(null)
 
   const baseClasses =
-    'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:pointer-events-none'
+    'inline-flex items-center justify-center rounded-lg font-medium focus:outline-none disabled:opacity-50 disabled:pointer-events-none'
 
   const variants = {
     primary: 'bg-blue-600 dark:bg-blue-700 text-white hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 dark:active:bg-blue-500 shadow-sm hover:shadow-md',
