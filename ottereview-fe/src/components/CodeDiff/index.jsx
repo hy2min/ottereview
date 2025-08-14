@@ -711,7 +711,7 @@ const CodeDiff = ({
                               </div>
                               <div>
                                 <span className="font-medium text-stone-900 text-base">
-                                  내 댓글
+                                  내 설명
                                 </span>
                                 <span className="text-sm text-stone-500 ml-2">
                                   {comment.submittedAt}

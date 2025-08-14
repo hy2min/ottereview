@@ -1,3 +1,4 @@
+import MDEditor from '@uiw/react-md-editor'
 import { FileText, FolderCode, GitCommit, MessageCircle, Users } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -335,8 +336,17 @@ const PRReview = () => {
             </div>
           )}
           {prDetail.body && prDetail.body.trim() && (
-            <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
-              {prDetail.body}
+            <div className="rounded-lg border-l-4 border-blue-500 overflow-hidden">
+              <MDEditor.Markdown 
+                source={prDetail.body} 
+                style={{ 
+                  backgroundColor: 'transparent',
+                  padding: '12px',
+                  fontSize: '14px',
+                  lineHeight: '1.6'
+                }}
+                className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
+              />
             </div>
           )}
 
