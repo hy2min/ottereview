@@ -29,6 +29,7 @@ public class PullRequestReviewCommentInfo {
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
     private String voiceFileUrl;
+    private Long parentCommentId;
 
     public static PullRequestReviewCommentInfo fromEntity(ReviewComment reviewComment, String voiceFileUrl) {
         return PullRequestReviewCommentInfo.builder()
@@ -48,6 +49,7 @@ public class PullRequestReviewCommentInfo {
                 .createdAt(reviewComment.getCreatedAt())
                 .modifiedAt(reviewComment.getModifiedAt())
                 .voiceFileUrl(voiceFileUrl)
+                .parentCommentId(reviewComment.getParentComment() != null ? reviewComment.getParentComment().getId() : null)
                 .build();
     }
 }
