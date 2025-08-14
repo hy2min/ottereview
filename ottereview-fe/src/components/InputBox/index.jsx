@@ -15,10 +15,10 @@ const InputBox = ({
   markdown = false, // 마크다운 에디터 사용 여부
   ...props
 }) => {
-  const base = 'bg-white border-2 border-black rounded-[8px]'
+  const base = 'soft-input'
 
-  const inputSpecificClasses = 'w-full px-2 py-1'
-  const textareaSpecificClasses = 'w-full px-2 py-1 resize-none h-full min-h-20'
+  const inputSpecificClasses = 'w-full'
+  const textareaSpecificClasses = 'w-full resize-none min-h-[80px]'
 
   const inputClasses = twMerge(base, inputSpecificClasses, className)
   const textareaClasses = twMerge(base, textareaSpecificClasses, className)
@@ -70,9 +70,9 @@ const InputBox = ({
   }
 
   return (
-    <div className={`relative ${as === 'textarea' ? 'flex flex-col h-full' : 'space-y-1'}`}>
-      <label className="block font-medium mb-1">{label}</label>
-      <div className={as === 'textarea' ? 'flex-1 min-h-0' : ''}>{renderControl()}</div>
+    <div className="relative space-y-2">
+      {label && <label className="block text-sm font-medium theme-text">{label}</label>}
+      {renderControl()}
     </div>
   )
 }

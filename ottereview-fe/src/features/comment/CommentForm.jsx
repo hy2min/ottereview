@@ -111,21 +111,18 @@ const CommentForm = ({
 
 
   return (
-    <div
-      className={`${size === 'small' ? 'p-2 max-w-md' : size === 'large' ? 'p-6 max-w-2xl' : 'p-4 max-w-xl'}`}
-    >
-      <Box shadow>
+      <Box shadow className={`${size === 'small' ? 'p-2 max-w-md' : size === 'large' ? 'p-6 max-w-2xl' : 'p-4 max-w-xl'}`}>
         {/* 음성 파일이 있을 때는 음성 재생 컨트롤만 표시 */}
         {audioFile ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium text-gray-700">음성 댓글</div>
-              <span className="text-sm text-green-600">🎵 음성 파일 준비됨</span>
+              <div className="text-sm font-medium theme-text">음성 댓글</div>
+              <span className="text-sm text-green-600 dark:text-green-400">🎵 음성 파일 준비됨</span>
             </div>
             <div className="flex items-center gap-3">
               <audio
                 controls
-                className="flex-1 h-10 border rounded-full border-gray-300 bg-gray-50"
+                className="flex-1 h-10 border rounded-full border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
               >
                 <source src={URL.createObjectURL(audioFile)} type={audioFile.type} />
                 브라우저가 오디오를 지원하지 않습니다.
@@ -139,9 +136,9 @@ const CommentForm = ({
           /* 음성 파일이 없을 때는 텍스트 입력 폼 표시 */
           <>
             <div className="space-y-1">
-              <label className="block font-medium mb-1 text-base">리뷰</label>
+              <label className="block font-medium mb-1 text-base theme-text">리뷰</label>
               <textarea
-                className={`bg-white border-2 border-black rounded-[8px] w-full px-2 py-1 resize-none min-h-20 text-base placeholder:text-base ${config.textareaHeight}`}
+                className={`theme-bg-primary border-2 theme-border rounded-[8px] w-full px-2 py-1 resize-none min-h-20 text-base placeholder:text-base theme-text placeholder:theme-text-muted ${config.textareaHeight}`}
                 placeholder={isRecording ? '음성 녹음 중...' : '리뷰를 입력하세요...'}
                 value={value}
                 onChange={onChange}
@@ -154,7 +151,7 @@ const CommentForm = ({
         {/* 리뷰 상태 선택 - showReviewState가 true일 때만 표시 */}
         {showReviewState && (
           <div className="space-y-2">
-            <label className="block font-medium text-base">리뷰 상태</label>
+            <label className="block font-medium text-base theme-text">리뷰 상태</label>
             <div className="flex gap-6">
               {reviewStates.map((state) => (
                 <label key={state.value} className="flex items-start gap-2 cursor-pointer">
@@ -164,11 +161,11 @@ const CommentForm = ({
                     value={state.value}
                     checked={reviewState === state.value}
                     onChange={(e) => onReviewStateChange?.(e.target.value)}
-                    className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500"
+                    className="mt-1 w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 dark:focus:ring-blue-400"
                   />
                   <div className="flex-1">
-                    <div className="font-medium text-base">{state.label}</div>
-                    <div className="text-sm text-gray-500">{state.description}</div>
+                    <div className="font-medium text-base theme-text">{state.label}</div>
+                    <div className="text-sm theme-text-muted">{state.description}</div>
                   </div>
                 </label>
               ))}
@@ -210,7 +207,6 @@ const CommentForm = ({
           </div>
         </div>
       </Box>
-    </div>
   )
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 
 import StepIndicator from '@/components/StepIndicator'
@@ -8,6 +8,7 @@ import PRCreateStep3 from '@/features/pullRequest/PRCreateStep3'
 import PRCreateStep4 from '@/features/pullRequest/PRCreateStep4'
 import PRCreateStep5 from '@/features/pullRequest/PRCreateStep5'
 import { fetchBrancheListByRepoId } from '@/features/repository/repoApi'
+import { useCommentManager } from '@/hooks/useCommentManager'
 
 const PRCreate = () => {
   const { repoId } = useParams()
@@ -18,18 +19,17 @@ const PRCreate = () => {
     source: '',
     target: '',
   })
-  
+
   // PR 제목과 설명을 별도로 관리
   const [prTitle, setPrTitle] = useState('')
   const [prBody, setPrBody] = useState('')
-  const [validationPR, setValidationPR] = useState(null)
   const [validationBranches, setValidationBranches] = useState(null)
   const [aiConvention, setAIConvention] = useState(null)
   const [aiOthers, setAIOthers] = useState(null)
-  
+
   // 브랜치 정보를 PRCreate에서 관리
   const [branches, setBranches] = useState([])
-  
+
   // 컨벤션 규칙들을 PRCreate에서 관리
   const [conventionRules, setConventionRules] = useState({
     file_names: '',
@@ -56,78 +56,68 @@ const PRCreate = () => {
     }
   }, [repoId])
 
-  // PR 생성 과정에서 작성된 댓글들 (모든 step에서 유지됨)
-  const [reviewComments, setReviewComments] = useState([])
-  const [audioFiles, setAudioFiles] = useState([])
-  const [fileComments, setFileComments] = useState({}) // 파일별 라인 댓글 상태 관리
-  
+  // 댓글 관리 훅 사용
+  const {
+    reviewComments,
+    audioFiles,
+    fileComments,
+    handleAddFileLineComment,
+    handleRemoveComment,
+    resetCommentStates,
+  } = useCommentManager()
+
   // 선택된 리뷰어들 (객체 배열로 관리)
   const [selectedReviewers, setSelectedReviewers] = useState([])
 
-  const updateSelectedBranches = (partial) => {
+  const updateSelectedBranches = useCallback((partial) => {
     setSelectedBranches((prev) => ({ ...prev, ...partial }))
-  }
+  }, [])
 
-  // PR 생성 완료 시 댓글 상태 초기화 함수
-  const resetCommentStates = () => {
-    setReviewComments([])
-    setAudioFiles([])
-    setFileComments({})
-  }
-
-  // 라인별 댓글 추가 함수 (기존)
-  const handleAddLineComment = (commentData) => {
-    // 음성 파일이 있는 경우 (fileIndex가 -1인 경우)
-    if (commentData.audioFile && commentData.fileIndex === -1) {
-      const currentFileIndex = audioFiles.length
-      setAudioFiles((prev) => [...prev, commentData.audioFile])
-
-      // fileIndex를 실제 인덱스로 업데이트
-      const updatedCommentData = {
-        ...commentData,
-        fileIndex: currentFileIndex,
-        audioFile: undefined, // API 요청에서는 audioFile 제거
-      }
-      setReviewComments((prev) => [...prev, updatedCommentData])
-    } else {
-      // 텍스트 댓글인 경우 (fileIndex가 null)
-      setReviewComments((prev) => [...prev, commentData])
-    }
-  }
-
-  // 파일별 라인 댓글 추가 함수 (새로 추가)
-  const handleAddFileLineComment = (filePath, lineIndex, commentData) => {
-    setFileComments((prev) => ({
-      ...prev,
-      [filePath]: {
-        ...prev[filePath],
-        submittedComments: {
-          ...prev[filePath]?.submittedComments,
-          [lineIndex]: [
-            ...(prev[filePath]?.submittedComments?.[lineIndex] || []),
-            {
-              ...commentData,
-              id: Date.now() + Math.random(),
-              submittedAt: new Date().toLocaleTimeString(),
-            },
-          ],
-        },
-      },
-    }))
-
-    // 기존 reviewComments에도 추가 (최종 제출을 위해)
-    handleAddLineComment(commentData)
-  }
-
-  const goToStep = (stepNumber) => {
+  const goToStep = useCallback((stepNumber) => {
     setStep(stepNumber)
-  }
+  }, [])
+
+  const [aiSummary, setAISummary] = useState('')
 
   const steps = ['브랜치 선택', '컨벤션 확인', 'PR 정보 입력', '리뷰어 선택', '최종 제출']
 
+  // Step3 props를 별도로 메모이제이션
+  const step3Props = useMemo(
+    () => ({
+      goToStep,
+      repoId,
+      validationBranches,
+      aiOthers,
+      setAIOthers,
+      reviewComments,
+      onAddComment: handleAddFileLineComment,
+      onRemoveComment: handleRemoveComment,
+      fileComments,
+      prTitle,
+      setPrTitle,
+      prBody,
+      setPrBody,
+    }),
+    [
+      goToStep,
+      repoId,
+      validationBranches,
+      aiOthers,
+      setAIOthers,
+      reviewComments,
+      handleAddFileLineComment,
+      handleRemoveComment,
+      fileComments,
+      prTitle,
+      setPrTitle,
+      prBody,
+      setPrBody,
+    ]
+  )
+
   const getStepProps = (stepNumber) => {
     const baseProps = { goToStep, repoId }
-    
+
     switch (stepNumber) {
       case 1:
         return {
@@ -136,7 +126,6 @@ const PRCreate = () => {
           updateSelectedBranches,
           validationBranches,
           setValidationBranches,
-          setValidationPR,
           branches,
         }
       case 2:
@@ -145,24 +134,13 @@ const PRCreate = () => {
           validationBranches,
           aiConvention,
           setAIConvention,
+          aiOthers,
           setAIOthers,
           conventionRules,
           setConventionRules,
         }
       case 3:
-        return {
-          ...baseProps,
-          validationBranches,
-          aiOthers,
-          reviewComments,
-          audioFiles,
-          onAddComment: handleAddFileLineComment,
-          fileComments,
-          prTitle,
-          setPrTitle,
-          prBody,
-          setPrBody,
-        }
+        return step3Props
       case 4:
         return {
           ...baseProps,
@@ -170,6 +148,7 @@ const PRCreate = () => {
           aiOthers,
           selectedReviewers,
           setSelectedReviewers,
+          setAISummary,
         }
       case 5:
         return {
@@ -179,6 +158,9 @@ const PRCreate = () => {
           prBody,
           selectedReviewers,
           resetCommentStates,
+          reviewComments,
+          audioFiles,
+          aiSummary,
         }
       default:
         return baseProps

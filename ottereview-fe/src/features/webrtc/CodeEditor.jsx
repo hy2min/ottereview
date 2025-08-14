@@ -14,6 +14,8 @@ const CodeEditor = ({ conflictFiles }) => {
   const viewRef = useRef(null)
   const docRef = useRef(null)
   const clientRef = useRef(null)
+  // 🔧 추가: 문서 상태 추적을 위한 Map
+  const attachedDocsRef = useRef(new Map())
 
   const [selectedFileName, setSelectedFileName] = useState('')
   const [availableFiles, setAvailableFiles] = useState([])
@@ -29,6 +31,61 @@ const CodeEditor = ({ conflictFiles }) => {
   // 현재 선택된 파일의 문서 키 생성
   const currentDocumentKey =
     selectedFileName && roomId ? `${roomId}_${sanitizeFileName(selectedFileName)}` : null
+
+  // 🔧 추가: 문서 상태 확인 함수
+  const isDocumentAttached = (doc) => {
+    try {
+      return doc && doc.getStatus() === 'attached'
+    } catch (error) {
+      return false
+    }
+  }
+
+  // 🔧 추가: 안전한 문서 detach 함수
+  const safeDetachDocument = async (client, doc, documentKey) => {
+    if (!client || !doc) {
+      console.log('🔍 detach 대상 없음:', documentKey)
+      return
+    }
+
+    try {
+      if (isDocumentAttached(doc)) {
+        console.log('🔌 문서 detach 시작:', documentKey)
+        await client.detach(doc)
+        console.log('✅ 문서 detach 완료:', documentKey)
+      } else {
+        console.log('ℹ️ 문서가 이미 detach됨:', documentKey)
+      }
+    } catch (error) {
+      console.error('❌ 문서 detach 실패:', documentKey, error)
+      // detach 실패해도 계속 진행
+    }
+  }
+
+  // 🔧 추가: 모든 문서 정리 함수
+  const cleanupAllDocuments = async () => {
+    const client = clientRef.current
+    if (!client) return
+
+    console.log('🧹 모든 문서 정리 시작')
+
+    for (const [documentKey, docInfo] of attachedDocsRef.current.entries()) {
+      // 구독 해제
+      if (docInfo.unsubscribeFunc) {
+        try {
+          docInfo.unsubscribeFunc()
+        } catch (error) {
+          console.warn('구독 해제 오류:', error.message)
+        }
+      }
+
+      // 문서 detach
+      await safeDetachDocument(client, docInfo.doc, documentKey)
+    }
+
+    attachedDocsRef.current.clear()
+    console.log('✅ 모든 문서 정리 완료')
+  }
 
   // 파일 선택 핸들러
   const handleFileSelect = (filename) => {
@@ -167,13 +224,21 @@ const CodeEditor = ({ conflictFiles }) => {
 
     initializeYorkie()
 
-    // 🎯 핵심: client.deactivate()만 호출, 개별 문서 detach는 하지 않음
+    // 🔧 수정: 모든 문서를 먼저 정리 후 클라이언트 deactivate
     return () => {
       console.log('🧹 Yorkie 클라이언트 정리 중...')
-      if (clientRef.current) {
-        clientRef.current.deactivate().catch(console.error)
-        clientRef.current = null
+      const cleanup = async () => {
+        try {
+          await cleanupAllDocuments()
+          if (clientRef.current) {
+            await clientRef.current.deactivate()
+            clientRef.current = null
+          }
+        } catch (error) {
+          console.error('❌ 클라이언트 정리 실패:', error)
+        }
       }
+      cleanup()
     }
   }, [roomId])
 
@@ -201,29 +266,78 @@ const CodeEditor = ({ conflictFiles }) => {
           throw new Error('Yorkie 클라이언트가 준비되지 않았습니다.')
         }
 
-        // 1. 기존 에디터만 정리 (문서 detach는 하지 않음)
+        // 1. 기존 에디터 정리
         if (viewRef.current) {
           console.log('🧹 기존 에디터 정리 중...')
           viewRef.current.destroy()
           viewRef.current = null
         }
 
-        console.log('🔗 새 Yorkie 문서에 연결 시도:', currentDocumentKey)
+        // 🔧 수정: 기존 문서 확인 및 재사용/detach 처리
+        let existingDocInfo = attachedDocsRef.current.get(currentDocumentKey)
 
-        // 2. 새 문서 생성 및 연결
-        doc = new yorkie.Document(currentDocumentKey)
-        await client.attach(doc, { initialPresence: {} })
+        if (existingDocInfo) {
+          // 기존 문서가 여전히 attach되어 있는지 확인
+          if (isDocumentAttached(existingDocInfo.doc)) {
+            console.log('♻️ 기존 문서 재사용:', currentDocumentKey)
+            doc = existingDocInfo.doc
+            unsubscribeFunc = existingDocInfo.unsubscribeFunc
+          } else {
+            console.log('🔄 기존 문서가 detach됨, 새로 생성:', currentDocumentKey)
+            // 상태에서 제거
+            attachedDocsRef.current.delete(currentDocumentKey)
+            existingDocInfo = null
+          }
+        }
+
+        if (!existingDocInfo) {
+          console.log('🔗 새 Yorkie 문서 생성 및 연결:', currentDocumentKey)
+
+          // 🔧 핵심 수정: disableGC 옵션 추가
+          doc = new yorkie.Document(currentDocumentKey, { disableGC: true })
+
+          try {
+            await client.attach(doc, { initialPresence: {} })
+            console.log('✅ Yorkie 문서 연결 완료 (GC 비활성화):', currentDocumentKey)
+          } catch (attachError) {
+            if (attachError.message.includes('document is attached')) {
+              console.warn('⚠️ 문서가 이미 attach됨, 기존 연결 상태로 진행:', currentDocumentKey)
+              // 이미 attach된 상태이므로 그대로 진행
+            } else {
+              throw attachError
+            }
+          }
+
+          // 문서 이벤트 구독
+          unsubscribeFunc = doc.subscribe((event) => {
+            console.log('📡 Yorkie 문서 이벤트:', event.type, 'for', currentDocumentKey)
+            if (event.type === 'snapshot' || event.type === 'remote-change') {
+              syncText()
+            }
+          })
+
+          // 🔧 추가: 문서 정보를 Map에 저장
+          attachedDocsRef.current.set(currentDocumentKey, {
+            doc,
+            unsubscribeFunc,
+            lastAccessed: Date.now(),
+          })
+        }
 
         docRef.current = doc
-        console.log('✅ Yorkie 문서 연결 완료:', currentDocumentKey)
 
-        // 3. 기존 문서 내용 확인
+        // 3. 기존 문서 내용 확인 및 초기화
         const existingContent = doc.getRoot().content
         if (existingContent) {
           const contentPreview = existingContent.toString().substring(0, 100)
           console.log('✅ 기존 문서 내용 발견:', contentPreview + '...')
         } else {
-          console.log('ℹ️ 문서에 content가 없습니다.')
+          console.log('ℹ️ 문서에 content가 없습니다. 초기화합니다.')
+          doc.update((root) => {
+            if (!root.content) {
+              root.content = new yorkie.Text()
+            }
+          }, 'content 초기화')
         }
 
         // 4. 에디터 동기화 함수
@@ -253,15 +367,7 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         }
 
-        // 5. 문서 이벤트 구독
-        unsubscribeFunc = doc.subscribe((event) => {
-          console.log('📡 Yorkie 문서 이벤트:', event.type)
-          if (event.type === 'snapshot' || event.type === 'remote-change') {
-            syncText()
-          }
-        })
-
-        // 6. 파일 확장자에 따른 언어 설정
+        // 5. 파일 확장자에 따른 언어 설정
         const getLanguageExtension = (fileName) => {
           const ext = fileName.split('.').pop()?.toLowerCase()
           switch (ext) {
@@ -275,7 +381,7 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         }
 
-        // 7. 에디터 업데이트 리스너
+        // 6. 에디터 업데이트 리스너
         const updateListener = EditorView.updateListener.of((v) => {
           if (!doc || !v.docChanged) return
 
@@ -303,7 +409,7 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         })
 
-        // 8. CodeMirror 에디터 생성
+        // 7. CodeMirror 에디터 생성
         view = new EditorView({
           doc: '',
           extensions: [
@@ -349,7 +455,7 @@ const CodeEditor = ({ conflictFiles }) => {
 
         viewRef.current = view
 
-        // 9. 기존 문서 내용을 에디터에 로드
+        // 8. 기존 문서 내용을 에디터에 로드
         syncText()
         console.log('✅ 에디터 초기화 완료:', selectedFileName)
       } catch (error) {
@@ -361,25 +467,16 @@ const CodeEditor = ({ conflictFiles }) => {
 
     initializeEditor()
 
-    // 🎯 핵심: 문서 detach 하지 않음, 에디터와 구독만 정리
+    // 🔧 수정: 에디터만 정리하고 문서는 Map에서 관리
     return () => {
-      console.log('🧹 에디터 cleanup (문서 detach 없음):', currentDocumentKey)
-
-      // 구독 해제
-      if (unsubscribeFunc) {
-        try {
-          unsubscribeFunc()
-        } catch (error) {
-          console.warn('구독 해제 오류:', error.message)
-        }
-      }
+      console.log('🧹 에디터 cleanup (문서는 Map에서 관리):', currentDocumentKey)
 
       // 에디터만 정리
       if (view) {
         view.destroy()
       }
 
-      // docRef는 초기화하지만 detach는 하지 않음
+      // docRef는 초기화하지만 실제 문서는 Map에서 관리됨
       docRef.current = null
     }
   }, [currentDocumentKey, selectedFileName, status])
@@ -387,14 +484,14 @@ const CodeEditor = ({ conflictFiles }) => {
   // 컴포넌트 언마운트 시 정리
   useEffect(() => {
     return () => {
-      console.log('🧹 컴포넌트 언마운트 정리 (문서 detach 없음)')
+      console.log('🧹 컴포넌트 언마운트 정리')
 
       if (viewRef.current) {
         viewRef.current.destroy()
         viewRef.current = null
       }
 
-      // 문서 detach는 하지 않음 - client.deactivate()가 자동으로 처리
+      // 문서들은 클라이언트 정리 시점에서 함께 처리됨
       docRef.current = null
     }
   }, [])
@@ -402,12 +499,12 @@ const CodeEditor = ({ conflictFiles }) => {
   // 에러 상태 렌더링
   if (status === 'error') {
     return (
-      <div className="h-full flex items-center justify-center flex-col gap-4 p-8 bg-red-50 rounded-lg m-4">
+      <div className="h-full flex items-center justify-center flex-col gap-4 p-8 bg-red-50 dark:bg-red-900/30 rounded-lg m-4">
         <div className="text-4xl">❌</div>
         <div className="text-center">
-          <h3 className="text-xl font-semibold text-red-700 mb-2">연결 오류</h3>
-          <p className="text-red-600 mb-4">{error}</p>
-          <details className="text-sm text-red-800">
+          <h3 className="text-xl font-semibold text-red-700 dark:text-red-300 mb-2">연결 오류</h3>
+          <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
+          <details className="text-sm text-red-800 dark:text-red-200">
             <summary className="cursor-pointer mb-2">해결 방법</summary>
             <ul className="text-left list-disc list-inside space-y-1">
               <li>URL의 roomId 파라미터 확인</li>
@@ -415,6 +512,7 @@ const CodeEditor = ({ conflictFiles }) => {
               <li>Yorkie 환경변수 설정 확인</li>
               <li>네트워크 연결 상태 확인</li>
               <li>개발 서버 재시작</li>
+              <li>브라우저 개발자 도구에서 상세 에러 확인</li>
             </ul>
           </details>
         </div>
@@ -429,15 +527,15 @@ const CodeEditor = ({ conflictFiles }) => {
     >
       {/* 파일 탭 영역 */}
       {availableFiles.length > 0 && (
-        <div className="flex bg-gray-50 border-b border-gray-200 px-4 py-2 gap-2 flex-wrap flex-shrink-0">
+        <div className="flex theme-bg-tertiary border-b theme-border px-4 py-2 gap-2 flex-wrap flex-shrink-0">
           {availableFiles.map((fileName) => (
             <button
               key={fileName}
               onClick={() => handleFileSelect(fileName)}
               className={`px-4 py-2 rounded-t-md text-sm font-medium transition-all duration-200 flex items-center gap-2 border-b-2 ${
                 selectedFileName === fileName
-                  ? 'bg-white text-gray-800 font-semibold border-b-blue-500 shadow-sm'
-                  : 'bg-transparent text-gray-600 border-b-transparent hover:bg-blue-50 hover:text-blue-700'
+                  ? 'theme-bg-primary theme-text font-semibold border-b-blue-500 shadow-sm'
+                  : 'bg-transparent theme-text-secondary border-b-transparent hover:theme-bg-secondary hover:text-blue-500'
               }`}
             >
               <span>📄</span>
@@ -453,27 +551,31 @@ const CodeEditor = ({ conflictFiles }) => {
         <div
           className={`px-4 py-3 border-b flex justify-between items-center flex-shrink-0 ${
             status === 'connected'
-              ? 'bg-green-50 border-green-200'
+              ? 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700'
               : loading
-                ? 'bg-yellow-50 border-yellow-200'
-                : 'bg-red-50 border-red-200'
+                ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-700'
+                : 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700'
           }`}
         >
           <div
             className={`text-sm font-medium ${
               status === 'connected'
-                ? 'text-green-800'
+                ? 'text-green-800 dark:text-green-200'
                 : loading
-                  ? 'text-yellow-800'
-                  : 'text-red-800'
+                  ? 'text-yellow-800 dark:text-yellow-200'
+                  : 'text-red-800 dark:text-red-200'
             }`}
           >
             📄 {selectedFileName}
             <span className="ml-2 text-xs font-mono">({sanitizeFileName(selectedFileName)})</span>
+            {/* 🔧 추가: 현재 attach된 문서 수 표시 */}
+            <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
+              [{attachedDocsRef.current.size} docs attached]
+            </span>
           </div>
           <div
             className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
-              status === 'connected' ? 'bg-green-500' : loading ? 'bg-yellow-500' : 'bg-red-500'
+              status === 'connected' ? 'bg-green-500 dark:bg-green-600' : loading ? 'bg-yellow-500 dark:bg-yellow-600' : 'bg-red-500 dark:bg-red-600'
             }`}
           >
             {loading ? '🔄 연결 중...' : status === 'connected' ? '✅ 실시간 협업' : '❌ 연결 실패'}
@@ -493,12 +595,12 @@ const CodeEditor = ({ conflictFiles }) => {
         }}
       >
         {!selectedFileName && (
-          <div className="h-full flex items-center justify-center text-center text-gray-600 p-8">
+          <div className="h-full flex items-center justify-center text-center theme-text-secondary p-8">
             {loading ? (
               <div className="space-y-4">
                 <div className="text-3xl">📁</div>
                 <div className="text-lg">파일 목록을 불러오는 중...</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm theme-text-muted">
                   미팅룸 API에서 파일 목록을 가져오고 있습니다.
                 </div>
               </div>
@@ -506,7 +608,7 @@ const CodeEditor = ({ conflictFiles }) => {
               <div className="space-y-4">
                 <div className="text-3xl">📂</div>
                 <div className="text-lg">편집할 파일을 선택해주세요</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm theme-text-muted">
                   위의 파일 탭을 클릭하여 협업 편집을 시작하세요.
                 </div>
               </div>
@@ -514,7 +616,7 @@ const CodeEditor = ({ conflictFiles }) => {
               <div className="space-y-4">
                 <div className="text-3xl">📭</div>
                 <div className="text-lg">사용 가능한 파일이 없습니다</div>
-                <div className="text-sm text-gray-400">미팅룸에 설정된 충돌 파일이 없습니다.</div>
+                <div className="text-sm theme-text-muted">미팅룸에 설정된 충돌 파일이 없습니다.</div>
               </div>
             )}
           </div>

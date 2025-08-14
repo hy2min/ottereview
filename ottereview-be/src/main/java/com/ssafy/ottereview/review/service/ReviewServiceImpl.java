@@ -67,6 +67,9 @@ public class ReviewServiceImpl implements ReviewService {
 
         GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user, savedReview.getId());
 
+        // GitHub API 호출 직후 즉시 reviewId 업데이트 (웹훅 Race Condition 방지)
+        savedReview.updateGithubId(githubResult.getReviewId());
+
         if (reviewRequest.getState() == ReviewState.APPROVE || reviewRequest.getState() == ReviewState.REQUEST_CHANGES) {
             updateReviewerStatus(pullRequest, user, reviewRequest.getState());
         }
@@ -231,7 +234,7 @@ public class ReviewServiceImpl implements ReviewService {
             GithubReviewResponse githubResult,
             User user) {
 
-        savedReview.updateGithubId(githubResult.getReviewId());
+        // Review의 githubId는 이미 상위에서 설정됨 (Race Condition 방지)
 
         Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
         Map<Long, String> commentDiffs = githubResult.getCommentDiffs();
