@@ -10,6 +10,7 @@ import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
+import Guide from '@/pages/Guide'
 import Landing from '@/pages/Landing'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
@@ -60,7 +61,8 @@ const App = () => {
     return (
       <main>
         <Routes>
-          <Route path="/" element={<Landing />} />
+          <Route path="/" element={<Guide />} />
+          <Route path="/landing" element={<Landing />} />
           <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
@@ -73,6 +75,7 @@ const App = () => {
       <Header />
       <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
         <Routes>
+          <Route path="/" element={<Guide />} />
           {protectedRoutes.map(({ path, element }) => (
             <Route key={path} path={path} element={element} />
           ))}
