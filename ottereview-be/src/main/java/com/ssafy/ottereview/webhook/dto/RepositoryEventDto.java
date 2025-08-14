@@ -18,6 +18,8 @@ public class RepositoryEventDto {
     @JsonProperty("repositories_removed")
     private List<RepositoryInfo> repositoriesRemoved;
 
+    @JsonProperty("sender")
+    private Sender sender;
 
     @Data
     public static class  Installation{
@@ -43,5 +45,11 @@ public class RepositoryEventDto {
         
         @JsonProperty("private")
         private Boolean isPrivate;
+    }
+
+    @Data
+    public static class Sender{
+        @JsonProperty("id")
+        private Long id;
     }
 }

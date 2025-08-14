@@ -11,6 +11,8 @@ import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
+import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.BranchEventDto;
 import com.ssafy.ottereview.webhook.dto.InstallationEventDto;
@@ -21,6 +23,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -161,7 +164,7 @@ public class InstallationEventService {
                 .repo(repo)
                 .minApproveCnt(0)
                 .build());
-        eventSendController.push("push", event.getName());
+
     }
     // B
 
@@ -189,7 +192,7 @@ public class InstallationEventService {
         }
         // repository , branch , pullRequest를 한번에 저장하는 로직이다.
         repoService.updateRepoList(ghRepositoryList, account);
-        eventSendController.push("update", "update");
+        eventSendController.push(event.getSender().getId(),"update", "update");
     }
 
 

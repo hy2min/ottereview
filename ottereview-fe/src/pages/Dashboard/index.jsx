@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
-import ChatRoomList from '@/features/chat/ChatRoomList'
 import { useAuthStore } from '@/features/auth/authStore'
+import ChatRoomList from '@/features/chat/ChatRoomList'
 import { fetchAuthoredPRs, fetchReviewerPRs } from '@/features/pullRequest/prApi'
 import PRList from '@/features/pullRequest/PRList'
 import { fetchRepoList } from '@/features/repository/repoApi'
@@ -13,7 +12,6 @@ import { api } from '@/lib/api'
 import { useUserStore } from '@/store/userStore'
 
 const Dashboard = () => {
-  const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const accessToken = useAuthStore((state) => state.accessToken)
 
@@ -74,7 +72,7 @@ const Dashboard = () => {
     if (!user?.id || !accessToken) return
 
     const updateEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=update`
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
     )
 
     updateEventSource.addEventListener('update', (event) => {
@@ -99,7 +97,7 @@ const Dashboard = () => {
 
   const handleTest = async () => {
     try {
-      const res = await api.post(`/api/meetings/2/join`)
+      const res = await api.post(`/api/meetings/1/join`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)

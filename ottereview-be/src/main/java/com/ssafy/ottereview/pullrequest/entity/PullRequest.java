@@ -164,7 +164,7 @@ public class PullRequest extends BaseEntity {
         this.merged = githubPr.getMerged();
         this.base = githubPr.getBase();
         this.head = githubPr.getHead();
-        this.mergeable = githubPr.getMergeable() != null && githubPr.getMergeable();
+        this.mergeable = true;
 
         // GitHub 시간 정보 업데이트
         this.githubCreatedAt = githubPr.getGithubCreatedAt();
