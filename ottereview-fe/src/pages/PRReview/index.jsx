@@ -8,7 +8,7 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { closePR, fetchPRDetail, reopenPR, submitReview } from '@/features/pullRequest/prApi'
+import { closePR, fetchPRDetail, reopenPR, submitReview, updatePRDescription, deletePRDescription } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -208,6 +208,34 @@ const PRReview = () => {
       alert('PR 재오픈에 실패했습니다.')
     } finally {
       setReopeningPR(false)
+    }
+  }
+
+  // Description 수정 핸들러
+  const handleDescriptionUpdate = async (descriptionId, data) => {
+    try {
+      await updatePRDescription(prId, descriptionId, data)
+      
+      // PR 데이터 새로고침하여 수정된 description 반영
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ Description 수정 실패:', error)
+      throw error // CodeDiff에서 에러 처리하도록
+    }
+  }
+
+  // Description 삭제 핸들러
+  const handleDescriptionDelete = async (descriptionId) => {
+    try {
+      await deletePRDescription(prId, descriptionId)
+      
+      // PR 데이터 새로고침하여 삭제된 description 반영
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ Description 삭제 실패:', error)
+      throw error // CodeDiff에서 에러 처리하도록
     }
   }
 
@@ -447,6 +475,9 @@ const PRReview = () => {
             descriptions={prDetail?.descriptions || []}
             prAuthor={prDetail?.author || {}}
             showDiffHunk={false}
+            prId={prId}
+            onDescriptionUpdate={handleDescriptionUpdate}
+            onDescriptionDelete={handleDescriptionDelete}
           />
         )}
         {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}

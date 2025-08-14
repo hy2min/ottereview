@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from 'lucide-react'
+import { Edit, Plus, Trash2 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import Badge from '@/components/Badge'
@@ -23,6 +23,9 @@ const CodeDiff = ({
   descriptions = [],
   prAuthor = {},
   showDiffHunk = false,
+  prId,
+  onDescriptionUpdate,
+  onDescriptionDelete,
 }) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
   const [comments, setComments] = useState({})
@@ -30,11 +33,15 @@ const CodeDiff = ({
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
-  
+
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
+
+  // description 편집 관련 상태
+  const [editingDescriptionId, setEditingDescriptionId] = useState(null)
+  const [editingDescriptionBody, setEditingDescriptionBody] = useState('')
 
   // initialSubmittedComments가 변경될 때 submittedComments 업데이트
   useEffect(() => {
@@ -83,7 +90,7 @@ const CodeDiff = ({
             id: lineId,
             position: currentPosition,
             diffHunk: patch,
-            side: isNew ? 'RIGHT' : (lineType === 'removed' ? 'LEFT' : 'RIGHT'),
+            side: isNew ? 'RIGHT' : lineType === 'removed' ? 'LEFT' : 'RIGHT',
             path: filePath,
             fileIndex: null,
           },
@@ -173,7 +180,7 @@ const CodeDiff = ({
       if (clickedLine !== null) {
         allSelectedLines.add(clickedLine)
       }
-      
+
       // 선택된 라인이 없으면 + 버튼을 누른 라인만 사용 (단일 라인 댓글)
       if (allSelectedLines.size === 0) {
         allSelectedLines.add(lineIndex)
@@ -181,8 +188,6 @@ const CodeDiff = ({
 
       // 선택된 라인들을 인덱스 순으로 정렬
       const sortedSelectedLines = Array.from(allSelectedLines).sort((a, b) => a - b)
-      
-
 
       // 각 라인의 실제 정보를 수집하기 위해 diff를 다시 파싱
       let tempOldLine = 0
@@ -261,7 +266,6 @@ const CodeDiff = ({
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-
         // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
           ...prev,
@@ -294,7 +298,6 @@ const CodeDiff = ({
           fileIndex: fileIndex,
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
-        
 
         // 마지막 선택된 라인의 인덱스 찾기 (임시 댓글 표시 위치)
         const lastLineIndex = sortedSelectedLines[sortedSelectedLines.length - 1]
@@ -304,7 +307,6 @@ const CodeDiff = ({
           ...commentData,
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
-
 
         // 로컬 상태에도 추가 (마지막 라인 위치에 표시)
         setSubmittedComments((prev) => ({
@@ -335,6 +337,44 @@ const CodeDiff = ({
     const start = Math.min(dragStart, dragEnd)
     const end = Math.max(dragStart, dragEnd)
     return lineIndex >= start && lineIndex <= end
+  }
+
+  // description 편집 시작
+  const handleEditDescription = (desc) => {
+    setEditingDescriptionId(desc.id)
+    setEditingDescriptionBody(desc.body)
+  }
+
+  // description 편집 취소
+  const handleCancelEditDescription = () => {
+    setEditingDescriptionId(null)
+    setEditingDescriptionBody('')
+  }
+
+  // description 편집 저장
+  const handleSaveDescription = async (descId) => {
+    if (onDescriptionUpdate && editingDescriptionBody.trim()) {
+      try {
+        await onDescriptionUpdate(descId, { body: editingDescriptionBody.trim() })
+        setEditingDescriptionId(null)
+        setEditingDescriptionBody('')
+      } catch (error) {
+        console.error('Description 수정 실패:', error)
+        alert('설명 수정에 실패했습니다.')
+      }
+    }
+  }
+
+  // description 삭제
+  const handleDeleteDescription = async (descId) => {
+    if (onDescriptionDelete && confirm('이 설명을 삭제하시겠습니까?')) {
+      try {
+        await onDescriptionDelete(descId)
+      } catch (error) {
+        console.error('Description 삭제 실패:', error)
+        alert('설명 삭제에 실패했습니다.')
+      }
+    }
   }
 
   return (
@@ -503,52 +543,99 @@ const CodeDiff = ({
                   {(() => {
                     const actualLineNumber = currentLineNumber
                     const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT'
-                    
+
                     // 현재 라인에 해당하는 descriptions 필터링
-                    const descriptionsForLine = descriptions.filter(desc => {
+                    const descriptionsForLine = descriptions.filter((desc) => {
                       // path가 현재 파일과 일치해야 함
                       if (desc.path !== filePath) return false
-                      
+
                       // 단일 라인 description인 경우
                       if (!desc.startLine || desc.startLine === desc.line) {
                         return desc.line === actualLineNumber && desc.side === currentSide
                       }
-                      
-                      // 멀티 라인 description인 경우 - 범위 내에 있는지 확인
-                      const startLine = Math.min(desc.startLine, desc.line)
-                      const endLine = Math.max(desc.startLine, desc.line)
-                      return actualLineNumber >= startLine && actualLineNumber <= endLine && desc.side === currentSide
+
+                      // 멀티 라인 description인 경우 - 마지막 라인(desc.line)에서만 표시
+                      return desc.line === actualLineNumber && desc.side === currentSide
                     })
-                    
-                    return descriptionsForLine.length > 0 ? descriptionsForLine.map((desc, index) => (
-                      <div key={`desc-${desc.line}-${desc.position}-${index}`} className="mx-2 mb-2 font-sans max-w-4xl">
-                        <Box shadow className="space-y-3 bg-amber-50 max-w-xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-600 flex items-center justify-center">
-                              <span className="text-sm font-medium text-amber-800">
-                                {prAuthor.githubUsername?.[0] || 'A'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="font-medium text-amber-900 text-base">
-                                {prAuthor.githubUsername || 'PR 작성자'}
-                              </span>
-                              {desc.startLine && desc.startLine !== desc.line && (
-                                <span className="text-sm text-amber-700 ml-2">
-                                  (라인 {Math.min(desc.startLine, desc.line)}-{Math.max(desc.startLine, desc.line)})
-                                </span>
+
+                    return descriptionsForLine.length > 0
+                      ? descriptionsForLine.map((desc, index) => (
+                          <div
+                            key={`desc-${desc.line}-${desc.position}-${index}`}
+                            className="mx-2 mb-2 font-sans max-w-4xl"
+                          >
+                            <Box shadow className="space-y-3 bg-amber-50 max-w-xl">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-600 flex items-center justify-center">
+                                    <span className="text-sm font-medium text-amber-800">
+                                      {prAuthor.githubUsername?.[0] || 'A'}
+                                    </span>
+                                  </div>
+                                  <div>
+                                    <span className="font-medium text-amber-900 text-base">
+                                      {prAuthor.githubUsername || 'PR 작성자'}
+                                    </span>
+
+                                    <Badge variant="warning" className="ml-2">
+                                      📝 설명
+                                    </Badge>
+                                  </div>
+                                </div>
+                                {/* 수정/삭제 버튼 */}
+                                {prId && onDescriptionUpdate && onDescriptionDelete && (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      onClick={() => handleEditDescription(desc)}
+                                      className="p-1 text-amber-600 hover:text-amber-800 hover:bg-amber-100 rounded transition-colors"
+                                      title="설명 수정"
+                                    >
+                                      <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteDescription(desc.id)}
+                                      className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                      title="설명 삭제"
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              {/* 편집 모드 */}
+                              {editingDescriptionId === desc.id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={editingDescriptionBody}
+                                    onChange={(e) => setEditingDescriptionBody(e.target.value)}
+                                    className="w-full p-2 border border-amber-300 rounded text-amber-900 text-base resize-none"
+                                    rows={3}
+                                    placeholder="설명을 입력하세요..."
+                                  />
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleSaveDescription(desc.id)}
+                                      className="px-3 py-1 bg-amber-600 text-white rounded text-sm hover:bg-amber-700 transition-colors"
+                                    >
+                                      저장
+                                    </button>
+                                    <button
+                                      onClick={handleCancelEditDescription}
+                                      className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-amber-900 whitespace-pre-wrap text-base font-medium">
+                                  {desc.body}
+                                </p>
                               )}
-                              <Badge variant="warning" className="ml-2">
-                                📝 설명
-                              </Badge>
-                            </div>
+                            </Box>
                           </div>
-                          <p className="text-amber-900 whitespace-pre-wrap text-base font-medium">
-                            {desc.body}
-                          </p>
-                        </Box>
-                      </div>
-                    )) : null
+                        ))
+                      : null
                   })()}
 
                   {/* 기존 리뷰 댓글들 표시 */}
@@ -557,54 +644,59 @@ const CodeDiff = ({
                     const actualLineNumber = currentLineNumber // 실제 소스 파일의 라인 번호
                     const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT' // context 라인은 RIGHT로 처리
                     const commentsForLine = existingReviewComments[actualLineNumber] || []
-                    
-                    
+
                     // side가 일치하는 댓글만 필터링
-                    const filteredComments = commentsForLine ? commentsForLine.filter(comment => 
-                      comment.side === currentSide
-                    ) : []
+                    const filteredComments = commentsForLine
+                      ? commentsForLine.filter((comment) => comment.side === currentSide)
+                      : []
+
+                    // body가 null이 아닌 댓글만 필터링
+                    const commentsWithBody = filteredComments.filter((comment) => 
+                      comment.body !== null && comment.body !== undefined && comment.body !== ''
+                    )
                     
-                    
-                    return filteredComments.length > 0 ? filteredComments.map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
-                        <Box shadow className="space-y-3 max-w-xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
-                              <span className="text-sm font-medium">
-                                {comment.reviewer?.[0] || 'R'}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="font-medium text-stone-900 text-base">
-                                {comment.reviewer || 'Unknown'}
-                              </span>
-                              <span className="text-sm text-stone-500 ml-2">
-                                {new Date(comment.submittedAt).toLocaleString()}
-                              </span>
-                              <Badge
-                                variant={
-                                  comment.reviewState === 'APPROVED'
-                                    ? 'success'
-                                    : comment.reviewState === 'CHANGES_REQUESTED'
-                                      ? 'danger'
-                                      : 'primary'
-                                }
-                                className="ml-3"
-                              >
-                                {comment.reviewState === 'APPROVED'
-                                  ? '승인'
-                                  : comment.reviewState === 'CHANGES_REQUESTED'
-                                    ? '변경 요청'
-                                    : '코멘트'}
-                              </Badge>
-                            </div>
+                    return commentsWithBody.length > 0
+                      ? commentsWithBody.map((comment) => (
+                          <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
+                            <Box shadow className="space-y-3 max-w-xl">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                                  <span className="text-sm font-medium">
+                                    {comment.reviewer?.[0] || 'R'}
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-stone-900 text-base">
+                                    {comment.reviewer || 'Unknown'}
+                                  </span>
+                                  <span className="text-sm text-stone-500 ml-2">
+                                    {new Date(comment.submittedAt).toLocaleString()}
+                                  </span>
+                                  <Badge
+                                    variant={
+                                      comment.reviewState === 'APPROVED'
+                                        ? 'success'
+                                        : comment.reviewState === 'CHANGES_REQUESTED'
+                                          ? 'danger'
+                                          : 'primary'
+                                    }
+                                    className="ml-3"
+                                  >
+                                    {comment.reviewState === 'APPROVED'
+                                      ? '승인'
+                                      : comment.reviewState === 'CHANGES_REQUESTED'
+                                        ? '변경 요청'
+                                        : '코멘트'}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <p className="text-stone-700 whitespace-pre-wrap text-base">
+                                {cleanReviewCommentBody(comment.body)}
+                              </p>
+                            </Box>
                           </div>
-                          <p className="text-stone-700 whitespace-pre-wrap text-base">
-                            {cleanReviewCommentBody(comment.body)}
-                          </p>
-                        </Box>
-                      </div>
-                    )) : null
+                        ))
+                      : null
                   })()}
 
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
@@ -618,7 +710,9 @@ const CodeDiff = ({
                                 <span className="text-sm font-medium">나</span>
                               </div>
                               <div>
-                                <span className="font-medium text-stone-900 text-base">내 댓글</span>
+                                <span className="font-medium text-stone-900 text-base">
+                                  내 댓글
+                                </span>
                                 <span className="text-sm text-stone-500 ml-2">
                                   {comment.submittedAt}
                                 </span>
