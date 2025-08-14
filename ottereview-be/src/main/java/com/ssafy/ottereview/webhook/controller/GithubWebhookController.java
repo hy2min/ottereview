@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.common.annotation.MvcController;
 import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
+import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import com.ssafy.ottereview.webhook.service.BranchProtectionEventService;
 import com.ssafy.ottereview.webhook.service.InstallationEventService;
@@ -16,6 +18,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -41,11 +44,12 @@ public class GithubWebhookController {
     @Hidden
     @PostMapping
     public ResponseEntity<String> handleWebhook(
+            @AuthenticationPrincipal CustomUserDetail customUserDetail,
             @RequestBody String payload,
             @RequestHeader("X-GitHub-Event") String event,
             @RequestHeader("X-GitHub-Delivery") String delivery,
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature) {
-
+        User user = customUserDetail.getUser();
         try {
             JsonNode jsonNode = objectMapper.readTree(payload);
             String action = jsonNode.path("action").asText();
@@ -57,7 +61,7 @@ public class GithubWebhookController {
         // 이벤트별 처리
         switch (event) {
             case "push":
-                pushEventService.processPushEvent(payload);
+                pushEventService.processPushEvent(user,payload);
                 break;
 
             case "pull_request":
@@ -82,7 +86,7 @@ public class GithubWebhookController {
 
             case "installation_repositories":
                 log.info("Handling installation repositories event");
-                installationEventService.processInstallationRepositoriesEvent(payload);
+                installationEventService.processInstallationRepositoriesEvent(user,payload);
                 break;
 
             case "create":
