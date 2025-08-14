@@ -16,10 +16,12 @@ const CommentForm = ({
   reviewState = 'COMMENT', // 리뷰 상태
   onReviewStateChange, // 리뷰 상태 변경 콜백
   showReviewState = false, // 리뷰 상태 선택 UI 표시 여부
+  mode = 'review', // 'review' 또는 'description' 모드
 }) => {
   const [audioFile, setAudioFile] = useState(null)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // 리뷰 상태 옵션들
   const reviewStates = [
@@ -109,6 +111,18 @@ const CommentForm = ({
     onAudioChange?.(null)
   }
 
+  // 제출 핸들러
+  const handleSubmit = async () => {
+    if (isSubmitting) return // 이미 제출 중이면 중복 실행 방지
+    
+    setIsSubmitting(true)
+    try {
+      await onSubmit()
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
 
   return (
       <Box shadow className={`${size === 'small' ? 'p-2 max-w-md' : size === 'large' ? 'p-6 max-w-2xl' : 'p-4 max-w-xl'}`}>
@@ -116,7 +130,7 @@ const CommentForm = ({
         {audioFile ? (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-sm font-medium theme-text">음성 댓글</div>
+              <div className="text-sm font-medium theme-text">음성 {mode === 'description' ? '설명' : '댓글'}</div>
               <span className="text-sm text-green-600 dark:text-green-400">🎵 음성 파일 준비됨</span>
             </div>
             <div className="flex items-center gap-3">
@@ -136,10 +150,10 @@ const CommentForm = ({
           /* 음성 파일이 없을 때는 텍스트 입력 폼 표시 */
           <>
             <div className="space-y-1">
-              <label className="block font-medium mb-1 text-base theme-text">리뷰</label>
+              <label className="block font-medium mb-1 text-base theme-text">{mode === 'description' ? '설명' : '리뷰'}</label>
               <textarea
                 className={`theme-bg-primary border-2 theme-border rounded-[8px] w-full px-2 py-1 resize-none min-h-20 text-base placeholder:text-base theme-text placeholder:theme-text-muted ${config.textareaHeight}`}
-                placeholder={isRecording ? '음성 녹음 중...' : '리뷰를 입력하세요...'}
+                placeholder={isRecording ? '음성 녹음 중...' : mode === 'description' ? '설명을 입력하세요...' : '리뷰를 입력하세요...'}
                 value={value}
                 onChange={onChange}
                 disabled={disabled || isRecording}
@@ -193,16 +207,23 @@ const CommentForm = ({
 
           {/* 오른쪽: 취소/제출 버튼 */}
           <div className={`flex ${config.gap}`}>
-            <Button size="sm" variant="outline" onClick={onCancel} disabled={disabled}>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={onCancel} 
+              disabled={disabled || isSubmitting}
+              className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
+            >
               취소
             </Button>
             <Button
               size="sm"
               variant="secondary"
-              onClick={onSubmit}
-              disabled={disabled || (!value?.trim() && (!enableAudio || !audioFile))}
+              onClick={handleSubmit}
+              disabled={disabled || isSubmitting || (!value?.trim() && (!enableAudio || !audioFile))}
+              className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
             >
-              제출
+              {isSubmitting ? '제출 중...' : '제출'}
             </Button>
           </div>
         </div>

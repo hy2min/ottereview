@@ -2,6 +2,7 @@ import MDEditor from '@uiw/react-md-editor'
 import { twMerge } from 'tailwind-merge'
 
 import CustomSelect from '@/components/InputBox/CustomSelect'
+import { useThemeStore } from '@/store/themeStore'
 
 const InputBox = ({
   label,
@@ -15,7 +16,8 @@ const InputBox = ({
   markdown = false, // 마크다운 에디터 사용 여부
   ...props
 }) => {
-  const base = 'soft-input'
+  const { theme } = useThemeStore()
+  const base = 'theme-bg-primary theme-border border-2 rounded-[8px] px-2 py-1 theme-text'
 
   const inputSpecificClasses = 'w-full'
   const textareaSpecificClasses = 'w-full resize-none min-h-[80px]'
@@ -31,11 +33,11 @@ const InputBox = ({
             <MDEditor
               value={value}
               onChange={(val) => onChange({ target: { value: val || '' } })}
-              data-color-mode="light"
+              data-color-mode={theme === 'dark' ? 'dark' : 'light'}
               height="100%"
               visibleDragBar={false}
               preview="edit"
-              className="!border-2 !border-black !rounded-[8px] !shadow-none [&_.w-md-editor-toolbar]:!bg-transparent"
+              className="!border-2 !rounded-[8px] !shadow-none [&_.w-md-editor-toolbar]:!bg-transparent theme-border"
             />
           </div>
         )
