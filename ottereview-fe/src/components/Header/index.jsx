@@ -1,4 +1,4 @@
-import { LogOut, Moon, Sun } from 'lucide-react'
+import { LogOut, Moon, Plus, Sun } from 'lucide-react'
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
@@ -115,7 +115,33 @@ const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
-            {/* User Info */}
+            {/* Import Repository Button */}
+            <button
+              onClick={handleImportRepo}
+              className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:via-emerald-600 hover:to-green-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-110 overflow-hidden"
+              title="새 레포지토리 연결"
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow =
+                  '0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(16, 185, 129, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              {/* Animated background layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-green-400 via-emerald-400 to-green-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-full transition-all duration-700 transform -skew-x-12" />
+
+              <Plus
+                size={18}
+                className="relative z-10 group-hover:rotate-90 group-hover:scale-110 transition-all duration-500"
+              />
+              <span className="relative z-10 hidden sm:inline tracking-wide">레포 연결</span>
+
+              {/* Button pulse effect */}
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-green-400/30 animate-ping" />
+            </button>
+            {/* User Info
             {user && (
               <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-gray-100/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-full border border-gray-200/50 dark:border-slate-700/50">
                 <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
@@ -127,8 +153,33 @@ const Header = () => {
                   {user.name || 'User'}
                 </span>
               </div>
-            )}
+            )} */}
 
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="group relative inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-110 overflow-hidden"
+              onMouseEnter={(e) => {
+                e.target.style.boxShadow =
+                  '0 0 30px rgba(239, 68, 68, 0.5), 0 0 60px rgba(236, 72, 153, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+              }}
+            >
+              {/* Animated background layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-full transition-all duration-700 transform -skew-x-12" />
+
+              <LogOut
+                size={18}
+                className="relative z-10 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500"
+              />
+              <span className="relative z-10 hidden sm:inline tracking-wide">로그아웃</span>
+
+              {/* Button pulse effect */}
+              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-red-400/30 animate-ping" />
+            </button>
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -163,32 +214,6 @@ const Header = () => {
               <div
                 className={`absolute inset-2 rounded-lg opacity-0 group-hover:opacity-50 blur-sm transition-all duration-500 ${theme === 'light' ? 'bg-purple-500' : 'bg-yellow-500'}`}
               />
-            </button>
-
-            {/* Logout Button */}
-            <button
-              onClick={handleLogout}
-              className="group relative inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-110 overflow-hidden"
-              onMouseEnter={(e) => {
-                e.target.style.boxShadow =
-                  '0 0 30px rgba(239, 68, 68, 0.5), 0 0 60px rgba(236, 72, 153, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-              }}
-            >
-              {/* Animated background layers */}
-              <div className="absolute inset-0 bg-gradient-to-r from-red-400 via-pink-400 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:translate-x-full transition-all duration-700 transform -skew-x-12" />
-
-              <LogOut
-                size={18}
-                className="relative z-10 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500"
-              />
-              <span className="relative z-10 hidden sm:inline tracking-wide">로그아웃</span>
-
-              {/* Button pulse effect */}
-              <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 bg-red-400/30 animate-ping" />
             </button>
           </div>
         </div>
