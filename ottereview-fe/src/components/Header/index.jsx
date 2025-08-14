@@ -59,16 +59,26 @@ const Header = () => {
             className="group flex items-center gap-4 hover:scale-105 transition-all duration-500"
             onMouseEnter={(e) => {
               const logo = e.currentTarget.querySelector('.logo-img')
+              const otterLogo = e.currentTarget.querySelector('.otter-logo-img')
               if (logo) {
                 logo.style.transform = 'rotate(360deg) scale(1.1)'
                 logo.style.filter = 'drop-shadow(0 0 20px rgba(59, 130, 246, 0.6))'
               }
+              if (otterLogo) {
+                otterLogo.style.transform = 'scale(1.15) rotate(5deg)'
+                otterLogo.style.filter = 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))'
+              }
             }}
             onMouseLeave={(e) => {
               const logo = e.currentTarget.querySelector('.logo-img')
+              const otterLogo = e.currentTarget.querySelector('.otter-logo-img')
               if (logo) {
                 logo.style.transform = 'rotate(0deg) scale(1)'
                 logo.style.filter = 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))'
+              }
+              if (otterLogo) {
+                otterLogo.style.transform = 'scale(1) rotate(0deg)'
+                otterLogo.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)'
               }
             }}
           >
@@ -79,8 +89,8 @@ const Header = () => {
               {/* Logo container with enhanced effects */}
               <div className="relative w-12 h-12 bg-white dark:bg-slate-800 rounded-xl p-1.5 shadow-lg group-hover:shadow-2xl transition-all duration-500 border-2 border-gray-200/50 dark:border-slate-700/50 group-hover:border-blue-400/50 dark:group-hover:border-blue-500/50">
                 <img
-                  src="/otter_logo.png"
-                  alt="Ottereview Logo"
+                  src="/OtteReview.png"
+                  alt="OtteReview Logo"
                   className="logo-img w-full h-full object-contain transition-all duration-700 ease-in-out"
                 />
 
@@ -93,12 +103,46 @@ const Header = () => {
               </div>
             </div>
 
-            <div className="hidden sm:block">
-              <span className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 dark:from-white dark:via-blue-200 dark:to-white bg-clip-text text-transparent group-hover:from-blue-600 group-hover:via-purple-600 group-hover:to-cyan-600 dark:group-hover:from-blue-400 dark:group-hover:via-purple-400 dark:group-hover:to-cyan-400 transition-all duration-500">
-                Ottereview
-              </span>
-              {/* Underline animation */}
-              <div className="h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+            <div className="hidden sm:block relative">
+              {/* Otter logo with enhanced effects */}
+              <div className="relative">
+                {/* Animated glow background for text logo */}
+                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover:opacity-20 blur-md transition-all duration-500 rounded-lg" />
+                
+                {/* Logo container */}
+                <div className="relative h-8 overflow-hidden">
+                  <img
+                    src="/otter_logo.png"
+                    alt="Otter Logo"
+                    className="otter-logo-img h-full object-contain transition-all duration-700 ease-in-out"
+                    style={{
+                      filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)',
+                      transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)'
+                    }}
+                  />
+                  
+                  {/* Enhanced sparkle effects for otter logo */}
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300" />
+                  <div 
+                    className="absolute -bottom-1 left-1 w-1.5 h-1.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-90 group-hover:animate-pulse transition-all duration-500"
+                    style={{ animationDelay: '0.3s' }}
+                  />
+                  <div 
+                    className="absolute top-1 -left-1 w-1 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full opacity-0 group-hover:opacity-75 group-hover:animate-bounce transition-all duration-400"
+                    style={{ animationDelay: '0.5s' }}
+                  />
+                  
+                  {/* Floating particles effect */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                    <div className="absolute top-2 right-1 w-0.5 h-0.5 bg-blue-300 rounded-full animate-ping" style={{ animationDelay: '0.1s' }} />
+                    <div className="absolute bottom-2 left-1 w-0.5 h-0.5 bg-purple-300 rounded-full animate-ping" style={{ animationDelay: '0.4s' }} />
+                    <div className="absolute top-1 left-2 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping" style={{ animationDelay: '0.7s' }} />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Enhanced underline animation */}
+              <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
             </div>
           </button>
 

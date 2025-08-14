@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import Badge from '@/components/Badge'
 import { createChat } from '@/features/chat/chatApi'
 import useConflictStore from '@/features/conflict/conflictStore'
 import { useUserStore } from '@/store/userStore'
@@ -356,9 +357,9 @@ function hello() {
                   <div className="flex items-center gap-2 border px-3 py-2 bg-green-50 border-green-300 rounded-md">
                     <input type="checkbox" checked={true} disabled={true} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
                     <span className="text-sm font-medium">{user.githubUsername} (나)</span>
-                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    <Badge variant="success" size="xs">
                       항상 포함
-                    </span>
+                    </Badge>
                   </div>
                 )}
 

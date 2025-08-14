@@ -314,14 +314,23 @@ const PRReview = () => {
     <div className="pt-1 pb-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
       <Box shadow className="space-y-4 p-4">
-        <div className="flex justify-between items-start">
-          <div className="flex-1">
-            {/* 레포지토리 정보 */}
-            <div className="flex items-center space-x-2 text-sm text-stone-600 mb-3">
-              <FolderCode className="w-4 h-4" />
-              <span className="font-medium">{prDetail.repo?.fullName}</span>
-              <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-                #{prDetail.githubPrNumber}
+        {/* 레포지토리 정보 */}
+        <div className="flex items-center space-x-2 text-sm text-stone-600">
+          <FolderCode className="w-4 h-4" />
+          <span className="font-medium">{prDetail.repo?.fullName}</span>
+          <Badge variant="default" size="xs" className="font-mono">
+            #{prDetail.githubPrNumber}
+          </Badge>
+        </div>
+        <div className="space-y-3">
+          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
+            {prDetail.title}
+          </h1>
+          {prDetail.author && (
+            <div className="flex items-center gap-2 text-sm theme-text-secondary">
+              <span>작성자:</span>
+              <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
+                @{prDetail.author.githubUsername}
               </span>
             </div>
             <div className="space-y-3">
