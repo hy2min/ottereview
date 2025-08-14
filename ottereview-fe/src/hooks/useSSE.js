@@ -1,17 +1,19 @@
 import { useEffect } from 'react'
 
 import { useAuthStore } from '@/features/auth/authStore'
+import { useUserStore } from '@/store/userStore'
 
 // 전역 push 이벤트만 관리하는 훅
 export const useSSE = (shouldConnect = true, onPushEvent = null) => {
   const accessToken = useAuthStore((state) => state.accessToken)
+  const user = useUserStore((state) => state.user)
 
   useEffect(() => {
     if (!shouldConnect || !accessToken) return
 
     // push 이벤트 구독 (브랜치 추가/푸시) - 모든 페이지에서 필요
     const pushEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=push`
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?user-id=${user.id}`
     )
 
     // push 이벤트 처리
@@ -32,6 +34,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
             timestamp: new Date()
           })
         }
+        console.log('푸시데이터 : ' ,pushData)
       } catch (error) {
         console.error('푸시 이벤트 파싱 오류:', error)
       }
