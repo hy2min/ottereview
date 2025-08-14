@@ -32,6 +32,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
             timestamp: new Date()
           })
         }
+        console.log('푸시데이터 : ' ,pushData)
       } catch (error) {
         console.error('푸시 이벤트 파싱 오류:', error)
       }
