@@ -32,7 +32,11 @@ public class ReviewEventDto {
         
         private UserWebhookInfo user;
         private String body;
-        
+
+        public void changeBody(String body){
+            this.body = body;
+        }
+
         @JsonProperty("commit_id")
         private String commitId;
         

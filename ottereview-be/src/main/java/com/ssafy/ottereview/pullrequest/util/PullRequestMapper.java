@@ -36,7 +36,7 @@ public class PullRequestMapper {
                 .head(pr.getHead())
                 .baseBranch(baseBranch)
                 .base(pr.getBase())
-                .mergeable(pr.getMergeable() != null && pr.getMergeable())
+                .mergeable(true)
                 .githubCreatedAt(pr.getGithubCreatedAt())
                 .githubUpdatedAt(pr.getGithubUpdatedAt())
                 .commitCnt(pr.getCommitCnt())
