@@ -59,6 +59,10 @@ public class Review extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String body;
 
+    public void changeBody(String body){
+        this.body = body;
+    }
+
     @Column(name = "commit_sha")
     private String commitSha;
 
