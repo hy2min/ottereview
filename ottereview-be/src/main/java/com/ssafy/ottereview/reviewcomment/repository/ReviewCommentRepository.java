@@ -15,8 +15,9 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Long> {
 
-    List<ReviewComment> findAllByReview(Review review);
-
+    @Query("SELECT rc FROM ReviewComment rc LEFT JOIN FETCH rc.parentComment WHERE rc.review = :review")
+    List<ReviewComment> findAllByReview(@Param("review") Review review);
+    
     List<ReviewComment> findAllByUserId(Long userId);
 
     Optional<ReviewComment> findByGithubId(Long githubId);

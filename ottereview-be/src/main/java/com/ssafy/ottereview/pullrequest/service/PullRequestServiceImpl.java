@@ -15,6 +15,8 @@ import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
 import com.ssafy.ottereview.priority.entity.Priority;
+import com.ssafy.ottereview.priority.entity.PriorityFile;
+import com.ssafy.ottereview.priority.repository.PriorityFileRepository;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestDescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
@@ -83,6 +85,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
     private final S3Service s3Service;
+    private final PriorityFileRepository priorityFileRepository;
 
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId, Integer limit, String cursor) {
@@ -238,7 +241,13 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 우선순위 추가
         List<PullRequestPriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
                 .stream()
-                .map(PullRequestPriorityInfo::fromEntity)
+                .map(priority -> {
+                    List<PriorityFile> allByPriority = priorityFileRepository.findAllByPriority(priority);
+                    List<String> relatedFiles = allByPriority.stream()
+                            .map(PriorityFile::getFileName)
+                            .toList();
+                    return PullRequestPriorityInfo.fromEntityAndFiles(priority, relatedFiles);
+                })
                 .toList();
 
         pullRequestDetailResponse.enrollDescription(descriptions);
@@ -334,7 +343,28 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .toList();
 
                 priorityRepository.saveAll(priorityList);
+
                 log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
+
+                // 각 우선 순위와 관련 파일들을 매핑하여 저장
+                for (int i = 0; i < prepareInfo.getPriorities().size(); i++) {
+                    var priorityInfo = prepareInfo.getPriorities().get(i);
+                    Priority savedPriority = priorityList.get(i);
+                    
+                    if (priorityInfo.getRelatedFiles() != null && !priorityInfo.getRelatedFiles().isEmpty()) {
+                        List<PriorityFile> priorityFiles = priorityInfo.getRelatedFiles()
+                                .stream()
+                                .map(fileName -> PriorityFile.builder()
+                                        .fileName(fileName)
+                                        .priority(savedPriority)
+                                        .build())
+                                .toList();
+                        
+                        priorityFileRepository.saveAll(priorityFiles);
+                        log.debug("우선 순위 ID: {} 관련 파일 저장 완료, 파일 수: {}", 
+                                 savedPriority.getId(), priorityFiles.size());
+                    }
+                }
             }
             // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
             createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()

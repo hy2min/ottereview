@@ -7,6 +7,9 @@ import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.preparation.service.PreparationService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.repo.entity.Repo;
+import com.ssafy.ottereview.repo.exception.RepoErrorCode;
+import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.PushEventDto;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
@@ -16,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 @Slf4j
@@ -27,6 +29,7 @@ public class PushEventService {
     private final GithubApiClient githubApiClient;
     private final PreparationService prPreparationService;
     private final EventSendController eventSendController;
+    private final RepoRepository repository;
 
     public void processPushEvent(String payload) {
         log.info("Push Event 프로세스 실행");
@@ -58,16 +61,20 @@ public class PushEventService {
             commitShas.add(commit.path("id")
                     .asText());
         }
-        
+
+        Long repoId = json.path("repository").path("id").asLong();
+        Repo repo = repository.findByRepoId(repoId)
+                .orElseThrow(() ->
+                        new BusinessException(RepoErrorCode.REPO_NOT_FOUND, "Repository not found with ID: " + repoId));
+
         return PushEventDto.builder()
                 .ref(ref)
                 .branchName(branchName)
                 .repoFullName(json.path("repository")
                         .path("full_name")
                         .asText())
-                .repoId(json.path("repository")
-                        .path("id")
-                        .asLong())
+                .repoId(repo.getId())
+                .repoGithubId(repo.getRepoId())
                 .defaultBranch(json.path("repository")
                         .path("default_branch")
                         .asText())
