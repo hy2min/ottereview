@@ -8,6 +8,7 @@ import { useUserStore } from '@/store/userStore'
 
 const OAuthCallbackPage = () => {
   const navigate = useNavigate()
+  const user = useUserStore((state) => state.user)
   const setUser = useUserStore((state) => state.setUser)
   const setAccessToken = useAuthStore((state) => state.setAccessToken)
   const clearUser = useUserStore((state) => state.clearUser)
@@ -15,6 +16,13 @@ const OAuthCallbackPage = () => {
 
   const [loading, setLoading] = useState(true)
   const loadingDots = useLoadingDots(loading, loading ? 300 : 0)
+
+  // user가 설정되면 대시보드로 이동
+  useEffect(() => {
+    if (user && !loading) {
+      navigate('/dashboard')
+    }
+  }, [user, loading, navigate])
 
   useEffect(() => {
     const code = new URL(window.location.href).searchParams.get('code')
@@ -44,7 +52,6 @@ const OAuthCallbackPage = () => {
         setUser(userRes.data)
 
         setLoading(false)
-        navigate('/dashboard')
       })
       .catch((err) => {
         console.error('[OAuth] 로그인 실패:', err)
@@ -57,8 +64,11 @@ const OAuthCallbackPage = () => {
   }, [])
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center">
-      <p className="text-stone-600 text-2xl">로그인 처리 중{loadingDots}</p>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="theme-text text-xl">로그인 처리 중{loadingDots}</p>
+      </div>
     </div>
   )
 }
