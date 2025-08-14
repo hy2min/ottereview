@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react'
 
+import Button from '@/components/Button'
 import { useAuthStore } from '@/features/auth/authStore'
 import { useChatStore } from '@/features/chat/chatStore'
 import { useUserStore } from '@/store/userStore'
-import Button from '@/components/Button'
-import { useWebRTC } from './hooks/useWebRTC'
+
 import AudioControls from './components/AudioControls'
 import ParticipantList from './components/ParticipantList'
+import { useWebRTC } from './hooks/useWebRTC'
 
 const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
   const [isMicMuted, setIsMicMuted] = useState(false)
@@ -185,20 +186,12 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
 
           {isSessionJoined && (
             <div className="flex gap-2">
-              <Button
-                onClick={leaveSession}
-                variant="secondary"
-                size="sm"
-              >
+              <Button onClick={leaveSession} variant="secondary" size="sm">
                 🚪 나가기
               </Button>
 
               {isOwner && (
-                <Button
-                  onClick={() => setShowCloseConfirm(true)}
-                  variant="danger"
-                  size="sm"
-                >
+                <Button onClick={() => setShowCloseConfirm(true)} variant="danger" size="sm">
                   🛑 세션 종료
                 </Button>
               )}
@@ -237,11 +230,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
               ❌ {errorMessage}
             </div>
             {retryCount < 3 && (
-              <Button
-                onClick={retryConnection}
-                variant="primary"
-                size="sm"
-              >
+              <Button onClick={retryConnection} variant="primary" size="sm">
                 🔄 다시 시도 ({retryCount + 1}/3)
               </Button>
             )}
@@ -301,18 +290,10 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
                 justifyContent: 'center',
               }}
             >
-              <Button
-                onClick={() => setShowCloseConfirm(false)}
-                variant="secondary"
-                size="md"
-              >
+              <Button onClick={() => setShowCloseConfirm(false)} variant="secondary" size="md">
                 취소
               </Button>
-              <Button
-                onClick={handleCloseEntireSession}
-                variant="danger"
-                size="md"
-              >
+              <Button onClick={handleCloseEntireSession} variant="danger" size="md">
                 종료
               </Button>
             </div>
