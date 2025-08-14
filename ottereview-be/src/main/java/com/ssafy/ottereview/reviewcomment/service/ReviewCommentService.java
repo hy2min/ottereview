@@ -1,8 +1,10 @@
 package com.ssafy.ottereview.reviewcomment.service;
 
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentReplyRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentWithRepliesResponse;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -73,4 +75,29 @@ public interface ReviewCommentService {
      * @return 댓글 응답 리스트
      */
     List<ReviewCommentResponse> getCommentsByReviewIdAndPath(Long reviewId, String path);
+
+    /**
+     * 댓글에 답글을 생성합니다.
+     *
+     * @param replyRequest 답글 생성 요청 DTO
+     * @param userId       작성자 ID
+     * @return 답글 응답
+     */
+    ReviewCommentResponse createReply(ReviewCommentReplyRequest replyRequest, Long userId);
+
+    /**
+     * 리뷰의 모든 댓글을 답글과 함께 계층적으로 조회합니다.
+     *
+     * @param reviewId 리뷰 ID
+     * @return 댓글과 답글이 포함된 응답 리스트
+     */
+    List<ReviewCommentWithRepliesResponse> getCommentsWithReplies(Long reviewId);
+
+    /**
+     * 특정 댓글의 답글들을 조회합니다.
+     *
+     * @param parentCommentId 부모 댓글 ID
+     * @return 답글 응답 리스트
+     */
+    List<ReviewCommentResponse> getRepliesByParentId(Long parentCommentId);
 }

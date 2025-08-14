@@ -1,8 +1,10 @@
 package com.ssafy.ottereview.reviewcomment.controller;
 
 import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentReplyRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentWithRepliesResponse;
 import com.ssafy.ottereview.reviewcomment.service.ReviewCommentService;
 import com.ssafy.ottereview.user.entity.CustomUserDetail;
 import java.util.List;
@@ -14,7 +16,9 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -79,6 +83,45 @@ public class ReviewCommentController {
         List<ReviewCommentResponse> comments = reviewCommentService.getCommentsByReviewIdAndPath(
                 reviewId, path);
         return ResponseEntity.ok(comments);
+    }
+
+    /**
+     * 클로드 코드
+     */
+
+
+    /**
+     * 답글 생성
+     */
+    @PostMapping("/replies")
+    public ResponseEntity<?> createReply(
+            @RequestBody ReviewCommentReplyRequest request,
+            @AuthenticationPrincipal CustomUserDetail userDetail) {
+
+        ReviewCommentResponse reply = reviewCommentService.createReply(request, userDetail.getUser().getId());
+        return ResponseEntity.ok(reply);
+    }
+
+    /**
+     * 댓글과 답글을 계층적으로 조회
+     */
+    @GetMapping("/with-replies")
+    public ResponseEntity<?> getCommentsWithReplies(
+            @PathVariable("review-id") Long reviewId) {
+
+        List<ReviewCommentWithRepliesResponse> commentsWithReplies = reviewCommentService.getCommentsWithReplies(reviewId);
+        return ResponseEntity.ok(commentsWithReplies);
+    }
+
+    /**
+     * 특정 댓글의 답글들 조회
+     */
+    @GetMapping("/{comment-id}/replies")
+    public ResponseEntity<?> getRepliesByParentId(
+            @PathVariable("comment-id") Long commentId) {
+
+        List<ReviewCommentResponse> replies = reviewCommentService.getRepliesByParentId(commentId);
+        return ResponseEntity.ok(replies);
     }
 
 }
