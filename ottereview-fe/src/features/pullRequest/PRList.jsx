@@ -1,9 +1,10 @@
 import { useState } from 'react'
 
+import InputBox from '@/components/InputBox'
+
 import Box from '../../components/Box'
 import CustomSelect from '../../components/InputBox/CustomSelect'
 import PRCardCompact from './PRCardCompact'
-
 const PRList = ({ authoredPRs = [], reviewerPRs = [] }) => {
   const [selectedType, setSelectedType] = useState('all')
 
