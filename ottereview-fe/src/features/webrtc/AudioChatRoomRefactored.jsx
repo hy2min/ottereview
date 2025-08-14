@@ -78,24 +78,12 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
     }
   }
 
-  const toggleSpeaker = async () => {
-    // 사용자 상호작용 처리
-    await handleUserInteraction()
-    
+  // 수정된 toggleSpeaker 함수
+  const toggleSpeaker = () => {
     setIsSpeakerMuted(!isSpeakerMuted)
     const audioElements = audioContainer.current?.querySelectorAll('audio')
-    audioElements?.forEach(async (audio) => {
+    audioElements?.forEach((audio) => {
       audio.muted = !isSpeakerMuted
-      
-      // 음소거 해제 시 재생 시도
-      if (!isSpeakerMuted && audio.paused) {
-        try {
-          await audio.play()
-          console.log('✅ 오디오 재생 시작됨 (스피커 켜짐)')
-        } catch (error) {
-          console.warn('⚠️ 오디오 재생 실패:', error.message)
-        }
-      }
     })
   }
 
@@ -355,6 +343,8 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
           isSpeakerMuted={isSpeakerMuted}
           toggleMicrophone={toggleMicrophone}
           toggleSpeaker={toggleSpeaker}
+          handleUserInteraction={handleUserInteraction}
+          needsUserInteraction={needsUserInteraction}
           colors={colors}
         />
       )}
