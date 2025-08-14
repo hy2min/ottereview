@@ -26,7 +26,7 @@ const PRCardCompact = ({ pr, type }) => {
       onClick={() => navigate(`/${pr.repo.id}/pr/${pr.id}/review`)}
     >
       <div className="flex justify-between overflow-hidden items-center space-x-2">
-        <p className="font-semibold text-stone-900 truncate min-w-0">{title}</p>
+        <p className="font-semibold theme-text truncate min-w-0">{title}</p>
         {isAuthored && (
           <Badge variant="purple" className="shrink-0">
             내 PR
@@ -39,14 +39,14 @@ const PRCardCompact = ({ pr, type }) => {
         )}
       </div>
 
-      <div className="flex text-stone-600">
+      <div className="flex theme-text-secondary">
         <div className="flex items-center space-x-1">
           <FolderCode className="w-4 h-4 mb-[2px]" />
           <span>{repoName}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-stone-600">
+      <div className="flex items-center justify-between text-sm theme-text-secondary">
         <div className="flex space-x-4 flex-wrap">
           <div className="flex items-center space-x-1">
             <Users className="w-4 h-4 mb-[2px]" />

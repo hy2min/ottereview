@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.branch.entity;
 
+import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.repo.entity.Repo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +21,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @AllArgsConstructor
 @Builder
 @Table(name="branch")
-public class Branch {
+public class Branch extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -18,6 +18,8 @@ const PRCreateStep5 = ({
 }) => {
   const navigate = useNavigate()
 
+
+
   const handleSubmit = async () => {
     try {
       const submitData = {
@@ -42,6 +44,8 @@ const PRCreateStep5 = ({
       alert('제출 실패')
     }
   }
+
+
 
   return (
     <div className="space-y-4">

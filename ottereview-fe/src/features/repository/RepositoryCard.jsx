@@ -10,8 +10,8 @@ const RepositoryCard = ({ repo, onClick }) => {
     <Box shadow pixelHover className="m-3" onClick={onClick}>
       <div className="flex items-center justify-between space-x-4 overflow-hidden">
         <div className="flex items-center space-x-2 min-w-0">
-          <FolderCode className="text-stone-700 shrink-0" />
-          <strong className="text-stone-900 truncate">{name}</strong>
+          <FolderCode className="theme-text-secondary shrink-0" />
+          <strong className="theme-text truncate">{name}</strong>
 
           {/* Private/Public 표시 */}
           {repo.private ? (
@@ -27,7 +27,7 @@ const RepositoryCard = ({ repo, onClick }) => {
           )}
         </div>
 
-        <strong className="text-sm text-stone-900 shrink-0">{account}</strong>
+        <strong className="text-sm theme-text shrink-0">{account}</strong>
       </div>
     </Box>
   )
