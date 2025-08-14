@@ -13,7 +13,6 @@ const Header = () => {
   const logout = useUserStore((state) => state.logout)
   const clearUser = useUserStore((state) => state.clearUser)
   const clearTokens = useAuthStore((state) => state.clearTokens)
-  const user = useUserStore((state) => state.user)
 
   const { theme, toggleTheme } = useThemeStore()
 
@@ -66,7 +65,8 @@ const Header = () => {
               }
               if (otterLogo) {
                 otterLogo.style.transform = 'scale(1.15) rotate(5deg)'
-                otterLogo.style.filter = 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))'
+                otterLogo.style.filter =
+                  'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) drop-shadow(0 0 20px rgba(59, 130, 246, 0.5))'
               }
             }}
             onMouseLeave={(e) => {
@@ -78,7 +78,8 @@ const Header = () => {
               }
               if (otterLogo) {
                 otterLogo.style.transform = 'scale(1) rotate(0deg)'
-                otterLogo.style.filter = 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)'
+                otterLogo.style.filter =
+                  'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)'
               }
             }}
           >
@@ -108,7 +109,7 @@ const Header = () => {
               <div className="relative">
                 {/* Animated glow background for text logo */}
                 <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover:opacity-20 blur-md transition-all duration-500 rounded-lg" />
-                
+
                 {/* Logo container */}
                 <div className="relative h-8 overflow-hidden">
                   <img
@@ -116,31 +117,41 @@ const Header = () => {
                     alt="Otter Logo"
                     className="otter-logo-img h-full object-contain transition-all duration-700 ease-in-out"
                     style={{
-                      filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)',
-                      transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)'
+                      filter:
+                        'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1)) drop-shadow(0 0 0px transparent)',
+                      transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   />
-                  
+
                   {/* Enhanced sparkle effects for otter logo */}
                   <div className="absolute -top-1 -right-1 w-2 h-2 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-all duration-300" />
-                  <div 
+                  <div
                     className="absolute -bottom-1 left-1 w-1.5 h-1.5 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full opacity-0 group-hover:opacity-90 group-hover:animate-pulse transition-all duration-500"
                     style={{ animationDelay: '0.3s' }}
                   />
-                  <div 
+                  <div
                     className="absolute top-1 -left-1 w-1 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full opacity-0 group-hover:opacity-75 group-hover:animate-bounce transition-all duration-400"
                     style={{ animationDelay: '0.5s' }}
                   />
-                  
+
                   {/* Floating particles effect */}
                   <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                    <div className="absolute top-2 right-1 w-0.5 h-0.5 bg-blue-300 rounded-full animate-ping" style={{ animationDelay: '0.1s' }} />
-                    <div className="absolute bottom-2 left-1 w-0.5 h-0.5 bg-purple-300 rounded-full animate-ping" style={{ animationDelay: '0.4s' }} />
-                    <div className="absolute top-1 left-2 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping" style={{ animationDelay: '0.7s' }} />
+                    <div
+                      className="absolute top-2 right-1 w-0.5 h-0.5 bg-blue-300 rounded-full animate-ping"
+                      style={{ animationDelay: '0.1s' }}
+                    />
+                    <div
+                      className="absolute bottom-2 left-1 w-0.5 h-0.5 bg-purple-300 rounded-full animate-ping"
+                      style={{ animationDelay: '0.4s' }}
+                    />
+                    <div
+                      className="absolute top-1 left-2 w-0.5 h-0.5 bg-cyan-300 rounded-full animate-ping"
+                      style={{ animationDelay: '0.7s' }}
+                    />
                   </div>
                 </div>
               </div>
-              
+
               {/* Enhanced underline animation */}
               <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
             </div>
