@@ -1,6 +1,8 @@
 package com.ssafy.ottereview.webhook.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.ssafy.ottereview.common.util.GitHubTimeDeserializer;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.BranchInfo;
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -34,9 +36,11 @@ public class PullRequestWebhookInfo {
     private Boolean mergeable;
     
     @JsonProperty("created_at")
+    @JsonDeserialize(using = GitHubTimeDeserializer.class)
     private LocalDateTime createdAt;
     
     @JsonProperty("updated_at")
+    @JsonDeserialize(using = GitHubTimeDeserializer.class)
     private LocalDateTime updatedAt;
     
     @JsonProperty("commits")

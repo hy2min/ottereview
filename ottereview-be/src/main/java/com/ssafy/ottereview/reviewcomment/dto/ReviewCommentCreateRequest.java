@@ -4,19 +4,25 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Builder
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ReviewCommentCreateRequest {
 
     @NotEmpty
     @Valid
     private List<CommentItem> comments;
-
+    
     @Builder
     @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CommentItem {
 
         @NotBlank
