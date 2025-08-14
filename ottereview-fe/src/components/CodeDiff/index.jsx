@@ -472,7 +472,7 @@ const CodeDiff = ({
               <React.Fragment key={idx}>
                 {/* 라인 번호 */}
                 <div
-                  className={`w-16 text-right pr-2 select-none border-r border-gray-200 cursor-pointer hover:bg-opacity-80 transition-colors ${finalNumBg}`}
+                  className={`w-16 text-right pr-2 py-0.5 select-none border-r border-gray-200 cursor-pointer hover:bg-opacity-80 transition-colors ${finalNumBg}`}
                   onMouseDown={(e) => handleMouseDown(idx, e)}
                   onMouseEnter={() => handleMouseEnter(idx)}
                 >
