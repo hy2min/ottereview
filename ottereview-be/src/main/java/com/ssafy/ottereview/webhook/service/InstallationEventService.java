@@ -11,6 +11,8 @@ import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.repo.service.RepoService;
+import com.ssafy.ottereview.user.entity.CustomUserDetail;
+import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.BranchEventDto;
 import com.ssafy.ottereview.webhook.dto.InstallationEventDto;
@@ -21,6 +23,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHRepository;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +73,7 @@ public class InstallationEventService {
         }
     }
 
-    public void processInstallationRepositoriesEvent(String payload) {
+    public void processInstallationRepositoriesEvent(User user, String payload) {
         log.debug("Installation Repositories Event 프로세스 실행");
 
         try {
@@ -91,7 +94,7 @@ public class InstallationEventService {
 
                 case "added":
                     log.debug("Repository added event received");
-                    handleRepositoryAdded(event);
+                    handleRepositoryAdded(user,event);
                     break;
                 default:
                     log.warn("Unhandled action: {}", event.getAction());
@@ -161,7 +164,7 @@ public class InstallationEventService {
                 .repo(repo)
                 .minApproveCnt(0)
                 .build());
-        eventSendController.push("push", event.getName());
+
     }
     // B
 
@@ -179,7 +182,7 @@ public class InstallationEventService {
         }
     }
 
-    private void handleRepositoryAdded(RepositoryEventDto event) throws IOException {
+    private void handleRepositoryAdded(User user, RepositoryEventDto event) throws IOException {
         Account account = userAccountService.getAccountByInstallationId(
                 event.getInstallation().getId());
         List<GHRepository> ghRepositoryList = githubApiClient.getRepositories(
@@ -189,7 +192,7 @@ public class InstallationEventService {
         }
         // repository , branch , pullRequest를 한번에 저장하는 로직이다.
         repoService.updateRepoList(ghRepositoryList, account);
-        eventSendController.push("update", "update");
+        eventSendController.push(user.getId(),"update", "update");
     }
 
 
