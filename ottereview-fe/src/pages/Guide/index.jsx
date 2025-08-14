@@ -7,6 +7,11 @@ const Guide = () => {
   const [visibleSections, setVisibleSections] = useState(new Set())
   const observerRef = useRef(null)
 
+  const handleLogin = () => {
+    const githubLoginUrl = `${import.meta.env.VITE_API_URL}/api/auth/login`
+    window.location.href = githubLoginUrl
+  }
+
   useEffect(() => {
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -58,7 +63,12 @@ const Guide = () => {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="primary" size="lg" className="shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                className="shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all"
+                onClick={handleLogin}
+              >
                 🚀 지금 시작하기
               </Button>
               <Button variant="outline" size="lg" className="border-2 hover:border-primary-300 hover:bg-primary-50/50 transition-all">
@@ -456,7 +466,12 @@ const Guide = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button variant="secondary" size="lg" className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-black/20">
+              <Button 
+                variant="secondary" 
+                size="lg" 
+                className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-black/20"
+                onClick={handleLogin}
+              >
                 🚀 GitHub으로 시작하기
               </Button>
               <Button variant="ghost" size="lg" className="text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 backdrop-blur-sm">
