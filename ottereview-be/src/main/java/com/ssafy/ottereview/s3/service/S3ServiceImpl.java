@@ -133,6 +133,11 @@ public class S3ServiceImpl implements S3Service {
             ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
             List<S3Object> objects = listResponse.contents();
 
+            if (objects.isEmpty()) {
+                log.info("삭제할 파일이 없음 - review_id: {}", reviewId);
+                return;
+            }
+
             List<ObjectIdentifier> objectsToDelete = objects.stream()
                     .map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
                     .collect(Collectors.toList());
@@ -147,8 +152,48 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObjects(deleteRequest);
+            log.info("리뷰 파일 삭제 완료 - review_id: {}, 삭제된 파일 수: {}", reviewId, objects.size());
         } catch (Exception e) {
+            log.error("리뷰 파일 삭제 실패 - review_id: {}", reviewId, e);
             throw new RuntimeException("파일 삭제 실패", e);
+        }
+    }
+
+    @Override
+    public void deleteDescriptionFiles(Long pullRequestId) {
+        try {
+            String prefix = String.format("voice-comments/pullrequest_%d/", pullRequestId);
+
+            ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix)
+                    .build();
+            ListObjectsV2Response listResponse = s3Client.listObjectsV2(listRequest);
+            List<S3Object> objects = listResponse.contents();
+
+            if (objects.isEmpty()) {
+                log.info("삭제할 Description 파일이 없음 - pullrequest_id: {}", pullRequestId);
+                return;
+            }
+
+            List<ObjectIdentifier> objectsToDelete = objects.stream()
+                    .map(obj -> ObjectIdentifier.builder().key(obj.key()).build())
+                    .collect(Collectors.toList());
+
+            Delete delete = Delete.builder()
+                    .objects(objectsToDelete)
+                    .build();
+
+            DeleteObjectsRequest deleteRequest = DeleteObjectsRequest.builder()
+                    .bucket(bucketName)
+                    .delete(delete)
+                    .build();
+
+            s3Client.deleteObjects(deleteRequest);
+            log.info("Description 파일 삭제 완료 - pullrequest_id: {}, 삭제된 파일 수: {}", pullRequestId, objects.size());
+        } catch (Exception e) {
+            log.error("Description 파일 삭제 실패 - pullrequest_id: {}", pullRequestId, e);
+            throw new RuntimeException("Description 파일 삭제 실패", e);
         }
     }
 
