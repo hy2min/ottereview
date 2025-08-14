@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Trash2 } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import Badge from '@/components/Badge'
@@ -8,7 +8,7 @@ import CommentForm from '@/features/comment/CommentForm'
 // 리뷰 댓글 텍스트 정리 함수
 const cleanReviewCommentBody = (body) => {
   if (!body) return ''
-  
+
   // \n을 실제 줄바꿈으로 변환 (백엔드에서 전처리되므로 간단하게)
   return body.replace(/\\n/g, '\n')
 }
@@ -16,9 +16,12 @@ const cleanReviewCommentBody = (body) => {
 const CodeDiff = ({
   patch,
   onAddComment,
+  onRemoveComment,
   filePath,
   initialSubmittedComments = {},
   existingReviewComments = {},
+  descriptions = [],
+  prAuthor = {},
   showDiffHunk = false,
 }) => {
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
@@ -27,7 +30,7 @@ const CodeDiff = ({
   const [hoveredLine, setHoveredLine] = useState(null)
   const [selectedLines, setSelectedLines] = useState(new Set())
   const [clickedLine, setClickedLine] = useState(null)
-
+  
   // 드래그 관련 상태
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState(null)
@@ -80,7 +83,7 @@ const CodeDiff = ({
             id: lineId,
             position: currentPosition,
             diffHunk: patch,
-            side: isNew ? 'RIGHT' : 'LEFT',
+            side: isNew ? 'RIGHT' : (lineType === 'removed' ? 'LEFT' : 'RIGHT'),
             path: filePath,
             fileIndex: null,
           },
@@ -166,13 +169,20 @@ const CodeDiff = ({
     // 텍스트나 음성 중 하나라도 있어야 제출 가능
     if (hasTextContent || hasAudioFile) {
       // 선택된 라인들 정보 수집
-      const allSelectedLines = new Set([...selectedLines, lineIndex])
+      const allSelectedLines = new Set([...selectedLines])
       if (clickedLine !== null) {
         allSelectedLines.add(clickedLine)
+      }
+      
+      // 선택된 라인이 없으면 + 버튼을 누른 라인만 사용 (단일 라인 댓글)
+      if (allSelectedLines.size === 0) {
+        allSelectedLines.add(lineIndex)
       }
 
       // 선택된 라인들을 인덱스 순으로 정렬
       const sortedSelectedLines = Array.from(allSelectedLines).sort((a, b) => a - b)
+      
+
 
       // 각 라인의 실제 정보를 수집하기 위해 diff를 다시 파싱
       let tempOldLine = 0
@@ -232,15 +242,15 @@ const CodeDiff = ({
       const bodyText = hasAudioFile ? '' : commentData.content?.trim() || ''
 
       if (selectedLinesInfo.length === 0) {
-        // 선택된 라인 정보가 없으면 원래 댓글 데이터 사용
+        // 선택된 라인 정보가 없으면 원래 댓글 데이터 사용 (단일 라인)
         const reviewCommentData = {
           path: commentData.path,
           body: bodyText,
           position: commentData.position,
           line: commentData.lineNumber,
           side: commentData.side,
-          startLine: commentData.lineNumber,
-          startSide: commentData.side,
+          startLine: undefined, // 단일 라인은 startLine 없음
+          startSide: undefined, // 단일 라인은 startSide 없음
           fileIndex: fileIndex,
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
@@ -251,7 +261,6 @@ const CodeDiff = ({
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-        console.log(reviewCommentData)
 
         // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
         setSubmittedComments((prev) => ({
@@ -285,20 +294,23 @@ const CodeDiff = ({
           fileIndex: fileIndex,
           ...(showDiffHunk && { diffHunk: commentData.diffHunk }),
         }
+        
+
+        // 마지막 선택된 라인의 인덱스 찾기 (임시 댓글 표시 위치)
+        const lastLineIndex = sortedSelectedLines[sortedSelectedLines.length - 1]
 
         // 상위 컴포넌트에 댓글 추가 알림 (파일별 상태 관리를 위해)
-        onAddComment?.(lineIndex, {
+        onAddComment?.(lastLineIndex, {
           ...commentData,
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-        console.log(reviewCommentData)
 
-        // 로컬 상태에도 추가 (즉시 UI 업데이트를 위해)
+        // 로컬 상태에도 추가 (마지막 라인 위치에 표시)
         setSubmittedComments((prev) => ({
           ...prev,
-          [lineIndex]: [
-            ...(prev[lineIndex] || []),
+          [lastLineIndex]: [
+            ...(prev[lastLineIndex] || []),
             {
               ...commentData,
               id: Date.now() + Math.random(), // 임시 ID (두 번째 케이스)
@@ -308,7 +320,7 @@ const CodeDiff = ({
         }))
       }
 
-      // 댓글 제출 성공 후 폼 닫기
+      // 댓글 제출 성공 후 폼 닫기 (+ 버튼이 있던 원래 위치)
       closeCommentForm(lineIndex)
 
       // 선택 상태 초기화
@@ -439,12 +451,17 @@ const CodeDiff = ({
                   }`}
                   onClick={() => handleCodeClick(idx)}
                   onMouseEnter={() => {
-                    canComment && setHoveredLine(idx)
                     if (isDragging) {
                       handleMouseEnter(idx)
+                    } else if (canComment && hoveredLine !== idx) {
+                      setHoveredLine(idx)
                     }
                   }}
-                  onMouseLeave={() => setHoveredLine(null)}
+                  onMouseLeave={() => {
+                    if (!isDragging && hoveredLine === idx) {
+                      setHoveredLine(null)
+                    }
+                  }}
                 >
                   {/* 댓글 추가 버튼 */}
                   {canComment &&
@@ -482,11 +499,75 @@ const CodeDiff = ({
                     )}
                   </div>
 
+                  {/* PR 작성자 설명(Descriptions) 표시 - 댓글보다 위에 */}
+                  {(() => {
+                    const actualLineNumber = currentLineNumber
+                    const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT'
+                    
+                    // 현재 라인에 해당하는 descriptions 필터링
+                    const descriptionsForLine = descriptions.filter(desc => {
+                      // path가 현재 파일과 일치해야 함
+                      if (desc.path !== filePath) return false
+                      
+                      // 단일 라인 description인 경우
+                      if (!desc.startLine || desc.startLine === desc.line) {
+                        return desc.line === actualLineNumber && desc.side === currentSide
+                      }
+                      
+                      // 멀티 라인 description인 경우 - 범위 내에 있는지 확인
+                      const startLine = Math.min(desc.startLine, desc.line)
+                      const endLine = Math.max(desc.startLine, desc.line)
+                      return actualLineNumber >= startLine && actualLineNumber <= endLine && desc.side === currentSide
+                    })
+                    
+                    return descriptionsForLine.length > 0 ? descriptionsForLine.map((desc, index) => (
+                      <div key={`desc-${desc.line}-${desc.position}-${index}`} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 bg-amber-50 max-w-xl">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-amber-200 border-2 border-amber-600 flex items-center justify-center">
+                              <span className="text-sm font-medium text-amber-800">
+                                {prAuthor.githubUsername?.[0] || 'A'}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="font-medium text-amber-900 text-base">
+                                {prAuthor.githubUsername || 'PR 작성자'}
+                              </span>
+                              {desc.startLine && desc.startLine !== desc.line && (
+                                <span className="text-sm text-amber-700 ml-2">
+                                  (라인 {Math.min(desc.startLine, desc.line)}-{Math.max(desc.startLine, desc.line)})
+                                </span>
+                              )}
+                              <Badge variant="warning" className="ml-2">
+                                📝 설명
+                              </Badge>
+                            </div>
+                          </div>
+                          <p className="text-amber-900 whitespace-pre-wrap text-base font-medium">
+                            {desc.body}
+                          </p>
+                        </Box>
+                      </div>
+                    )) : null
+                  })()}
+
                   {/* 기존 리뷰 댓글들 표시 */}
-                  {existingReviewComments[idx] &&
-                    existingReviewComments[idx].map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2 font-sans">
-                        <Box shadow className="space-y-3">
+                  {(() => {
+                    // 실제 라인 번호와 side를 기반으로 댓글 찾기
+                    const actualLineNumber = currentLineNumber // 실제 소스 파일의 라인 번호
+                    const currentSide = isAdded ? 'RIGHT' : isRemoved ? 'LEFT' : 'RIGHT' // context 라인은 RIGHT로 처리
+                    const commentsForLine = existingReviewComments[actualLineNumber] || []
+                    
+                    
+                    // side가 일치하는 댓글만 필터링
+                    const filteredComments = commentsForLine ? commentsForLine.filter(comment => 
+                      comment.side === currentSide
+                    ) : []
+                    
+                    
+                    return filteredComments.length > 0 ? filteredComments.map((comment) => (
+                      <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 max-w-xl">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
                               <span className="text-sm font-medium">
@@ -494,56 +575,76 @@ const CodeDiff = ({
                               </span>
                             </div>
                             <div>
-                              <span className="font-medium text-stone-900 text-base">{comment.reviewer || 'Unknown'}</span>
+                              <span className="font-medium text-stone-900 text-base">
+                                {comment.reviewer || 'Unknown'}
+                              </span>
                               <span className="text-sm text-stone-500 ml-2">
                                 {new Date(comment.submittedAt).toLocaleString()}
                               </span>
-                              <Badge 
+                              <Badge
                                 variant={
-                                  comment.reviewState === 'APPROVED' ? 'success' :
-                                  comment.reviewState === 'CHANGES_REQUESTED' ? 'danger' :
-                                  'primary'
+                                  comment.reviewState === 'APPROVED'
+                                    ? 'success'
+                                    : comment.reviewState === 'CHANGES_REQUESTED'
+                                      ? 'danger'
+                                      : 'primary'
                                 }
                                 className="ml-3"
                               >
-                                {comment.reviewState === 'APPROVED' ? '승인' :
-                                 comment.reviewState === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                                {comment.reviewState === 'APPROVED'
+                                  ? '승인'
+                                  : comment.reviewState === 'CHANGES_REQUESTED'
+                                    ? '변경 요청'
+                                    : '코멘트'}
                               </Badge>
                             </div>
                           </div>
-                          <p className="text-stone-700 whitespace-pre-wrap text-base">{cleanReviewCommentBody(comment.body)}</p>
+                          <p className="text-stone-700 whitespace-pre-wrap text-base">
+                            {cleanReviewCommentBody(comment.body)}
+                          </p>
                         </Box>
                       </div>
-                    ))}
+                    )) : null
+                  })()}
 
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
                   {submittedComments[idx] &&
                     submittedComments[idx].map((comment) => (
-                      <div key={comment.id} className="mx-2 mb-2 font-sans">
-                        <Box shadow className="space-y-3 bg-sky-50">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
-                              <span className="text-sm font-medium">나</span>
-                            </div>
-                            <div>
-                              <span className="font-medium text-stone-900 text-base">내 댓글</span>
-                              <span className="text-sm text-stone-500 ml-2">
-                                {comment.submittedAt}
-                              </span>
-                              <Badge variant="warning" className="ml-2">
-                                임시
-                              </Badge>
-                              {comment.audioFile && (
-                                <Badge variant="success" className="ml-2">
-                                  🎵 음성
+                      <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
+                        <Box shadow className="space-y-3 bg-sky-50 max-w-xl">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
+                                <span className="text-sm font-medium">나</span>
+                              </div>
+                              <div>
+                                <span className="font-medium text-stone-900 text-base">내 댓글</span>
+                                <span className="text-sm text-stone-500 ml-2">
+                                  {comment.submittedAt}
+                                </span>
+                                <Badge variant="warning" className="ml-2">
+                                  임시
                                 </Badge>
-                              )}
+                                {comment.audioFile && (
+                                  <Badge variant="success" className="ml-2">
+                                    🎵 음성
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
+                            {/* 삭제 버튼 */}
+                            {onRemoveComment && (
+                              <button
+                                onClick={() => onRemoveComment(idx, comment.id)}
+                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                                title="댓글 삭제"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
                           </div>
                           <div className="space-y-2">
-                            <p className="text-stone-700 text-base">
-                              {comment.content || (comment.audioFile ? '음성 댓글' : '')}
-                            </p>
+                            <p className="text-stone-700 text-base">{comment.content || ''}</p>
                             {comment.audioFile && (
                               <div className="flex items-center gap-2">
                                 <audio
@@ -566,7 +667,7 @@ const CodeDiff = ({
                   {/* 댓글 폼 */}
                   {activeCommentLines.has(idx) && (
                     <div
-                      className="font-sans"
+                      className="font-sans mx-2 mb-2"
                       onMouseEnter={(e) => e.stopPropagation()}
                       onMouseLeave={(e) => e.stopPropagation()}
                       onClick={(e) => e.stopPropagation()}
@@ -593,4 +694,4 @@ const CodeDiff = ({
   )
 }
 
-export default CodeDiff
+export default React.memo(CodeDiff)

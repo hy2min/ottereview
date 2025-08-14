@@ -111,10 +111,7 @@ const CommentForm = ({
 
 
   return (
-    <div
-      className={`${size === 'small' ? 'p-2 max-w-md' : size === 'large' ? 'p-6 max-w-2xl' : 'p-4 max-w-xl'}`}
-    >
-      <Box shadow>
+      <Box shadow className={`${size === 'small' ? 'p-2 max-w-md' : size === 'large' ? 'p-6 max-w-2xl' : 'p-4 max-w-xl'}`}>
         {/* 음성 파일이 있을 때는 음성 재생 컨트롤만 표시 */}
         {audioFile ? (
           <div className="space-y-3">
@@ -210,7 +207,6 @@ const CommentForm = ({
           </div>
         </div>
       </Box>
-    </div>
   )
 }
 

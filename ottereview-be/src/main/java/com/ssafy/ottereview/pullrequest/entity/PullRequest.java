@@ -115,6 +115,10 @@ public class PullRequest extends BaseEntity {
     @Column(nullable = false)
     private Integer approveCnt; // 현재 승인 수
 
+    public void changeMergeable(boolean mergeable){
+        this.mergeable = mergeable;
+    }
+
     public void enrollRepo(Repo repo) {
         this.repo = repo;
     }

@@ -22,6 +22,7 @@ public class PullRequestDescriptionInfo {
     private Integer line;
     private String side;
     private String diffHunk;
+    private String voiceFileUrl;
 
     public static PullRequestDescriptionInfo fromEntity(Description description) {
         return PullRequestDescriptionInfo.builder()

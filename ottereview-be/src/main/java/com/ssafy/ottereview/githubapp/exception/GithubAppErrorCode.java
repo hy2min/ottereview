@@ -25,7 +25,12 @@ public enum GithubAppErrorCode implements ErrorCode {
     GITHUB_APP_BRANCH_NOT_FOUND("GITHUB015", "GitHub 앱 브랜치를 찾을 수 없습니다.", 404),
     GITHUB_APP_FILE_DIFF_NOT_FOUND("GITHUB016", "GitHub 앱 파일 차이 정보를 찾을 수 없습니다.", 404),
     GITHUB_APP_ORGANIZATION_MEMBER_NOT_FOUND("GITHUB017", "GitHub 앱 조직 멤버 정보를 찾을 수 없습니다.", 404),
-    GITHUB_APP_PULL_REQUEST_CLOSE_FAILED("GITHUB018", "GitHub 풀 리퀘스트 닫기에 실패했습니다.", 500);
+    GITHUB_APP_PULL_REQUEST_CLOSE_FAILED("GITHUB018", "GitHub 풀 리퀘스트 닫기에 실패했습니다.", 500),
+    GITHUB_APP_REVIEW_COMMENT_CREATE_FAILED("GITHUB019", "GitHub 리뷰 댓글 생성에 실패했습니다.", 500),
+    GITHUB_APP_REVIEW_COMMENT_REPLY_CREATE_FAILED("GITHUB020", "GitHub 리뷰 댓글 답글 생성에 실패했습니다.", 500),
+    GITHUB_APP_REVIEW_COMMENT_UPDATE_FAILED("GITHUB021", "GitHub 리뷰 댓글 수정에 실패했습니다.", 500),
+    GITHUB_APP_REVIEW_COMMENT_DELETE_FAILED("GITHUB022", "GitHub 리뷰 댓글 삭제에 실패했습니다.", 500),
+    GITHUB_APP_REVIEW_COMMENT_NOT_FOUND("GITHUB023", "GitHub 리뷰 댓글을 찾을 수 없습니다.", 404);
 
     private final String code;
     private final String message;
