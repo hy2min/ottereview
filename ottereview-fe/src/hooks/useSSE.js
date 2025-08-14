@@ -13,7 +13,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
 
     // push 이벤트 구독 (브랜치 추가/푸시) - 모든 페이지에서 필요
     const pushEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?user-id=${user.id}`
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubUsername}`
     )
 
     // push 이벤트 처리
@@ -22,7 +22,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
 
       try {
         const pushData = JSON.parse(event.data)
-        
+
         // 토스트 데이터 생성
         if (onPushEvent) {
           onPushEvent({
@@ -31,10 +31,10 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
             repoName: pushData.repoFullName,
             branchName: pushData.branchName,
             commitCount: pushData.commitCount,
-            timestamp: new Date()
+            timestamp: new Date(),
           })
         }
-        console.log('푸시데이터 : ' ,pushData)
+        console.log('푸시데이터 : ', pushData)
       } catch (error) {
         console.error('푸시 이벤트 파싱 오류:', error)
       }
