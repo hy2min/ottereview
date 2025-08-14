@@ -40,4 +40,16 @@ public interface ReviewCommentRepository extends JpaRepository<ReviewComment, Lo
     void updatePosition(@Param("id") Long id, @Param("position") Integer position);
 
     List<ReviewComment> findByReviewId(Long reviewId);
+
+    /**
+     * 클로드 코드
+     */
+
+    List<ReviewComment> findAllByParentCommentIsNull();
+
+    List<ReviewComment> findAllByParentComment(ReviewComment parentComment);
+
+    List<ReviewComment> findAllByParentCommentId(Long parentCommentId);
+
+    Optional<ReviewComment> findByGithubInReplyToId(Long githubInReplyToId);
 }

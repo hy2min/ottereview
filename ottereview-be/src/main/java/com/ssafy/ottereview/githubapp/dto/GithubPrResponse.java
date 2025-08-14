@@ -86,7 +86,7 @@ public class GithubPrResponse {
             if (dateObj instanceof java.util.Date) {
                 java.util.Date date = (java.util.Date) dateObj;
                 return date.toInstant()
-                        .atZone(ZoneId.systemDefault())
+                        .atZone(ZoneId.of("Asia/Seoul"))
                         .toLocalDateTime();
             }
 

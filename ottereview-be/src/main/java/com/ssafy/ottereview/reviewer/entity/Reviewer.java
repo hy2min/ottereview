@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.reviewer.entity;
 
+import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.user.entity.User;
 import jakarta.persistence.*;
@@ -15,7 +16,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Getter
 @Entity
 @Builder
-public class Reviewer {
+public class Reviewer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
