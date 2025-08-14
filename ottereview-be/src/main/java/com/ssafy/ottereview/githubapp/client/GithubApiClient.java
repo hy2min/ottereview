@@ -32,6 +32,8 @@ import org.kohsuke.github.GHIssueState;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHPullRequestCommitDetail;
 import org.kohsuke.github.GHPullRequestFileDetail;
+import org.kohsuke.github.GHPullRequestReviewComment;
+import org.kohsuke.github.GHPullRequestReviewComment.Side;
 import org.kohsuke.github.GHRepository;
 import org.kohsuke.github.GitHub;
 import org.kohsuke.github.PagedIterable;
@@ -324,7 +326,7 @@ public class GithubApiClient {
     }
 
     /**
-     * Pull Request 닫기
+     * Pull Request 다시 열기
      */
     public void reopenPullRequest(Long installationId, String repositoryName, Integer prNumber) {
         try {
@@ -336,6 +338,111 @@ public class GithubApiClient {
 
         } catch (IOException e) {
             throw new BusinessException(GithubAppErrorCode.GITHUB_APP_PULL_REQUEST_CLOSE_FAILED);
+        }
+    }
+
+    /**
+     * 클로드 코드
+     */
+
+
+    /**
+     * Pull Request에 Review Comment 생성
+     */
+    public GHPullRequestReviewComment createReviewComment(Long installationId, String repositoryName, 
+                                                         Integer prNumber, String body, String commitSha, 
+                                                         String path, Integer startLine, String startSide, Integer line, String side) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+            
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            
+            return pullRequest.createReviewComment()
+                    .body(body)
+                    .commitId(commitSha)
+                    .path(path)
+                    .sides(Side.from(startSide), Side.from(side))
+                    .lines(startLine, line)
+                    .create();
+            
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_CREATE_FAILED);
+        }
+    }
+
+    /**
+     * Pull Request Review Comment에 답글 생성
+     * GitHub API에서 답글은 단순히 body만 있으면 되고, 위치 정보는 부모 댓글을 따름
+     */
+    public GHPullRequestReviewComment createReviewCommentReply(Long installationId, String repositoryName, 
+                                                              Integer prNumber, Long parentGithubId, String body) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+            
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            
+            // PR의 모든 Review Comment를 조회하여 부모 댓글 찾기
+            GHPullRequestReviewComment parentComment = pullRequest.listReviewComments().toList()
+                    .stream()
+                    .filter(comment -> comment.getId() == parentGithubId)
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_NOT_FOUND));
+            
+            // 답글은 부모 댓글에 reply() 메서드로 생성
+            return parentComment.reply(body);
+            
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_REPLY_CREATE_FAILED);
+        }
+    }
+
+    /**
+     * Review Comment 수정
+     */
+    public void updateReviewComment(Long installationId, String repositoryName, Integer prNumber, Long commentId, String body) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+            
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            
+            // PR의 모든 Review Comment를 조회하여 특정 ID 찾기
+            GHPullRequestReviewComment comment = pullRequest.listReviewComments().toList()
+                    .stream()
+                    .filter(c -> c.getId() == commentId)
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_NOT_FOUND));
+            
+            comment.update(body);
+            
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_UPDATE_FAILED);
+        }
+    }
+
+    /**
+     * Review Comment 삭제
+     */
+    public void deleteReviewComment(Long installationId, String repositoryName, Integer prNumber, Long commentId) {
+        try {
+            GitHub github = githubAppUtil.getGitHub(installationId);
+            GHRepository repo = github.getRepository(repositoryName);
+            
+            GHPullRequest pullRequest = repo.getPullRequest(prNumber);
+            
+            // PR의 모든 Review Comment를 조회하여 특정 ID 찾기
+            GHPullRequestReviewComment comment = pullRequest.listReviewComments().toList()
+                    .stream()
+                    .filter(c -> c.getId() == commentId)
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_NOT_FOUND));
+            
+            comment.delete();
+            
+        } catch (IOException e) {
+            throw new BusinessException(GithubAppErrorCode.GITHUB_APP_REVIEW_COMMENT_DELETE_FAILED);
         }
     }
 }

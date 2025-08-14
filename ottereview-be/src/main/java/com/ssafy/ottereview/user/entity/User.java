@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.user.entity;
 
+import com.ssafy.ottereview.common.entity.BaseEntity;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 @Table(name = "users")
-public class User {
+public class User extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
