@@ -13,7 +13,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
 
     // push 이벤트 구독 (브랜치 추가/푸시) - 모든 페이지에서 필요
     const pushEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubUsername}`
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
     )
 
     // push 이벤트 처리
