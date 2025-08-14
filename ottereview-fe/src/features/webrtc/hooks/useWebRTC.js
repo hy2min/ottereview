@@ -13,7 +13,75 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   const [connectedParticipants, setConnectedParticipants] = useState([])
   const [errorMessage, setErrorMessage] = useState('')
   const [retryCount, setRetryCount] = useState(0)
+  const [needsUserInteraction, setNeedsUserInteraction] = useState(true)
+  const [audioContext, setAudioContext] = useState(null)
   const audioContainer = useRef(null)
+
+  // 컴포넌트 언마운트 시 정리
+  useEffect(() => {
+    return () => {
+      if (session) {
+        console.log('🧹 컴포넌트 언마운트 - 세션 정리')
+        try {
+          session.disconnect()
+        } catch (error) {
+          console.warn('세션 정리 중 오류:', error)
+        }
+      }
+      if (audioContext) {
+        audioContext.close()
+      }
+    }
+  }, [session, audioContext])
+
+  // 오디오 컨텍스트 초기화
+  const initializeAudioContext = async () => {
+    if (!audioContext && (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined')) {
+      try {
+        const AudioContextClass = AudioContext || webkitAudioContext
+        const newAudioContext = new AudioContextClass()
+        
+        if (newAudioContext.state === 'suspended') {
+          await newAudioContext.resume()
+        }
+        
+        setAudioContext(newAudioContext)
+        console.log('✅ 오디오 컨텍스트 초기화됨:', newAudioContext.state)
+        return newAudioContext
+      } catch (error) {
+        console.error('오디오 컨텍스트 초기화 실패:', error)
+      }
+    }
+    return audioContext
+  }
+
+  // 사용자 상호작용 처리
+  const handleUserInteraction = async () => {
+    try {
+      console.log('👆 사용자 상호작용 감지됨')
+      
+      await initializeAudioContext()
+      
+      const audioElements = audioContainer.current?.querySelectorAll('audio')
+      if (audioElements) {
+        for (const audio of audioElements) {
+          if (audio.paused) {
+            try {
+              await audio.play()
+              console.log('✅ 오디오 재생 시작됨 (사용자 상호작용)')
+            } catch (error) {
+              console.warn('⚠️ 오디오 재생 실패:', error.message)
+            }
+          }
+        }
+      }
+      
+      setNeedsUserInteraction(false)
+      setErrorMessage('')
+    } catch (error) {
+      console.error('사용자 상호작용 처리 실패:', error)
+    }
+  }
 
   const joinSession = async (currentRoomId) => {
     console.log('🎯 joinSession 시작 - roomId:', currentRoomId)
@@ -49,7 +117,13 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         throw new Error('OpenVidu 토큰을 받지 못했습니다.')
       }
 
-      const ov = new OpenVidu()
+      console.log('✅ OpenVidu 토큰 받음')
+
+      // OpenVidu 초기화 - 9001 포트 사용
+      const ov = new OpenVidu({
+        wsUrl: 'wss://i13c108.p.ssafy.io:9001'
+      })
+      
       const mySession = ov.initSession()
 
       setupSessionEventListeners(mySession)
@@ -59,15 +133,38 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         username: myUserInfo.username,
         userId: myUserInfo.id,
         isOwner: isOwner,
+        timestamp: Date.now(), // 고유성을 위한 타임스탬프 추가
       }
 
-      // 세션 연결 (10초 타임아웃)
-      const connectPromise = mySession.connect(openviduToken, JSON.stringify(connectionData))
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('연결 시간 초과')), 10000)
-      })
+      console.log('🔗 보낼 연결 데이터:', connectionData)
 
-      await Promise.race([connectPromise, timeoutPromise])
+      // 연결 재시도 로직
+      const connectWithRetry = async (retries = 3) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            console.log(`🔗 OpenVidu 세션 연결 시도... (${i + 1}/${retries})`)
+            
+            const connectPromise = mySession.connect(openviduToken, JSON.stringify(connectionData))
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('연결 시간 초과')), 15000) // 15초로 증가
+            })
+
+            await Promise.race([connectPromise, timeoutPromise])
+            console.log('✅ OpenVidu 세션 연결 성공!')
+            break
+          } catch (error) {
+            console.warn(`⚠️ 연결 시도 ${i + 1} 실패:`, error.message)
+            if (i === retries - 1) {
+              throw error
+            }
+            await new Promise(resolve => setTimeout(resolve, 2000))
+          }
+        }
+      }
+
+      await connectWithRetry()
+
+      console.log('✅ 내 연결 ID:', mySession.connection.connectionId)
 
       // 참가자 목록 초기화
       setConnectedParticipants([
@@ -81,26 +178,76 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         },
       ])
 
+      // 기존 연결들 안전하게 확인
+      setTimeout(() => {
+        try {
+          const existingConnections = mySession.remoteConnections
+          console.log('🔍 기존 연결들 확인:', Object.keys(existingConnections).length)
+
+          if (Object.keys(existingConnections).length > 0) {
+            Object.values(existingConnections).forEach((connection) => {
+              if (connection && connection.data) {
+                try {
+                  const connectionData = JSON.parse(connection.data)
+                  console.log('👤 기존 참가자 정보:', connectionData)
+
+                  setConnectedParticipants((prev) => {
+                    const exists = prev.some((p) => p.connectionId === connection.connectionId)
+                    if (!exists) {
+                      return [
+                        ...prev,
+                        {
+                          connectionId: connection.connectionId,
+                          username: connectionData.username || `User-${connection.connectionId.slice(-6)}`,
+                          userId: connectionData.userId,
+                          isOwner: connectionData.isOwner || false,
+                          isMe: false,
+                          hasAudioStream: false,
+                        },
+                      ]
+                    }
+                    return prev
+                  })
+                } catch (parseError) {
+                  console.error('기존 연결 데이터 파싱 에러:', parseError)
+                }
+              }
+            })
+          }
+        } catch (error) {
+          console.error('기존 연결 확인 중 오류:', error)
+        }
+      }, 2000)
+
       // 퍼블리셔 생성 및 발행
-      const myPublisher = await ov.initPublisherAsync(undefined, {
-        audioSource: undefined,
-        videoSource: false,
-        publishAudio: true,
-        publishVideo: false,
-      })
+      console.log('🎤 마이크 퍼블리셔 생성 중...')
+      try {
+        const myPublisher = await ov.initPublisherAsync(undefined, {
+          audioSource: undefined,
+          videoSource: false,
+          publishAudio: true,
+          publishVideo: false,
+          insertMode: 'APPEND',
+          mirror: false,
+        })
 
-      await mySession.publish(myPublisher)
+        await mySession.publish(myPublisher)
 
-      setConnectedParticipants((prev) =>
-        prev.map((p) => (p.isMe ? { ...p, hasAudioStream: true } : p))
-      )
+        setConnectedParticipants((prev) =>
+          prev.map((p) => (p.isMe ? { ...p, hasAudioStream: true } : p))
+        )
 
-      setPublisher(myPublisher)
-      setIsSessionJoined(true)
-      setConnectionStatus('connected')
-      setRetryCount(0)
+        setPublisher(myPublisher)
+        setIsSessionJoined(true)
+        setConnectionStatus('connected')
+        setRetryCount(0)
 
-      console.log('🎉 OpenVidu 연결 완료!')
+        console.log('🎉 OpenVidu 연결 완료!')
+      } catch (publishError) {
+        console.error('퍼블리셔 생성/발행 에러:', publishError)
+        setErrorMessage('마이크 접근 권한을 확인해주세요.')
+        setConnectionStatus('error')
+      }
     } catch (error) {
       console.error('세션 참여 중 오류 발생:', error)
       setConnectionStatus('error')
@@ -110,19 +257,68 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   }
 
   const setupSessionEventListeners = (mySession) => {
+    // participantEvicted 이벤트 안전하게 처리
+    mySession.on('participantEvicted', (event) => {
+      console.log('👮 참가자 강제 퇴장:', event)
+      
+      try {
+        // event.connection이 undefined일 수 있음을 대비
+        const connectionId = event.connection?.connectionId || event.connectionId
+        
+        if (connectionId) {
+          console.log(`🚪 강제 퇴장된 연결: ${connectionId}`)
+          
+          setConnectedParticipants((prev) => {
+            return prev.filter((p) => p.connectionId !== connectionId)
+          })
+          
+          // 만약 내가 강제 퇴장당했다면
+          if (connectionId === mySession.connection?.connectionId) {
+            console.log('😱 내가 강제 퇴장당했습니다!')
+            alert('세션에서 강제 퇴장되었습니다.')
+            handleSessionEnd()
+          }
+        } else {
+          console.warn('⚠️ 강제 퇴장 이벤트에 연결 정보가 없음:', event)
+        }
+      } catch (error) {
+        console.error('참가자 퇴장 처리 중 오류:', error)
+      }
+    })
+
     // 연결 생성 이벤트
     mySession.on('connectionCreated', (event) => {
-      if (event.connection.connectionId !== mySession.connection?.connectionId) {
+      console.log('🔗 새 연결 생성됨:', event.connection?.connectionId)
+
+      if (event.connection?.connectionId !== mySession.connection?.connectionId) {
+        console.log('👤 다른 사용자 연결됨!')
+        
         setConnectedParticipants((prev) => {
           const exists = prev.some((p) => p.connectionId === event.connection.connectionId)
           if (!exists) {
+            // 연결 데이터 안전하게 파싱
+            let username = `User-${event.connection.connectionId.slice(-6)}`
+            let userId = null
+            let isOwner = false
+
+            if (event.connection.data) {
+              try {
+                const connectionData = JSON.parse(event.connection.data)
+                username = connectionData.username || username
+                userId = connectionData.userId
+                isOwner = connectionData.isOwner || false
+              } catch (error) {
+                console.warn('연결 데이터 파싱 실패:', error)
+              }
+            }
+
             return [
               ...prev,
               {
                 connectionId: event.connection.connectionId,
-                username: `User-${event.connection.connectionId.slice(-6)}`,
-                userId: null,
-                isOwner: false,
+                username,
+                userId,
+                isOwner,
                 isMe: false,
                 hasAudioStream: false,
               },
@@ -135,67 +331,113 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
     // 연결 삭제 이벤트
     mySession.on('connectionDestroyed', (event) => {
-      setConnectedParticipants((prev) =>
-        prev.filter((p) => p.connectionId !== event.connection.connectionId)
-      )
+      console.log('🔌 연결 삭제됨:', event.connection?.connectionId)
 
-      try {
-        if (event.connection?.data) {
-          const connectionData = JSON.parse(event.connection.data)
-          if (connectionData.isOwner && !isOwner) {
-            setTimeout(() => {
-              alert('방장이 나가서 음성 채팅이 종료됩니다.')
-              handleSessionEnd()
-            }, 1000)
+      if (event.connection?.connectionId) {
+        setConnectedParticipants((prev) =>
+          prev.filter((p) => p.connectionId !== event.connection.connectionId)
+        )
+
+        try {
+          if (event.connection.data) {
+            const connectionData = JSON.parse(event.connection.data)
+            console.log(`👋 ${connectionData.username}님이 나갔습니다.`)
+
+            if (connectionData.isOwner && !isOwner) {
+              setTimeout(() => {
+                alert('방장이 나가서 음성 채팅이 종료됩니다.')
+                handleSessionEnd()
+              }, 1000)
+            }
           }
+        } catch (error) {
+          console.error('연결 데이터 파싱 에러:', error)
         }
-      } catch (error) {
-        console.error('연결 데이터 파싱 에러:', error)
       }
     })
 
-    // 스트림 생성 이벤트
-    mySession.on('streamCreated', (event) => {
+    // 스트림 생성 이벤트 - 자동재생 정책 대응
+    mySession.on('streamCreated', async (event) => {
+      console.log('📺 새 스트림 생성됨:', event.stream.streamId)
+
       try {
+        // 스트림 유효성 검사
+        if (!event.stream || !event.stream.getMediaStream()) {
+          console.warn('⚠️ 유효하지 않은 스트림')
+          return
+        }
+
         const subscriber = mySession.subscribe(event.stream, undefined)
         setSubscribers((prev) => [...prev, subscriber])
 
+        // 오디오 요소 생성 및 설정
         const audio = document.createElement('audio')
-        audio.autoplay = true
         audio.controls = false
-        audio.srcObject = event.stream.getMediaStream()
+        audio.playsInline = true
+        audio.autoplay = false // 자동재생 비활성화
+        
+        const mediaStream = event.stream.getMediaStream()
+        audio.srcObject = mediaStream
 
         if (audioContainer.current) {
           audioContainer.current.appendChild(audio)
         }
 
-        // 참가자 스트림 정보 업데이트
-        if (event.stream.connection.data) {
-          const connectionData = JSON.parse(event.stream.connection.data)
-          setConnectedParticipants((prev) => {
-            const existingIndex = prev.findIndex(
-              (p) => p.connectionId === event.stream.connection.connectionId
-            )
-
-            if (existingIndex !== -1) {
-              const updated = [...prev]
-              updated[existingIndex] = { ...updated[existingIndex], hasAudioStream: true }
-              return updated
+        // 사용자 상호작용 후 재생 시도
+        const playAudio = async () => {
+          try {
+            if (!needsUserInteraction) {
+              await audio.play()
+              console.log('✅ 오디오 재생 시작됨')
             } else {
-              return [
-                ...prev,
-                {
-                  connectionId: event.stream.connection.connectionId,
-                  username: connectionData.username,
-                  userId: connectionData.userId,
-                  isOwner: connectionData.isOwner,
-                  isMe: false,
-                  hasAudioStream: true,
-                },
-              ]
+              console.log('⚠️ 사용자 상호작용 필요')
+              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
             }
-          })
+          } catch (error) {
+            console.warn('⚠️ 자동 재생 차단됨:', error.message)
+            if (error.name === 'NotAllowedError') {
+              setNeedsUserInteraction(true)
+              setErrorMessage('음성을 들으려면 "🎵 음성 활성화" 버튼을 클릭해주세요.')
+            }
+          }
         }
+
+        await playAudio()
+
+        // 참가자 스트림 정보 업데이트
+        if (event.stream.connection?.data) {
+          try {
+            const connectionData = JSON.parse(event.stream.connection.data)
+
+            setConnectedParticipants((prev) => {
+              const existingIndex = prev.findIndex(
+                (p) => p.connectionId === event.stream.connection.connectionId
+              )
+
+              if (existingIndex !== -1) {
+                const updated = [...prev]
+                updated[existingIndex] = { ...updated[existingIndex], hasAudioStream: true }
+                return updated
+              } else {
+                return [
+                  ...prev,
+                  {
+                    connectionId: event.stream.connection.connectionId,
+                    username: connectionData.username || `User-${event.stream.connection.connectionId.slice(-6)}`,
+                    userId: connectionData.userId,
+                    isOwner: connectionData.isOwner || false,
+                    isMe: false,
+                    hasAudioStream: true,
+                  },
+                ]
+              }
+            })
+          } catch (error) {
+            console.error('스트림 연결 데이터 파싱 에러:', error)
+          }
+        }
+
+        console.log('✅ 오디오 스트림 구독 성공')
       } catch (error) {
         console.error('스트림 구독 에러:', error)
       }
@@ -203,6 +445,8 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
     // 스트림 삭제 이벤트
     mySession.on('streamDestroyed', (event) => {
+      console.log('🗑️ 스트림 삭제됨:', event.stream.streamId)
+
       setSubscribers((prev) => prev.filter((sub) => sub.stream.streamId !== event.stream.streamId))
       setConnectedParticipants((prev) =>
         prev.map((p) =>
@@ -218,10 +462,19 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
     // 세션 연결 해제 이벤트
     mySession.on('sessionDisconnected', (event) => {
       console.log('🔌 세션이 종료되었습니다:', event.reason)
+      
       if (event.reason === 'sessionClosedByServer') {
         alert('방장이 음성 채팅을 종료했습니다.')
+      } else if (event.reason === 'networkDisconnect') {
+        alert('네트워크 연결이 끊어져 음성 채팅이 종료되었습니다.')
       }
       handleSessionEnd()
+    })
+
+    // 에러 이벤트 처리
+    mySession.on('exception', (event) => {
+      console.error('🚨 OpenVidu 세션 에러:', event)
+      setErrorMessage('음성 채팅 중 오류가 발생했습니다.')
     })
   }
 
@@ -232,7 +485,13 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         try {
           if (audio.srcObject === stream.getMediaStream()) {
             if (audio.srcObject) {
-              audio.srcObject.getTracks().forEach((track) => track.stop())
+              audio.srcObject.getTracks().forEach((track) => {
+                try {
+                  track.stop()
+                } catch (trackError) {
+                  console.warn('트랙 정지 실패:', trackError)
+                }
+              })
             }
             audio.remove()
           }
@@ -252,7 +511,13 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
       audioElements.forEach((audio) => {
         try {
           if (audio.srcObject) {
-            audio.srcObject.getTracks().forEach((track) => track.stop())
+            audio.srcObject.getTracks().forEach((track) => {
+              try {
+                track.stop()
+              } catch (trackError) {
+                console.warn('트랙 정지 실패:', trackError)
+              }
+            })
           }
           audio.remove()
         } catch (error) {
@@ -262,12 +527,28 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
       audioContainer.current.innerHTML = ''
     }
 
+    // 퍼블리셔 정리
+    if (publisher) {
+      try {
+        publisher.stream.getMediaStream().getTracks().forEach((track) => {
+          try {
+            track.stop()
+          } catch (trackError) {
+            console.warn('퍼블리셔 트랙 정지 실패:', trackError)
+          }
+        })
+      } catch (error) {
+        console.warn('퍼블리셔 정리 실패:', error)
+      }
+    }
+
     setSession(undefined)
     setPublisher(undefined)
     setIsSessionJoined(false)
     setSubscribers([])
     setConnectionStatus('connecting')
     setErrorMessage('')
+    setNeedsUserInteraction(true)
   }
 
   const leaveSession = () => {
@@ -327,10 +608,12 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
     errorMessage,
     retryCount,
     audioContainer,
+    needsUserInteraction,
     joinSession,
     leaveSession,
     closeEntireSession,
     retryConnection,
+    handleUserInteraction,
   }
 }
 
