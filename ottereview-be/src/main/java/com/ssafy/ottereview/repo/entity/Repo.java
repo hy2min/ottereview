@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.repo.entity;
 
 import com.ssafy.ottereview.account.entity.Account;
+import com.ssafy.ottereview.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -22,7 +23,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "Repository")
-public class Repo {
+public class Repo extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

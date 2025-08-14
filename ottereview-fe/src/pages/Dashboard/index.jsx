@@ -73,8 +73,10 @@ const Dashboard = () => {
   useEffect(() => {
     if (!user?.id || !accessToken) return
 
-    const updateEventSource = new EventSource(`${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=update`)
-    
+    const updateEventSource = new EventSource(
+      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?action=update`
+    )
+
     updateEventSource.addEventListener('update', (event) => {
       console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard):', event.data)
       fetchData()
@@ -105,31 +107,47 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="pt-2 space-y-3">
-      <div className="flex justify-between items-center">
-        <Box shadow className="min-h-24 flex-row space-y-1">
-          <h1 className="text-2xl">안녕하세요, {user?.githubUsername}님! 👋</h1>
-          <p className="text-stone-600">오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!</p>
-        </Box>
+    <div className="pt-2 space-y-8">
+      {/* 환영 메시지와 채팅방 목록 */}
+      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+        <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
+          <h1 className="text-2xl xl:text-3xl theme-text font-bold">
+            안녕하세요, {user?.githubUsername}님! 👋
+          </h1>
+          <p className="theme-text-secondary text-base xl:text-lg">
+            오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!
+          </p>
 
-        <ChatRoomList />
-
-        <div className="flex gap-2">
           <button
             onClick={handleTest}
-            className="bg-white border border-stone-300 rounded-full px-4 py-2 hover:bg-stone-100 shadow-sm"
+            className="theme-btn text-xs px-2 py-1 absolute top-2 right-2"
+            title="API 응답 테스트"
           >
-            응답 테스트
+            응답테스트
           </button>
+        </Box>
+
+        <div className="xl:w-1/2">
+          <ChatRoomList />
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row mb-4 justify-center gap-4 max-w-7xl mx-auto">
-        <div className="w-full md:w-1/2 min-w-0">
-          <RepositoryList />
-        </div>
-        <div className="w-full md:w-1/2 min-w-0">
-          <PRList authoredPRs={authoredPRs} reviewerPRs={reviewerPRs} />
+      {/* 메인 콘텐츠: Repository와 PR 관리 (더 강조) */}
+      <div className="theme-bg-secondary border theme-border p-6 rounded-xl theme-shadow-lg">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-6">
+            <h2 className="text-3xl font-bold theme-text mb-2">🚀 코드 리뷰 워크스페이스</h2>
+            <p className="theme-text-muted">Repository와 Pull Request를 효율적으로 관리하세요</p>
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-6">
+            <div className="w-full lg:w-1/2 min-w-0">
+              <RepositoryList />
+            </div>
+            <div className="w-full lg:w-1/2 min-w-0">
+              <PRList authoredPRs={authoredPRs} reviewerPRs={reviewerPRs} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

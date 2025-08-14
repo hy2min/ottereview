@@ -22,3 +22,9 @@ export const fetchChatDetail = async (meetingroomId) => {
   const res = await api.get(`api/meetings/${meetingroomId}`)
   return res.data
 }
+
+// 채팅방 삭제
+export const deleteChatRoom = async (meetingroomId) => {
+  const res = await api.delete(`/api/meetings/${meetingroomId}`)
+  return res.data
+}
