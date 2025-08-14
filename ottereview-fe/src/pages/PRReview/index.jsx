@@ -8,7 +8,14 @@ import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
-import { closePR, fetchPRDetail, reopenPR, submitReview, updatePRDescription, deletePRDescription } from '@/features/pullRequest/prApi'
+import {
+  closePR,
+  deletePRDescription,
+  fetchPRDetail,
+  reopenPR,
+  submitReview,
+  updatePRDescription,
+} from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -215,7 +222,7 @@ const PRReview = () => {
   const handleDescriptionUpdate = async (descriptionId, data) => {
     try {
       await updatePRDescription(prId, descriptionId, data)
-      
+
       // PR 데이터 새로고침하여 수정된 description 반영
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
@@ -229,7 +236,7 @@ const PRReview = () => {
   const handleDescriptionDelete = async (descriptionId) => {
     try {
       await deletePRDescription(prId, descriptionId)
-      
+
       // PR 데이터 새로고침하여 삭제된 description 반영
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
@@ -307,31 +314,60 @@ const PRReview = () => {
     <div className="pt-1 pb-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
       <Box shadow className="space-y-4 p-4">
-        {/* 레포지토리 정보 */}
-        <div className="flex items-center space-x-2 text-sm text-stone-600">
-          <FolderCode className="w-4 h-4" />
-          <span className="font-medium">{prDetail.repo?.fullName}</span>
-          <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
-            #{prDetail.githubPrNumber}
-          </span>
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
-            {prDetail.title}
-          </h1>
-          {prDetail.author && (
-            <div className="flex items-center gap-2 text-sm theme-text-secondary">
-              <span>작성자:</span>
-              <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
-                @{prDetail.author.githubUsername}
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            {/* 레포지토리 정보 */}
+            <div className="flex items-center space-x-2 text-sm text-stone-600 mb-3">
+              <FolderCode className="w-4 h-4" />
+              <span className="font-medium">{prDetail.repo?.fullName}</span>
+              <span className="px-2 py-1 bg-gray-100 rounded text-xs font-mono">
+                #{prDetail.githubPrNumber}
               </span>
             </div>
-          )}
-          {prDetail.body && prDetail.body.trim() && (
-            <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
-              {prDetail.body}
+            <div className="space-y-3">
+              <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
+                {prDetail.title}
+              </h1>
+              {prDetail.author && (
+                <div className="flex items-center gap-2 text-sm theme-text-secondary">
+                  <span>작성자:</span>
+                  <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
+                    {prDetail.author.githubUsername}
+                  </span>
+                </div>
+              )}
+              {prDetail.body && prDetail.body.trim() && (
+                <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
+                  {prDetail.body}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* PR 상태별 버튼 */}
+          <div className="flex-shrink-0 ml-4">
+            {prDetail.state === 'OPEN' ? (
+              <Button
+                variant="danger"
+                size="sm"
+                className="px-4 py-2"
+                onClick={handleClosePR}
+                disabled={closingPR}
+              >
+                {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
+              </Button>
+            ) : prDetail.state === 'CLOSED' ? (
+              <Button
+                variant="success"
+                size="sm"
+                className="px-4 py-2"
+                onClick={handleReopenPR}
+                disabled={reopeningPR}
+              >
+                {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
+              </Button>
+            ) : null}
+          </div>
         </div>
       </Box>
 
@@ -410,7 +446,7 @@ const PRReview = () => {
                 key={reviewer.id}
                 className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
               >
-                <span>@{reviewer.githubUsername}</span>
+                <span>{reviewer.githubUsername}</span>
               </div>
             ))}
           </div>
