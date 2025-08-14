@@ -333,25 +333,12 @@ const PRReview = () => {
                 @{prDetail.author.githubUsername}
               </span>
             </div>
-            <div className="space-y-3">
-              <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
-                {prDetail.title}
-              </h1>
-              {prDetail.author && (
-                <div className="flex items-center gap-2 text-sm theme-text-secondary">
-                  <span>작성자:</span>
-                  <span className="font-medium bg-blue-50 dark:bg-blue-900 px-2 py-1 rounded text-blue-700 dark:text-blue-300">
-                    {prDetail.author.githubUsername}
-                  </span>
-                </div>
-              )}
-              {prDetail.body && prDetail.body.trim() && (
-                <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
-                  {prDetail.body}
-                </div>
-              )}
+          )}
+          {prDetail.body && prDetail.body.trim() && (
+            <div className="text-sm theme-text whitespace-pre-wrap leading-relaxed p-3 theme-bg-tertiary rounded-lg border-l-4 border-blue-500">
+              {prDetail.body}
             </div>
-          </div>
+          )}
 
           {/* PR 상태별 버튼 */}
           <div className="flex-shrink-0 ml-4">
