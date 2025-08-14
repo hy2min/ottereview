@@ -28,7 +28,7 @@ public class PushEventService {
     private final PreparationService prPreparationService;
     private final EventSendController eventSendController;
 
-    public void processPushEvent(User user, String payload) {
+    public void processPushEvent(String payload) {
         log.info("Push Event 프로세스 실행");
         try {
             JsonNode json = objectMapper.readTree(payload);
@@ -40,7 +40,7 @@ public class PushEventService {
             // Push 이벤트 기본 정보 추출
             PushEventDto pushInfo = extractPushEventInfo(json);
 
-            eventSendController.push(user.getId(),"push", pushInfo);
+            eventSendController.push(pushInfo.getSender().getId(),"push", pushInfo);
             
         } catch (Exception e) {
             throw new BusinessException(WebhookErrorCode.WEBHOOK_UNSUPPORTED_ACTION);

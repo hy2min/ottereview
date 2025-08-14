@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -26,6 +26,9 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
+  
+  // 툴팁 표시 상태
+  const [showTooltip, setShowTooltip] = useState(false)
 
   // 템플릿 정의
   const templates = [
@@ -95,7 +98,25 @@ close #이슈번호
     }
   }
 
+  // 다음 버튼 활성화 조건 확인
+  const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
+  
+  // 툴팁 메시지 생성
+  const getDisabledTooltip = () => {
+    const missingFields = []
+    if (prTitle.trim() === '') missingFields.push('제목')
+    if (prBody.trim() === '') missingFields.push('설명')
+    
+    if (missingFields.length === 0) return ''
+    return `${missingFields.join(', ')}을(를) 입력해주세요`
+  }
+
   const handleNextStep = async () => {
+    // 타이틀과 설명이 없으면 실행하지 않음
+    if (!isNextButtonEnabled) {
+      return
+    }
+
     try {
       const formattedDescriptions = reviewComments.map((comment) => ({
         author_id: user?.id,
@@ -270,9 +291,25 @@ close #이슈번호
             이전
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary">
-            다음
-          </Button>
+          <div 
+            className="relative"
+            onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            <Button 
+              onClick={handleNextStep} 
+              variant="primary" 
+              disabled={!isNextButtonEnabled}
+            >
+              다음
+            </Button>
+            {showTooltip && !isNextButtonEnabled && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-50">
+                {getDisabledTooltip()}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
