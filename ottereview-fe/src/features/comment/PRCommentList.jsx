@@ -17,7 +17,9 @@ const PRCommentList = ({ reviews = [] }) => {
           <p className="text-stone-500">아직 리뷰가 없습니다.</p>
         </Box>
       ) : (
-        reviews.map((review) => (
+        reviews
+          .filter(review => review.body || (review.reviewComments && review.reviewComments.length > 0))
+          .map((review) => (
           <Box key={review.id} shadow className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
