@@ -1,60 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css');
 @import 'tailwindcss';
-
-/* ===== 폰트 등록 ===== */
-@font-face {
-  font-family: 'BMJUA';
-  src:
-    url('../fonts/BMJUA_ttf.ttf') format('truetype'),
-    url('../fonts/BMJUA_otf.otf') format('opentype');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
 
 /* ===== 전역 폰트 적용 ===== */
 body {
-  font-family: 'BMJUA', 'Inter', system-ui, sans-serif !important;
-  /* background-color: var(--color-warning-100); */
+  font-family:
+    'DM Sans',
+    'Inter',
+    'Pretendard',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif !important;
+  background-color: var(--bg-primary);
   background-attachment: fixed;
   min-height: 100vh;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.014em;
+  color: var(--text-primary);
+  transition:
+    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 html {
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
 }
 
 @theme {
-  --color-primary-50: #e8f5e8;
-  --color-primary-100: #c8e6c8;
-  --color-primary-200: #a8d7a8;
-  --color-primary-300: #88c888;
-  --color-primary-400: #68b968;
-  --color-primary-500: #48aa48;
-  --color-primary-600: #3a8a3a;
-  --color-primary-700: #2c6a2c;
-  --color-primary-800: #1e4a1e;
-  --color-primary-900: #102a10;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
 
-  --color-secondary-50: #f0f8ff;
-  --color-secondary-100: #e0f0ff;
-  --color-secondary-200: #c0e0ff;
-  --color-secondary-300: #a0d0ff;
-  --color-secondary-400: #80c0ff;
-  --color-secondary-500: #60b0ff;
-  --color-secondary-600: #4d8ccc;
-  --color-secondary-700: #3a6899;
-  --color-secondary-800: #274466;
-  --color-secondary-900: #142033;
+  --color-secondary-50: #f0fdfa;
+  --color-secondary-100: #ccfbf1;
+  --color-secondary-200: #99f6e4;
+  --color-secondary-300: #5eead4;
+  --color-secondary-400: #2dd4bf;
+  --color-secondary-500: #14b8a6;
+  --color-secondary-600: #0d9488;
+  --color-secondary-700: #0f766e;
+  --color-secondary-800: #115e59;
+  --color-secondary-900: #134e4a;
 
-  --color-accent-50: #fff8e1;
-  --color-accent-100: #ffecb3;
-  --color-accent-200: #ffe082;
-  --color-accent-300: #ffd54f;
-  --color-accent-400: #ffca28;
-  --color-accent-500: #ffc107;
-  --color-accent-600: #ffb300;
-  --color-accent-700: #ffa000;
-  --color-accent-800: #ff8f00;
-  --color-accent-900: #ff6f00;
+  --color-accent-50: #fdf4ff;
+  --color-accent-100: #fae8ff;
+  --color-accent-200: #f5d0fe;
+  --color-accent-300: #f0abfc;
+  --color-accent-400: #e879f9;
+  --color-accent-500: #d946ef;
+  --color-accent-600: #c026d3;
+  --color-accent-700: #a21caf;
+  --color-accent-800: #86198f;
+  --color-accent-900: #701a75;
 
   --color-earth-50: #f5f5dc;
   --color-earth-100: #e8e8b8;
@@ -78,38 +92,38 @@ html {
   --color-stone-800: #373737;
   --color-stone-900: #1c1c1c;
 
-  --color-danger-50: #ffeaea;
-  --color-danger-100: #ffd5d5;
-  --color-danger-200: #ffb3b3;
-  --color-danger-300: #ff9191;
-  --color-danger-400: #ff6f6f;
-  --color-danger-500: #ff4d4d;
-  --color-danger-600: #cc3e3e;
-  --color-danger-700: #992e2e;
-  --color-danger-800: #661f1f;
-  --color-danger-900: #330f0f;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #cf222e;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
 
-  --color-success-50: #e8f5e8;
-  --color-success-100: #c8e6c8;
-  --color-success-200: #a8d7a8;
-  --color-success-300: #88c888;
-  --color-success-400: #68b968;
-  --color-success-500: #48aa48;
-  --color-success-600: #3a8a3a;
-  --color-success-700: #2c6a2c;
-  --color-success-800: #1e4a1e;
-  --color-success-900: #102a10;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #1a7f37;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
 
-  --color-warning-50: #fff8e1;
-  --color-warning-100: #ffecb3;
-  --color-warning-200: #ffe082;
-  --color-warning-300: #ffd54f;
-  --color-warning-400: #ffca28;
-  --color-warning-500: #ffc107;
-  --color-warning-600: #ffb300;
-  --color-warning-700: #ffa000;
-  --color-warning-800: #ff8f00;
-  --color-warning-900: #ff6f00;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #bf8700;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
 
   --color-info-50: #e3f2fd;
   --color-info-100: #bbdefb;
@@ -135,17 +149,51 @@ html {
   --color-selected-added-code: #caf0e2;
 }
 
+[data-theme='light'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #fafbfc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --shadow-color: rgba(15, 23, 42, 0.04);
+  --accent-primary: #3b82f6;
+  --accent-secondary: #1e293b;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --danger-color: #ef4444;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #020617;
+  --bg-secondary: #0f172a;
+  --bg-tertiary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --border-primary: #334155;
+  --border-secondary: #475569;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --accent-primary: #60a5fa;
+  --accent-secondary: #f8fafc;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --danger-color: #f87171;
+}
+
 :root {
-  --color-primary-50: #e8f5e8;
-  --color-primary-100: #c8e6c8;
-  --color-primary-200: #a8d7a8;
-  --color-primary-300: #88c888;
-  --color-primary-400: #68b968;
-  --color-primary-500: #48aa48;
-  --color-primary-600: #3a8a3a;
-  --color-primary-700: #2c6a2c;
-  --color-primary-800: #1e4a1e;
-  --color-primary-900: #102a10;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #0969da;
+  --color-primary-600: #0557b8;
+  --color-primary-700: #0b4695;
+  --color-primary-800: #1e3a8a;
+  --color-primary-900: #1e293b;
 
   --color-secondary-50: #f0f8ff;
   --color-secondary-100: #e0f0ff;
@@ -191,38 +239,38 @@ html {
   --color-stone-800: #373737;
   --color-stone-900: #1c1c1c;
 
-  --color-danger-50: #ffeaea;
-  --color-danger-100: #ffd5d5;
-  --color-danger-200: #ffb3b3;
-  --color-danger-300: #ff9191;
-  --color-danger-400: #ff6f6f;
-  --color-danger-500: #ff4d4d;
-  --color-danger-600: #cc3e3e;
-  --color-danger-700: #992e2e;
-  --color-danger-800: #661f1f;
-  --color-danger-900: #330f0f;
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-200: #fecaca;
+  --color-danger-300: #fca5a5;
+  --color-danger-400: #f87171;
+  --color-danger-500: #cf222e;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger-800: #991b1b;
+  --color-danger-900: #7f1d1d;
 
-  --color-success-50: #e8f5e8;
-  --color-success-100: #c8e6c8;
-  --color-success-200: #a8d7a8;
-  --color-success-300: #88c888;
-  --color-success-400: #68b968;
-  --color-success-500: #48aa48;
-  --color-success-600: #3a8a3a;
-  --color-success-700: #2c6a2c;
-  --color-success-800: #1e4a1e;
-  --color-success-900: #102a10;
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-200: #bbf7d0;
+  --color-success-300: #86efac;
+  --color-success-400: #4ade80;
+  --color-success-500: #1a7f37;
+  --color-success-600: #16a34a;
+  --color-success-700: #15803d;
+  --color-success-800: #166534;
+  --color-success-900: #14532d;
 
-  --color-warning-50: #fff8e1;
-  --color-warning-100: #ffecb3;
-  --color-warning-200: #ffe082;
-  --color-warning-300: #ffd54f;
-  --color-warning-400: #ffca28;
-  --color-warning-500: #ffc107;
-  --color-warning-600: #ffb300;
-  --color-warning-700: #ffa000;
-  --color-warning-800: #ff8f00;
-  --color-warning-900: #ff6f00;
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-200: #fde68a;
+  --color-warning-300: #fcd34d;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #bf8700;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning-800: #92400e;
+  --color-warning-900: #78350f;
 
   --color-info-50: #e3f2fd;
   --color-info-100: #bbdefb;
@@ -252,7 +300,7 @@ html {
   --font-bmjua: 'BMJUA', sans-serif;
   --font-pixel: 'Press Start 2P', monospace;
   --font-minecraft: 'Minecraft', monospace;
-  --font-sans: 'BMJUA', 'Inter', system-ui, sans-serif;
+  --font-sans: 'DM Sans', 'Inter', system-ui, sans-serif;
 
   /* =======================================================
      📦 Box Shadows
@@ -315,30 +363,45 @@ html {
   animation: minecraft-progress 1s linear infinite;
 }
 
-/* Pixel Art Logo - Reduced shadow */
+/* Logo Typography */
 .pixel-logo {
-  font-family: var(--font-pixel); /* @apply font-pixel */
-  color: var(--color-primary-600); /* @apply text-primary-600 */
-  text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  color: var(--accent-primary);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-optical-sizing: auto;
 }
 
 .minecraft-container {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  background-color: var(--bg-secondary);
+  border-width: 2px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 8px var(--shadow-color);
+  padding: 1rem;
   border-radius: 8px;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
 }
 
 /* Soft rounded containers */
 .soft-container {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  padding: 1rem; /* @apply p-4 (1rem = 16px) */
+  background-color: var(--bg-secondary);
+  border-width: 1px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 12px var(--shadow-color);
+  padding: 1rem;
   border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+/* 다크모드에서 컨테이너 가시성 개선 */
+[data-theme='dark'] .soft-container {
+  border-color: #525866;
+  background-color: #2a2d3a;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(255, 255, 255, 0.02);
 }
 
 /* Utility classes */
@@ -351,68 +414,86 @@ html {
 
 /* Soft rounded cards */
 .soft-card {
-  background-color: white; /* @apply bg-white */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
+  background-color: var(--bg-secondary);
+  border-width: 1px;
+  border-color: var(--border-primary);
+  box-shadow: 0 2px 8px var(--shadow-color);
   border-radius: 12px;
-  transition-property: all; /* @apply transition-all */
-  transition-duration: 200ms; /* @apply duration-200 */
+  transition: all 0.2s ease;
 }
 .soft-card:hover {
-  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
+  box-shadow: 0 4px 16px var(--shadow-color);
+  transform: translateY(-2px);
 }
 
-/* Soft rounded buttons */
-.soft-btn {
-  display: inline-flex; /* @apply inline-flex */
-  align-items: center; /* @apply items-center */
-  justify-content: center; /* @apply justify-center */
-  font-weight: 500; /* @apply font-medium (Tailwind font-medium은 500) */
-  transition-property: all; /* @apply transition-all */
-  transition-duration: 200ms; /* @apply duration-200 */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  box-shadow: var(--shadow-pixel); /* @apply shadow-pixel */
-  border-radius: 8px;
+/* 다크모드에서 카드 가시성 개선 */
+[data-theme='dark'] .soft-card {
+  border-color: #525866;
+  background-color: #2a2d3a;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 1px 3px rgba(255, 255, 255, 0.03);
 }
-.soft-btn:hover {
-  box-shadow: var(--shadow-pixel-lg); /* @apply hover:shadow-pixel-lg */
-  transform: translateY(-4px); /* @apply hover:-translate-y-1 */
+
+[data-theme='dark'] .soft-card:hover {
+  border-color: #60a5fa;
+  background-color: #2f3241;
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.3),
+    0 4px 10px rgba(96, 165, 250, 0.1);
 }
-.soft-btn:active {
-  box-shadow: var(--shadow-pixel-inset); /* @apply active:shadow-pixel-inset */
-  transform: translateY(0); /* @apply active:translate-y-0 */
+
+/* Modern button base styles */
+.btn-focus-ring:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
-.soft-btn:focus {
-  outline: 2px solid transparent; /* @apply focus:outline-none */
-  outline-offset: 2px; /* @apply focus:ring-offset-2 */
-  --tw-ring-color: currentColor; /* @apply focus:ring-2 */
-  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+
+.btn-focus-ring:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* Soft rounded inputs */
 .soft-input {
-  width: 100%; /* @apply w-full */
-  padding: 0.5rem 0.75rem; /* @apply px-3 py-2 */
-  border-width: 2px; /* @apply border-2 */
-  border-color: black; /* @apply border-black */
-  background-color: white; /* @apply bg-white */
-  color: #1a202c; /* @apply text-gray-900 (Tailwind gray-900) */
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-width: 1px;
+  border-color: var(--border-primary);
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
   border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px var(--shadow-color);
 }
 .soft-input:focus {
-  outline: 2px solid transparent; /* @apply focus:outline-none */
-  outline-offset: 2px; /* @apply focus:ring-offset-2 (일반적으로 ring-offset-width는 2px) */
-  --tw-ring-color: var(--color-primary-500); /* @apply focus:ring-primary-500 */
-  border-color: var(--color-primary-500); /* @apply focus:border-primary-500 */
-  box-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width))
-    var(--tw-ring-color);
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow:
+    0 0 0 3px rgba(9, 105, 218, 0.1),
+    0 1px 3px var(--shadow-color);
 }
 
 .soft-input::placeholder {
-  color: #6b7280; /* @apply placeholder-gray-500 (Tailwind gray-500) */
+  color: var(--text-muted);
+}
+
+/* 다크모드에서 input 가시성 개선 */
+[data-theme='dark'] .soft-input {
+  background-color: #2a2d3a;
+  border-color: #525866;
+  color: #ffffff;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='dark'] .soft-input:focus {
+  border-color: #60a5fa;
+  background-color: #2f3241;
+  box-shadow:
+    0 0 0 3px rgba(96, 165, 250, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* 박스 쉐도우를 위한 유틸리티 클래스 */
@@ -453,4 +534,577 @@ html {
   100% {
     background-position: 8px 8px;
   }
+}
+
+/* ===== 스크롤 애니메이션 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.8s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-400 {
+  animation-delay: 0.4s;
+}
+
+.animate-delay-600 {
+  animation-delay: 0.6s;
+}
+
+.animate-delay-800 {
+  animation-delay: 0.8s;
+}
+
+/* 스크롤 기반 애니메이션을 위한 초기 상태 */
+.scroll-animation {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-animation.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* 페이지 전환 애니메이션 */
+.page-transition {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+/* 로딩 애니메이션 */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* 텍스트 그라데이션 애니메이션 */
+@keyframes gradient {
+  0%, 100% {
+    background-size: 200% 200%;
+    background-position: left center;
+  }
+  50% {
+    background-size: 200% 200%;
+    background-position: right center;
+  }
+}
+
+.text-gradient-animated {
+  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 4s ease-in-out infinite;
+}
+
+/* 고급 애니메이션과 효과 */
+@keyframes morphing {
+  0%, 100% {
+    border-radius: 40% 60% 70% 30% / 40% 40% 60% 50%;
+  }
+  34% {
+    border-radius: 70% 30% 50% 50% / 30% 70% 70% 30%;
+  }
+  67% {
+    border-radius: 100% 60% 60% 100% / 100% 100% 60% 60%;
+  }
+}
+
+.morphing-blob {
+  animation: morphing 8s ease-in-out infinite;
+}
+
+@keyframes floating {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+.floating {
+  animation: floating 6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer-effect {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* 3D 카드 효과 */
+.card-3d {
+  transform-style: preserve-3d;
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card-3d:hover {
+  transform: rotateX(5deg) rotateY(-10deg) translateZ(50px);
+}
+
+.card-3d::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  border-radius: inherit;
+  z-index: -1;
+  transform: translateZ(-1px);
+}
+
+/* 고급 그라데이션 효과 */
+.gradient-mesh {
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* 매끄러운 스크롤 애니메이션 */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.8s ease-out forwards;
+}
+
+/* 호버 시 글로우 효과 */
+.glow-on-hover {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.glow-on-hover:hover {
+  box-shadow: 
+    0 0 30px rgba(59, 130, 246, 0.3),
+    0 0 60px rgba(59, 130, 246, 0.2),
+    0 0 80px rgba(59, 130, 246, 0.1);
+}
+
+/* 동적 배경 패턴 */
+.dynamic-bg {
+  background-image: 
+    radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
+  background-size: 20px 20px;
+  animation: move-bg 20s linear infinite;
+}
+
+@keyframes move-bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 20px 20px;
+  }
+}
+
+/* 정교한 카드 호버 효과 */
+.premium-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.premium-card:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(-10px) scale(1.02);
+}
+
+[data-theme='dark'] .premium-card {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .premium-card:hover {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* 초염췜 인터랙션 효과 */
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes rainbow {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes levitate {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+@keyframes sparkle-animation {
+  0%, 100% { opacity: 0; transform: scale(0); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+.wiggle { animation: wiggle 0.5s ease-in-out; }
+.heartbeat { animation: heartbeat 1.5s ease-in-out infinite; }
+.rainbow { animation: rainbow 3s linear infinite; }
+.levitate { animation: levitate 3s ease-in-out infinite; }
+.sparkle-anim { animation: sparkle-animation 1.5s ease-in-out infinite; }
+
+/* 자연스러운 스크롤 애니메이션 */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(60px) scale(0.95);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.scroll-reveal.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* 카운터 애니메이션 */
+@keyframes countUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.counter-animation {
+  animation: countUp 0.6s ease-out forwards;
+}
+
+/* 연속 애니메이션 지연 */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+.stagger-6 { animation-delay: 0.6s; }
+
+/* ===== 개선된 타이포그래피 ===== */
+.text-display {
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  line-height: 1.1;
+  font-optical-sizing: auto;
+}
+
+.text-headline {
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
+  font-optical-sizing: auto;
+}
+
+.text-body {
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.014em;
+  line-height: 1.6;
+  font-optical-sizing: auto;
+}
+
+.text-caption {
+  font-family: 'DM Sans', 'Inter', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  font-size: 0.875rem;
+  font-optical-sizing: auto;
+}
+
+/* 다크모드 호환 유틸리티 클래스 */
+.theme-btn {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: 8px;
+  padding: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.theme-btn:hover {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border-color: var(--border-secondary);
+}
+
+/* 다크모드에서 테마 버튼 가시성 개선 */
+[data-theme='dark'] .theme-btn {
+  background-color: #2a2d3a;
+  border-color: #525866;
+  color: #b8bcc8;
+}
+
+[data-theme='dark'] .theme-btn:hover {
+  background-color: #2f3241;
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+.theme-text {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-border {
+  border-color: var(--border-primary);
+}
+
+.theme-shadow {
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+
+.theme-shadow-lg {
+  box-shadow:
+    0 4px 6px -1px var(--shadow-color),
+    0 2px 4px -1px var(--shadow-color);
+}
+
+/* 다크모드에서 더 부드러운 그림자 효과 */
+[data-theme='dark'] .theme-shadow {
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(255, 255, 255, 0.02);
+}
+
+[data-theme='dark'] .theme-shadow-lg {
+  box-shadow:
+    0 8px 25px rgba(0, 0, 0, 0.2),
+    0 4px 10px rgba(255, 255, 255, 0.03);
+}
+
+/* 자동 슬라이드 컨테이너 - 스크롤바 완전 숨김 */
+.chat-room-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chat-room-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* 자동 슬라이드 애니메이션 */
+.auto-slide-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.auto-slide-track {
+  display: flex;
+  gap: 12px;
+  will-change: transform;
+}
+
+/* 텍스트 줄 제한 유틸리티 */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 호버 스케일 효과 */
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+/* 글래스모피즘 효과 */
+.glass-effect {
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(209, 213, 219, 0.3);
+}
+
+[data-theme='dark'] .glass-effect {
+  background-color: rgba(17, 24, 39, 0.8);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+/* 부드러운 그라데이션 오버레이 */
+.gradient-overlay {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+}
+
+[data-theme='dark'] .gradient-overlay {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(147, 51, 234, 0.2) 100%);
+}
+
+/* 인터랙티브 버튼 효과 */
+.btn-interactive {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-interactive::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.btn-interactive:hover::before {
+  left: 100%;
+}
+
+/* 카드 호버 효과 개선 */
+.card-hover-effect {
+  transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-style: preserve-3d;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-8px) rotateX(2deg);
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] .card-hover-effect:hover {
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }

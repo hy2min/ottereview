@@ -190,3 +190,15 @@ export const fetchPRDescriptions = async (prId) => {
   const res = await api.get(`/api/pull-requests/${prId}/descriptions`)
   return res.data
 }
+
+// PR description 수정
+export const updatePRDescription = async (prId, descriptionId, data) => {
+  const res = await api.put(`/api/pull-requests/${prId}/descriptions/${descriptionId}`, data)
+  return res.data
+}
+
+// PR description 삭제
+export const deletePRDescription = async (prId, descriptionId) => {
+  const res = await api.delete(`/api/pull-requests/${prId}/descriptions/${descriptionId}`)
+  return res.data
+}

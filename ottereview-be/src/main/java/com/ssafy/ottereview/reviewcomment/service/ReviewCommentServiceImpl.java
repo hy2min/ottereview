@@ -3,13 +3,16 @@ package com.ssafy.ottereview.reviewcomment.service;
 import com.ssafy.ottereview.account.repository.AccountRepository;
 import com.ssafy.ottereview.ai.service.AiAudioProcessingService;
 import com.ssafy.ottereview.common.exception.BusinessException;
+import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.review.entity.Review;
 import com.ssafy.ottereview.review.exception.ReviewErrorCode;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
 import com.ssafy.ottereview.review.service.ReviewGithubService;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentCreateRequest;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentReplyRequest;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentResponse;
 import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentUpdateRequest;
+import com.ssafy.ottereview.reviewcomment.dto.ReviewCommentWithRepliesResponse;
 import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import com.ssafy.ottereview.reviewcomment.exception.ReviewCommentErrorCode;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
@@ -17,6 +20,13 @@ import com.ssafy.ottereview.s3.service.S3ServiceImpl;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,18 +39,15 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import reactor.util.function.Tuple2;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Slf4j
 @RequiredArgsConstructor
 @Service
 public class ReviewCommentServiceImpl implements ReviewCommentService {
 
+    private static final String COMMENT_TEMPLATE = """
+            **👀 Reviewer: @%s**
+            %s
+            """;
     private final ReviewCommentRepository reviewCommentRepository;
     private final UserRepository userRepository;
     private final ReviewRepository reviewRepository;
@@ -48,6 +55,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
     private final AccountRepository accountRepository;
     private final S3ServiceImpl s3Service;
     private final AiAudioProcessingService aiAudioProcessingService;
+    private final GithubApiClient githubApiClient;
 
     @Override
     @Transactional
@@ -300,7 +308,6 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
         }
     }
 
-
     @Override
     @Transactional(readOnly = true)
     public List<ReviewCommentResponse> getCommentsByReviewId(Long reviewId) {
@@ -359,6 +366,151 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                 log.warn("음성 파일 URL 생성 실패 - commentId: {}, recordKey: {}, error: {}",
                         comment.getId(), comment.getRecordKey(), e.getMessage());
                 // URL 생성 실패해도 응답은 반환
+            }
+        }
+
+        return response;
+    }
+
+    /**
+     * 클로드 코드
+     */
+
+
+    @Override
+    @Transactional
+    public ReviewCommentResponse createReply(ReviewCommentReplyRequest request, Long userId) {
+        // 1. 부모 댓글 존재 확인
+        ReviewComment parentComment = reviewCommentRepository.findById(request.getParentCommentId())
+                .orElseThrow(() -> new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_NOT_FOUND));
+
+        // 2. 작성자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        // 3. 답글 생성
+        ReviewComment reply = ReviewComment.builder()
+                .user(user)
+                .review(parentComment.getReview())
+                .path(parentComment.getPath())
+                .body(COMMENT_TEMPLATE.formatted(user.getGithubUsername(), request.getBody()))
+                .parentComment(parentComment)
+                .build();
+
+        ReviewComment savedReply = reviewCommentRepository.save(reply);
+
+        // 4. GitHub에 답글 생성
+        try {
+            createReplyOnGithub(savedReply, parentComment);
+        } catch (Exception e) {
+            log.error("GitHub 답글 생성 실패 - 답글 ID: {}, 부모 댓글 ID: {}, 오류: {}", 
+                    savedReply.getId(), parentComment.getId(), e.getMessage());
+        }
+
+        return ReviewCommentResponse.from(savedReply);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewCommentWithRepliesResponse> getCommentsWithReplies(Long reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new BusinessException(ReviewErrorCode.REVIEW_NOT_FOUND));
+
+        // 최상위 댓글들만 조회
+        List<ReviewComment> parentComments = reviewCommentRepository.findAllByReview(review)
+                .stream()
+                .filter(comment -> comment.getParentComment() == null)
+                .collect(Collectors.toList());
+
+        // 모든 답글들을 조회하고 부모 댓글별로 그룹핑
+        List<ReviewComment> allReplies = reviewCommentRepository.findAllByReview(review)
+                .stream()
+                .filter(comment -> comment.getParentComment() != null)
+                .collect(Collectors.toList());
+
+        Map<Long, List<ReviewComment>> repliesByParentId = allReplies.stream()
+                .collect(Collectors.groupingBy(reply -> reply.getParentComment().getId()));
+
+        // 계층 구조로 변환
+        return parentComments.stream()
+                .map(parent -> {
+                    ReviewCommentWithRepliesResponse response = createResponseWithVoiceUrlForReplies(parent);
+                    List<ReviewComment> replies = repliesByParentId.getOrDefault(parent.getId(), Collections.emptyList());
+                    List<ReviewCommentWithRepliesResponse> replyResponses = replies.stream()
+                            .map(this::createResponseWithVoiceUrlForReplies)
+                            .collect(Collectors.toList());
+                    return response.toBuilder().replies(replyResponses).build();
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewCommentResponse> getRepliesByParentId(Long parentCommentId) {
+        List<ReviewComment> replies = reviewCommentRepository.findAllByParentCommentId(parentCommentId);
+
+        if(replies.isEmpty()) {
+            throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_RETRIEVE_FAILED);
+        }
+
+        return replies.stream()
+                .map(this::createResponseWithVoiceUrl)
+                .collect(Collectors.toList());
+    }
+
+    private void createReplyOnGithub(ReviewComment reply, ReviewComment parentComment) {
+        if (parentComment.getGithubId() == null) {
+            log.warn("부모 댓글에 GitHub ID가 없어 GitHub 답글을 생성할 수 없습니다 - 부모 댓글 ID: {}", parentComment.getId());
+            return;
+        }
+
+        try {
+            String repoFullName = reply.getReview().getPullRequest().getRepo().getFullName();
+            Long installationId = reply.getReview().getPullRequest().getRepo().getAccount().getInstallationId();
+
+            var githubComment = githubApiClient.createReviewCommentReply(
+                    installationId,
+                    repoFullName,
+                    reply.getReview().getPullRequest().getGithubPrNumber(),
+                    parentComment.getGithubId(), // 부모 댓글의 GitHub ID
+                    reply.getBody()
+            );
+
+            // GitHub ID와 in_reply_to ID 업데이트
+            reply = reply.toBuilder()
+                    .githubId(githubComment.getId())
+                    .githubInReplyToId(parentComment.getGithubId())
+                    .line(githubComment.getLine())
+                    .startLine(githubComment.getStartLine())
+                    .startSide(githubComment.getStartSide().toString())
+                    .side(githubComment.getSide().toString())
+                    .position(githubComment.getPosition())
+                    .diffHunk(githubComment.getDiffHunk())
+                    .build();
+            
+            reviewCommentRepository.save(reply);
+
+            log.info("GitHub 답글 생성 성공 - 답글 ID: {}, GitHub 댓글 ID: {}", reply.getId(), githubComment.getId());
+
+        } catch (Exception e) {
+            log.error("GitHub 답글 생성 실패", e);
+            throw new BusinessException(ReviewCommentErrorCode.REVIEW_COMMENT_CREATE_FAILED);
+        }
+    }
+
+    private ReviewCommentWithRepliesResponse createResponseWithVoiceUrlForReplies(ReviewComment comment) {
+        ReviewCommentWithRepliesResponse response = ReviewCommentWithRepliesResponse.from(comment);
+
+        // recordKey가 있으면 Pre-signed URL 생성
+        if (comment.getRecordKey() != null && !comment.getRecordKey().trim().isEmpty()) {
+            try {
+                String voiceUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60);
+                return response.toBuilder()
+                        .voiceFileUrl(voiceUrl)
+                        .build();
+            } catch (Exception e) {
+                log.warn("음성 파일 URL 생성 실패 - commentId: {}, recordKey: {}, error: {}",
+                        comment.getId(), comment.getRecordKey(), e.getMessage());
             }
         }
 

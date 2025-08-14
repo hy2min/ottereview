@@ -23,26 +23,26 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
     setIsOpen(false)
   }
 
-  const baseBoxClasses = 'bg-white border-2 border-black w-full box-border'
+  const baseBoxClasses = 'theme-bg-secondary border theme-border w-full box-border'
 
   const selectBoxClasses = twMerge(
     baseBoxClasses,
-    'px-2 py-1',
-    isOpen ? 'rounded-t-[8px] rounded-b-none' : 'rounded-[8px]',
-    'cursor-pointer'
+    'px-3 py-2 theme-text',
+    isOpen ? 'rounded-t-lg rounded-b-none border-b-transparent' : 'rounded-lg',
+    'cursor-pointer transition-colors hover:theme-bg-tertiary'
   )
 
   const dropdownBoxClasses = twMerge(
     baseBoxClasses,
-    'absolute z-10 top-full left-0 max-h-60 overflow-y-auto shadow-lg border-t-0',
-    'rounded-b-[8px] rounded-t-none'
+    'absolute z-10 top-full left-0 max-h-60 overflow-y-auto theme-shadow-lg border-t-0',
+    'rounded-b-lg rounded-t-none'
   )
 
   const getOptionClass = (optionValue) => {
     const isSelected = optionValue === selectedOption?.value
     return twMerge(
-      'p-2 cursor-pointer',
-      isSelected ? 'bg-blue-500 text-white' : 'hover:bg-blue-100'
+      'px-3 py-2 cursor-pointer transition-colors theme-text',
+      isSelected ? 'bg-blue-600 text-white' : 'hover:theme-bg-tertiary'
     )
   }
 
@@ -50,9 +50,11 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
     <div ref={selectRef} className="relative w-full" {...props}>
       <div className={selectBoxClasses} onClick={() => setIsOpen(!isOpen)}>
         <div className="flex justify-between items-center">
-          <span>{selectedOption ? selectedOption.label : placeholder}</span>
+          <span className={selectedOption ? 'theme-text' : 'theme-text-muted'}>
+            {selectedOption ? selectedOption.label : placeholder}
+          </span>
           <svg
-            className={`w-4 h-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`w-4 h-4 transform transition-transform theme-text-secondary ${isOpen ? 'rotate-180' : ''}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"

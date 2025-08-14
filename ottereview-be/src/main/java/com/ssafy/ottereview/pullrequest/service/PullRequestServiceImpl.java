@@ -183,10 +183,33 @@ public class PullRequestServiceImpl implements PullRequestService {
                 .toList();
 
         // Description 추가
-
         List<PullRequestDescriptionInfo> descriptions = descriptionRepository.findAllByPullRequest(pullRequest)
                 .stream()
-                .map(PullRequestDescriptionInfo::fromEntity)
+                .map(description -> {
+                    String voiceFileUrl = null;
+                    if (description.getRecordKey() != null && !description.getRecordKey().trim().isEmpty()) {
+                        try {
+                            voiceFileUrl = s3Service.generatePresignedUrl(description.getRecordKey(), 60);
+                        } catch (Exception e) {
+                            log.warn("Description 음성 파일 URL 생성 실패 - descriptionId: {}, recordKey: {}", 
+                                description.getId(), description.getRecordKey());
+                        }
+                    }
+                    
+                    return PullRequestDescriptionInfo.builder()
+                            .id(description.getId())
+                            .path(description.getPath())
+                            .body(description.getBody())
+                            .recordKey(description.getRecordKey())
+                            .position(description.getPosition())
+                            .startLine(description.getStartLine())
+                            .startSide(description.getStartSide())
+                            .line(description.getLine())
+                            .side(description.getSide())
+                            .diffHunk(description.getDiffHunk())
+                            .voiceFileUrl(voiceFileUrl)
+                            .build();
+                })
                 .toList();
 
         // Review 추가
