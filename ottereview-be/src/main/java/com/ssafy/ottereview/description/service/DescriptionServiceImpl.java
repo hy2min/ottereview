@@ -57,7 +57,7 @@ public class DescriptionServiceImpl implements DescriptionService {
             // AI 처리와 S3 업로드를 병렬로 수행
             Mono<String> aiProcessing = aiAudioProcessingService.processAudioFile(file);
             Mono<String> s3Upload = Mono.fromCallable(() ->
-                            s3Service.uploadFile(file, request.getPullRequestId())
+                            s3Service.uploadDesFile(file, request.getPullRequestId())
                     )
                     .subscribeOn(Schedulers.boundedElastic());
 
@@ -95,7 +95,7 @@ public class DescriptionServiceImpl implements DescriptionService {
         Description savedDescription = descriptionRepository.save(description);
         log.info("Description 생성 완료 - ID: {}", savedDescription.getId());
 
-        return DescriptionResponse.from(savedDescription);
+        return createResponseWithVoiceUrl(savedDescription);
     }
 
     @Override
@@ -253,7 +253,7 @@ public class DescriptionServiceImpl implements DescriptionService {
         Description savedDescription = descriptionRepository.save(description);
 
         log.info("Description 수정 완료 - ID: {}", savedDescription.getId());
-        return DescriptionResponse.from(savedDescription);
+        return createResponseWithVoiceUrl(savedDescription);
     }
 
     @Override
