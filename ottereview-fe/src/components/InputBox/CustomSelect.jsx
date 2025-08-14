@@ -28,7 +28,7 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
   const selectBoxClasses = twMerge(
     baseBoxClasses,
     'px-3 py-2 theme-text',
-    isOpen ? 'rounded-t-lg rounded-b-none border-b-0' : 'rounded-lg',
+    isOpen ? 'rounded-t-lg rounded-b-none border-b-transparent' : 'rounded-lg',
     'cursor-pointer transition-colors hover:theme-bg-tertiary'
   )
 
