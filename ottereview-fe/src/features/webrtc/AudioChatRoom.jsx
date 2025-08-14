@@ -123,12 +123,27 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
         return
       }
 
-      console.log('✅ OpenVidu 토큰 받음')
+      console.log('✅ OpenVidu 토큰 받음:', openviduToken)
 
-      const ov = new OpenVidu({
-          wsUrl: 'wss://i13c108.p.ssafy.io:9001'
-      })
-      
+      // 🎯 WebSocket URL에서 실제 토큰 추출
+      let actualToken = openviduToken
+      try {
+        if (openviduToken.startsWith('wss://')) {
+          const url = new URL(openviduToken.replace('wss://', 'https://'))
+          const sessionId = url.searchParams.get('sessionId')
+          const tokenParam = url.searchParams.get('token')
+          
+          console.log('🌐 서버:', url.origin)
+          console.log('📺 세션 ID:', sessionId)
+          console.log('🎫 추출된 토큰:', tokenParam)
+          
+          actualToken = tokenParam || openviduToken
+        }
+      } catch (parseError) {
+        console.log('⚠️ 토큰 파싱 실패, 원본 사용:', parseError)
+      }
+
+      const ov = new OpenVidu()
       const mySession = ov.initSession()
 
       // 세션 이벤트 리스너들 설정
@@ -145,10 +160,11 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
 
       console.log('🔗 보낼 연결 데이터:', connectionData)
       console.log('🔗 JSON 문자열:', JSON.stringify(connectionData))
+      console.log('🔗 사용할 토큰:', actualToken)
       console.log('🔗 OpenVidu 세션 연결 시도...')
 
       // 세션 연결 - 타임아웃 설정
-      const connectPromise = mySession.connect(openviduToken, JSON.stringify(connectionData))
+      const connectPromise = mySession.connect(actualToken, JSON.stringify(connectionData))
 
       // 10초 타임아웃 설정
       const timeoutPromise = new Promise((_, reject) => {
