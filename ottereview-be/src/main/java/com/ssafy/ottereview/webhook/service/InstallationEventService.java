@@ -73,7 +73,7 @@ public class InstallationEventService {
         }
     }
 
-    public void processInstallationRepositoriesEvent(User user, String payload) {
+    public void processInstallationRepositoriesEvent(String payload) {
         log.debug("Installation Repositories Event 프로세스 실행");
 
         try {
@@ -94,7 +94,7 @@ public class InstallationEventService {
 
                 case "added":
                     log.debug("Repository added event received");
-                    handleRepositoryAdded(user,event);
+                    handleRepositoryAdded(event);
                     break;
                 default:
                     log.warn("Unhandled action: {}", event.getAction());
@@ -182,7 +182,7 @@ public class InstallationEventService {
         }
     }
 
-    private void handleRepositoryAdded(User user, RepositoryEventDto event) throws IOException {
+    private void handleRepositoryAdded(RepositoryEventDto event) throws IOException {
         Account account = userAccountService.getAccountByInstallationId(
                 event.getInstallation().getId());
         List<GHRepository> ghRepositoryList = githubApiClient.getRepositories(
@@ -192,7 +192,7 @@ public class InstallationEventService {
         }
         // repository , branch , pullRequest를 한번에 저장하는 로직이다.
         repoService.updateRepoList(ghRepositoryList, account);
-        eventSendController.push(user.getId(),"update", "update");
+        eventSendController.push(event.getSender().getId(),"update", "update");
     }
 
 
