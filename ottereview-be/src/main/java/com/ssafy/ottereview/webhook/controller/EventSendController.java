@@ -19,7 +19,7 @@ public class EventSendController {
     private final Map<Long , SseEmitter> clients = new ConcurrentHashMap<>();
 
     @GetMapping("/make-clients")
-    public SseEmitter makeClients(@RequestParam(name = "user-id") Long userId){
+    public SseEmitter makeClients(@RequestParam(name = "github-id") Long userId){
         SseEmitter emitter = new SseEmitter(0L); // 무한대(프록시 타임아웃은 따로)
         clients.put(userId, emitter);
         emitter.onCompletion(()-> clients.remove(userId));

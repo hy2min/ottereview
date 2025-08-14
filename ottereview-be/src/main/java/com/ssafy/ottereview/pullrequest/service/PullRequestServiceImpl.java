@@ -466,6 +466,9 @@ public class PullRequestServiceImpl implements PullRequestService {
                                         .status(ReviewStatus.NONE)
                                         .build());
                     }
+                    if(pullRequestRepository.existsByGithubId(pullRequest.getGithubId())){
+                        continue;
+                    }
                     newPullRequests.add(pullRequest);
                 }
 

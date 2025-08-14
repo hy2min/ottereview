@@ -43,4 +43,6 @@ public interface PullRequestRepository extends JpaRepository<PullRequest, Long> 
             @Param("cursorUpdatedAt") Instant cursorUpdatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable);
+
+    boolean existsByGithubId(Long githubId);
 }
