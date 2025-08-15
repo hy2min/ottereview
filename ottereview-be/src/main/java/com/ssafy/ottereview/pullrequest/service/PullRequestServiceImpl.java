@@ -265,81 +265,21 @@ public class PullRequestServiceImpl implements PullRequestService {
             // PR 생성 검증
             validatePullRequestCreation(prepareInfo, repo);
 
-            // PR 생성
+            // GitHub에 PR 생성 (DB 저장은 Webhook에서 처리)
             prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
                     .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), request.getSource(), request.getTarget())
             );
 
-            // PR 저장
-            PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
-            PrUserInfo prepareAuthor = prepareInfo.getAuthor();
-            User author = userRepository.findById(prepareAuthor.getId())
-                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-
-            pullRequest.enrollAuthor(author);
-
-            pullRequest.enrollSummary(prepareInfo.getSummary());
-            PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
-
-            // 리뷰어 저장
-            if (prepareInfo.getReviewers() != null) {
-                List<PrUserInfo> reviewers = prepareInfo.getReviewers();
-
-                List<User> userList = reviewers.stream()
-                        .map(this::getUserFromUserInfo)
-                        .toList();
-
-                List<Reviewer> reviewerList = userList.stream()
-                        .map(user -> Reviewer.builder()
-                                .pullRequest(savePullRequest)
-                                .user(user)
-                                .status(ReviewStatus.NONE)
-                                .build())
-                        .toList();
-
-                reviewerRepository.saveAll(reviewerList);
-                log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
+            // 파일 정보를 Redis에 저장 (Webhook에서 사용하기 위해)
+            if (mediaFiles != null && mediaFiles.length > 0) {
+                String filesCacheKey = String.format("pr_files:%d:%s:%s", repoId, request.getSource(), request.getTarget());
+                preparationRedisRepository.saveMediaFiles(filesCacheKey, mediaFiles);
+                log.info("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", filesCacheKey, mediaFiles.length);
             }
-            // 우선 순위 저장
-            if (prepareInfo.getPriorities() != null) {
 
-                List<Priority> priorityList = prepareInfo.getPriorities()
-                        .stream()
-                        .map((priorityInfo) -> Priority.builder()
-                                .pullRequest(savePullRequest)
-                                .title(priorityInfo.getTitle())
-                                .level(priorityInfo.getLevel())
-                                .content(priorityInfo.getContent())
-                                .build())
-                        .toList();
-
-                priorityRepository.saveAll(priorityList);
-
-                log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
-
-                // 각 우선 순위와 관련 파일들을 매핑하여 저장
-                for (int i = 0; i < prepareInfo.getPriorities().size(); i++) {
-                    var priorityInfo = prepareInfo.getPriorities().get(i);
-                    Priority savedPriority = priorityList.get(i);
-                    
-                    if (priorityInfo.getRelatedFiles() != null && !priorityInfo.getRelatedFiles().isEmpty()) {
-                        List<PriorityFile> priorityFiles = priorityInfo.getRelatedFiles()
-                                .stream()
-                                .map(fileName -> PriorityFile.builder()
-                                        .fileName(fileName)
-                                        .priority(savedPriority)
-                                        .build())
-                                .toList();
-                        
-                        priorityFileRepository.saveAll(priorityFiles);
-                        log.debug("우선 순위 ID: {} 관련 파일 저장 완료, 파일 수: {}", 
-                                 savedPriority.getId(), priorityFiles.size());
-                    }
-                }
-            }
-            // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
-            createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()
-                    .getId(), mediaFiles);
+            log.info("GitHub PR 생성 완료 - PR #{}: {}", prResponse.getGithubPrNumber(), prResponse.getTitle());
+            log.info("DB 저장은 Webhook에서 처리됩니다.");
+            
         } catch (Exception e) {
             log.error("Pull Request 생성 중 오류 발생: {}", e.getMessage(), e);
             // 오류 발생 시 Github PR 삭제
@@ -355,54 +295,6 @@ public class PullRequestServiceImpl implements PullRequestService {
                 log.error("Pull Request 삭제 중 오류 발생: {}", deleteEx.getMessage(), deleteEx);
                 throw new BusinessException(PullRequestErrorCode.PR_CREATE_FAILED, "PR 생성 중 오류가 발생하였고, PR 삭제에도 실패하였습니다.");
             }
-        }
-    }
-
-    /**
-     * DescriptionService를 사용한 설명 일괄 생성 develop 브랜치의 PreparationResult 구조에 맞춰 수정
-     */
-    private void createDescriptionsWithService(PreparationResult prepareInfo, PullRequest pullRequest,
-            Long userId, MultipartFile[] files) {
-        // prepareInfo에서 descriptions가 없거나 비어있는 경우 처리
-        List<DescriptionInfo> descriptions = Optional.ofNullable(prepareInfo.getDescriptions())
-                .orElse(List.of());
-
-        if (descriptions.isEmpty() && (files == null || files.length == 0)) {
-            log.debug("생성할 설명이 없어 설명 저장을 건너뜁니다.");
-            return;
-        }
-
-        // DescriptionInfo를 DescriptionBulkCreateRequest.DescriptionItemRequest로 변환
-        List<DescriptionBulkCreateRequest.DescriptionItemRequest> descriptionItems = descriptions.stream()
-                .map(info -> DescriptionBulkCreateRequest.DescriptionItemRequest.builder()
-                        .path(info.getPath())
-                        .body(info.getBody())
-                        .position(info.getPosition())
-                        .line(info.getLine())
-                        .side(info.getSide())
-                        .startLine(info.getStartLine())
-                        .startSide(info.getStartSide())
-                        .diffHunk(info.getDiffHunk())
-                        .fileIndex(info.getFileIndex()) // 넘어온 정보에서 fileIndex 가져오기
-                        .build())
-                .toList();
-
-        // 파일만 있고 description 정보가 없는 경우를 위한 처리
-        if (descriptionItems.isEmpty() && files != null && files.length > 0) {
-            throw new BusinessException(DescriptionErrorCde.DESCRIPTION_CREATE_FAILED, "설명 정보가 없고, 파일만 있는 경우는 허용되지 않습니다.");
-        }
-
-        if (!descriptionItems.isEmpty()) {
-            DescriptionBulkCreateRequest bulkRequest = DescriptionBulkCreateRequest.builder()
-                    .pullRequestId(pullRequest.getId())
-                    .descriptions(descriptionItems)
-                    .build();
-
-            // DescriptionService를 통한 일괄 생성
-            List<DescriptionResponse> createdDescriptions = descriptionService.createDescriptionsBulk(
-                    bulkRequest, userId, files);
-
-            log.debug("설명 일괄 생성 완료, 생성된 설명 수: {}", createdDescriptions.size());
         }
     }
 

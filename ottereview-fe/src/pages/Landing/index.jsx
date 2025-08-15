@@ -68,14 +68,14 @@ const Landing = () => {
       icon: <Github className="w-7 h-7" />,
       title: "깊이 있는 GitHub 통합",
       description: "기존 워크플로우를 방해하지 않으면서 강력한 기능을 제공합니다",
-      color: "from-blue-500 to-cyan-500",
+      color: "from-orange-500 to-red-500",
       delay: "0ms"
     },
     {
       icon: <MessageSquare className="w-7 h-7" />,
       title: "실시간 협업 환경",
       description: "팀원들과 즉시 소통하며 효율적으로 코드를 리뷰하세요",
-      color: "from-green-500 to-emerald-500",
+      color: "from-orange-600 to-red-600",
       delay: "100ms"
     },
     {
@@ -107,7 +107,7 @@ const Landing = () => {
           }}
         />
         <div 
-          className="absolute w-80 h-80 rounded-full bg-gradient-to-r from-emerald-400/10 to-cyan-400/10 blur-3xl transition-transform duration-1000 ease-out"
+          className="absolute w-80 h-80 rounded-full bg-gradient-to-r from-orange-400/10 to-red-400/10 blur-3xl transition-transform duration-1000 ease-out"
           style={{
             transform: `translate(${mousePosition.x * -0.015}px, ${mousePosition.y * -0.015}px)`,
             bottom: '20%',
@@ -128,7 +128,7 @@ const Landing = () => {
               {/* Animated Logo */}
               <div className="flex justify-center mb-8">
                 <div className="group relative">
-                  <div className="absolute -inset-4 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-full opacity-20 blur-2xl group-hover:opacity-40 transition-all duration-500 animate-pulse" />
+                  <div className="absolute -inset-4 bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 rounded-full opacity-20 blur-2xl group-hover:opacity-40 transition-all duration-500 animate-pulse" />
                   <div className="relative w-32 h-32 hover:scale-110 transition-all duration-500 cursor-pointer">
                     <img 
                       src="/otter_logo.png" 
@@ -148,14 +148,17 @@ const Landing = () => {
               </div>
 
               {/* Badge */}
-              <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 backdrop-blur-sm border border-emerald-500/20 rounded-full shadow-2xl hover:scale-105 hover:shadow-emerald-500/25 transition-all duration-500 group">
+              <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-orange-600/10 backdrop-blur-sm border border-orange-500/20 rounded-full shadow-2xl hover:scale-105 hover:shadow-orange-500/25 transition-all duration-500 group">
                 <div className="relative">
-                  <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                  <div className="absolute inset-0 w-3 h-3 bg-emerald-500 rounded-full animate-ping" />
+                  <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />
+                  <div className="absolute inset-0 w-3 h-3 bg-orange-500 rounded-full animate-ping" />
                 </div>
-                <span className="text-sm font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-                  ✨ 새로운 AI 리뷰 기능이 출시되었습니다!
-                </span>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-semibold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent group-hover:from-red-600 group-hover:to-orange-700 transition-all duration-300">
+                    새로운 AI 리뷰 기능이 출시되었습니다!
+                  </span>
+                </div>
               </div>
 
               {/* Main Title */}
@@ -165,14 +168,14 @@ const Landing = () => {
                     코드 리뷰의
                   </span>
                   <br />
-                  <span className="inline-block bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 bg-clip-text text-transparent hover:from-cyan-600 hover:via-purple-600 hover:to-blue-600 transition-all duration-1000 hover:scale-105 cursor-pointer">
+                  <span className="inline-block bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 bg-clip-text text-transparent hover:from-red-600 hover:via-orange-600 hover:to-orange-700 transition-all duration-1000 hover:scale-105 cursor-pointer">
                     새로운 기준
                   </span>
                 </h1>
                 <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-                  Ottereview는 GitHub 기반의 혁신적인 코드 리뷰 플랫폼입니다.
+                  GitHub 기반의 스마트한 코드 리뷰 플랫폼으로
                   <br className="hidden sm:block" />
-                  팀의 생산성을 높이고, 코드 품질을 향상시키세요.
+                  개발 워크플로우를 혁신하고 팀 협업을 강화하세요.
                 </p>
               </div>
 
@@ -180,9 +183,9 @@ const Landing = () => {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6">
                 <button
                   onClick={handleLogin}
-                  className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 hover:from-cyan-600 hover:via-purple-600 hover:to-blue-600 text-white font-bold px-10 py-5 rounded-2xl shadow-2xl hover:shadow-blue-500/50 transition-all duration-500 hover:scale-110 overflow-hidden transform-gpu"
+                  className="group relative inline-flex items-center gap-3 bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 hover:from-red-600 hover:via-orange-600 hover:to-orange-700 text-white font-bold px-10 py-5 rounded-2xl shadow-2xl hover:shadow-orange-500/50 transition-all duration-500 hover:scale-110 overflow-hidden transform-gpu"
                   onMouseEnter={(e) => {
-                    e.target.style.boxShadow = '0 0 50px rgba(59, 130, 246, 0.8), 0 0 100px rgba(147, 51, 234, 0.4)';
+                    e.target.style.boxShadow = '0 0 50px rgba(249, 115, 22, 0.8), 0 0 100px rgba(251, 146, 60, 0.4)';
                   }}
                   onMouseLeave={(e) => {
                     e.target.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
@@ -201,7 +204,7 @@ const Landing = () => {
                 </button>
                 
                 <button 
-                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white/10 dark:bg-slate-800/10 backdrop-blur-sm border-2 border-gray-300/20 dark:border-slate-600/20 hover:border-blue-500/50 dark:hover:border-blue-400/50 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold rounded-2xl transition-all duration-500 hover:scale-105 hover:shadow-xl overflow-hidden"
+                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white/10 dark:bg-slate-800/10 backdrop-blur-sm border-2 border-gray-300/20 dark:border-slate-600/20 hover:border-orange-500/50 dark:hover:border-orange-400/50 text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 font-semibold rounded-2xl transition-all duration-500 hover:scale-105 hover:shadow-xl overflow-hidden"
                   onMouseEnter={(e) => {
                     e.target.style.background = 'rgba(59, 130, 246, 0.05)';
                     e.target.style.backdropFilter = 'blur(20px)';
@@ -211,10 +214,10 @@ const Landing = () => {
                     e.target.style.backdropFilter = 'blur(4px)';
                   }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Code className="w-5 h-5 z-10 group-hover:rotate-12 transition-transform duration-300" />
                   <span className="z-10">데모 보기</span>
-                  <div className="absolute inset-0 border-2 border-blue-500/0 group-hover:border-blue-500/30 rounded-2xl transition-all duration-300" />
+                  <div className="absolute inset-0 border-2 border-orange-500/0 group-hover:border-orange-500/30 rounded-2xl transition-all duration-300" />
                 </button>
               </div>
 
@@ -239,8 +242,8 @@ const Landing = () => {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
               {stats.map((stat, index) => {
                 const colors = [
-                  'from-blue-500 to-cyan-500',
-                  'from-green-500 to-emerald-500', 
+                  'from-orange-500 to-red-500',
+                  'from-orange-600 to-red-600', 
                   'from-purple-500 to-pink-500',
                   'from-yellow-500 to-orange-500'
                 ];
@@ -297,10 +300,10 @@ const Landing = () => {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-                왜 Ottereview인가요?
+                핵심 기능
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                개발팀을 위해 설계된 강력하고 직관적인 도구들로 더 나은 코드를 작성하세요
+                효율적인 코드 리뷰를 위한 필수 기능들
               </p>
             </div>
 
@@ -386,7 +389,7 @@ const Landing = () => {
         {/* Bottom CTA */}
         <section className="py-20 px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="group relative p-16 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 rounded-3xl shadow-2xl overflow-hidden cursor-pointer"
+            <div className="group relative p-16 bg-gradient-to-r from-orange-600 via-red-600 to-orange-700 rounded-3xl shadow-2xl overflow-hidden cursor-pointer"
                  onMouseEnter={(e) => {
                    e.currentTarget.style.transform = 'scale(1.02) translateY(-5px)';
                    e.currentTarget.style.boxShadow = '0 50px 100px -20px rgba(59, 130, 246, 0.4), 0 0 0 1px rgba(255,255,255,0.1)';
@@ -398,7 +401,7 @@ const Landing = () => {
             >
               {/* Animated background layers */}
               <div className="absolute inset-0 bg-black/20" />
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 via-purple-500/20 to-cyan-500/20 group-hover:from-blue-400/30 group-hover:via-purple-400/30 group-hover:to-cyan-400/30 transition-all duration-700" />
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 via-red-500/20 to-orange-600/20 group-hover:from-orange-400/30 group-hover:via-red-400/30 group-hover:to-orange-500/30 transition-all duration-700" />
               
               {/* Moving gradient overlay */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-30 transition-all duration-1000">
@@ -417,8 +420,8 @@ const Landing = () => {
                     <span className="inline-block group-hover:animate-pulse" style={{ animationDelay: '0.1s' }}>코드 리뷰를</span>{' '}
                     <span className="inline-block group-hover:animate-pulse" style={{ animationDelay: '0.2s' }}>시작하세요</span>
                   </h2>
-                  <p className="text-xl text-blue-100 max-w-2xl mx-auto group-hover:text-blue-50 transition-colors duration-300 group-hover:scale-105">
-                    수천 개의 팀이 Ottereview와 함께 더 효율적으로 협업하고 있습니다
+                  <p className="text-xl text-orange-100 max-w-2xl mx-auto group-hover:text-orange-50 transition-colors duration-300 group-hover:scale-105">
+                    개발팀의 생산성과 코드 품질을 한 번에 향상시키는 솔루션
                   </p>
                 </div>
                 
@@ -440,7 +443,7 @@ const Landing = () => {
                   <ArrowRight className="w-6 h-6 z-10 group-hover/btn:translate-x-2 group-hover/btn:scale-125 transition-transform duration-300" />
                   
                   {/* Button glow */}
-                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover/btn:opacity-100 bg-gradient-to-r from-blue-400/20 via-purple-400/20 to-cyan-400/20 blur-sm transition-all duration-500" />
+                  <div className="absolute inset-0 rounded-2xl opacity-0 group-hover/btn:opacity-100 bg-gradient-to-r from-orange-400/20 via-red-400/20 to-orange-500/20 blur-sm transition-all duration-500" />
                 </button>
               </div>
             </div>

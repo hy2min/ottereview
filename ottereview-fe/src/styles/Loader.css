@@ -1,0 +1,78 @@
+.otter-loader {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  /* 오른쪽 끝 잘림 방지 (필요시 조절) */
+  padding-right: 90px;
+}
+
+.shells-row {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 86%;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.95;
+}
+
+.otter {
+  position: absolute;
+  bottom: 24px;
+  transform: translateX(-50%);
+  transition: left 600ms ease;
+  will-change: left;
+}
+
+/* 고정 프레임 박스(바닥선에 맞춰 하단정렬) */
+.otter-frame {
+  position: relative;
+  overflow: visible;
+}
+
+/* 프레임 안에서 이미지 하단 정렬 + 크기 표준화 */
+.otter-img {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%); /* 가운데 정렬 */
+  max-height: 100%;
+  max-width: 100%;
+  width: auto; /* 원본 비율 유지 */
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+}
+
+.flip-x {
+  transform: translateX(-50%) scaleX(-1);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 640px) {
+  .otter-loader {
+    height: 180px;
+    padding-right: 70px;
+  }
+  .otter-frame {
+    width: 160px !important;
+    height: 160px !important;
+  }
+}
