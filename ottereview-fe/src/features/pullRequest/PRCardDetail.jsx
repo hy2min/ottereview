@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CheckCircle,
   Clock,
   Eye,
   FileDiff,
@@ -112,7 +113,7 @@ const PRCardDetail = ({ pr }) => {
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex flex-wrap gap-2 text-sm">
+          <div className="flex flex-wrap gap-4 text-sm">
             <Badge variant="sky">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
@@ -122,9 +123,31 @@ const PRCardDetail = ({ pr }) => {
               </div>
             </Badge>
 
-            <Badge variant="emerald">승인 {approveCnt}</Badge>
-            <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
-            <Badge variant="indigo">파일 {changedFilesCnt}</Badge>
+            <div className="flex items-center space-x-3">
+              {/* 병합 검토 - Red */}
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">{mergeable ? '병합 가능' : '병합 검토'}</span>
+              </div>
+              
+              {/* 승인 - Green */}
+              <div className="flex items-center space-x-1">
+                <CheckCircle className="w-3 h-3 text-green-500" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">승인 {approveCnt}</span>
+              </div>
+              
+              {/* 리뷰 - Yellow */}
+              <div className="flex items-center space-x-1">
+                <Clock className="w-3 h-3 text-yellow-500" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">리뷰 {reviewCommentCnt}</span>
+              </div>
+              
+              {/* 파일 - Blue */}
+              <div className="flex items-center space-x-1">
+                <FileDiff className="w-3 h-3 text-orange-500" />
+                <span className="text-xs text-gray-700 dark:text-gray-300">파일 {changedFilesCnt}</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-2">

@@ -42,7 +42,7 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
     const isSelected = optionValue === selectedOption?.value
     return twMerge(
       'px-3 py-2 cursor-pointer transition-colors theme-text',
-      isSelected ? 'bg-blue-600 text-white' : 'hover:theme-bg-tertiary'
+      isSelected ? 'bg-orange-500 text-white' : 'hover:theme-bg-tertiary'
     )
   }
 

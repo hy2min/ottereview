@@ -99,101 +99,40 @@ const Chat = ({ roomId }) => {
   }
 
   return (
-    <div
-      style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        backgroundColor: '#ffffff',
-      }}
-    >
+    <div className="h-full flex flex-col theme-bg-primary">
       {/* 연결 상태 표시 */}
-      <div
-        style={{
-          padding: '0.5rem 1rem',
-          fontSize: '0.75rem',
-          color: isConnected ? '#10b981' : '#ef4444',
-          backgroundColor: isConnected ? '#d1fae5' : '#fee2e2',
-          textAlign: 'center',
-          borderBottom: '1px solid #e5e7eb',
-        }}
-      >
+      <div className={`px-4 py-2 text-xs text-center border-b theme-border ${
+        isConnected 
+          ? 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/20' 
+          : 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20'
+      }`}>
         {isConnected ? '🟢 연결됨' : '🔴 연결 중...'}
       </div>
 
       {/* 메시지 영역 */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: 'auto',
-          padding: '1rem',
-          backgroundColor: '#f8f9fa',
-          minHeight: 0, // 중요: flex 축소 허용
-          maxHeight: '100%',
-        }}
-      >
+      <div className="flex-1 overflow-y-auto p-4 theme-bg-secondary min-h-0 max-h-full">
         {messages.length === 0 ? (
-          <div
-            style={{
-              textAlign: 'center',
-              color: '#6b7280',
-              fontSize: '0.875rem',
-              marginTop: '2rem',
-            }}
-          >
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
+          <div className="text-center theme-text-muted text-sm mt-8">
+            <div className="text-3xl mb-2">💬</div>
             <p>아직 메시지가 없습니다.</p>
             <p>첫 번째 메시지를 보내보세요!</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="flex flex-col gap-3">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{
-                  backgroundColor: 'white',
-                  borderRadius: '12px',
-                  padding: '0.75rem 1rem',
-                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-                  border: '1px solid #e5e7eb',
-                  maxWidth: '85%',
-                  alignSelf: 'flex-start', // 모든 메시지를 왼쪽 정렬
-                }}
+                className="theme-bg-primary rounded-xl p-3 shadow-sm theme-border border max-w-[85%] self-start"
               >
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.25rem',
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: '600',
-                      fontSize: '0.875rem',
-                      color: '#374151',
-                    }}
-                  >
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-semibold text-sm theme-text">
                     {msg.senderName || '익명'}
                   </span>
-                  <span
-                    style={{
-                      fontSize: '0.75rem',
-                      color: '#9ca3af',
-                    }}
-                  >
+                  <span className="text-xs theme-text-muted">
                     {formatTime(msg.timestamp)}
                   </span>
                 </div>
-                <div
-                  style={{
-                    fontSize: '0.875rem',
-                    color: '#1f2937',
-                    lineHeight: '1.4',
-                    wordBreak: 'break-word',
-                  }}
-                >
+                <div className="text-sm theme-text leading-relaxed break-words">
                   {msg.message}
                 </div>
               </div>
@@ -205,21 +144,8 @@ const Chat = ({ roomId }) => {
       </div>
 
       {/* 입력 영역 */}
-      <div
-        style={{
-          padding: '1rem',
-          borderTop: '1px solid #e5e7eb',
-          backgroundColor: 'white',
-          flexShrink: 0, // 입력 영역이 축소되지 않도록
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            gap: '0.5rem',
-            alignItems: 'flex-end',
-          }}
-        >
+      <div className="p-4 border-t theme-border theme-bg-primary flex-shrink-0">
+        <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
             value={input}
@@ -227,73 +153,25 @@ const Chat = ({ roomId }) => {
             onKeyPress={handleKeyPress}
             placeholder="메시지를 입력하세요..."
             disabled={!isConnected}
-            style={{
-              flex: 1,
-              padding: '0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              lineHeight: '1.4',
-              resize: 'none',
-              minHeight: '40px',
-              maxHeight: '120px',
-              fontFamily: 'inherit',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              backgroundColor: isConnected ? 'white' : '#f3f4f6',
-            }}
-            onFocus={(e) => {
-              e.target.style.borderColor = '#3b82f6'
-              e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
-            }}
-            onBlur={(e) => {
-              e.target.style.borderColor = '#d1d5db'
-              e.target.style.boxShadow = 'none'
-            }}
+            className={`flex-1 p-3 theme-border border rounded-lg text-sm resize-none min-h-[40px] max-h-[120px] font-inherit outline-none transition-all duration-200 theme-bg-primary theme-text ${
+              isConnected ? '' : 'theme-bg-secondary'
+            } focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20`}
           />
           <button
             onClick={sendMessage}
             disabled={!input.trim() || !isConnected}
-            style={{
-              padding: '0.75rem 1rem',
-              backgroundColor: !input.trim() || !isConnected ? '#d1d5db' : '#3b82f6',
-              color: !input.trim() || !isConnected ? '#9ca3af' : 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              cursor: !input.trim() || !isConnected ? 'not-allowed' : 'pointer',
-              transition: 'all 0.2s',
-              minWidth: '60px',
-              height: '40px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-            onMouseEnter={(e) => {
-              if (input.trim() && isConnected) {
-                e.target.style.backgroundColor = '#2563eb'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (input.trim() && isConnected) {
-                e.target.style.backgroundColor = '#3b82f6'
-              }
-            }}
+            className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-w-[60px] h-[40px] flex items-center justify-center ${
+              !input.trim() || !isConnected
+                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+            }`}
           >
             전송
           </button>
         </div>
 
         {/* 입력 상태 안내 */}
-        <div
-          style={{
-            marginTop: '0.5rem',
-            fontSize: '0.75rem',
-            color: '#6b7280',
-            textAlign: 'center',
-          }}
-        >
+        <div className="mt-2 text-xs theme-text-muted text-center">
           {!isConnected && '연결을 기다리는 중...'}
           {isConnected && messages.length > 0 && `${messages.length}개의 메시지`}
         </div>

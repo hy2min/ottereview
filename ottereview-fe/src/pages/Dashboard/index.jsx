@@ -1,3 +1,4 @@
+import { Rocket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import Box from '@/components/Box'
@@ -110,10 +111,10 @@ const Dashboard = () => {
       <div className="flex flex-col xl:flex-row gap-6 items-stretch">
         <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
           <h1 className="text-2xl xl:text-3xl theme-text font-bold">
-            안녕하세요, {user?.githubUsername}님! 👋
+            안녕하세요, {user?.githubUsername}님!
           </h1>
           <p className="theme-text-secondary text-base xl:text-lg">
-            오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!
+            효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
           </p>
 
           <button
@@ -134,7 +135,10 @@ const Dashboard = () => {
       <div className="theme-bg-secondary border theme-border p-6 rounded-xl theme-shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold theme-text mb-2">🚀 코드 리뷰 워크스페이스</h2>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Rocket className="w-8 h-8 text-orange-500" />
+              <h2 className="text-3xl font-bold theme-text">코드 리뷰 워크스페이스</h2>
+            </div>
             <p className="theme-text-muted">Repository와 Pull Request를 효율적으로 관리하세요</p>
           </div>
 
