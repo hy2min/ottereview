@@ -77,7 +77,7 @@ class PrUserInfo(BaseModel):
     id: int
     githubId: int
     githubUsername: str
-    githubEmail: str
+    githubEmail: Optional[str] = None
 
 class PriorityInfo(BaseModel):
     """우선순위 정보 - 머지용"""

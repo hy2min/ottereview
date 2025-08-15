@@ -1,9 +1,11 @@
 package com.ssafy.ottereview.ai.client;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.ai.dto.AiCushionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
+import com.ssafy.ottereview.ai.dto.response.AiCushionResponse;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
@@ -112,6 +114,22 @@ public class AiClient {
                 .doOnSuccess(conventions -> log.info("Coding Convention 검사 완료"))
                 .doOnError(error -> log.error("Coding Convention 검사 실패", error))
                 .onErrorReturn(createDefaultConventionResponse());
+    }
+    
+    /**
+     * 쿠션어 변환
+     */
+    public Mono<AiCushionResponse> applyCushion(AiCushionRequest request) {
+        
+        return aiWebClient.post()
+                .uri("/ai/review/cushion")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AiCushionResponse.class)
+                .timeout(Duration.ofMinutes(1))
+                .doOnSuccess(conventions -> log.info("쿠션어 변환 완료"))
+                .doOnError(error -> log.error("쿠션어 변환 실패", error))
+                .onErrorReturn(createDefaultCushionResponse());
     }
     
     /**
@@ -279,6 +297,10 @@ public class AiClient {
     
     private AiConventionResponse createDefaultConventionResponse() {
         return new AiConventionResponse("컨벤션 검사를 수행할 수 없습니다.");
+    }
+    
+    private AiCushionResponse createDefaultCushionResponse() {
+        return new AiCushionResponse("쿠션어 변환에 실패하였습니다.");
     }
     
     // 10. 부분 실패 처리 개선

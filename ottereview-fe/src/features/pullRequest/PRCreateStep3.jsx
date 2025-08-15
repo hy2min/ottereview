@@ -4,7 +4,8 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
-import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import Modal from '@/components/Modal'
+import { applyCushionLanguage, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -26,9 +27,15 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
-  
+
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
+
+  // 쿠션어 모달 상태 관리
+  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
+  const [originalContent, setOriginalContent] = useState('')
+  const [cushionedContent, setCushionedContent] = useState('')
+  const [isCushionLoading, setIsCushionLoading] = useState(false)
 
   // 템플릿 정의
   const templates = [
@@ -98,15 +105,49 @@ close #이슈번호
     }
   }
 
+  // 쿠션어 적용 처리
+  const handleApplyCushion = async () => {
+    if (!prBody.trim()) return
+
+    setOriginalContent(prBody)
+    setIsCushionModalOpen(true)
+    setIsCushionLoading(true)
+    setCushionedContent('')
+
+    try {
+      const response = await applyCushionLanguage(prBody)
+
+      if (response?.result) {
+        setCushionedContent(response.result)
+      }
+    } catch (error) {
+      console.error('쿠션어 적용 실패:', error)
+      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
+    } finally {
+      setIsCushionLoading(false)
+    }
+  }
+
+  // 쿠션어 적용 확정
+  const handleApplyCushionConfirm = () => {
+    setPrBody(cushionedContent)
+    setIsCushionModalOpen(false)
+  }
+
+  // 쿠션어 적용 취소
+  const handleApplyCushionCancel = () => {
+    setIsCushionModalOpen(false)
+  }
+
   // 다음 버튼 활성화 조건 확인
   const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
-  
+
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
     const missingFields = []
     if (prTitle.trim() === '') missingFields.push('제목')
     if (prBody.trim() === '') missingFields.push('설명')
-    
+
     if (missingFields.length === 0) return ''
     return `${missingFields.join(', ')}을(를) 입력해주세요`
   }
@@ -121,7 +162,7 @@ close #이슈번호
       const formattedDescriptions = reviewComments.map((comment) => ({
         author_id: user?.id,
         path: comment.path,
-        body: comment.content || '',
+        body: comment.body || comment.content || '',
         position: comment.position,
         start_line: comment.startLine,
         start_side: comment.startSide,
@@ -137,6 +178,7 @@ close #이슈번호
         level: priority.priority_level,
         title: priority.title,
         content: priority.reason,
+        related_files: priority.related_files || [],
       }))
 
       // 전체 추가 정보 구성
@@ -194,7 +236,7 @@ close #이슈번호
                       ? `추천받는 중${loadingDots}`
                       : removeQuotes(aiOthers?.title?.result || '')
                   }
-                  className="bg-white border-2 border-black rounded-[8px] w-full px-2 py-1"
+                  className="theme-bg-primary theme-border border-2 rounded-[8px] w-full px-2 py-1 theme-text"
                 />
               </div>
               <div className="mb-2">
@@ -219,6 +261,11 @@ close #이슈번호
                         { value: 'remove', label: '템플릿 제거' },
                       ]}
                     />
+                    <div className="-mt-[4px]">
+                      <Button size="sm" onClick={handleApplyCushion} disabled={!prBody.trim()}>
+                        쿠션어 적용
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1 min-h-0">
@@ -239,7 +286,7 @@ close #이슈번호
         {showPriorities && (
           <div className="w-full md:w-1/3 md:order-2">
             <Box shadow className="h-[450px] flex flex-col">
-              <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
+              <div className="font-medium mt-2 mb-3 theme-text">AI 우선순위 추천</div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
                   <Box key={index} className="p-3">
@@ -252,14 +299,16 @@ close #이슈번호
                           >
                             {priority.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-800 font-medium leading-tight">
+                          <span className="text-sm theme-text font-medium leading-tight">
                             {priority.title}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm leading-relaxed">{priority.reason}</p>
+                        <p className="theme-text-secondary text-sm leading-relaxed">
+                          {priority.reason}
+                        </p>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-22 text-sm text-gray-400">
+                      <div className="flex items-center justify-center h-22 text-sm theme-text-muted">
                         추천 없음
                       </div>
                     )}
@@ -278,6 +327,7 @@ close #이슈번호
           onAddComment={onAddComment}
           onRemoveComment={onRemoveComment}
           fileComments={fileComments}
+          commentMode="description"
         />
       </Box>
       <div className="mx-auto z-10">
@@ -291,16 +341,12 @@ close #이슈번호
             이전
           </Button>
 
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <Button 
-              onClick={handleNextStep} 
-              variant="primary" 
-              disabled={!isNextButtonEnabled}
-            >
+            <Button onClick={handleNextStep} variant="primary" disabled={!isNextButtonEnabled}>
               다음
             </Button>
             {showTooltip && !isNextButtonEnabled && (
@@ -312,6 +358,56 @@ close #이슈번호
           </div>
         </div>
       </div>
+
+      {/* 쿠션어 적용 모달 */}
+      <Modal
+        isOpen={isCushionModalOpen}
+        onClose={handleApplyCushionCancel}
+        title="쿠션어 적용 결과"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleApplyCushionCancel}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleApplyCushionConfirm}
+              disabled={isCushionLoading || !cushionedContent}
+            >
+              적용
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* 원본 내용 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">원본 내용</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                {originalContent}
+              </pre>
+            </Box>
+          </div>
+
+          {/* 쿠션어 적용 결과 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">쿠션어 적용 결과</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              {isCushionLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm theme-text-secondary">변환 중...</div>
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                  {cushionedContent}
+                </pre>
+              )}
+            </Box>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
