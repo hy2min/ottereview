@@ -28,9 +28,11 @@ import {
 import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
+import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
+  const user = useUserStore((state) => state.user)
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -297,8 +299,11 @@ const PRReview = () => {
   // 로딩 중일 때 표시
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-stone-600 text-2xl">PR 정보를 불러오는 중{loadingDots}</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="theme-text text-xl">PR 정보를 불러오는 중{loadingDots}</p>
+        </div>
       </div>
     )
   }
@@ -529,6 +534,7 @@ const PRReview = () => {
                 reviewState={reviewState}
                 onReviewStateChange={setReviewState}
                 showReviewState={true}
+                disableReviewOptions={prDetail?.author?.id === user?.id}
               />
             </div>
           )}
