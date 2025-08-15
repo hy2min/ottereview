@@ -287,9 +287,13 @@ const PRReview = () => {
           existingReviewComments[filePath][lineNumber].push({
             ...comment,
             reviewState: review.state,
-            reviewer: review.githubUsername || 'Unknown',
+            reviewer: review.githubUsername || 'Unknown', // Review 작성자
+            reviewerUserId: review.reviewerId, // 리뷰어 사용자 ID 추가
             submittedAt: review.createdAt,
-            id: `${review.id}-${comment.id || Math.random()}`,
+            reviewId: review.id, // 리뷰 ID 추가
+            id: comment.id || Math.random(),
+            // ReviewComment 자체의 작성자 정보 추가 (githubUsername만 사용)
+            commentAuthor: comment.githubUsername || null,
           })
         })
       }

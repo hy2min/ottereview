@@ -39,7 +39,7 @@ const PRCommentList = ({ reviews = [] }) => {
                   className="ml-3"
                 >
                   {review.state === 'APPROVED' ? '승인' :
-                   review.state === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                   review.state === 'CHANGES_REQUESTED' ? '변경 요청' : '리뷰'}
                 </Badge>
               </div>
             </div>
