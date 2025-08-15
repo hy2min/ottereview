@@ -69,21 +69,6 @@ public class AiController {
                 .map(ResponseEntity::ok);
     }
     
-    @PostMapping("/cushions")
-    public Mono<ResponseEntity<AiCushionResponse>> applyCushion(@RequestBody AiCushionRequest request) {
-        return aiClient.applyCushion(request)
-                .map(ResponseEntity::ok)
-                .doOnSuccess(response -> log.info("쿠션어 변환 완료"))
-                .doOnError(error -> log.error("쿠션어 변환 실패", error))
-                .onErrorResume(error -> {
-                    // 에러 발생 시 기본 요약 응답
-                    AiCushionResponse defaultResponse = new AiCushionResponse("쿠션어 변환 실패");
-                    
-                    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                            .body(defaultResponse));
-                });
-    }
-    
     @PostMapping("/all")
     public Mono<ResponseEntity<AiResult>> getAllAi(@AuthenticationPrincipal CustomUserDetail customUserDetail, @RequestBody AiRequest request) {
         return aiClient.analyzeAll(customUserDetail, request)
