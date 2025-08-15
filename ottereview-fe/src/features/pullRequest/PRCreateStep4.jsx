@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -14,6 +14,7 @@ const PRCreateStep4 = ({
   setSelectedReviewers,
   setAISummary
 }) => {
+  const [isGenerating, setIsGenerating] = useState(false)
   const reviewers = useMemo(() => validationBranches?.preReviewers || [], [validationBranches])
   const aiRecommendedReviewers = useMemo(
     () => aiOthers?.reviewers?.result?.reviewers || [],
@@ -44,6 +45,9 @@ const PRCreateStep4 = ({
   }
 
   const handleNextStep = async () => {
+    if (isGenerating) return // 이미 진행 중이면 중복 실행 방지
+    
+    setIsGenerating(true)
     try {
       // 객체 배열에서 ID만 추출 (find 불필요!)
       const selectedReviewerIds = selectedReviewers.map((reviewer) => reviewer.id)
@@ -81,6 +85,8 @@ const PRCreateStep4 = ({
       goToStep(5)
     } catch (error) {
       console.error('추가 정보 저장 실패:', error)
+    } finally {
+      setIsGenerating(false)
     }
   }
 
@@ -172,8 +178,8 @@ const PRCreateStep4 = ({
             이전
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary">
-            다음
+          <Button onClick={handleNextStep} variant="primary" disabled={isGenerating}>
+            {isGenerating ? 'AI 요약 생성중...' : '다음'}
           </Button>
         </div>
       </div>

@@ -121,7 +121,7 @@ close #이슈번호
       const formattedDescriptions = reviewComments.map((comment) => ({
         author_id: user?.id,
         path: comment.path,
-        body: comment.content || '',
+        body: comment.body || comment.content || '',
         position: comment.position,
         start_line: comment.startLine,
         start_side: comment.startSide,
@@ -194,7 +194,7 @@ close #이슈번호
                       ? `추천받는 중${loadingDots}`
                       : removeQuotes(aiOthers?.title?.result || '')
                   }
-                  className="bg-white border-2 border-black rounded-[8px] w-full px-2 py-1"
+                  className="theme-bg-primary theme-border border-2 rounded-[8px] w-full px-2 py-1 theme-text"
                 />
               </div>
               <div className="mb-2">
@@ -239,7 +239,7 @@ close #이슈번호
         {showPriorities && (
           <div className="w-full md:w-1/3 md:order-2">
             <Box shadow className="h-[450px] flex flex-col">
-              <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
+              <div className="font-medium mt-2 mb-3 theme-text">AI 우선순위 추천</div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
                   <Box key={index} className="p-3">
@@ -252,14 +252,14 @@ close #이슈번호
                           >
                             {priority.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-800 font-medium leading-tight">
+                          <span className="text-sm theme-text font-medium leading-tight">
                             {priority.title}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm leading-relaxed">{priority.reason}</p>
+                        <p className="theme-text-secondary text-sm leading-relaxed">{priority.reason}</p>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-22 text-sm text-gray-400">
+                      <div className="flex items-center justify-center h-22 text-sm theme-text-muted">
                         추천 없음
                       </div>
                     )}
@@ -278,6 +278,7 @@ close #이슈번호
           onAddComment={onAddComment}
           onRemoveComment={onRemoveComment}
           fileComments={fileComments}
+          commentMode="description"
         />
       </Box>
       <div className="mx-auto z-10">

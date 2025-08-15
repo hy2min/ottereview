@@ -20,6 +20,7 @@ public class PushEventDto {
     private String branchName;
     private String repoFullName;
     private Long repoId;
+    private Long repoGithubId;
     private String defaultBranch;
     private String pusherName;
     private String pusherEmail;
