@@ -412,7 +412,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .startLine(info.getStartLine())
                         .startSide(info.getStartSide())
                         .diffHunk(info.getDiffHunk())
-                        .fileIndex(null) // 파일 매핑은 서비스에서 처리
+                        .fileIndex(info.getFileIndex()) // 넘어온 정보에서 fileIndex 가져오기
                         .build())
                 .toList();
 
