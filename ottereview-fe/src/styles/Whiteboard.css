@@ -20,3 +20,87 @@ canvas {
   display: flex;
   gap: 10px;
 }
+
+.tl-ui-layout__toolbar {
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  min-width: 200px !important;
+}
+
+.tl-ui-layout__toolbar .tl-ui-button {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 16px !important;
+}
+
+.tl-ui-layout__style-panel {
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 하단 툴바 스타일 */
+.tl-ui-layout__bottom {
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 8px !important;
+  padding: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  margin-bottom: 16px !important;
+}
+
+.tl-ui-layout__bottom .tl-ui-button {
+  width: 40px !important;
+  height: 40px !important;
+  font-size: 16px !important;
+  margin: 2px !important;
+}
+
+/* 페이지 메뉴와 줌 컨트롤 */
+.tl-ui-page-menu,
+.tl-ui-zoom-menu {
+  z-index: 1000 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 8px !important;
+  padding: 4px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* 컨텍스트 메뉴 */
+.tl-ui-menu {
+  z-index: 1100 !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 모든 tldraw UI 버튼 일반화 */
+.tl-ui-button {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+}
+
+.tl-ui-button:hover {
+  background: rgba(255, 255, 255, 1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 액티브 상태 버튼 */
+.tl-ui-button[data-state="selected"] {
+  background: rgba(59, 130, 246, 0.9) !important;
+  color: white !important;
+}
+
+/* 전체 tldraw 컨테이너 */
+.tl-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+}

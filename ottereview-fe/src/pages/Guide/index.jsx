@@ -5,6 +5,7 @@ import Button from '@/components/Button'
 
 const Guide = () => {
   const [visibleSections, setVisibleSections] = useState(new Set())
+  const [scrollY, setScrollY] = useState(0)
   const observerRef = useRef(null)
 
   const handleLogin = () => {
@@ -13,36 +14,93 @@ const Guide = () => {
   }
 
   useEffect(() => {
+    // 부드러운 스크롤을 위한 CSS 추가
+    document.documentElement.style.scrollBehavior = 'smooth'
+    
+    // 스크롤 위치 추적 (throttled)
+    let ticking = false
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrollY(window.scrollY)
+          ticking = false
+        })
+        ticking = true
+      }
+    }
+
+    // Intersection Observer 설정 (더 부드러운 애니메이션을 위해)
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setVisibleSections((prev) => new Set([...prev, entry.target.id]))
+          } else {
+            // 스크롤 시 요소가 화면에서 벗어나면 다시 애니메이션이 가능하도록
+            setVisibleSections((prev) => {
+              const newSet = new Set(prev)
+              newSet.delete(entry.target.id)
+              return newSet
+            })
           }
         })
       },
-      { threshold: 0.1, rootMargin: '0px 0px -100px 0px' }
+      { 
+        threshold: [0, 0.1, 0.2, 0.3], 
+        rootMargin: '0px 0px -50px 0px' 
+      }
     )
 
     const sections = document.querySelectorAll('[data-animate]')
     sections.forEach((section) => observerRef.current?.observe(section))
 
-    return () => observerRef.current?.disconnect()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      observerRef.current?.disconnect()
+      window.removeEventListener('scroll', handleScroll)
+      document.documentElement.style.scrollBehavior = 'auto'
+    }
   }, [])
 
   return (
     <div className="min-h-screen">
       {/* 히어로 섹션 */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-white">
-        {/* 배경 장식 요소 */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-400 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-secondary-400 rounded-full blur-3xl"></div>
-          <div className="absolute top-3/4 left-1/3 w-24 h-24 bg-accent-400 rounded-full blur-2xl"></div>
+        {/* 배경 장식 요소 with parallax */}
+        <div 
+          className="absolute inset-0 opacity-5 transition-transform duration-1000 ease-out"
+          style={{
+            transform: `translateY(${scrollY * 0.5}px)`,
+          }}
+        >
+          <div 
+            className="absolute top-1/4 left-1/4 w-32 h-32 bg-primary-400 rounded-full blur-3xl transition-transform duration-1000"
+            style={{
+              transform: `translateY(${scrollY * 0.3}px) rotate(${scrollY * 0.1}deg)`,
+            }}
+          ></div>
+          <div 
+            className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-secondary-400 rounded-full blur-3xl transition-transform duration-1000"
+            style={{
+              transform: `translateY(${scrollY * -0.2}px) rotate(${scrollY * -0.05}deg)`,
+            }}
+          ></div>
+          <div 
+            className="absolute top-3/4 left-1/3 w-24 h-24 bg-accent-400 rounded-full blur-2xl transition-transform duration-1000"
+            style={{
+              transform: `translateY(${scrollY * 0.4}px)`,
+            }}
+          ></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-          <div className="space-y-8 animate-fade-in-up">
+          <div 
+            className="space-y-8 animate-fade-in-up transition-transform duration-700 ease-out"
+            style={{
+              transform: `translateY(${scrollY * -0.1}px)`,
+            }}
+          >
             <div className="inline-block">
               <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-primary-200/50 rounded-full px-4 py-2 shadow-lg shadow-primary-500/10">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
@@ -88,8 +146,18 @@ const Guide = () => {
             </div>
           </div>
           
-          <div className="relative animate-fade-in-up animate-delay-200">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-secondary-400/20 rounded-3xl blur-2xl transform rotate-6"></div>
+          <div 
+            className="relative animate-fade-in-up animate-delay-200 transition-transform duration-700 ease-out"
+            style={{
+              transform: `translateY(${scrollY * -0.15}px) rotateY(${scrollY * 0.02}deg)`,
+            }}
+          >
+            <div 
+              className="absolute inset-0 bg-gradient-to-r from-primary-400/20 to-secondary-400/20 rounded-3xl blur-2xl transform rotate-6 transition-transform duration-1000"
+              style={{
+                transform: `rotate(${6 + scrollY * 0.02}deg)`,
+              }}
+            ></div>
             <div className="relative bg-white/80 backdrop-blur-sm border border-white/50 rounded-3xl p-8 shadow-2xl shadow-slate-900/10">
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
@@ -205,18 +273,39 @@ const Guide = () => {
 
       {/* AI 스마트 기능 섹션 */}
       <section className="relative py-32 bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/20 overflow-hidden" id="ai-section" data-animate>
-        {/* AI 배경 장식 */}
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-1/3 right-1/4 w-36 h-36 bg-primary-400 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/3 left-1/5 w-28 h-28 bg-secondary-400 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        {/* AI 배경 장식 with parallax */}
+        <div 
+          className="absolute inset-0 opacity-5 transition-transform duration-1000 ease-out"
+          style={{
+            transform: `translateY(${scrollY * 0.3}px)`,
+          }}
+        >
+          <div 
+            className="absolute top-1/3 right-1/4 w-36 h-36 bg-primary-400 rounded-full blur-3xl animate-pulse transition-transform duration-1000"
+            style={{
+              transform: `translateX(${scrollY * 0.1}px) scale(${1 + scrollY * 0.0001})`,
+            }}
+          ></div>
+          <div 
+            className="absolute bottom-1/3 left-1/5 w-28 h-28 bg-secondary-400 rounded-full blur-3xl animate-pulse transition-transform duration-1000"
+            style={{
+              animationDelay: '1s',
+              transform: `translateX(${scrollY * -0.05}px) scale(${1 + scrollY * 0.0001})`,
+            }}
+          ></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
-          <div className={`space-y-8 transition-all duration-1000 ${
-            visibleSections.has('ai-section')
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-10'
-          }`}>
+          <div 
+            className={`space-y-8 transition-all duration-1000 ${
+              visibleSections.has('ai-section')
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-10'
+            }`}
+            style={{
+              transform: `translateY(${visibleSections.has('ai-section') ? scrollY * -0.05 : 10}px)`,
+            }}
+          >
             <div className="flex items-center gap-3">
               <div className="relative p-3 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-2xl">
                 <GitPullRequest className="w-6 h-6 text-primary-600" />
@@ -431,11 +520,33 @@ const Guide = () => {
 
       {/* CTA 섹션 */}
       <section className="relative py-32 bg-gradient-to-br from-slate-900 via-primary-900 to-secondary-900 overflow-hidden" id="cta-section" data-animate>
-        {/* CTA 배경 장식 */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-1/4 left-1/3 w-40 h-40 bg-primary-400 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/3 right-1/4 w-32 h-32 bg-secondary-400 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-2/3 left-1/5 w-28 h-28 bg-accent-400 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        {/* CTA 배경 장식 with parallax */}
+        <div 
+          className="absolute inset-0 opacity-10 transition-transform duration-1000 ease-out"
+          style={{
+            transform: `translateY(${scrollY * 0.2}px)`,
+          }}
+        >
+          <div 
+            className="absolute top-1/4 left-1/3 w-40 h-40 bg-primary-400 rounded-full blur-3xl animate-pulse transition-transform duration-1000"
+            style={{
+              transform: `translateY(${scrollY * 0.1}px) scale(${1 + scrollY * 0.0002})`,
+            }}
+          ></div>
+          <div 
+            className="absolute bottom-1/3 right-1/4 w-32 h-32 bg-secondary-400 rounded-full blur-3xl animate-pulse transition-transform duration-1000"
+            style={{
+              animationDelay: '1s',
+              transform: `translateY(${scrollY * -0.1}px) scale(${1 + scrollY * 0.0002})`,
+            }}
+          ></div>
+          <div 
+            className="absolute top-2/3 left-1/5 w-28 h-28 bg-accent-400 rounded-full blur-2xl animate-pulse transition-transform duration-1000"
+            style={{
+              animationDelay: '2s',
+              transform: `translateY(${scrollY * 0.15}px)`,
+            }}
+          ></div>
         </div>
         
         <div className={`relative max-w-4xl mx-auto px-6 text-center text-white transition-all duration-1000 ${
