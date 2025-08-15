@@ -104,7 +104,7 @@ const Guide = () => {
             <div className="inline-block">
               <div className="flex items-center gap-3 bg-white/80 backdrop-blur-sm border border-primary-200/50 rounded-full px-4 py-2 shadow-lg shadow-primary-500/10">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium text-slate-600">AI 기반 코드 리뷰 플랫폼</span>
+                <span className="text-sm font-medium theme-text-secondary">AI 기반 코드 리뷰 플랫폼</span>
               </div>
             </div>
             
@@ -114,10 +114,10 @@ const Guide = () => {
               <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text">새로운 패러다임</span>
             </h1>
             
-            <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
+            <p className="text-xl theme-text-secondary leading-relaxed max-w-lg">
               GitHub 기반의 지능형 코드 리뷰 플랫폼으로
               <br />
-              <span className="font-semibold text-slate-700">개발 워크플로우를 혁신하세요</span>
+              <span className="font-semibold theme-text">개발 워크플로우를 혁신하세요</span>
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
@@ -143,7 +143,7 @@ const Guide = () => {
                   <div className="w-8 h-8 bg-secondary-500 rounded-full border-2 border-white"></div>
                   <div className="w-8 h-8 bg-accent-500 rounded-full border-2 border-white"></div>
                 </div>
-                <span className="text-sm text-slate-500 ml-2">전 세계 개발팀이 선택</span>
+                <span className="text-sm theme-text-muted ml-2">전 세계 개발팀이 선택</span>
               </div>
             </div>
           </div>
@@ -164,8 +164,8 @@ const Guide = () => {
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
                 <div className="relative text-center space-y-3">
-                  <div className="text-slate-500 font-medium text-lg">실시간 협업</div>
-                  <div className="text-slate-400 text-sm">코드 리뷰 & 토론</div>
+                  <div className="theme-text-secondary font-medium text-lg">실시간 협업</div>
+                  <div className="theme-text-muted text-sm">코드 리뷰 & 토론</div>
                   <div className="flex justify-center gap-1">
                     <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>

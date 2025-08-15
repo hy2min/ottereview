@@ -76,7 +76,7 @@ const RepositoryDetail = () => {
     return (
       <div className="pt-2">
         <Box shadow className="min-h-24 flex items-center justify-center">
-          <p className="text-stone-600">레포지토리를 찾을 수 없습니다.</p>
+          <p className="theme-text-secondary">레포지토리를 찾을 수 없습니다.</p>
         </Box>
       </div>
     )
@@ -97,7 +97,7 @@ const RepositoryDetail = () => {
               )}
             </div>
           </div>
-          <p className="text-stone-600">{filteredPRs.length}개의 Pull Request</p>
+          <p className="theme-text-secondary">{filteredPRs.length}개의 Pull Request</p>
         </Box>
 
         <div className="flex gap-3 items-end">

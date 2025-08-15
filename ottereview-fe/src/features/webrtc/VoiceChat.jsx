@@ -45,7 +45,7 @@ const VoiceChat = ({ roomId }) => {
     if (error) return 'bg-red-100 border-red-300 text-red-700'
     if (isConnected) return 'bg-green-100 border-green-300 text-green-700'
     if (isConnecting) return 'bg-yellow-100 border-yellow-300 text-yellow-700'
-    return 'bg-gray-100 border-gray-300 text-gray-700'
+    return 'bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 text-gray-700 dark:text-gray-200'
   }
 
   const getStatusIcon = () => {
@@ -73,7 +73,7 @@ const VoiceChat = ({ roomId }) => {
         
         <button
           onClick={() => setShowParticipants(!showParticipants)}
-          className="text-xs text-gray-600 hover:text-gray-800"
+          className="text-xs theme-text-secondary hover:theme-text"
         >
           {showParticipants ? '👥 숨기기' : '👥 참여자'}
         </button>
@@ -124,7 +124,7 @@ const VoiceChat = ({ roomId }) => {
       {/* 참여자 목록 */}
       {showParticipants && isConnected && (
         <div className="space-y-1">
-          <div className="text-xs font-medium text-gray-600 mb-2">
+          <div className="text-xs font-medium theme-text-secondary mb-2">
             참여자 ({participants.length + 1}명)
           </div>
           
@@ -149,7 +149,7 @@ const VoiceChat = ({ roomId }) => {
           ))}
           
           {participants.length === 0 && (
-            <div className="text-xs text-gray-500 italic p-2">
+            <div className="text-xs theme-text-muted italic p-2">
               다른 참여자가 없습니다
             </div>
           )}
@@ -159,7 +159,7 @@ const VoiceChat = ({ roomId }) => {
       {/* 연결 중 로딩 */}
       {isConnecting && (
         <div className="text-center py-2">
-          <div className="text-xs text-gray-600">음성 채팅에 연결하는 중...</div>
+          <div className="text-xs theme-text-secondary">음성 채팅에 연결하는 중...</div>
         </div>
       )}
       

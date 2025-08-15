@@ -263,7 +263,7 @@ const ChatRoom = () => {
 
           {/* 파일 없음 상태 */}
           {!loading && !error && conflictFiles.length === 0 && (
-            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded-md text-sm text-gray-600 dark:text-gray-300">
+            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded-md text-sm theme-text-secondary">
               📭 편집할 파일이 없습니다
             </div>
           )}

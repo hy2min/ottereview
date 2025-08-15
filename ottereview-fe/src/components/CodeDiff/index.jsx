@@ -521,7 +521,7 @@ const CodeDiff = ({
               return (
                 <div
                   key={idx}
-                  className="col-span-2 sticky top-0 bg-gray-200 text-gray-600 py-1 px-4 text-sm font-semibold"
+                  className="col-span-2 sticky top-0 bg-gray-200 dark:bg-gray-700 theme-text-secondary py-1 px-4 text-sm font-semibold"
                 >
                   {line}
                 </div>

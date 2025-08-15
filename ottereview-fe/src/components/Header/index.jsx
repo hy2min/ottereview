@@ -101,7 +101,7 @@ const Header = () => {
             {/* Page Title - next to logo */}
             {title && (
               <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-600">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-medium theme-text-secondary">
                   {title}
                 </span>
               </div>
@@ -114,10 +114,10 @@ const Header = () => {
             {isLoggedIn && isDashboard && (
               <button
                 onClick={handleImportRepo}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 theme-text hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="새 레포지토리 연결"
               >
-                <Plus size={16} className="text-gray-600 dark:text-gray-300" />
+                <Plus size={16} className="theme-text-secondary" />
                 <span className="hidden sm:inline">레포 연결</span>
               </button>
             )}
@@ -141,9 +141,9 @@ const Header = () => {
               title={theme === 'light' ? '다크 모드로 변경' : '라이트 모드로 변경'}
             >
               {theme === 'light' ? (
-                <Moon size={18} className="text-gray-600 dark:text-gray-300" />
+                <Moon size={18} className="theme-text-secondary" />
               ) : (
-                <Sun size={18} className="text-gray-600 dark:text-gray-300" />
+                <Sun size={18} className="theme-text-secondary" />
               )}
             </button>
           </div>
