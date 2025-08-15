@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, CheckCircle, GitPullRequest, MessageSquare, Users } from 'lucide-react'
+import { ArrowRight, BookOpen, Bot, CheckCircle, Github, GitPullRequest, Heart, MessageSquare, Sparkles, Target, Users } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import Button from '@/components/Button'
@@ -109,28 +109,30 @@ const Guide = () => {
             </div>
             
             <h1 className="text-5xl lg:text-6xl font-bold leading-tight bg-gradient-to-r from-slate-900 via-primary-700 to-slate-800 bg-clip-text text-transparent">
-              🦦 코드 리뷰가
+              코드 리뷰의
               <br />
-              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text">이렇게 쉬울 줄이야</span>
+              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text">새로운 패러다임</span>
             </h1>
             
             <p className="text-xl text-slate-600 leading-relaxed max-w-lg">
-              AI와 함께하는 스마트한 코드 리뷰 플랫폼으로
+              GitHub 기반의 지능형 코드 리뷰 플랫폼으로
               <br />
-              <span className="font-semibold text-slate-700">팀 협업을 한 단계 높여보세요</span>
+              <span className="font-semibold text-slate-700">개발 워크플로우를 혁신하세요</span>
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 variant="primary" 
                 size="lg" 
-                className="shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all"
+                className="shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all flex items-center gap-2"
                 onClick={handleLogin}
               >
-                🚀 지금 시작하기
+                <Target className="w-5 h-5" />
+                지금 시작하기
               </Button>
-              <Button variant="outline" size="lg" className="border-2 hover:border-primary-300 hover:bg-primary-50/50 transition-all">
-                📖 더 알아보기
+              <Button variant="outline" size="lg" className="border-2 hover:border-primary-300 hover:bg-primary-50/50 transition-all flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                더 알아보기
               </Button>
             </div>
             
@@ -141,7 +143,7 @@ const Guide = () => {
                   <div className="w-8 h-8 bg-secondary-500 rounded-full border-2 border-white"></div>
                   <div className="w-8 h-8 bg-accent-500 rounded-full border-2 border-white"></div>
                 </div>
-                <span className="text-sm text-slate-500 ml-2">1000+ 개발자가 사용중</span>
+                <span className="text-sm text-slate-500 ml-2">전 세계 개발팀이 선택</span>
               </div>
             </div>
           </div>
@@ -162,8 +164,8 @@ const Guide = () => {
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
                 <div className="relative text-center space-y-3">
-                  <div className="text-4xl">🦦</div>
-                  <div className="text-slate-500 font-medium">메인 데모 영역</div>
+                  <div className="text-slate-500 font-medium text-lg">실시간 협업</div>
+                  <div className="text-slate-400 text-sm">코드 리뷰 & 토론</div>
                   <div className="flex justify-center gap-1">
                     <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
                     <div className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -196,7 +198,9 @@ const Guide = () => {
               <div className="aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5"></div>
                 <div className="relative text-center space-y-4">
-                  <div className="text-5xl mb-2">🐙</div>
+                  <div className="flex justify-center mb-2">
+                    <Github className="w-20 h-20 text-slate-700" />
+                  </div>
                   <div className="text-slate-600 font-medium text-lg">GitHub 연동 데모</div>
                   <div className="flex justify-center gap-2 mt-4">
                     <div className="w-3 h-3 bg-primary-400 rounded-full animate-ping"></div>
@@ -231,9 +235,9 @@ const Guide = () => {
               </h2>
               
               <p className="text-xl text-slate-600 leading-relaxed">
-                복잡한 설정은 필요 없어요. <span className="font-semibold text-slate-700">GitHub 계정으로 로그인</span>하면
+                복잡한 설정 없이 <span className="font-semibold text-slate-700">GitHub 계정으로 간편 로그인</span>
                 <br />
-                리포지토리와 PR 정보를 자동으로 가져와 드립니다.
+                모든 리포지토리와 PR 정보를 자동으로 동기화합니다.
               </p>
             </div>
             <div className="space-y-4">
@@ -337,9 +341,9 @@ const Guide = () => {
               </div>
             </div>
             <p className="text-xl text-slate-600 leading-relaxed">
-              AI가 <span className="font-semibold text-slate-700 bg-gradient-to-r from-primary-600/10 to-secondary-600/10 px-2 py-1 rounded-lg">PR 제목과 설명을 자동 생성</span>하고, 우선순위까지 추천해요.
+              AI가 <span className="font-semibold text-slate-700 bg-gradient-to-r from-primary-600/10 to-secondary-600/10 px-2 py-1 rounded-lg">PR 제목과 설명을 자동 생성</span>하고, 우선순위까지 추천합니다.
               <br />
-              더 이상 어떻게 써야 할지 고민하지 마세요.
+              개발자는 코딩에만 집중하세요.
             </p>
             <div className="space-y-4">
               <div className="group relative">
@@ -393,8 +397,8 @@ const Guide = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10"></div>
                 <div className="relative text-center space-y-6">
                   <div className="flex justify-center items-center gap-2">
-                    <div className="text-3xl">🤖</div>
-                    <div className="text-2xl">✨</div>
+                    <Bot className="w-12 h-12 text-blue-600" />
+                    <Sparkles className="w-8 h-8 text-purple-600" />
                   </div>
                   <div className="space-y-2">
                     <div className="text-slate-700 font-semibold text-lg">AI 기능 데모</div>
@@ -449,9 +453,9 @@ const Guide = () => {
               <span className="text-primary-600">실시간으로 소통</span>
             </h2>
             <p className="text-xl text-stone-600 leading-relaxed">
-              채팅, 음성 댓글, 화이트보드까지!
+              실시간 채팅, 음성 댓글, 공유 화이트보드로
               <br />
-              다양한 방식으로 아이디어를 공유하고 토론해보세요.
+              효율적인 협업과 빠른 피드백을 경험하세요.
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -489,9 +493,9 @@ const Guide = () => {
               <span className="text-primary-600">함께 해결</span>
             </h2>
             <p className="text-xl text-stone-600 leading-relaxed">
-              충돌이 발생해도 걱정 마세요. 팀원들과 함께
+              머지 충돌 발생 시 팀원들과 실시간으로 협력하여
               <br />
-              실시간으로 충돌을 해결하고 안전하게 머지할 수 있어요.
+              안전하고 효율적으로 문제를 해결할 수 있습니다.
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -557,7 +561,6 @@ const Guide = () => {
           <div className="space-y-8">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-6 py-3">
-                <div className="text-2xl">🦦</div>
                 <span className="text-lg font-semibold">Ottereview</span>
               </div>
               
@@ -570,9 +573,9 @@ const Guide = () => {
               </h2>
               
               <p className="text-xl text-slate-200 leading-relaxed max-w-2xl mx-auto">
-                1000명 이상의 개발자들이 이미 경험하고 있는
+                전 세계 개발팀들이 선택한
                 <br />
-                <span className="font-semibold text-white">AI 기반 코드 리뷰 플랫폼</span>
+                <span className="font-semibold text-white">차세대 코드 리뷰 플랫폼</span>
               </p>
             </div>
             
@@ -580,13 +583,15 @@ const Guide = () => {
               <Button 
                 variant="secondary" 
                 size="lg" 
-                className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-black/20"
+                className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-black/20 flex items-center gap-2"
                 onClick={handleLogin}
               >
-                🚀 GitHub으로 시작하기
+                <Github className="w-5 h-5" />
+                GitHub으로 시작하기
               </Button>
-              <Button variant="ghost" size="lg" className="text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 backdrop-blur-sm">
-                📚 문서 보기
+              <Button variant="ghost" size="lg" className="text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 backdrop-blur-sm flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                문서 보기
               </Button>
             </div>
             
