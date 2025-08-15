@@ -30,10 +30,12 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
     errorMessage,
     retryCount,
     audioContainer,
+    needsUserInteraction,
     joinSession,
     leaveSession,
     closeEntireSession: closeSession,
     retryConnection,
+    handleUserInteraction,
   } = useWebRTC(roomId, myUserInfo, isOwner)
 
   // 현재 사용자 정보와 Owner 여부 확인
@@ -76,6 +78,7 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
     }
   }
 
+  // 수정된 toggleSpeaker 함수
   const toggleSpeaker = () => {
     setIsSpeakerMuted(!isSpeakerMuted)
     const audioElements = audioContainer.current?.querySelectorAll('audio')
@@ -209,6 +212,38 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
           Room ID: {roomId}
         </div>
 
+        {/* 사용자 상호작용 안내 메시지 */}
+        {needsUserInteraction && isSessionJoined && (
+          <div
+            style={{
+              marginTop: '0.5rem',
+              padding: '0.75rem',
+              backgroundColor: '#fef3c7',
+              border: '1px solid #f59e0b',
+              borderRadius: '4px',
+            }}
+          >
+            <div
+              style={{
+                fontSize: '0.75rem',
+                color: '#92400e',
+                marginBottom: '0.5rem',
+                fontWeight: '500',
+              }}
+            >
+              🔊 음성을 듣기 위해 아래 버튼을 클릭해주세요.
+            </div>
+            <Button
+              onClick={handleUserInteraction}
+              variant="warning"
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              🎵 음성 활성화
+            </Button>
+          </div>
+        )}
+
         {/* 에러 메시지 및 재시도 버튼 */}
         {connectionStatus === 'error' && errorMessage && (
           <div
@@ -308,6 +343,8 @@ const AudioChatRoom = ({ roomId, roomParticipants = [] }) => {
           isSpeakerMuted={isSpeakerMuted}
           toggleMicrophone={toggleMicrophone}
           toggleSpeaker={toggleSpeaker}
+          handleUserInteraction={handleUserInteraction}
+          needsUserInteraction={needsUserInteraction}
           colors={colors}
         />
       )}
