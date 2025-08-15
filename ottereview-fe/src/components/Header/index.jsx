@@ -73,42 +73,35 @@ const Header = () => {
     <header className="sticky top-0 z-50 w-full backdrop-blur-md theme-bg-primary border-b border-gray-200/50 dark:border-gray-700/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Center Logo & Page Info */}
-          <div className="absolute left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+          {/* Left Logo */}
+          <div className="flex items-center">
             <button
               onClick={() => navigate(isLoggedIn ? '/dashboard' : '/')}
-              className="group flex items-center gap-3 hover:scale-105 transition-all duration-500"
+              className="group flex items-center gap-3 hover:scale-105 transition-all duration-300"
             >
               {/* Logo Image */}
               <div className="relative">
-                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover:opacity-30 blur-lg transition-all duration-500 rounded-xl animate-pulse" />
-                <div className="relative w-10 h-10 bg-white dark:bg-gray-800 rounded-xl p-1.5 shadow-lg group-hover:shadow-2xl transition-all duration-500 border-2 border-gray-200/50 dark:border-gray-600/50 group-hover:border-blue-400/50 dark:group-hover:border-blue-500/50">
-                  <img
-                    src="/OtteReview.png"
-                    alt="OtteReview Logo"
-                    className="w-full h-full object-contain transition-all duration-700 ease-in-out"
-                  />
-                </div>
+                <img
+                  src="/OtteReview.png"
+                  alt="OtteReview Logo"
+                  className="w-12 h-12 object-contain transition-all duration-300 ease-in-out group-hover:scale-110"
+                />
               </div>
 
               {/* Text Logo */}
               <div className="relative">
-                <div className="absolute -inset-2 bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 opacity-0 group-hover:opacity-20 blur-md transition-all duration-500 rounded-lg" />
-                <div className="relative h-8 overflow-hidden">
-                  <img
-                    src="/otter_logo.png"
-                    alt="Otter Logo"
-                    className="h-full object-contain transition-all duration-700 ease-in-out"
-                  />
-                </div>
-                <div className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-cyan-600 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 origin-center rounded-full" />
+                <img
+                  src="/otter_logo.png"
+                  alt="Otter Logo"
+                  className="h-8 object-contain transition-all duration-300 ease-in-out"
+                />
               </div>
             </button>
             
-            {/* Page Title - smaller text below logo */}
+            {/* Page Title - next to logo */}
             {title && (
-              <div className="mt-1">
-                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-600">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
                   {title}
                 </span>
               </div>
@@ -121,11 +114,11 @@ const Header = () => {
             {isLoggedIn && isDashboard && (
               <button
                 onClick={handleImportRepo}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:via-emerald-600 hover:to-green-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-110 overflow-hidden"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="새 레포지토리 연결"
               >
-                <Plus size={18} className="relative z-10 group-hover:rotate-90 group-hover:scale-110 transition-all duration-500" />
-                <span className="relative z-10 hidden sm:inline tracking-wide">레포 연결</span>
+                <Plus size={16} className="text-gray-600 dark:text-gray-300" />
+                <span className="hidden sm:inline">레포 연결</span>
               </button>
             )}
 
@@ -133,24 +126,24 @@ const Header = () => {
             {isLoggedIn && (
               <button
                 onClick={handleLogout}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 hover:from-red-600 hover:via-pink-600 hover:to-red-700 text-white font-semibold text-sm rounded-xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-110 overflow-hidden"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="로그아웃"
               >
-                <LogOut size={18} className="relative z-10 group-hover:rotate-12 group-hover:scale-110 transition-all duration-500" />
-                <span className="relative z-10 hidden sm:inline tracking-wide">로그아웃</span>
+                <LogOut size={16} />
+                <span className="hidden sm:inline">로그아웃</span>
               </button>
             )}
             
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="group relative p-3 bg-gray-100/60 dark:bg-slate-800/60 hover:bg-gray-200/80 dark:hover:bg-slate-700/80 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-slate-700/50 transition-all duration-500 hover:scale-110 hover:shadow-lg overflow-hidden"
+              className="p-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200"
               title={theme === 'light' ? '다크 모드로 변경' : '라이트 모드로 변경'}
             >
               {theme === 'light' ? (
-                <Moon size={20} className="relative z-10 text-gray-600 dark:text-gray-300 group-hover:text-purple-600 group-hover:rotate-180 group-hover:scale-110 transition-all duration-500" />
+                <Moon size={18} className="text-gray-600 dark:text-gray-300" />
               ) : (
-                <Sun size={20} className="relative z-10 text-gray-600 dark:text-gray-300 group-hover:text-yellow-500 group-hover:rotate-180 group-hover:scale-110 transition-all duration-500" />
+                <Sun size={18} className="text-gray-600 dark:text-gray-300" />
               )}
             </button>
           </div>

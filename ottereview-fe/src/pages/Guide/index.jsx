@@ -397,7 +397,7 @@ const Guide = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10"></div>
                 <div className="relative text-center space-y-6">
                   <div className="flex justify-center items-center gap-2">
-                    <Bot className="w-12 h-12 text-blue-600" />
+                    <Bot className="w-12 h-12 text-orange-600" />
                     <Sparkles className="w-8 h-8 text-purple-600" />
                   </div>
                   <div className="space-y-2">
@@ -567,7 +567,7 @@ const Guide = () => {
               <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
                 지금 바로 시작해보세요!
                 <br />
-                <span className="bg-gradient-to-r from-blue-200 via-cyan-200 to-purple-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-orange-200 via-red-200 to-orange-300 bg-clip-text text-transparent">
                   더 스마트한 코드 리뷰 경험
                 </span>
               </h2>
@@ -601,7 +601,7 @@ const Guide = () => {
                 <span>무료로 시작</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
                 <span>5분만에 설정</span>
               </div>
               <div className="flex items-center gap-2">

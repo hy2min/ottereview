@@ -136,7 +136,7 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-3 mb-2">
-              <Rocket className="w-8 h-8 text-blue-600" />
+              <Rocket className="w-8 h-8 text-orange-500" />
               <h2 className="text-3xl font-bold theme-text">코드 리뷰 워크스페이스</h2>
             </div>
             <p className="theme-text-muted">Repository와 Pull Request를 효율적으로 관리하세요</p>
