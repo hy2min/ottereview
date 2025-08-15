@@ -22,6 +22,8 @@ const CodeEditor = ({ conflictFiles }) => {
   const [status, setStatus] = useState('connecting') // connecting, connected, error
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [lastSaveTime, setLastSaveTime] = useState(null)
 
   // 파일명을 안전한 문서 키로 변환하는 함수
   const sanitizeFileName = (fileName) => {
@@ -87,15 +89,75 @@ const CodeEditor = ({ conflictFiles }) => {
     console.log('✅ 모든 문서 정리 완료')
   }
 
-  // 파일 선택 핸들러
-  const handleFileSelect = (filename) => {
+  // 🔧 추가: 현재 문서 저장 함수
+  const saveCurrentDocument = async () => {
+    const doc = docRef.current
+    const view = viewRef.current
+    
+    if (!doc || !view) {
+      console.log('💾 저장할 문서나 에디터가 없음')
+      return false
+    }
+
+    try {
+      console.log('💾 현재 문서 저장 중...', selectedFileName)
+      
+      // Yorkie 문서의 변경사항을 강제로 동기화
+      const currentContent = view.state.doc.toString()
+      const documentContent = doc.getRoot().content?.toString() || ''
+      
+      if (currentContent !== documentContent) {
+        console.log('💾 변경사항 발견, 동기화 중...')
+        doc.update((root) => {
+          if (!root.content) {
+            root.content = new yorkie.Text()
+          }
+          // 전체 내용을 새로운 내용으로 교체
+          const currentLength = root.content.length
+          if (currentLength > 0) {
+            root.content.edit(0, currentLength, currentContent)
+          } else {
+            root.content.edit(0, 0, currentContent)
+          }
+        }, `자동 저장: ${selectedFileName}`)
+        
+        setLastSaveTime(new Date())
+        setHasUnsavedChanges(false)
+        console.log('✅ 문서 저장 완료:', selectedFileName)
+        return true
+      } else {
+        console.log('💾 변경사항 없음, 저장 생략')
+        return true
+      }
+    } catch (error) {
+      console.error('❌ 문서 저장 실패:', error)
+      return false
+    }
+  }
+
+  // 파일 선택 핸들러 (자동 저장 포함)
+  const handleFileSelect = async (filename) => {
     if (selectedFileName === filename) {
       console.log('📝 동일한 파일 선택됨, 무시:', filename)
       return
     }
 
+    console.log('📝 파일 전환 시작:', selectedFileName, '→', filename)
+    
+    // 현재 파일이 있으면 저장
+    if (selectedFileName && docRef.current && viewRef.current) {
+      console.log('💾 파일 전환 전 자동 저장 실행...')
+      const saveSuccess = await saveCurrentDocument()
+      if (saveSuccess) {
+        console.log('✅ 파일 전환 전 저장 완료')
+      } else {
+        console.warn('⚠️ 파일 전환 전 저장 실패, 그래도 전환 진행')
+      }
+    }
+
     console.log('📝 파일 선택:', filename, '(이전:', selectedFileName, ')')
     setSelectedFileName(filename)
+    setHasUnsavedChanges(false) // 새 파일로 전환하므로 변경사항 초기화
   }
 
   // 미팅룸 정보에서 파일 목록 가져오기
@@ -381,7 +443,7 @@ const CodeEditor = ({ conflictFiles }) => {
           }
         }
 
-        // 6. 에디터 업데이트 리스너
+        // 6. 에디터 업데이트 리스너 (변경사항 추적 포함)
         const updateListener = EditorView.updateListener.of((v) => {
           if (!doc || !v.docChanged) return
 
@@ -390,6 +452,9 @@ const CodeEditor = ({ conflictFiles }) => {
             const userEvent = events.some((e) => tr.isUserEvent(e))
 
             if (!userEvent || tr.annotation(Transaction.remote)) continue
+
+            // 변경사항 발생 시 unsaved 상태로 변경
+            setHasUnsavedChanges(true)
 
             tr.changes.iterChanges((from, to, _, __, inserted) => {
               try {
@@ -402,6 +467,10 @@ const CodeEditor = ({ conflictFiles }) => {
                   }
                   root.content.edit(from, to, text)
                 }, `사용자 편집: ${selectedFileName}`)
+
+                // 편집 직후 변경사항 저장됨으로 표시 (Yorkie가 실시간 동기화하므로)
+                setHasUnsavedChanges(false)
+                setLastSaveTime(new Date())
               } catch (editError) {
                 console.error('❌ 편집 업데이트 오류:', editError)
               }
@@ -417,6 +486,18 @@ const CodeEditor = ({ conflictFiles }) => {
             getLanguageExtension(selectedFileName),
             oneDark,
             updateListener,
+            EditorView.domEventHandlers({
+              keydown: (event, view) => {
+                // Ctrl+S 또는 Cmd+S로 수동 저장
+                if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                  event.preventDefault()
+                  console.log('💾 키보드 단축키로 수동 저장 실행...')
+                  saveCurrentDocument()
+                  return true
+                }
+                return false
+              },
+            }),
             EditorView.theme({
               '&': {
                 height: '100%',
@@ -481,10 +562,18 @@ const CodeEditor = ({ conflictFiles }) => {
     }
   }, [currentDocumentKey, selectedFileName, status])
 
-  // 컴포넌트 언마운트 시 정리
+  // 컴포넌트 언마운트 시 정리 (자동 저장 포함)
   useEffect(() => {
     return () => {
       console.log('🧹 컴포넌트 언마운트 정리')
+
+      // 언마운트 전 현재 변경사항 저장
+      if (hasUnsavedChanges && docRef.current && viewRef.current) {
+        console.log('💾 언마운트 전 자동 저장 실행...')
+        saveCurrentDocument().catch((error) => {
+          console.error('❌ 언마운트 전 저장 실패:', error)
+        })
+      }
 
       if (viewRef.current) {
         viewRef.current.destroy()
@@ -540,7 +629,11 @@ const CodeEditor = ({ conflictFiles }) => {
             >
               <span>📄</span>
               <span>{fileName}</span>
-              {selectedFileName === fileName && <span className="text-xs text-green-500">●</span>}
+              {selectedFileName === fileName && (
+                <span className={`text-xs ${hasUnsavedChanges ? 'text-orange-500' : 'text-green-500'}`}>
+                  {hasUnsavedChanges ? '◯' : '●'}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -568,6 +661,16 @@ const CodeEditor = ({ conflictFiles }) => {
           >
             📄 {selectedFileName}
             <span className="ml-2 text-xs font-mono">({sanitizeFileName(selectedFileName)})</span>
+            {/* 변경사항 및 저장 상태 표시 */}
+            {hasUnsavedChanges ? (
+              <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                ● 변경사항 있음
+              </span>
+            ) : lastSaveTime ? (
+              <span className="ml-2 text-xs text-green-600 dark:text-green-400">
+                ✓ 저장됨 ({lastSaveTime.toLocaleTimeString()})
+              </span>
+            ) : null}
             {/* 🔧 추가: 현재 attach된 문서 수 표시 */}
             <span className="ml-2 text-xs text-blue-600 dark:text-blue-400">
               [{attachedDocsRef.current.size} docs attached]

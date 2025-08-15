@@ -287,9 +287,9 @@ const ChatRoom = () => {
         </div>
 
         {/* 오른쪽 사이드바 - 채팅 & 음성 */}
-        <div className="w-80 flex flex-col m-2 mr-2 ml-1 gap-2 min-h-0 flex-shrink-0">
-          {/* 음성 채팅 - 고정 높이 */}
-          <div className="theme-bg-secondary rounded-lg theme-shadow overflow-hidden h-60 flex-shrink-0">
+        <div className="w-96 flex flex-col m-2 mr-2 ml-1 gap-2 min-h-0 flex-shrink-0">
+          {/* 음성 채팅 - 축소된 높이 */}
+          <div className="theme-bg-secondary rounded-lg theme-shadow overflow-hidden h-40 flex-shrink-0">
             <div className="px-3 py-2 border-b theme-border theme-bg-primary flex-shrink-0">
               <h3 className="m-0 text-sm font-medium theme-text">🎤 음성 채팅</h3>
             </div>
