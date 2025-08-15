@@ -385,8 +385,9 @@ const PRReview = () => {
                     padding: '12px',
                     fontSize: '14px',
                     lineHeight: '1.6',
+                    color: 'inherit',
                   }}
-                  className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
+                  className="theme-text [&_*]:theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:theme-text-secondary [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:dark:border-gray-600 [&_blockquote]:pl-2 [&_a]:text-blue-600 [&_a]:dark:text-blue-400"
                 />
               </div>
             )}
