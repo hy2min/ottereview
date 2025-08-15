@@ -122,35 +122,6 @@ public class PullRequestServiceImpl implements PullRequestService {
     }
 
     @Override
-    public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
-            Long repoId) {
-
-        Repo targetRepo = userAccountService.validateUserPermission(userDetail.getUser()
-                .getId(), repoId);
-
-        // 2. Repo 엔티티에서 GitHub 저장소 이름과 설치 ID를 가져온다.
-        String repositoryFullName = targetRepo.getFullName();
-        Long installationId = targetRepo.getAccount()
-                .getInstallationId();
-
-        // 3. GitHub API를 호출하여 해당 레포지토리의 Pull Request 목록을 가져온다.
-        List<GithubPrResponse> githubPrResponses = githubApiClient.getPullRequests(installationId,
-                repositoryFullName);
-
-        // 4~8. GitHub PR과 DB PR 동기화
-        synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
-
-        // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
-//        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-
-        List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        return finalPullRequests.stream()
-                .map(pullRequestMapper::PullRequestToResponse)
-                .toList();
-    }
-
-    @Override
     public List<PullRequestResponse> getMyPullRequests(CustomUserDetail customUserDetail) {
         User loginUser = userRepository.findById(customUserDetail.getUser()
                         .getId())
@@ -543,59 +514,6 @@ public class PullRequestServiceImpl implements PullRequestService {
     private void validatePullRequestCreation(PreparationResult preparationResult, Repo repo) {
         if (preparationResult.getSource() == null || preparationResult.getTarget() == null || preparationResult.getTitle() == null || repo.getFullName() == null) {
             throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
-        }
-    }
-
-    /**
-     * GitHub에서 가져온 PR 정보와 DB의 PR을 동기화하는 메서드
-     *
-     * @param githubPrResponses GitHub에서 가져온 PR 목록
-     * @param targetRepo        대상 저장소
-     * @param user              사용자 정보
-     */
-    private void synchronizePullRequestsWithGithub(List<GithubPrResponse> githubPrResponses,
-            Repo targetRepo, User user) {
-
-        List<PullRequest> existingPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        Map<Integer, PullRequest> existingPrMap = existingPullRequests.stream()
-                .collect(Collectors.toMap(PullRequest::getGithubPrNumber, pr -> pr));
-
-        // 5. GitHub에서 가져온 PR 번호 Set
-        Set<Integer> githubPrNumbers = githubPrResponses.stream()
-                .map(GithubPrResponse::getGithubPrNumber)
-                .collect(Collectors.toSet());
-
-        // 6. 새로운 PR과 기존 PR을 비교하여 저장할 Pull Request 목록을 준비한다.
-        List<PullRequest> pullRequestsToSave = new ArrayList<>();
-
-        for (GithubPrResponse githubPr : githubPrResponses) {
-            PullRequest existingPr = existingPrMap.get(githubPr.getGithubPrNumber());
-
-            if (existingPr == null) {
-                // 6-1. 새로운 PR: 생성
-                PullRequest newPr = pullRequestMapper.githubPrResponseToEntity(githubPr, user, targetRepo);
-                newPr.enrollRepo(targetRepo);
-                pullRequestsToSave.add(newPr);
-            } else {
-                // 6-2. 기존 PR: 업데이트 (변경사항이 있는 경우만)
-                if (existingPr.hasChangedFrom(githubPr)) {
-                    existingPr.updateFromGithub(githubPr);
-                    pullRequestsToSave.add(existingPr);
-                }
-            }
-        }
-
-        // 7. 깃허브에 없는 PR들을 삭제 처리한다.
-        List<PullRequest> prsToMarkAsDeleted = existingPullRequests.stream()
-                .filter(pr -> !githubPrNumbers.contains(pr.getGithubPrNumber()))
-                .toList();
-
-        pullRequestRepository.deleteAll(prsToMarkAsDeleted);
-
-        if (!pullRequestsToSave.isEmpty()) {
-            pullRequestRepository.saveAll(pullRequestsToSave);
-            log.info("총 {}개의 PR이 동기화되었습니다.", pullRequestsToSave.size());
         }
     }
 
