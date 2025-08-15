@@ -153,9 +153,12 @@ const Landing = () => {
                   <div className="w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
                   <div className="absolute inset-0 w-3 h-3 bg-emerald-500 rounded-full animate-ping" />
                 </div>
-                <span className="text-sm font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
-                  ✨ 새로운 AI 리뷰 기능이 출시되었습니다!
-                </span>
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-semibold bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent group-hover:from-blue-600 group-hover:to-purple-600 transition-all duration-300">
+                    새로운 AI 리뷰 기능이 출시되었습니다!
+                  </span>
+                </div>
               </div>
 
               {/* Main Title */}
@@ -170,9 +173,9 @@ const Landing = () => {
                   </span>
                 </h1>
                 <p className="text-xl sm:text-2xl text-gray-600 dark:text-gray-300 max-w-4xl mx-auto leading-relaxed">
-                  Ottereview는 GitHub 기반의 혁신적인 코드 리뷰 플랫폼입니다.
+                  GitHub 기반의 스마트한 코드 리뷰 플랫폼으로
                   <br className="hidden sm:block" />
-                  팀의 생산성을 높이고, 코드 품질을 향상시키세요.
+                  개발 워크플로우를 혁신하고 팀 협업을 강화하세요.
                 </p>
               </div>
 
@@ -297,10 +300,10 @@ const Landing = () => {
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-                왜 Ottereview인가요?
+                핵심 기능
               </h2>
               <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-                개발팀을 위해 설계된 강력하고 직관적인 도구들로 더 나은 코드를 작성하세요
+                효율적인 코드 리뷰를 위한 필수 기능들
               </p>
             </div>
 
@@ -418,7 +421,7 @@ const Landing = () => {
                     <span className="inline-block group-hover:animate-pulse" style={{ animationDelay: '0.2s' }}>시작하세요</span>
                   </h2>
                   <p className="text-xl text-blue-100 max-w-2xl mx-auto group-hover:text-blue-50 transition-colors duration-300 group-hover:scale-105">
-                    수천 개의 팀이 Ottereview와 함께 더 효율적으로 협업하고 있습니다
+                    개발팀의 생산성과 코드 품질을 한 번에 향상시키는 솔루션
                   </p>
                 </div>
                 
