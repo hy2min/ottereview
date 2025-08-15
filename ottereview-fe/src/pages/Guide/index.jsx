@@ -567,7 +567,7 @@ const Guide = () => {
               <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
                 지금 바로 시작해보세요!
                 <br />
-                <span className="bg-gradient-to-r from-blue-200 via-cyan-200 to-purple-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-orange-200 via-red-200 to-orange-300 bg-clip-text text-transparent">
                   더 스마트한 코드 리뷰 경험
                 </span>
               </h2>

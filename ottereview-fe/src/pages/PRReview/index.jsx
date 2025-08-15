@@ -462,11 +462,11 @@ const PRReview = () => {
                   /* 일반 승인 진행 상태 */
                   <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
                     {/* 배경 그라데이션 효과 */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-purple-50/30 to-cyan-50/50 dark:from-blue-900/20 dark:via-purple-900/10 dark:to-cyan-900/20" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 via-red-50/30 to-orange-50/50 dark:from-orange-900/20 dark:via-red-900/10 dark:to-orange-900/20" />
                     
                     {/* 진행 바 */}
                     <div
-                      className="relative h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 transition-all duration-1000 ease-out rounded-full shadow-lg"
+                      className="relative h-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 transition-all duration-1000 ease-out rounded-full shadow-lg"
                       style={{
                         width: `${
                           prDetail.headBranch?.minApproveCnt
@@ -515,7 +515,7 @@ const PRReview = () => {
                     </div>
                     
                     {/* 외곽 글로우 효과 */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
                   </div>
                 )}
               </div>
