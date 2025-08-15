@@ -5,7 +5,7 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import Modal from '@/components/Modal'
-import { savePRAdditionalInfo, applyCushionLanguage } from '@/features/pullRequest/prApi'
+import { applyCushionLanguage, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -27,10 +27,10 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
-  
+
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
-  
+
   // 쿠션어 모달 상태 관리
   const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
   const [originalContent, setOriginalContent] = useState('')
@@ -116,7 +116,7 @@ close #이슈번호
 
     try {
       const response = await applyCushionLanguage(prBody)
-      
+
       if (response?.result) {
         setCushionedContent(response.result)
       }
@@ -141,13 +141,13 @@ close #이슈번호
 
   // 다음 버튼 활성화 조건 확인
   const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
-  
+
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
     const missingFields = []
     if (prTitle.trim() === '') missingFields.push('제목')
     if (prBody.trim() === '') missingFields.push('설명')
-    
+
     if (missingFields.length === 0) return ''
     return `${missingFields.join(', ')}을(를) 입력해주세요`
   }
@@ -262,11 +262,7 @@ close #이슈번호
                       ]}
                     />
                     <div className="-mt-[4px]">
-                      <Button
-                        size="sm"
-                        onClick={handleApplyCushion}
-                        disabled={!prBody.trim()}
-                      >
+                      <Button size="sm" onClick={handleApplyCushion} disabled={!prBody.trim()}>
                         쿠션어 적용
                       </Button>
                     </div>
@@ -307,7 +303,9 @@ close #이슈번호
                             {priority.title}
                           </span>
                         </div>
-                        <p className="theme-text-secondary text-sm leading-relaxed">{priority.reason}</p>
+                        <p className="theme-text-secondary text-sm leading-relaxed">
+                          {priority.reason}
+                        </p>
                       </div>
                     ) : (
                       <div className="flex items-center justify-center h-22 text-sm theme-text-muted">
@@ -343,16 +341,12 @@ close #이슈번호
             이전
           </Button>
 
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <Button 
-              onClick={handleNextStep} 
-              variant="primary" 
-              disabled={!isNextButtonEnabled}
-            >
+            <Button onClick={handleNextStep} variant="primary" disabled={!isNextButtonEnabled}>
               다음
             </Button>
             {showTooltip && !isNextButtonEnabled && (
@@ -376,8 +370,8 @@ close #이슈번호
             <Button variant="secondary" onClick={handleApplyCushionCancel}>
               취소
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               onClick={handleApplyCushionConfirm}
               disabled={isCushionLoading || !cushionedContent}
             >

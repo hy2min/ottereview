@@ -18,8 +18,9 @@ const CommentForm = ({
   showReviewState = false, // 리뷰 상태 선택 UI 표시 여부
   mode = 'review', // 'review' 또는 'description' 모드
   disableReviewOptions = false, // 리뷰 옵션 비활성화 여부
+  audioFile: initialAudioFile = null, // 초기 음성 파일 (편집 모드용)
 }) => {
-  const [audioFile, setAudioFile] = useState(null)
+  const [audioFile, setAudioFile] = useState(initialAudioFile)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -101,7 +102,7 @@ const CommentForm = ({
 
   // 음성 관련 상태 초기화
   const resetAudioState = () => {
-    setAudioFile(null)
+    setAudioFile(initialAudioFile)
     setIsRecording(false)
     setMediaRecorder(null)
   }
@@ -143,7 +144,10 @@ const CommentForm = ({
               controls
               className="flex-1 h-10 border rounded-full border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
             >
-              <source src={URL.createObjectURL(audioFile)} type={audioFile.type} />
+              <source 
+                src={audioFile instanceof File ? URL.createObjectURL(audioFile) : audioFile} 
+                type={audioFile instanceof File ? audioFile.type : 'audio/webm'} 
+              />
               브라우저가 오디오를 지원하지 않습니다.
             </audio>
             <Button size="sm" variant="outline" onClick={handleRemoveAudio}>
