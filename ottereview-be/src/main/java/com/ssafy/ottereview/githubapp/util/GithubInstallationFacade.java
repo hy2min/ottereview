@@ -39,8 +39,15 @@ public class GithubInstallationFacade {
 
         GithubUserDto githubUserDto = authService.requestGithubUser(accessToken);
 
-        User loginUser = userRepository.findByGithubEmail(githubUserDto.getEmail())
-                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        User loginUser;
+        if (githubUserDto.getEmail() != null) {
+            loginUser = userRepository.findByGithubEmail(githubUserDto.getEmail())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        } else {
+            // email이 null인 경우 githubId로 검색
+            loginUser = userRepository.findByGithubId(githubUserDto.getId())
+                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        }
 
         // 2. Account 생성/조회
         GithubAccountResponse githubAccountResponse = githubApiClient.getAccount(installationId);

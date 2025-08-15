@@ -131,58 +131,6 @@ public class PullRequest extends BaseEntity {
         this.summary = summary;
     }
 
-    public boolean hasChangedFrom(GithubPrResponse githubPr) {
-        return !Objects.equals(this.githubPrNumber, githubPr.getGithubPrNumber()) ||
-                !Objects.equals(this.githubId, githubPr.getGithubId()) ||
-                !Objects.equals(this.commitSha, githubPr.getCommitSha()) ||
-                !Objects.equals(this.title, githubPr.getTitle()) ||
-                !Objects.equals(this.state, githubPr.getState()) ||
-                !Objects.equals(this.body, githubPr.getBody()) ||
-                !Objects.equals(this.merged, githubPr.getMerged()) ||
-                !Objects.equals(this.base, githubPr.getBase()) ||
-                !Objects.equals(this.head, githubPr.getHead()) ||
-                !Objects.equals(this.mergeable, githubPr.getMergeable()) ||
-                !Objects.equals(this.githubCreatedAt, githubPr.getGithubCreatedAt()) ||
-                !Objects.equals(this.githubUpdatedAt, githubPr.getGithubUpdatedAt()) ||
-                !Objects.equals(this.commitCnt, githubPr.getCommitCnt()) ||
-                !Objects.equals(this.changedFilesCnt, githubPr.getChangedFilesCnt()) ||
-                !Objects.equals(this.commentCnt, githubPr.getCommentCnt()) ||
-                !Objects.equals(this.reviewCommentCnt, githubPr.getReviewCommentCnt()) ||
-                !Objects.equals(this.htmlUrl, githubPr.getHtmlUrl()) ||
-                !Objects.equals(this.patchUrl, githubPr.getPatchUrl()) ||
-                !Objects.equals(this.issueUrl, githubPr.getIssueUrl()) ||
-                !Objects.equals(this.diffUrl, githubPr.getDiffUrl());
-    }
-
-    public void updateFromGithub(GithubPrResponse githubPr) {
-        // 기본 PR 정보 업데이트
-        this.commitSha = githubPr.getCommitSha();
-        this.githubPrNumber = githubPr.getGithubPrNumber();
-        this.title = githubPr.getTitle();
-        this.state = PrState.fromGithubState(githubPr.getState(), githubPr.getMerged());
-        this.body = githubPr.getBody();
-        this.merged = githubPr.getMerged();
-        this.base = githubPr.getBase();
-        this.head = githubPr.getHead();
-        this.mergeable = githubPr.getMergeable() != null && githubPr.getMergeable();
-
-        // GitHub 시간 정보 업데이트
-        this.githubCreatedAt = githubPr.getGithubCreatedAt();
-        this.githubUpdatedAt = githubPr.getGithubUpdatedAt();
-
-        // 통계 정보 업데이트
-        this.commitCnt = githubPr.getCommitCnt();
-        this.changedFilesCnt = githubPr.getChangedFilesCnt();
-        this.commentCnt = githubPr.getCommentCnt();
-        this.reviewCommentCnt = githubPr.getReviewCommentCnt();
-
-        // URL 정보 업데이트
-        this.htmlUrl = githubPr.getHtmlUrl();
-        this.patchUrl = githubPr.getPatchUrl();
-        this.issueUrl = githubPr.getIssueUrl();
-        this.diffUrl = githubPr.getDiffUrl();
-    }
-
     public void updateState(PrState state){
         this.state = state;
     }
@@ -192,7 +140,7 @@ public class PullRequest extends BaseEntity {
         this.title = event.getPullRequest().getTitle();
         this.body = event.getPullRequest().getBody();
         this.state = PrState.fromGithubState(event.getPullRequest().getState(), event.getPullRequest().getMerged());
-        this.merged = event.getPullRequest().getMerged() != null && event.getPullRequest().getMerged();
+        this.merged = event.getPullRequest().getMerged() == null || event.getPullRequest().getMerged();
         this.githubUpdatedAt = event.getPullRequest().getUpdatedAt();
         this.commitCnt = event.getPullRequest().getCommits();
         this.changedFilesCnt = event.getPullRequest().getChangedFiles();

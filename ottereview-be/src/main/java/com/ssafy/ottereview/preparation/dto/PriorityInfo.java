@@ -1,7 +1,9 @@
 package com.ssafy.ottereview.preparation.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ssafy.ottereview.preparation.dto.request.PreparationPriorityRequest;
 import com.ssafy.ottereview.priority.entity.Priority;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,20 +18,16 @@ public class PriorityInfo {
     private String level;
     private String title;
     private String content;
-    
-    public static PriorityInfo from(Priority priority) {
-        return PriorityInfo.builder()
-                .level(priority.getLevel())
-                .title(priority.getTitle())
-                .content(priority.getContent())
-                .build();
-    }
+
+    @JsonProperty("related_files")
+    private List<String> relatedFiles;
     
     public static PriorityInfo fromRequest(PreparationPriorityRequest request) {
         return PriorityInfo.builder()
                 .level(request.getLevel())
                 .title(request.getTitle())
                 .content(request.getContent())
+                .relatedFiles(request.getRelatedFiles())
                 .build();
     }
 }

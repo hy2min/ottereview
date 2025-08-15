@@ -71,6 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
         savedReview.updateGithubId(githubResult.getReviewId());
 
         if (reviewRequest.getState() == ReviewState.APPROVE || reviewRequest.getState() == ReviewState.REQUEST_CHANGES) {
+            log.debug("리뷰어 상태 : {} ", reviewRequest.getState());
             updateReviewerStatus(pullRequest, user, reviewRequest.getState());
         }
 
@@ -80,7 +81,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     private void updateReviewerStatus(PullRequest pullRequest, User user, @NotNull ReviewState state) {
-        Reviewer reviewer = (Reviewer) reviewerRepository.findByPullRequestAndUser(pullRequest, user)
+        Reviewer reviewer = reviewerRepository.findByPullRequestAndUser(pullRequest, user)
                 .orElse(null);
         if (reviewer == null) return;
 

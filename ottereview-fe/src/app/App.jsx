@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import { NotFound, protectedRoutes } from '@/app/routes'
+import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
 import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -13,6 +13,7 @@ import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Guide from '@/pages/Guide'
 import Landing from '@/pages/Landing'
+import NotFound from '@/pages/NotFound'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
 
@@ -57,10 +58,6 @@ const App = () => {
     }
   }, [user, accessToken, setUser, clearUser, clearTokens])
 
-  if (pathname === '/chatroom/test') return <ChatRoom />
-  if (pathname === '/audiotest') return <AudioChatRoom />
-  if (pathname === '/install-complete') return <InstallComplete />
-
   const isLoggedIn = !!user
 
   // 토스트 닫기 핸들러
@@ -71,16 +68,24 @@ const App = () => {
   // 로그인된 사용자에게 전역 SSE 연결 제공
   useSSE(isLoggedIn, handlePushEvent)
 
+  // 조건부 렌더링들은 모든 hooks 다음에
+  if (pathname === '/chatroom/test') return <ChatRoom />
+  if (pathname === '/audiotest') return <AudioChatRoom />
+  if (pathname === '/install-complete') return <InstallComplete />
+  if (pathname.startsWith('/oauth/github/callback')) return <OAuthCallbackPage />
+
   if (!isLoggedIn) {
     return (
-      <main>
-        <Routes>
-          <Route path="/" element={<Guide />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <div className="min-h-screen">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<Guide />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
     )
   }
 

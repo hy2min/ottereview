@@ -393,7 +393,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                 .user(user)
                 .review(parentComment.getReview())
                 .path(parentComment.getPath())
-                .body(COMMENT_TEMPLATE.formatted(user.getGithubUsername(), request.getBody()))
+                .body(request.getBody())
                 .parentComment(parentComment)
                 .build();
 
@@ -401,7 +401,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
         // 4. GitHub에 답글 생성
         try {
-            createReplyOnGithub(savedReply, parentComment);
+            createReplyOnGithub(savedReply, parentComment, user.getGithubUsername());
         } catch (Exception e) {
             log.error("GitHub 답글 생성 실패 - 답글 ID: {}, 부모 댓글 ID: {}, 오류: {}", 
                     savedReply.getId(), parentComment.getId(), e.getMessage());
@@ -458,7 +458,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                 .collect(Collectors.toList());
     }
 
-    private void createReplyOnGithub(ReviewComment reply, ReviewComment parentComment) {
+    private void createReplyOnGithub(ReviewComment reply, ReviewComment parentComment, String githubUsername) {
         if (parentComment.getGithubId() == null) {
             log.warn("부모 댓글에 GitHub ID가 없어 GitHub 답글을 생성할 수 없습니다 - 부모 댓글 ID: {}", parentComment.getId());
             return;
@@ -473,7 +473,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     repoFullName,
                     reply.getReview().getPullRequest().getGithubPrNumber(),
                     parentComment.getGithubId(), // 부모 댓글의 GitHub ID
-                    reply.getBody()
+                    COMMENT_TEMPLATE.formatted(githubUsername, reply.getBody())
             );
 
             // GitHub ID와 in_reply_to ID 업데이트
