@@ -1,12 +1,18 @@
 import MDEditor from '@uiw/react-md-editor'
 import {
+  AlertCircle,
+  AlertTriangle,
   ArrowRight,
+  CheckCircle,
+  Clock,
   FileText,
   FolderCode,
   GitBranch,
   GitCommit,
+  Info,
   MessageCircle,
   Users,
+  XCircle,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
@@ -386,15 +392,17 @@ const PRReview = () => {
                     fontSize: '14px',
                     lineHeight: '1.6',
                     color: 'inherit',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
                   }}
-                  className="theme-text [&_*]:theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:theme-text-secondary [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:dark:border-gray-600 [&_blockquote]:pl-2 [&_a]:text-blue-600 [&_a]:dark:text-blue-400"
+                  className="theme-text [&_*]:theme-text [&_*]:break-words [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_pre]:break-all [&_pre]:whitespace-pre-wrap [&_code]:text-xs [&_code]:break-all [&_blockquote]:theme-text-secondary [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:dark:border-gray-600 [&_blockquote]:pl-2 [&_a]:text-blue-600 [&_a]:dark:text-blue-400 [&_a]:break-all"
                 />
               </div>
             )}
             {/* PR 상태별 버튼 */}
           </div>
         </div>
-        <div className="ml-auto">
+        <div className="min-w-20 ml-auto flex justify-end">
           {prDetail.state === 'OPEN' ? (
             <Button
               variant="danger"
@@ -448,8 +456,10 @@ const PRReview = () => {
               <div className="flex justify-between items-center">
                 {(() => {
                   const totalReviewers = prDetail.reviewers?.length || 0
-                  const approvedReviewers = prDetail.reviewers?.filter(reviewer => reviewer.state === 'APPROVED')?.length || 0
-                  
+                  const approvedReviewers =
+                    prDetail.reviewers?.filter((reviewer) => reviewer.state === 'APPROVED')
+                      ?.length || 0
+
                   if (totalReviewers === 0) {
                     return (
                       <span className="text-sm text-green-600 dark:text-green-400 font-medium">
@@ -457,7 +467,7 @@ const PRReview = () => {
                       </span>
                     )
                   }
-                  
+
                   return (
                     <span className="text-sm theme-text-secondary font-medium">
                       {approvedReviewers} / {totalReviewers}
@@ -468,27 +478,31 @@ const PRReview = () => {
               <div className="relative">
                 {(() => {
                   const totalReviewers = prDetail.reviewers?.length || 0
-                  const approvedReviewers = prDetail.reviewers?.filter(reviewer => reviewer.state === 'APPROVED')?.length || 0
-                  
+                  const approvedReviewers =
+                    prDetail.reviewers?.filter((reviewer) => reviewer.state === 'APPROVED')
+                      ?.length || 0
+
                   if (totalReviewers === 0) {
                     /* 리뷰어 없음 상태 */
                     return (
                       <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden">
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">리뷰어 없음</span>
+                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                            리뷰어 없음
+                          </span>
                         </div>
                       </div>
                     )
                   }
-                  
+
                   const approvalPercentage = (approvedReviewers / totalReviewers) * 100
                   const isFullyApproved = approvedReviewers >= totalReviewers
-                  
+
                   return (
                     <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
                       {/* 배경 그라데이션 효과 */}
                       <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 via-red-50/30 to-orange-50/50 dark:from-orange-900/20 dark:via-red-900/10 dark:to-orange-900/20" />
-                      
+
                       {/* 진행 바 */}
                       <div
                         className="relative h-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 transition-all duration-1000 ease-out rounded-full shadow-lg"
@@ -498,13 +512,16 @@ const PRReview = () => {
                       >
                         {/* 반짝이는 오버레이 효과 */}
                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
-                        
+
                         {/* 움직이는 하이라이트 효과 */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse" style={{animationDelay: '0.5s'}} />
-                        
+                        <div
+                          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse"
+                          style={{ animationDelay: '0.5s' }}
+                        />
+
                         {/* 끝부분 글로우 효과 */}
                         <div className="absolute right-0 top-0 w-4 h-full bg-gradient-to-l from-white/50 to-transparent rounded-r-full" />
-                        
+
                         {/* 완료 상태일 때 특별 효과 */}
                         {isFullyApproved && (
                           <>
@@ -512,23 +529,32 @@ const PRReview = () => {
                             <div className="absolute inset-0 flex items-center justify-center">
                               <div className="flex gap-0.5">
                                 <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
-                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                                <div
+                                  className="w-1 h-1 bg-white rounded-full animate-bounce"
+                                  style={{ animationDelay: '0.1s' }}
+                                />
+                                <div
+                                  className="w-1 h-1 bg-white rounded-full animate-bounce"
+                                  style={{ animationDelay: '0.2s' }}
+                                />
                               </div>
                             </div>
                           </>
                         )}
                       </div>
-                      
+
                       {/* 진행률 텍스트 - 중앙에 표시 */}
                       <div className="absolute inset-0 flex items-center justify-center">
                         <span className="text-xs font-bold text-gray-700 dark:text-gray-300 drop-shadow-sm">
                           {Math.round(approvalPercentage)}%
                         </span>
                       </div>
-                      
+
                       {/* 외곽 글로우 효과 */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
+                      <div
+                        className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse"
+                        style={{ animationDelay: '1s' }}
+                      />
                     </div>
                   )
                 })()}
@@ -538,25 +564,148 @@ const PRReview = () => {
         </Box>
       </div>
 
-      {/* 리뷰어 목록 */}
-      {prDetail.reviewers && prDetail.reviewers.length > 0 && (
-        <Box shadow className="p-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <h3 className="font-medium theme-text">리뷰어</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {prDetail.reviewers.map((reviewer) => (
-              <div
-                key={reviewer.id}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
-              >
-                <span>{reviewer.githubUsername}</span>
-              </div>
-            ))}
-          </div>
-        </Box>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* 리뷰어 목록 */}
+        {prDetail.reviewers && prDetail.reviewers.length > 0 && (
+          <Box shadow className="p-3">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <h3 className="font-medium theme-text">리뷰어</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {prDetail.reviewers.map((reviewer) => {
+                const getReviewerBadgeStyle = (state) => {
+                  switch (state) {
+                    case 'APPROVED':
+                      return 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-800'
+                    case 'REQUEST_CHANGES':
+                      return 'bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800'
+                    case 'COMMENT':
+                      return 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800'
+                    case 'NONE':
+                    default:
+                      return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }
+                }
+
+                const getStateIcon = (state) => {
+                  switch (state) {
+                    case 'APPROVED':
+                      return <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    case 'REQUEST_CHANGES':
+                      return <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    case 'COMMENT':
+                      return <MessageCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    case 'NONE':
+                    default:
+                      return <Clock className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  }
+                }
+
+                const getStateText = (state) => {
+                  switch (state) {
+                    case 'APPROVED':
+                      return '승인'
+                    case 'REQUEST_CHANGES':
+                      return '변경 요청'
+                    case 'COMMENT':
+                      return '코멘트'
+                    case 'NONE':
+                    default:
+                      return '대기'
+                  }
+                }
+
+                return (
+                  <div
+                    key={reviewer.id}
+                    className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm border transition-colors ${getReviewerBadgeStyle(reviewer.state)}`}
+                  >
+                    <span className="font-medium">{reviewer.githubUsername}</span>
+                    <div className="flex items-center gap-1">
+                      {getStateIcon(reviewer.state)}
+                      <span className="text-xs font-medium">{getStateText(reviewer.state)}</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Box>
+        )}
+
+        {/* 우선순위 목록 */}
+        {prDetail.priorities && prDetail.priorities.length > 0 && (
+          <Box shadow className="p-3">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <h3 className="font-medium theme-text">우선순위</h3>
+            </div>
+            <div className="space-y-2">
+              {prDetail.priorities.map((priority, index) => {
+                const getPriorityIcon = (level) => {
+                  switch (level?.toLowerCase()) {
+                    case 'high':
+                    case '높음':
+                      return <AlertCircle className="w-4 h-4 text-red-500" />
+                    case 'medium':
+                    case '보통':
+                      return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                    case 'low':
+                    case '낮음':
+                      return <Info className="w-4 h-4 text-blue-500" />
+                    default:
+                      return <Info className="w-4 h-4 text-gray-500" />
+                  }
+                }
+
+                const getPriorityBadgeStyle = (level) => {
+                  switch (level?.toLowerCase()) {
+                    case 'high':
+                    case '높음':
+                      return 'bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'
+                    case 'medium':
+                    case '보통':
+                      return 'bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700'
+                    case 'low':
+                    case '낮음':
+                      return 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
+                    default:
+                      return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                  }
+                }
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 px-3 py-2 rounded-lg border transition-colors ${getPriorityBadgeStyle(priority.level)}`}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">{getPriorityIcon(priority.level)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-sm">{priority.title}</h4>
+                        <Badge
+                          variant={
+                            priority.level?.toLowerCase() === 'high' || priority.level === '높음'
+                              ? 'danger'
+                              : priority.level?.toLowerCase() === 'medium' ||
+                                  priority.level === '보통'
+                                ? 'warning'
+                                : 'default'
+                          }
+                          size="xs"
+                        >
+                          {priority.level}
+                        </Badge>
+                      </div>
+                      <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Box>
+        )}
+      </div>
 
       <Box shadow className="p-3">
         <div className="relative">
