@@ -101,7 +101,7 @@ const Header = () => {
             {/* Page Title - next to logo */}
             {title && (
               <div className="ml-4 pl-4 border-l border-gray-200 dark:border-gray-600">
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                <span className="text-sm font-medium theme-text-secondary">
                   {title}
                 </span>
               </div>
