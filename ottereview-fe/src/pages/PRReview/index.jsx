@@ -603,6 +603,7 @@ const PRReview = () => {
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 enableAudio={false}
+                enableCushion={true}
                 reviewState={reviewState}
                 onReviewStateChange={setReviewState}
                 showReviewState={true}
