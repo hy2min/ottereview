@@ -1,5 +1,6 @@
 package com.ssafy.ottereview.review.service;
 
+import com.ssafy.ottereview.review.dto.ReviewDetailResponse;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import java.util.List;
@@ -15,7 +16,7 @@ public interface ReviewService {
 //
 //    void deleteReview(Long accountId, Long repoId, Long prId, Long reviewId, Long userId);
 
-    List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId);
+    List<ReviewDetailResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId);
 
     ReviewResponse getReviewById(Long accountId, Long repoId, Long prId, Long reviewId);
 }

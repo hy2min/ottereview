@@ -15,9 +15,9 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
               <span
                 className={`inline-block px-3 py-2 border rounded-lg transition-colors duration-200 font-medium ${
                   isActive
-                    ? 'bg-blue-600 dark:bg-blue-500 text-white border-blue-600 dark:border-blue-500 shadow-sm'
+                    ? 'bg-orange-600 dark:bg-orange-500 text-white border-orange-600 dark:border-orange-500 shadow-sm'
                     : isCompleted
-                      ? 'bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800'
+                      ? 'bg-orange-50 dark:bg-orange-950 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800'
                       : 'theme-bg-secondary theme-text-secondary border-gray-200 dark:border-gray-700'
                 }`}
               >
@@ -32,7 +32,7 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
       <div className="relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
           className={
-            'absolute top-0 left-0 h-full bg-blue-600 dark:bg-blue-500 transition-all duration-500 ease-out rounded-full'
+            'absolute top-0 left-0 h-full bg-orange-600 dark:bg-orange-500 transition-all duration-500 ease-out rounded-full'
           }
           style={{ width: `${progressPercent}%` }}
         />
