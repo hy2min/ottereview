@@ -20,7 +20,7 @@ const RepositoryDetail = () => {
   const [repoPRs, setRepoPRs] = useState([])
   const [branches, setBranches] = useState([])
   const [selectedBranch, setSelectedBranch] = useState('all') // 브랜치 필터 상태
-  const [selectedState, setSelectedState] = useState('all') // 상태 필터 상태
+  const [selectedState, setSelectedState] = useState('OPEN') // 상태 필터 상태 (기본값 OPEN)
 
   const name = repo?.fullName?.split('/')[1]
 
@@ -55,6 +55,14 @@ const RepositoryDetail = () => {
     return branchMatch && stateMatch
   })
 
+  // 상태 필터 버튼들
+  const stateFilters = [
+    { label: 'OPEN', value: 'OPEN', variant: 'success' },
+    { label: 'MERGED', value: 'MERGED', variant: 'primary' },
+    { label: 'CLOSED', value: 'CLOSED', variant: 'secondary' },
+    { label: 'ALL', value: 'all', variant: 'outline' },
+  ]
+
   const branchOptions = [
     { label: '모든 브랜치', value: 'all' },
     ...branches.map((branch) => ({
@@ -63,12 +71,6 @@ const RepositoryDetail = () => {
     })),
   ]
 
-  const stateOptions = [
-    { label: '모든 상태', value: 'all' },
-    { label: '열린 PR', value: 'OPEN' },
-    { label: '닫힌 PR', value: 'CLOSED' },
-    { label: '병합된 PR', value: 'MERGED' },
-  ]
 
   if (!repo) {
     return (
@@ -98,33 +100,42 @@ const RepositoryDetail = () => {
           <p className="text-stone-600">{filteredPRs.length}개의 Pull Request</p>
         </Box>
 
-        <div className="flex mt-auto items-end gap-3 w-full lg:w-1/2">
-          {/* 브랜치 필터 */}
-          <div className="flex-1">
-            <InputBox
-              as="select"
-              options={branchOptions}
-              value={selectedBranch}
-              onChange={(e) => setSelectedBranch(e.target.value)}
-              placeholder="브랜치 선택"
-            />
-          </div>
+        <div className="flex gap-3 items-end">
+          {/* 필터 영역 (브랜치 + 상태 버튼들) */}
+          <div className="flex flex-col gap-2">
+            {/* 브랜치 필터 */}
+            <div className="w-64">
+              <InputBox
+                as="select"
+                options={branchOptions}
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                placeholder="브랜치 선택"
+              />
+            </div>
 
-          {/* 상태 필터 */}
-          <div className="flex-1">
-            <InputBox
-              as="select"
-              options={stateOptions}
-              value={selectedState}
-              onChange={(e) => setSelectedState(e.target.value)}
-              placeholder="상태 선택"
-            />
+            {/* 상태 필터 버튼들 */}
+            <div className="flex gap-1">
+              {stateFilters.map((filter) => (
+                <Button
+                  key={filter.value}
+                  variant={selectedState === filter.value ? 'primary' : 'outline'}
+                  size="sm"
+                  onClick={() => setSelectedState(filter.value)}
+                  className="px-2 py-1 text-xs w-16"
+                >
+                  {filter.label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           {/* 새 PR 생성 버튼 */}
-          <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
-            <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
-          </Button>
+          <div className="flex-shrink-0 ml-auto">
+            <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
+              <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
+            </Button>
+          </div>
         </div>
       </div>
 
