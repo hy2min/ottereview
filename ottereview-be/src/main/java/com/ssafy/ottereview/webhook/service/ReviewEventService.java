@@ -67,6 +67,12 @@ public class ReviewEventService {
     }
     
     private void handleReviewSubmittedAndEdited(ReviewEventDto event) {
+
+        if(event.getReview().getBody() == null){
+            log.warn("리뷰 본문이 비어있습니다. 리뷰를 등록하지 않습니다.");
+            return;
+        }
+
         Long reviewGithubId = event.getReview()
                 .getId();
         try {

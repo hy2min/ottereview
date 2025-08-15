@@ -22,6 +22,20 @@ public class OpenViduServiceImpl implements OpenViduService{
         }
     }
 
+    // customSessionId로 미팅룸 세션 생성
+    public String createSession(String customSessionId) {
+        try {
+            SessionProperties properties = new SessionProperties.Builder()
+                    .customSessionId(customSessionId)
+                    .build();
+            Session session = openVidu.createSession(properties);
+            return session.getSessionId();
+        } catch (OpenViduJavaClientException | OpenViduHttpException e) {
+            log.error("Failed to create OpenVidu session with customSessionId: {}", customSessionId, e);
+            throw new IllegalStateException("세션 생성 실패", e);
+        }
+    }
+
     // 미팅룸 접근을 위한 토큰 생성
     public String generateToken(String sessionId) {
         try {

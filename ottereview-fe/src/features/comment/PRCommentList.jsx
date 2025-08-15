@@ -14,7 +14,7 @@ const PRCommentList = ({ reviews = [] }) => {
     <div className="space-y-2">
       {reviews.length === 0 ? (
         <Box shadow className="text-center py-8">
-          <p className="text-stone-500">아직 리뷰가 없습니다.</p>
+          <p className="theme-text-muted">아직 리뷰가 없습니다.</p>
         </Box>
       ) : (
         reviews
@@ -22,12 +22,12 @@ const PRCommentList = ({ reviews = [] }) => {
           .map((review) => (
           <Box key={review.id} shadow className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-stone-300 border-2 border-black flex items-center justify-center">
-                <span className="text-sm font-medium">{review.githubUsername?.[0] || 'U'}</span>
+              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
+                <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{review.githubUsername?.[0] || 'U'}</span>
               </div>
               <div>
-                <span className="font-medium text-stone-900 text-base">{review.githubUsername || 'Unknown'}</span>
-                <span className="text-sm text-stone-500 ml-2">
+                <span className="font-medium theme-text text-base">{review.githubUsername || 'Unknown'}</span>
+                <span className="text-sm theme-text-muted ml-2">
                   {new Date(review.createdAt).toLocaleString()}
                 </span>
                 <Badge 
@@ -39,11 +39,11 @@ const PRCommentList = ({ reviews = [] }) => {
                   className="ml-3"
                 >
                   {review.state === 'APPROVED' ? '승인' :
-                   review.state === 'CHANGES_REQUESTED' ? '변경 요청' : '코멘트'}
+                   review.state === 'CHANGES_REQUESTED' ? '변경 요청' : '리뷰'}
                 </Badge>
               </div>
             </div>
-            <p className="text-stone-700 whitespace-pre-wrap text-base">{review.body}</p>
+            <p className="theme-text whitespace-pre-wrap text-base">{cleanReviewCommentBody(review.body)}</p>
           </Box>
         ))
       )}

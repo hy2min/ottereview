@@ -15,6 +15,8 @@ import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
 import com.ssafy.ottereview.priority.entity.Priority;
+import com.ssafy.ottereview.priority.entity.PriorityFile;
+import com.ssafy.ottereview.priority.repository.PriorityFileRepository;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestDescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
@@ -83,6 +85,7 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
     private final S3Service s3Service;
+    private final PriorityFileRepository priorityFileRepository;
 
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId, Integer limit, String cursor) {
@@ -116,35 +119,6 @@ public class PullRequestServiceImpl implements PullRequestService {
         List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
         return reviewers.stream()
                 .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
-    }
-
-    @Override
-    public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
-            Long repoId) {
-
-        Repo targetRepo = userAccountService.validateUserPermission(userDetail.getUser()
-                .getId(), repoId);
-
-        // 2. Repo 엔티티에서 GitHub 저장소 이름과 설치 ID를 가져온다.
-        String repositoryFullName = targetRepo.getFullName();
-        Long installationId = targetRepo.getAccount()
-                .getInstallationId();
-
-        // 3. GitHub API를 호출하여 해당 레포지토리의 Pull Request 목록을 가져온다.
-        List<GithubPrResponse> githubPrResponses = githubApiClient.getPullRequests(installationId,
-                repositoryFullName);
-
-        // 4~8. GitHub PR과 DB PR 동기화
-        synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
-
-        // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
-//        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-
-        List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        return finalPullRequests.stream()
-                .map(pullRequestMapper::PullRequestToResponse)
-                .toList();
     }
 
     @Override
@@ -238,7 +212,13 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 우선순위 추가
         List<PullRequestPriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
                 .stream()
-                .map(PullRequestPriorityInfo::fromEntity)
+                .map(priority -> {
+                    List<PriorityFile> allByPriority = priorityFileRepository.findAllByPriority(priority);
+                    List<String> relatedFiles = allByPriority.stream()
+                            .map(PriorityFile::getFileName)
+                            .toList();
+                    return PullRequestPriorityInfo.fromEntityAndFiles(priority, relatedFiles);
+                })
                 .toList();
 
         pullRequestDetailResponse.enrollDescription(descriptions);
@@ -334,7 +314,28 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .toList();
 
                 priorityRepository.saveAll(priorityList);
+
                 log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
+
+                // 각 우선 순위와 관련 파일들을 매핑하여 저장
+                for (int i = 0; i < prepareInfo.getPriorities().size(); i++) {
+                    var priorityInfo = prepareInfo.getPriorities().get(i);
+                    Priority savedPriority = priorityList.get(i);
+                    
+                    if (priorityInfo.getRelatedFiles() != null && !priorityInfo.getRelatedFiles().isEmpty()) {
+                        List<PriorityFile> priorityFiles = priorityInfo.getRelatedFiles()
+                                .stream()
+                                .map(fileName -> PriorityFile.builder()
+                                        .fileName(fileName)
+                                        .priority(savedPriority)
+                                        .build())
+                                .toList();
+                        
+                        priorityFileRepository.saveAll(priorityFiles);
+                        log.debug("우선 순위 ID: {} 관련 파일 저장 완료, 파일 수: {}", 
+                                 savedPriority.getId(), priorityFiles.size());
+                    }
+                }
             }
             // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
             createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()
@@ -382,7 +383,7 @@ public class PullRequestServiceImpl implements PullRequestService {
                         .startLine(info.getStartLine())
                         .startSide(info.getStartSide())
                         .diffHunk(info.getDiffHunk())
-                        .fileIndex(null) // 파일 매핑은 서비스에서 처리
+                        .fileIndex(info.getFileIndex()) // 넘어온 정보에서 fileIndex 가져오기
                         .build())
                 .toList();
 
@@ -513,59 +514,6 @@ public class PullRequestServiceImpl implements PullRequestService {
     private void validatePullRequestCreation(PreparationResult preparationResult, Repo repo) {
         if (preparationResult.getSource() == null || preparationResult.getTarget() == null || preparationResult.getTitle() == null || repo.getFullName() == null) {
             throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
-        }
-    }
-
-    /**
-     * GitHub에서 가져온 PR 정보와 DB의 PR을 동기화하는 메서드
-     *
-     * @param githubPrResponses GitHub에서 가져온 PR 목록
-     * @param targetRepo        대상 저장소
-     * @param user              사용자 정보
-     */
-    private void synchronizePullRequestsWithGithub(List<GithubPrResponse> githubPrResponses,
-            Repo targetRepo, User user) {
-
-        List<PullRequest> existingPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        Map<Integer, PullRequest> existingPrMap = existingPullRequests.stream()
-                .collect(Collectors.toMap(PullRequest::getGithubPrNumber, pr -> pr));
-
-        // 5. GitHub에서 가져온 PR 번호 Set
-        Set<Integer> githubPrNumbers = githubPrResponses.stream()
-                .map(GithubPrResponse::getGithubPrNumber)
-                .collect(Collectors.toSet());
-
-        // 6. 새로운 PR과 기존 PR을 비교하여 저장할 Pull Request 목록을 준비한다.
-        List<PullRequest> pullRequestsToSave = new ArrayList<>();
-
-        for (GithubPrResponse githubPr : githubPrResponses) {
-            PullRequest existingPr = existingPrMap.get(githubPr.getGithubPrNumber());
-
-            if (existingPr == null) {
-                // 6-1. 새로운 PR: 생성
-                PullRequest newPr = pullRequestMapper.githubPrResponseToEntity(githubPr, user, targetRepo);
-                newPr.enrollRepo(targetRepo);
-                pullRequestsToSave.add(newPr);
-            } else {
-                // 6-2. 기존 PR: 업데이트 (변경사항이 있는 경우만)
-                if (existingPr.hasChangedFrom(githubPr)) {
-                    existingPr.updateFromGithub(githubPr);
-                    pullRequestsToSave.add(existingPr);
-                }
-            }
-        }
-
-        // 7. 깃허브에 없는 PR들을 삭제 처리한다.
-        List<PullRequest> prsToMarkAsDeleted = existingPullRequests.stream()
-                .filter(pr -> !githubPrNumbers.contains(pr.getGithubPrNumber()))
-                .toList();
-
-        pullRequestRepository.deleteAll(prsToMarkAsDeleted);
-
-        if (!pullRequestsToSave.isEmpty()) {
-            pullRequestRepository.saveAll(pullRequestsToSave);
-            log.info("총 {}개의 PR이 동기화되었습니다.", pullRequestsToSave.size());
         }
     }
 

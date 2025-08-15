@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { deleteChatRoom } from '@/features/chat/chatApi'
 import { useChatStore } from '@/features/chat/chatStore'
-import AudioChatRoom from '@/features/webrtc/AudioChatRoom'
 import Chat from '@/features/webrtc/Chat'
 import CodeEditor from '@/features/webrtc/CodeEditor'
+import VoiceChat from '@/features/webrtc/VoiceChat'
 import Whiteboard from '@/features/webrtc/Whiteboard'
 import { api } from '@/lib/api'
 import { useUserStore } from '@/store/userStore'
@@ -294,9 +294,7 @@ const ChatRoom = () => {
               <h3 className="m-0 text-sm font-medium theme-text">🎤 음성 채팅</h3>
             </div>
             <div className="p-2 h-[calc(100%-45px)] overflow-auto">
-              {console.log('🎯 AudioChatRoom 렌더링 직전, roomId:', roomId)}
-              <AudioChatRoom roomId={roomId} roomParticipants={roomInfo?.participants || []} />
-              {console.log('🎯 AudioChatRoom 렌더링 직후')}
+              <VoiceChat roomId={roomId} />
             </div>
           </div>
 
