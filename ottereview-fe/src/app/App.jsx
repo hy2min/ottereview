@@ -76,13 +76,16 @@ const App = () => {
 
   if (!isLoggedIn) {
     return (
-      <main>
-        <Routes>
-          <Route path="/" element={<Guide />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+      <div className="min-h-screen">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<Guide />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
     )
   }
 

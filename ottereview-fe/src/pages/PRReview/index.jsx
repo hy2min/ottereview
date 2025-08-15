@@ -316,7 +316,7 @@ const PRReview = () => {
   if (!prDetail) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-stone-600 text-lg">PR 정보를 찾을 수 없습니다.</p>
+        <p className="theme-text-secondary text-lg">PR 정보를 찾을 수 없습니다.</p>
       </div>
     )
   }
@@ -336,7 +336,7 @@ const PRReview = () => {
         {/* 레포지토리 정보 */}
         <div>
           <div className="flex items-center space-x-2">
-            <div className="flex items-center space-x-2 text-sm text-stone-600">
+            <div className="flex items-center space-x-2 text-sm theme-text-secondary">
               <FolderCode className="w-4 h-4" />
               <span className="font-medium">{prDetail.repo?.fullName}</span>
               <Badge variant="default" size="xs" className="font-mono">
@@ -443,24 +443,80 @@ const PRReview = () => {
                   </span>
                 )}
               </div>
-              <div className="minecraft-progress">
+              <div className="relative">
                 {prDetail.headBranch?.minApproveCnt === 0 ? (
-                  <div className="minecraft-progress-fill w-full bg-green-500" />
+                  /* 승인 불필요 상태 */
+                  <div className="relative h-6 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-full border border-green-200 dark:border-green-700 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.2s'}} />
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.4s'}} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <div
-                    className="minecraft-progress-fill transition-all duration-500"
-                    style={{
-                      width: `${
-                        prDetail.headBranch?.minApproveCnt
-                          ? Math.min(
-                              ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) *
-                                100,
-                              100
-                            )
-                          : 0
-                      }%`,
-                    }}
-                  />
+                  /* 일반 승인 진행 상태 */
+                  <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
+                    {/* 배경 그라데이션 효과 */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 via-purple-50/30 to-cyan-50/50 dark:from-blue-900/20 dark:via-purple-900/10 dark:to-cyan-900/20" />
+                    
+                    {/* 진행 바 */}
+                    <div
+                      className="relative h-full bg-gradient-to-r from-blue-500 via-purple-500 to-cyan-500 transition-all duration-1000 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${
+                          prDetail.headBranch?.minApproveCnt
+                            ? Math.min(
+                                ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) *
+                                  100,
+                                100
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    >
+                      {/* 반짝이는 오버레이 효과 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
+                      
+                      {/* 움직이는 하이라이트 효과 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse" style={{animationDelay: '0.5s'}} />
+                      
+                      {/* 끝부분 글로우 효과 */}
+                      <div className="absolute right-0 top-0 w-4 h-full bg-gradient-to-l from-white/50 to-transparent rounded-r-full" />
+                      
+                      {/* 완료 상태일 때 특별 효과 */}
+                      {prDetail.approveCnt >= prDetail.headBranch?.minApproveCnt && (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full animate-pulse" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="flex gap-0.5">
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* 진행률 텍스트 - 중앙에 표시 */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold text-gray-700 dark:text-gray-300 drop-shadow-sm">
+                        {Math.round(
+                          prDetail.headBranch?.minApproveCnt
+                            ? ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) * 100
+                            : 0
+                        )}%
+                      </span>
+                    </div>
+                    
+                    {/* 외곽 글로우 효과 */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-cyan-500/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
+                  </div>
                 )}
               </div>
             </div>
