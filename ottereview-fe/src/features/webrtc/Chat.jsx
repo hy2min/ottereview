@@ -162,7 +162,7 @@ const Chat = ({ roomId }) => {
             disabled={!input.trim() || !isConnected}
             className={`px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 min-w-[60px] h-[40px] flex items-center justify-center ${
               !input.trim() || !isConnected
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                 : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
             }`}
           >

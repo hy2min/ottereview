@@ -87,10 +87,10 @@ const PRCardDetail = ({ pr }) => {
               <GitPullRequest className="w-5 h-5 -mt-[4px] text-white" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-stone-900 mb-1">
-                {title} <span className="text-stone-400 text-sm">{prNumber}</span>
+              <h3 className="font-semibold theme-text mb-1">
+                {title} <span className="theme-text-muted text-sm">{prNumber}</span>
               </h3>
-              <p className="text-sm text-stone-600 line-clamp-2">{description}</p>
+              <p className="text-sm theme-text-secondary line-clamp-2">{description}</p>
             </div>
           </div>
 
@@ -99,7 +99,7 @@ const PRCardDetail = ({ pr }) => {
           </Badge>
         </div>
 
-        <div className="text-stone-600">
+        <div className="theme-text-secondary">
           <div className="flex space-x-4">
             <div className="flex items-center space-x-1">
               <User className="w-4 h-4 mb-[2px]" />
@@ -118,7 +118,7 @@ const PRCardDetail = ({ pr }) => {
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{headBranch}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 theme-text-muted" />
                 <span>{baseBranch}</span>
               </div>
             </Badge>
@@ -127,25 +127,25 @@ const PRCardDetail = ({ pr }) => {
               {/* 병합 검토 - Red */}
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-xs text-gray-700 dark:text-gray-300">{mergeable ? '병합 가능' : '병합 검토'}</span>
+                <span className="text-xs theme-text-secondary">{mergeable ? '병합 가능' : '병합 검토'}</span>
               </div>
               
               {/* 승인 - Green */}
               <div className="flex items-center space-x-1">
                 <CheckCircle className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-gray-700 dark:text-gray-300">승인 {approveCnt}</span>
+                <span className="text-xs theme-text-secondary">승인 {approveCnt}</span>
               </div>
               
               {/* 리뷰 - Yellow */}
               <div className="flex items-center space-x-1">
                 <Clock className="w-3 h-3 text-yellow-500" />
-                <span className="text-xs text-gray-700 dark:text-gray-300">리뷰 {reviewCommentCnt}</span>
+                <span className="text-xs theme-text-secondary">리뷰 {reviewCommentCnt}</span>
               </div>
               
               {/* 파일 - Blue */}
               <div className="flex items-center space-x-1">
                 <FileDiff className="w-3 h-3 text-orange-500" />
-                <span className="text-xs text-gray-700 dark:text-gray-300">파일 {changedFilesCnt}</span>
+                <span className="text-xs theme-text-secondary">파일 {changedFilesCnt}</span>
               </div>
             </div>
           </div>

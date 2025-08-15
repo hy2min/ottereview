@@ -105,17 +105,43 @@ const Dashboard = () => {
     }
   }
 
+  // user 객체 구조 확인을 위한 console.log
+  console.log('User 객체:', user)
+  console.log('User profile_image_url:', user?.profile_image_url)
+
   return (
     <div className="pt-2 space-y-8">
       {/* 환영 메시지와 채팅방 목록 */}
       <div className="flex flex-col xl:flex-row gap-6 items-stretch">
         <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
-          <h1 className="text-2xl xl:text-3xl theme-text font-bold">
-            안녕하세요, {user?.githubUsername}님!
-          </h1>
-          <p className="theme-text-secondary text-base xl:text-lg">
-            효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
-          </p>
+          <div className="flex items-center gap-4">
+            {/* GitHub Profile Image */}
+            <div className="relative">
+              <img
+                src={
+                  user?.profileImageUrl ||
+                  user?.profile_image_url ||
+                  'https://github.com/identicons/jasonlong.png'
+                }
+                alt={`${user?.githubUsername}'s profile`}
+                className="w-16 h-16 rounded-full border-3 border-orange-500 shadow-lg object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://github.com/identicons/jasonlong.png'
+                }}
+              />
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 shadow-sm"></div>
+            </div>
+
+            {/* Welcome Message */}
+            <div className="flex-1">
+              <h1 className="text-2xl xl:text-3xl theme-text font-bold">
+                안녕하세요, {user?.githubUsername}님!
+              </h1>
+              <p className="theme-text-secondary text-base xl:text-lg">
+                효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
+              </p>
+            </div>
+          </div>
 
           <button
             onClick={handleTest}
