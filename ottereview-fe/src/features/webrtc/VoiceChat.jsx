@@ -4,7 +4,6 @@ import { useUserStore } from '@/store/userStore'
 import Button from '@/components/Button'
 
 const VoiceChat = ({ roomId }) => {
-  const [isMuted, setIsMuted] = useState(false)
   const [showParticipants, setShowParticipants] = useState(true)
   
   const user = useUserStore(state => state.user)
@@ -14,6 +13,7 @@ const VoiceChat = ({ roomId }) => {
     participants,
     error,
     publisher,
+    audioContainer,
     joinVoiceChat,
     leaveVoiceChat,
     toggleMicrophone,
@@ -28,9 +28,11 @@ const VoiceChat = ({ roomId }) => {
   }, [roomId, user, isConnected, isConnecting, joinVoiceChat])
 
   const handleToggleMicrophone = () => {
-    const newMutedState = toggleMicrophone()
-    setIsMuted(!newMutedState) // toggleMicrophone returns audio state, we want muted state
+    toggleMicrophone()
   }
+
+  // publisher 상태에서 직접 파생된 상태 사용
+  const isMuted = !publisher?.stream?.audioActive
 
   const handleJoinVoice = () => {
     if (user) {
@@ -160,6 +162,9 @@ const VoiceChat = ({ roomId }) => {
           <div className="text-xs text-gray-600">음성 채팅에 연결하는 중...</div>
         </div>
       )}
+      
+      {/* 숨겨진 오디오 컨테이너 - useVoiceChat에서 필요 */}
+      <div ref={audioContainer} style={{ display: 'none' }}></div>
     </div>
   )
 }
