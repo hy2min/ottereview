@@ -1,8 +1,6 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { OpenVidu } from 'openvidu-browser'
-import { useAuthStore } from '@/features/auth/authStore'
-
-const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080'
+import { api } from '@/lib/api'
 
 export const useVoiceChat = () => {
   const [session, setSession] = useState(undefined)
@@ -14,6 +12,39 @@ export const useVoiceChat = () => {
   const [error, setError] = useState('')
   
   const OV = useRef(null)
+  const audioContainer = useRef(null)
+
+  // 컴포넌트 언마운트 및 페이지 종료 처리
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (session) {
+        console.log('🔄 페이지 새로고침/닫기 - 세션 정리')
+        try {
+          session.disconnect()
+        } catch (error) {
+          console.warn('세션 정리 중 오류:', error)
+        }
+      }
+    }
+
+    // beforeunload만 사용 (페이지 새로고침/닫기만 감지)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      if (session) {
+        console.log('🧹 컴포넌트 언마운트 - 세션 정리')
+        try {
+          session.disconnect()
+        } catch (error) {
+          console.warn('세션 정리 중 오류:', error)
+        }
+      }
+      
+      // 이벤트 리스너 제거
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [session])
 
   const joinVoiceChat = useCallback(async (roomId, username) => {
     if (isConnecting || isConnected) return
@@ -82,9 +113,7 @@ export const useVoiceChat = () => {
     if (publisher) {
       const currentState = publisher.stream.audioActive
       publisher.publishAudio(!currentState)
-      return !currentState
     }
-    return false
   }, [publisher])
 
   const setupSessionEvents = (mySession) => {
@@ -150,27 +179,14 @@ export const useVoiceChat = () => {
 
   // 간소화된 토큰 요청 (chatroom 전용)
   const getVoiceChatToken = async (roomId) => {
-    const accessToken = useAuthStore.getState().accessToken
-    
-    if (!accessToken) {
-      throw new Error('인증이 필요합니다.')
+    try {
+      // 공통 api 인스턴스 사용 - 인증 토큰 자동 추가됨
+      const response = await api.post(`/api/meetings/${roomId}/join`)
+      return response.data.openviduToken
+    } catch (error) {
+      console.error('토큰 요청 실패:', error)
+      throw new Error('음성 채팅 토큰 요청에 실패했습니다.')
     }
-
-    // 우선 기존 미팅룸 API 사용, 추후 chatroom 전용 API로 분리 가능
-    const response = await fetch(`${BACKEND_URL}/api/meetings/${roomId}/join`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    return data.openviduToken
   }
 
   return {
@@ -181,6 +197,7 @@ export const useVoiceChat = () => {
     error,
     publisher,
     subscribers,
+    audioContainer,
     
     // 액션
     joinVoiceChat,
