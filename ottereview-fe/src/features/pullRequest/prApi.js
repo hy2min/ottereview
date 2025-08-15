@@ -157,6 +157,16 @@ export const generateAISummary = async ({ source, target, repoId }) => {
   return res.data
 }
 
+// 리뷰 댓글에 답글 작성
+export const createReviewCommentReply = async (reviewId, replyData) => {
+  const payload = {
+    parent_comment_id: replyData.parentCommentId,
+    body: replyData.body,
+  }
+  const res = await api.post(`/api/reviews/${reviewId}/comments/replies`, payload)
+  return res.data
+}
+
 // 쿠션어 적용
 export const applyCushionLanguage = async (content) => {
   const payload = {

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import Box from '@/components/Box'
 import CodeDiff from '@/components/CodeDiff'
 
-const PRFileList = ({ files, onAddComment, onRemoveComment, fileComments = {}, existingReviewComments = {}, descriptions = [], prAuthor = {}, showDiffHunk = false, prId, onDescriptionUpdate, onDescriptionDelete, commentMode = 'review' }) => {
+const PRFileList = ({ files, onAddComment, onRemoveComment, fileComments = {}, existingReviewComments = {}, descriptions = [], prAuthor = {}, showDiffHunk = false, prId, onDescriptionUpdate, onDescriptionDelete, commentMode = 'review', onDataRefresh }) => {
   const [expandedFiles, setExpandedFiles] = useState([]) // 배열로 변경
 
   const toggle = (filename) => {
@@ -64,6 +64,7 @@ const PRFileList = ({ files, onAddComment, onRemoveComment, fileComments = {}, e
                   onDescriptionUpdate={onDescriptionUpdate}
                   onDescriptionDelete={onDescriptionDelete}
                   commentMode={commentMode}
+                  onDataRefresh={onDataRefresh}
                 />
               </motion.div>
             )}

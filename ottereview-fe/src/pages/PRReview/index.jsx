@@ -258,6 +258,18 @@ const PRReview = () => {
     }
   }
 
+  // PR 데이터 새로고침 핸들러 (답글, 댓글 수정/삭제 후 사용)
+  const handleDataRefresh = async () => {
+    try {
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+    } catch (error) {
+      console.error('❌ PR 데이터 새로고침 실패:', error)
+      // 실패하면 페이지 새로고침으로 폴백
+      window.location.reload()
+    }
+  }
+
   const prFiles =
     prDetail?.files?.map(({ filename, additions, deletions, patch }) => ({
       filename,
@@ -557,6 +569,7 @@ const PRReview = () => {
             prId={prId}
             onDescriptionUpdate={handleDescriptionUpdate}
             onDescriptionDelete={handleDescriptionDelete}
+            onDataRefresh={handleDataRefresh}
           />
         )}
         {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
