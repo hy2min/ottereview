@@ -76,7 +76,7 @@ const RepositoryDetail = () => {
     return (
       <div className="pt-2">
         <Box shadow className="min-h-24 flex items-center justify-center">
-          <p className="text-stone-600">레포지토리를 찾을 수 없습니다.</p>
+          <p className="theme-text-secondary">레포지토리를 찾을 수 없습니다.</p>
         </Box>
       </div>
     )
@@ -89,15 +89,15 @@ const RepositoryDetail = () => {
           <div className="flex items-center space-x-3 min-w-0">
             <FolderCode className="min-w-8 min-h-8 shrink-0" />
             <div className="flex items-center space-x-2 min-w-0 flex-1">
-              <h1 className="text-2xl leading-tight truncate">{name}</h1>
+              <h1 className="text-2xl leading-tight truncate theme-text">{name}</h1>
               {repo.private ? (
-                <Lock className="w-6 h-6 text-amber-600" title="Private Repository" />
+                <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" title="Private Repository" />
               ) : (
-                <Globe className="w-6 h-6 text-emerald-600" title="Public Repository" />
+                <Globe className="w-6 h-6 text-emerald-600 dark:text-emerald-400" title="Public Repository" />
               )}
             </div>
           </div>
-          <p className="text-stone-600">{filteredPRs.length}개의 Pull Request</p>
+          <p className="theme-text-secondary">{filteredPRs.length}개의 Pull Request</p>
         </Box>
 
         <div className="flex gap-3 items-end">
@@ -142,9 +142,9 @@ const RepositoryDetail = () => {
       <div className="space-y-3">
         {filteredPRs.length === 0 ? (
           selectedBranch === 'all' && selectedState === 'all' ? (
-            <p>PR이 없습니다.</p>
+            <p className="theme-text-secondary">PR이 없습니다.</p>
           ) : (
-            <p>선택한 조건에 맞는 PR이 없습니다.</p>
+            <p className="theme-text-secondary">선택한 조건에 맞는 PR이 없습니다.</p>
           )
         ) : (
           filteredPRs.map((pr) => <PRCardDetail key={pr.id} pr={pr} />)

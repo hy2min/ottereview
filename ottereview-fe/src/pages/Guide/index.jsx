@@ -64,7 +64,7 @@ const Guide = () => {
   }, [])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       {/* 히어로 섹션 */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-white">
         {/* 배경 장식 요소 with parallax */}
