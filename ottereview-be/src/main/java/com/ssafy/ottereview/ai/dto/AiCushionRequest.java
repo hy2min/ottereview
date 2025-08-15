@@ -1,13 +1,13 @@
-package com.ssafy.ottereview.ai.dto.response;
+package com.ssafy.ottereview.ai.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
-@Getter
-public class AiCushionResponse {
+public class AiCushionRequest {
     
-    private String result;
+    private String content;
 }

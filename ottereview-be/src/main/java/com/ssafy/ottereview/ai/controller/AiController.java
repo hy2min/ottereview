@@ -1,9 +1,11 @@
 package com.ssafy.ottereview.ai.controller;
 
 import com.ssafy.ottereview.ai.client.AiClient;
+import com.ssafy.ottereview.ai.dto.AiCushionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
 import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
+import com.ssafy.ottereview.ai.dto.response.AiCushionResponse;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
@@ -103,6 +105,21 @@ public class AiController {
                 .onErrorResume(error -> {
                     // 에러 발생 시 기본 요약 응답
                     AiConventionResponse defaultResponse = new AiConventionResponse("컨벤션 체크 실패");
+                    
+                    return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                            .body(defaultResponse));
+                });
+    }
+    
+    @PostMapping("/cushions")
+    public Mono<ResponseEntity<AiCushionResponse>> applyCushion(@RequestBody AiCushionRequest request) {
+        return aiClient.applyCushion(request)
+                .map(ResponseEntity::ok)
+                .doOnSuccess(response -> log.info("쿠션어 변환 완료"))
+                .doOnError(error -> log.error("쿠션어 변환 실패", error))
+                .onErrorResume(error -> {
+                    // 에러 발생 시 기본 요약 응답
+                    AiCushionResponse defaultResponse = new AiCushionResponse("쿠션어 변환 실패");
                     
                     return Mono.just(ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                             .body(defaultResponse));
