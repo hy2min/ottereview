@@ -157,6 +157,15 @@ export const generateAISummary = async ({ source, target, repoId }) => {
   return res.data
 }
 
+// 쿠션어 적용
+export const applyCushionLanguage = async (content) => {
+  const payload = {
+    content,
+  }
+  const res = await api.post('/api/ai/cushion', payload)
+  return res.data
+}
+
 // PR 리뷰 목록 가져오기
 export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
   const res = await api.get(
