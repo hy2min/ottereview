@@ -145,8 +145,8 @@ const PRCreateStep2 = ({
                 </Button>
               </div>
             </div>
-            <Box className='h-87.75'>
-              <div className="space-y-2">{renderAIConvention(aiConvention?.result)}</div>
+            <Box className='h-87.75 overflow-y-auto'>
+              <div className="space-y-2 max-w-full break-words">{renderAIConvention(aiConvention?.result)}</div>
             </Box>
           </div>
         </Box>

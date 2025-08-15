@@ -4,7 +4,8 @@ import { useState } from 'react'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import { createReviewCommentReply, deleteReviewComment, updateReviewComment } from '@/features/pullRequest/prApi'
+import Modal from '@/components/Modal'
+import { applyCushionLanguage, createReviewCommentReply, deleteReviewComment, updateReviewComment } from '@/features/pullRequest/prApi'
 import { useUserStore } from '@/store/userStore'
 
 const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
@@ -17,6 +18,13 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
   // 답글 상태
   const [replyingToCommentId, setReplyingToCommentId] = useState(null)
   const [replyContent, setReplyContent] = useState('')
+  
+  // 쿠션어 모달 상태 관리
+  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
+  const [originalContent, setOriginalContent] = useState('')
+  const [cushionedContent, setCushionedContent] = useState('')
+  const [isCushionLoading, setIsCushionLoading] = useState(false)
+  const [cushionTargetType, setCushionTargetType] = useState('') // 'reply' 또는 'edit'
 
   // 댓글 본문 정리 함수
   const cleanReviewCommentBody = (body) => {
@@ -113,6 +121,45 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       alert('답글 작성에 실패했습니다.')
     }
   }
+  
+  // 쿠션어 적용 처리
+  const handleApplyCushion = async (content, targetType) => {
+    if (!content?.trim()) return
+
+    setOriginalContent(content)
+    setCushionTargetType(targetType)
+    setIsCushionModalOpen(true)
+    setIsCushionLoading(true)
+    setCushionedContent('')
+
+    try {
+      const response = await applyCushionLanguage(content)
+
+      if (response?.result) {
+        setCushionedContent(response.result)
+      }
+    } catch (error) {
+      console.error('쿠션어 적용 실패:', error)
+      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
+    } finally {
+      setIsCushionLoading(false)
+    }
+  }
+
+  // 쿠션어 적용 확정
+  const handleApplyCushionConfirm = () => {
+    if (cushionTargetType === 'reply') {
+      setReplyContent(cushionedContent)
+    } else if (cushionTargetType === 'edit') {
+      setEditingReviewCommentContent(cushionedContent)
+    }
+    setIsCushionModalOpen(false)
+  }
+
+  // 쿠션어 적용 취소
+  const handleApplyCushionCancel = () => {
+    setIsCushionModalOpen(false)
+  }
 
   return (
     <div className="mx-2 mb-4 font-sans max-w-4xl">
@@ -182,24 +229,41 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                 rows={3}
                 placeholder="댓글을 수정하세요..."
               />
-              <div className="flex gap-2 justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCancelEditReviewComment}
-                  className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
-                >
-                  취소
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleSaveEditReviewComment(comment)}
-                  disabled={!editingReviewCommentContent.trim()}
-                  className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
-                >
-                  저장
-                </Button>
+              <div className="flex justify-between items-center">
+                {/* 왼쪽: 쿠션어 적용 버튼 */}
+                <div>
+                  {editingReviewCommentContent.trim() && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleApplyCushion(editingReviewCommentContent, 'edit')}
+                      className="hover:!bg-purple-50 dark:hover:!bg-purple-900 hover:!text-purple-700 dark:hover:!text-purple-300"
+                    >
+                      쿠션어 적용
+                    </Button>
+                  )}
+                </div>
+                
+                {/* 오른쪽: 취소/저장 버튼 */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelEditReviewComment}
+                    className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleSaveEditReviewComment(comment)}
+                    disabled={!editingReviewCommentContent.trim()}
+                    className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
+                  >
+                    저장
+                  </Button>
+                </div>
               </div>
             </div>
           ) : (
@@ -244,24 +308,41 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                 className="w-full p-2 border theme-border rounded theme-bg-primary theme-text text-sm resize-none"
                 rows={3}
               />
-              <div className="flex gap-2 justify-end">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleCancelReply}
-                  className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100"
-                >
-                  취소
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => handleSubmitReply(comment)}
-                  disabled={!replyContent.trim()}
-                  className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
-                >
-                  답글 작성
-                </Button>
+              <div className="flex justify-between items-center">
+                {/* 왼쪽: 쿠션어 적용 버튼 */}
+                <div>
+                  {replyContent.trim() && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleApplyCushion(replyContent, 'reply')}
+                      className="hover:!bg-purple-50 dark:hover:!bg-purple-900 hover:!text-purple-700 dark:hover:!text-purple-300"
+                    >
+                      쿠션어 적용
+                    </Button>
+                  )}
+                </div>
+                
+                {/* 오른쪽: 취소/작성 버튼 */}
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelReply}
+                    className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100"
+                  >
+                    취소
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => handleSubmitReply(comment)}
+                    disabled={!replyContent.trim()}
+                    className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
+                  >
+                    답글 작성
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -321,24 +402,41 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       rows={2}
                       placeholder="답글을 수정하세요..."
                     />
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleCancelEditReviewComment}
-                        className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
-                      >
-                        취소
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleSaveEditReviewComment(reply)}
-                        disabled={!editingReviewCommentContent.trim()}
-                        className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
-                      >
-                        저장
-                      </Button>
+                    <div className="flex justify-between items-center">
+                      {/* 왼쪽: 쿠션어 적용 버튼 */}
+                      <div>
+                        {editingReviewCommentContent.trim() && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleApplyCushion(editingReviewCommentContent, 'edit')}
+                            className="hover:!bg-purple-50 dark:hover:!bg-purple-900 hover:!text-purple-700 dark:hover:!text-purple-300"
+                          >
+                            쿠션어 적용
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {/* 오른쪽: 취소/저장 버튼 */}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleCancelEditReviewComment}
+                          className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
+                        >
+                          취소
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleSaveEditReviewComment(reply)}
+                          disabled={!editingReviewCommentContent.trim()}
+                          className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300"
+                        >
+                          저장
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ) : reply.voiceFileUrl ? (
@@ -359,6 +457,56 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
           ))}
         </div>
       )}
+      
+      {/* 쿠션어 적용 모달 */}
+      <Modal
+        isOpen={isCushionModalOpen}
+        onClose={handleApplyCushionCancel}
+        title="쿠션어 적용 결과"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleApplyCushionCancel}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleApplyCushionConfirm}
+              disabled={isCushionLoading || !cushionedContent}
+            >
+              적용
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* 원본 내용 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">원본 내용</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                {originalContent}
+              </pre>
+            </Box>
+          </div>
+
+          {/* 쿠션어 적용 결과 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">쿠션어 적용 결과</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              {isCushionLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm theme-text-secondary">변환 중...</div>
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                  {cushionedContent}
+                </pre>
+              )}
+            </Box>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }
