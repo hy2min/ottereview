@@ -52,7 +52,7 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
 
             // GitHub Review 생성 요청
             String reviewUrl = String.format("https://api.github.com/repos/%s/pulls/%d/reviews", repoFullName, githubPrNumber);
-            Map<String, Object> requestBody = createReviewRequestBody(body, state, reviewComments, githubUsername);
+            Map<String, Object> requestBody = createReviewRequestBody(body, ReviewState.COMMENT, reviewComments, githubUsername);
             Long reviewId = postReview(reviewUrl, requestBody, headers);
 
             // 해당 리뷰 코멘트들 조회
