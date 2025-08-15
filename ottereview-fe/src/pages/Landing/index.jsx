@@ -204,7 +204,7 @@ const Landing = () => {
                 </button>
                 
                 <button 
-                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white/10 dark:bg-slate-800/10 backdrop-blur-sm border-2 border-gray-300/20 dark:border-slate-600/20 hover:border-blue-500/50 dark:hover:border-blue-400/50 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 font-semibold rounded-2xl transition-all duration-500 hover:scale-105 hover:shadow-xl overflow-hidden"
+                  className="group relative inline-flex items-center gap-3 px-8 py-4 bg-white/10 dark:bg-slate-800/10 backdrop-blur-sm border-2 border-gray-300/20 dark:border-slate-600/20 hover:border-orange-500/50 dark:hover:border-orange-400/50 text-gray-700 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 font-semibold rounded-2xl transition-all duration-500 hover:scale-105 hover:shadow-xl overflow-hidden"
                   onMouseEnter={(e) => {
                     e.target.style.background = 'rgba(59, 130, 246, 0.05)';
                     e.target.style.backdropFilter = 'blur(20px)';
@@ -214,10 +214,10 @@ const Landing = () => {
                     e.target.style.backdropFilter = 'blur(4px)';
                   }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/5 to-blue-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/5 to-orange-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Code className="w-5 h-5 z-10 group-hover:rotate-12 transition-transform duration-300" />
                   <span className="z-10">데모 보기</span>
-                  <div className="absolute inset-0 border-2 border-blue-500/0 group-hover:border-blue-500/30 rounded-2xl transition-all duration-300" />
+                  <div className="absolute inset-0 border-2 border-orange-500/0 group-hover:border-orange-500/30 rounded-2xl transition-all duration-300" />
                 </button>
               </div>
 
@@ -420,7 +420,7 @@ const Landing = () => {
                     <span className="inline-block group-hover:animate-pulse" style={{ animationDelay: '0.1s' }}>코드 리뷰를</span>{' '}
                     <span className="inline-block group-hover:animate-pulse" style={{ animationDelay: '0.2s' }}>시작하세요</span>
                   </h2>
-                  <p className="text-xl text-blue-100 max-w-2xl mx-auto group-hover:text-blue-50 transition-colors duration-300 group-hover:scale-105">
+                  <p className="text-xl text-orange-100 max-w-2xl mx-auto group-hover:text-orange-50 transition-colors duration-300 group-hover:scale-105">
                     개발팀의 생산성과 코드 품질을 한 번에 향상시키는 솔루션
                   </p>
                 </div>

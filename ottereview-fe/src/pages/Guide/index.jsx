@@ -397,7 +397,7 @@ const Guide = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10"></div>
                 <div className="relative text-center space-y-6">
                   <div className="flex justify-center items-center gap-2">
-                    <Bot className="w-12 h-12 text-blue-600" />
+                    <Bot className="w-12 h-12 text-orange-600" />
                     <Sparkles className="w-8 h-8 text-purple-600" />
                   </div>
                   <div className="space-y-2">
@@ -601,7 +601,7 @@ const Guide = () => {
                 <span>무료로 시작</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                <div className="w-2 h-2 bg-orange-400 rounded-full"></div>
                 <span>5분만에 설정</span>
               </div>
               <div className="flex items-center gap-2">
