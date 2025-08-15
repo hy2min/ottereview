@@ -178,7 +178,7 @@ close #이슈번호
         level: priority.priority_level,
         title: priority.title,
         content: priority.reason,
-        related_files: priority.related_files,
+        related_files: priority.related_files || [],
       }))
 
       // 전체 추가 정보 구성
