@@ -4,7 +4,7 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
-import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import { savePRAdditionalInfo, applyCushionLanguage } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -95,6 +95,21 @@ close #이슈번호
       if (template) {
         setPrBody(template.content)
       }
+    }
+  }
+
+  // 쿠션어 적용 처리
+  const handleApplyCushion = async () => {
+    if (!prBody.trim()) return
+
+    try {
+      const response = await applyCushionLanguage(prBody)
+      
+      if (response?.result) {
+        setPrBody(response.result)
+      }
+    } catch (error) {
+      console.error('쿠션어 적용 실패:', error)
     }
   }
 
@@ -219,6 +234,15 @@ close #이슈번호
                         { value: 'remove', label: '템플릿 제거' },
                       ]}
                     />
+                    <div className="-mt-[4px]">
+                      <Button
+                        size="sm"
+                        onClick={handleApplyCushion}
+                        disabled={!prBody.trim()}
+                      >
+                        쿠션어 적용
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <div className="flex-1 min-h-0">
