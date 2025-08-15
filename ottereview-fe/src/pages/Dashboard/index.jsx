@@ -97,7 +97,7 @@ const Dashboard = () => {
 
   const handleTest = async () => {
     try {
-      const res = await api.post(`/api/meetings/1/join`)
+      const res = await api.get(`/api/accounts/1/repositories/4/pull-requests/32/review`)
       console.log('응답: ', res.data)
     } catch (err) {
       console.error('요청 실패: ', err)

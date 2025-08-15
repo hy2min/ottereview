@@ -1,5 +1,6 @@
-import { twMerge } from 'tailwind-merge'
 import { useEffect } from 'react'
+import { twMerge } from 'tailwind-merge'
+
 import Button from '@/components/Button'
 
 const Modal = ({ 
