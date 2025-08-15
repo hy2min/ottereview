@@ -748,6 +748,7 @@ const CodeDiff = ({
                         onSubmit={() => handleCommentSubmit(idx)}
                         onCancel={() => closeCommentForm(idx)}
                         enableAudio={true}
+                        enableCushion={commentMode === 'review'}
                         mode={commentMode}
                         audioFile={comments[idx]?.audioFile}
                       />
