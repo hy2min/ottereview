@@ -2,6 +2,7 @@ package com.ssafy.ottereview.reviewer.service;
 
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.pullrequest.dto.response.PullRequestResponse;
+import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
@@ -45,6 +46,7 @@ public class ReviewerServiceImpl implements ReviewerService {
 
         return reviewers.stream()
                 .map(Reviewer::getPullRequest)
+                .filter(pullRequest -> pullRequest.getState() == PrState.OPEN)
                 .map(PullRequestResponse::fromEntity)
                 .toList();
     }
