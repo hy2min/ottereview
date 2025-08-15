@@ -30,6 +30,8 @@ public class PullRequestReviewCommentInfo {
     private LocalDateTime modifiedAt;
     private String voiceFileUrl;
     private Long parentCommentId;
+    private String authorName;
+    private Long authorId;
 
     public static PullRequestReviewCommentInfo fromEntity(ReviewComment reviewComment, String voiceFileUrl) {
         return PullRequestReviewCommentInfo.builder()
@@ -50,6 +52,8 @@ public class PullRequestReviewCommentInfo {
                 .modifiedAt(reviewComment.getModifiedAt())
                 .voiceFileUrl(voiceFileUrl)
                 .parentCommentId(reviewComment.getParentComment() != null ? reviewComment.getParentComment().getId() : null)
+                .authorId(reviewComment.getUser().getId())
+                .authorName(reviewComment.getUser().getGithubUsername())
                 .build();
     }
 }
