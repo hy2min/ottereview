@@ -96,20 +96,12 @@ const Dashboard = () => {
     fetchData()
   }, [user?.id])
 
-  const handleTest = async () => {
-    try {
-      const res = await api.get(`/api/accounts/1/repositories/4/pull-requests/32/review`)
-      console.log('응답: ', res.data)
-    } catch (err) {
-      console.error('요청 실패: ', err)
-    }
-  }
 
   return (
     <div className="pt-2 space-y-8">
       {/* 환영 메시지와 채팅방 목록 */}
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
-        <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        <Box shadow className="lg:w-1/2 min-h-32 flex-col space-y-3 relative">
           <h1 className="text-2xl xl:text-3xl theme-text font-bold">
             안녕하세요, {user?.githubUsername}님!
           </h1>
@@ -117,16 +109,9 @@ const Dashboard = () => {
             효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
           </p>
 
-          <button
-            onClick={handleTest}
-            className="theme-btn text-xs px-2 py-1 absolute top-2 right-2"
-            title="API 응답 테스트"
-          >
-            응답테스트
-          </button>
         </Box>
 
-        <div className="xl:w-1/2">
+        <div className="lg:w-1/2">
           <ChatRoomList />
         </div>
       </div>
