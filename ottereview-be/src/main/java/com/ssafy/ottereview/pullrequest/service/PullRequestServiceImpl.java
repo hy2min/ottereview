@@ -3,21 +3,16 @@ package com.ssafy.ottereview.pullrequest.service;
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.common.config.utils.CursorUtils;
 import com.ssafy.ottereview.common.exception.BusinessException;
-import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
-import com.ssafy.ottereview.description.dto.DescriptionResponse;
-import com.ssafy.ottereview.description.exception.DescriptionErrorCde;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
-import com.ssafy.ottereview.description.service.DescriptionService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.preparation.dto.DescriptionInfo;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
-import com.ssafy.ottereview.priority.entity.Priority;
 import com.ssafy.ottereview.priority.entity.PriorityFile;
 import com.ssafy.ottereview.priority.repository.PriorityFileRepository;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
+import com.ssafy.ottereview.pullrequest.dto.info.MergeStatusResult;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestDescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewCommentInfo;
@@ -36,7 +31,6 @@ import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
-import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
@@ -47,15 +41,10 @@ import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
@@ -81,7 +70,6 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionRepository descriptionRepository;
     private final PullRequestMapper pullRequestMapper;
     private final PreparationRedisRepository preparationRedisRepository;
-    private final DescriptionService descriptionService;
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
     private final S3Service s3Service;
@@ -109,16 +97,24 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
                 .map(pullRequest -> {
-                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest, checkMergeStatus(pullRequest));
+                    MergeStatusResult mergeStatus = checkMergeStatus(pullRequest);
+                    return PullRequestResponse.fromEntityAndMergeStatus(pullRequest, mergeStatus);
                 })
                 .toList();
     }
 
-    private Boolean checkMergeStatus(PullRequest pullRequest) {
+    private MergeStatusResult checkMergeStatus(PullRequest pullRequest) {
         // Reviewer 모두 APPROVED인지 확인
         List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
-        return reviewers.stream()
+        
+        int approveCount = (int) reviewers.stream()
+                .mapToLong(r -> r.getStatus() == ReviewStatus.APPROVED ? 1 : 0)
+                .sum();
+        
+        boolean allApproved = reviewers.stream()
                 .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
+        
+        return new MergeStatusResult(allApproved, approveCount);
     }
 
     @Override
