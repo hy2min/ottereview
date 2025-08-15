@@ -124,8 +124,9 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
                     emailService.sendChatInvite(inviteDto); // @Async 메서드 호출
                 });
 
-        // OpenVidu 세션 생성 & Redis 저장
-        String sessionId = openViduService.createSession();
+        // OpenVidu 세션 생성 & Redis 저장 (roomId를 customSessionId로 사용)
+        String customSessionId = "room-" + room.getId();
+        String sessionId = openViduService.createSession(customSessionId);
         redisTemplate.opsForValue()
                 .set(SESSION_KEY_PREFIX + room.getId(), sessionId, sessionTtlHours, TimeUnit.HOURS);
 
