@@ -51,6 +51,7 @@ const CodeDiff = ({
   // 임시 댓글 편집 관련 상태
   const [editingCommentId, setEditingCommentId] = useState(null)
   const [editingCommentContent, setEditingCommentContent] = useState('')
+  const [editingCommentAudio, setEditingCommentAudio] = useState(null)
   
   // 기존 리뷰 댓글 편집 관련 상태
   const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
@@ -175,7 +176,7 @@ const CodeDiff = ({
       ...prevComments,
       [lineIndex]: {
         ...prevComments[lineIndex],
-        content,
+        content: audioFile ? '' : content, // 음성 파일이 있으면 텍스트는 빈 문자열로
         audioFile,
       },
     }))
@@ -279,20 +280,18 @@ const CodeDiff = ({
           ...reviewCommentData, // reviewCommentData 정보도 포함
         })
 
-        // 리뷰 모드일 때만 로컬 상태에 추가 (설명 모드에서는 임시 상태 표시 안함)
-        if (commentMode === 'review') {
-          setSubmittedComments((prev) => ({
-            ...prev,
-            [lineIndex]: [
-              ...(prev[lineIndex] || []),
-              {
-                ...commentData,
-                id: Date.now(), // 임시 ID
-                submittedAt: new Date().toLocaleTimeString(),
-              },
-            ],
-          }))
-        }
+        // 리뷰 모드와 설명 모드 모두 로컬 상태에 추가 (임시 상태 표시)
+        setSubmittedComments((prev) => ({
+          ...prev,
+          [lineIndex]: [
+            ...(prev[lineIndex] || []),
+            {
+              ...commentData,
+              id: Date.now(), // 임시 ID
+              submittedAt: new Date().toLocaleTimeString(),
+            },
+          ],
+        }))
       } else {
         // 첫 번째와 마지막 라인 정보 사용
         const firstLine = selectedLinesInfo[0]
@@ -396,22 +395,32 @@ const CodeDiff = ({
   const handleEditComment = (lineIndex, comment) => {
     setEditingCommentId(`${lineIndex}-${comment.id}`)
     setEditingCommentContent(comment.content || '')
+    setEditingCommentAudio(comment.audioFile || null)
   }
   
   // 임시 댓글 편집 취소
   const handleCancelEditComment = () => {
     setEditingCommentId(null)
     setEditingCommentContent('')
+    setEditingCommentAudio(null)
   }
   
   // 임시 댓글 편집 저장
   const handleSaveEditComment = (lineIndex, comment) => {
-    if (editingCommentContent.trim()) {
+    const hasTextContent = editingCommentContent.trim()
+    const hasAudioFile = editingCommentAudio
+    
+    // 텍스트나 음성 중 하나라도 있어야 저장 가능
+    if (hasTextContent || hasAudioFile) {
       setSubmittedComments((prev) => ({
         ...prev,
         [lineIndex]: prev[lineIndex].map((c) => 
           c.id === comment.id 
-            ? { ...c, content: editingCommentContent.trim() }
+            ? { 
+                ...c, 
+                content: hasAudioFile ? '' : editingCommentContent.trim(),
+                audioFile: editingCommentAudio
+              }
             : c
         )
       }))
@@ -419,56 +428,16 @@ const CodeDiff = ({
       // 편집 상태 초기화
       setEditingCommentId(null)
       setEditingCommentContent('')
+      setEditingCommentAudio(null)
     }
   }
   
-  // 음성 댓글 다시 녹음 (편집 대신)
-  const handleRerecordComment = async (lineIndex, comment) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
-      const chunks = []
-      
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data)
-        }
-      }
-      
-      recorder.onstop = () => {
-        const audioBlob = new Blob(chunks, { type: 'audio/webm' })
-        const audioFile = new File([audioBlob], `recording-${Date.now()}.webm`, {
-          type: 'audio/webm',
-        })
-        
-        // 음성 파일 업데이트
-        setSubmittedComments((prev) => ({
-          ...prev,
-          [lineIndex]: prev[lineIndex].map((c) => 
-            c.id === comment.id 
-              ? { ...c, audioFile: audioFile }
-              : c
-          )
-        }))
-        
-        // 스트림 정리
-        stream.getTracks().forEach((track) => track.stop())
-        alert('음성이 다시 녹음되었습니다.')
-      }
-      
-      recorder.start()
-      
-      // 3초 후 자동 정지 (데모용)
-      setTimeout(() => {
-        if (recorder.state === 'recording') {
-          recorder.stop()
-        }
-      }, 5000)
-      
-      alert('녹음이 시작되었습니다. 5초 후 자동으로 종료됩니다.')
-    } catch (error) {
-      console.error('마이크 접근 실패:', error)
-      alert('마이크 접근 권한이 필요합니다.')
+  // 편집 중 음성 파일 변경 핸들러
+  const handleEditCommentAudioChange = (audioFile) => {
+    setEditingCommentAudio(audioFile)
+    // 음성 파일이 있으면 텍스트 내용 초기화
+    if (audioFile) {
+      setEditingCommentContent('')
     }
   }
   
@@ -726,6 +695,11 @@ const CodeDiff = ({
                                     <Badge variant="primary" className="ml-2">
                                       📝 설명
                                     </Badge>
+                                    {desc.voiceFileUrl && (
+                                      <Badge variant="success" className="ml-2">
+                                        🎵 음성
+                                      </Badge>
+                                    )}
                                   </div>
                                 </div>
                                 {/* 수정/삭제 버튼 */}
@@ -778,9 +752,21 @@ const CodeDiff = ({
                                   </div>
                                 </div>
                               ) : (
-                                <p className="theme-text whitespace-pre-wrap text-base font-medium">
-                                  {desc.body}
-                                </p>
+                                <>
+                                  {desc.voiceFileUrl ? (
+                                    <audio
+                                      controls
+                                      src={desc.voiceFileUrl}
+                                      className="h-8 rounded-full border border-gray-300 "
+                                    >
+                                      브라우저가 오디오를 지원하지 않습니다.
+                                    </audio>
+                                  ) : (
+                                    <p className="theme-text whitespace-pre-wrap text-base font-medium">
+                                      {desc.body}
+                                    </p>
+                                  )}
+                                </>
                               )}
                             </Box>
                           </div>
@@ -950,28 +936,26 @@ const CodeDiff = ({
                             </div>
                             {/* 수정/삭제 버튼 */}
                             <div className="flex items-center gap-1">
-                              {/* 수정 버튼 (텍스트 댓글만) 또는 다시 녹음 버튼 (음성 댓글) */}
-                              {comment.audioFile ? (
-                                <button
-                                  onClick={() => handleRerecordComment(idx, comment)}
-                                  className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                                  title="다시 녹음"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => handleEditComment(idx, comment)}
-                                  className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                                  title="댓글 수정"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                              )}
+                              {/* 수정 버튼 (텍스트/음성 댓글 모두) */}
+                              <button
+                                onClick={() => handleEditComment(idx, comment)}
+                                className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
+                                title="댓글 수정"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
                               {/* 삭제 버튼 */}
                               {onRemoveComment && (
                                 <button
-                                  onClick={() => onRemoveComment(idx, comment.id)}
+                                  onClick={() => {
+                                    // 로컬 상태에서 삭제
+                                    setSubmittedComments((prev) => ({
+                                      ...prev,
+                                      [idx]: (prev[idx] || []).filter((c) => c.id !== comment.id)
+                                    }))
+                                    // 상위 컴포넌트에도 알림
+                                    onRemoveComment(idx, comment.id)
+                                  }}
                                   className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
                                   title="댓글 삭제"
                                 >
@@ -982,33 +966,19 @@ const CodeDiff = ({
                           </div>
                           <div className="space-y-2">
                             {/* 편집 모드인지 확인 */}
-                            {editingCommentId === `${idx}-${comment.id}` && !comment.audioFile ? (
-                              <div className="space-y-2">
-                                <textarea
+                            {editingCommentId === `${idx}-${comment.id}` ? (
+                              <div className="font-sans">
+                                <CommentForm
+                                  size="normal"
                                   value={editingCommentContent}
                                   onChange={(e) => setEditingCommentContent(e.target.value)}
-                                  className="w-full p-2 border theme-border rounded theme-bg-primary theme-text text-base resize-none"
-                                  rows={3}
-                                  placeholder="댓글을 수정하세요..."
+                                  onAudioChange={handleEditCommentAudioChange}
+                                  onSubmit={() => handleSaveEditComment(idx, comment)}
+                                  onCancel={handleCancelEditComment}
+                                  enableAudio={true}
+                                  mode={commentMode}
+                                  audioFile={editingCommentAudio}
                                 />
-                                <div className="flex gap-2 justify-end">
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleCancelEditComment}
-                                    className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
-                                  >
-                                    취소
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="secondary"
-                                    onClick={() => handleSaveEditComment(idx, comment)}
-                                    className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
-                                  >
-                                    저장
-                                  </Button>
-                                </div>
                               </div>
                             ) : (
                               <>
