@@ -79,7 +79,6 @@ async def health_check():
         "environment": ENV,
         "openai_configured": bool(os.getenv("OPENAI_API_KEY"))
         }
-
 class reviewRequest(BaseModel):
     content: str
     """
