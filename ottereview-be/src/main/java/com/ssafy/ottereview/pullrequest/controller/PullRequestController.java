@@ -31,16 +31,6 @@ public class PullRequestController {
 
     private final PullRequestService pullRequestService;
 
-    @GetMapping("/github")
-    @Hidden
-    @Operation(
-            summary = "Github에서 Pull Request 목록 조회",
-            description = "GitHub API를 호출하여 동기화한 후 해당 레포지토리의 Pull Request 목록을 반환합니다."
-    )
-    public ResponseEntity<List<PullRequestResponse>> getPullRequestsByGithub(@AuthenticationPrincipal CustomUserDetail userDetail, @PathVariable("repo-id") Long repositoryId) {
-        return ResponseEntity.ok(pullRequestService.getPullRequestsByGithub(userDetail, repositoryId));
-    }
-
     @GetMapping("/search")
     @Operation(
             summary = "브랜치 정보를 이용한 Open 상태 Pull Request 단일 조회",

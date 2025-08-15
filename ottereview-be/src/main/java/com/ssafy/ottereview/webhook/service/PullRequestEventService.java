@@ -189,7 +189,7 @@ public class PullRequestEventService {
                         .getRef())
                 .head(pullRequest.getHead()
                         .getRef())
-                .mergeable(pullRequest.getMergeable() != null && pullRequest.getMergeable())
+                .mergeable(pullRequest.getMergeable() == null || pullRequest.getMergeable())
                 .githubCreatedAt(pullRequest.getCreatedAt())
                 .githubUpdatedAt(pullRequest.getUpdatedAt())
                 .commitCnt(pullRequest.getCommits())
