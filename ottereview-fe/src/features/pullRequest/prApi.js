@@ -266,3 +266,8 @@ export const updateReviewComment = async (reviewId, reviewCommentId, requestBody
   })
   return res.data
 }
+
+export const fetchReviews = async (accountId, repoId, prId) => {
+  const res = await api.get(`/api/accounts/${accountId}/repositories/${repoId}/pull-requests/${prId}/review`)
+  return res.data
+}

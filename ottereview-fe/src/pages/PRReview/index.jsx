@@ -25,6 +25,7 @@ import {
   closePR,
   deletePRDescription,
   fetchPRDetail,
+  fetchReviews,
   reopenPR,
   submitReview,
   updatePRDescription,
@@ -179,14 +180,23 @@ const PRReview = () => {
 
       alert('리뷰가 성공적으로 제출되었습니다!')
 
-      // 새로고침 대신 PR 데이터만 다시 불러오기
+      // 리뷰 데이터만 새로 받아오기
       try {
-        const pr = await fetchPRDetail({ repoId, prId })
-        setPrDetail(pr)
+        const updatedReviews = await fetchReviews(prDetail?.repo.accountId, repoId, prId)
+        setPrDetail(prev => ({
+          ...prev,
+          reviews: updatedReviews
+        }))
       } catch (err) {
-        console.error('PR 데이터 새로고침 실패:', err)
-        // 실패하면 페이지 새로고침
-        window.location.reload()
+        console.error('리뷰 데이터 새로고침 실패:', err)
+        // 실패하면 전체 PR 데이터 다시 불러오기
+        try {
+          const pr = await fetchPRDetail({ repoId, prId })
+          setPrDetail(pr)
+        } catch (error) {
+          console.error('전체 PR 데이터 새로고침도 실패:', error)
+          window.location.reload()
+        }
       }
     } catch (error) {
       console.error('❌ 리뷰 제출 실패:', error)
@@ -260,6 +270,26 @@ const PRReview = () => {
     } catch (error) {
       console.error('❌ Description 삭제 실패:', error)
       throw error // CodeDiff에서 에러 처리하도록
+    }
+  }
+
+  // 댓글 작성/수정/삭제 후 리뷰 데이터만 새로고침하는 함수
+  const handleDataRefresh = async () => {
+    try {
+      const updatedReviews = await fetchReviews(prDetail?.repo.accountId, repoId, prId)
+      setPrDetail(prev => ({
+        ...prev,
+        reviews: updatedReviews
+      }))
+    } catch (err) {
+      console.error('리뷰 데이터 새로고침 실패:', err)
+      // 실패하면 전체 PR 데이터 다시 불러오기
+      try {
+        const pr = await fetchPRDetail({ repoId, prId })
+        setPrDetail(pr)
+      } catch (error) {
+        console.error('전체 PR 데이터 새로고침도 실패:', error)
+      }
     }
   }
 
@@ -730,6 +760,7 @@ const PRReview = () => {
             prId={prId}
             onDescriptionUpdate={handleDescriptionUpdate}
             onDescriptionDelete={handleDescriptionDelete}
+            onDataRefresh={handleDataRefresh}
           />
         )}
         {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
