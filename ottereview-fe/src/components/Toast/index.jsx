@@ -1,5 +1,5 @@
+import { GitBranch,X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { X, GitBranch } from 'lucide-react'
 
 const Toast = ({ toast, onClose }) => {
   const [isVisible, setIsVisible] = useState(false)

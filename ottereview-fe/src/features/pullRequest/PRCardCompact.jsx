@@ -1,4 +1,4 @@
-import { Clock, FolderCode, Users } from 'lucide-react'
+import { CheckCircle, Clock, FolderCode, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
@@ -58,13 +58,23 @@ const PRCardCompact = ({ pr, type }) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-1 flex-wrap">
-          <Badge variant={isMergeable ? 'primary' : 'danger'}>
-            {isMergeable ? '병합 가능' : '병합 불가'}
-          </Badge>
-          <div className="flex justify-end flex-wrap gap-1">
-            <Badge variant="emerald">승인 {approveCnt}</Badge>
-            <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
+        <div className="flex items-center space-x-3">
+          {/* 병합 검토 - Red */}
+          <div className="flex items-center space-x-1">
+            <div className={`w-2 h-2 rounded-full ${isMergeable ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-red-500 dark:bg-red-400'}`} />
+            <span className="text-xs font-medium theme-text-secondary">{isMergeable ? '병합 가능' : '병합 검토'}</span>
+          </div>
+          
+          {/* 승인 - Green */}
+          <div className="flex items-center space-x-1">
+            <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
+            <span className="text-xs font-medium theme-text-secondary">승인 {approveCnt}</span>
+          </div>
+          
+          {/* 리뷰 - Yellow */}
+          <div className="flex items-center space-x-1">
+            <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-medium theme-text-secondary">리뷰 {reviewCommentCnt}</span>
           </div>
         </div>
       </div>

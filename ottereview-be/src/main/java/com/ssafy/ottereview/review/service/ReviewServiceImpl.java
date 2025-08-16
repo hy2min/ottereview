@@ -5,6 +5,8 @@ import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.review.dto.GithubReviewResponse;
+import com.ssafy.ottereview.review.dto.ReviewCommentDetailResponse;
+import com.ssafy.ottereview.review.dto.ReviewDetailResponse;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.entity.Review;
@@ -22,23 +24,21 @@ import com.ssafy.ottereview.s3.service.S3Service;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class ReviewServiceImpl implements ReviewService {
-
+    
     private static final String COMMENT_TEMPLATE = """
             **👀 Reviewer: @%s**
             %s
@@ -53,43 +53,46 @@ public class ReviewServiceImpl implements ReviewService {
     private final AccountRepository accountRepository;
     private final ReviewerRepository reviewerRepository;
     private final S3Service s3Service;
-
+    
     @Override
     @Transactional
     public ReviewResponse createReviewWithFiles(Long accountId, Long repoId, Long prId,
-                                                ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
+            ReviewRequest reviewRequest, MultipartFile[] files, Long userId) {
         User user = findUser(userId);
         PullRequest pullRequest = findPullRequest(prId);
-
+        
         Review savedReview = saveReview(reviewRequest, pullRequest, user);
-
+        
         List<ReviewCommentResponse> createdComments = createReviewCommentsIfExists(savedReview.getId(), reviewRequest, files, userId);
-
+        
         GithubReviewResponse githubResult = createReviewOnGithub(accountId, repoId, pullRequest, reviewRequest, user, savedReview.getId());
-
+        
         // GitHub API 호출 직후 즉시 reviewId 업데이트 (웹훅 Race Condition 방지)
         savedReview.updateGithubId(githubResult.getReviewId());
-
+        
         if (reviewRequest.getState() == ReviewState.APPROVE || reviewRequest.getState() == ReviewState.REQUEST_CHANGES) {
+            log.debug("리뷰어 상태 : {} ", reviewRequest.getState());
             updateReviewerStatus(pullRequest, user, reviewRequest.getState());
         }
-
+        
         updateGithubIdsForComments(savedReview, createdComments, githubResult, user);
-
+        
         return buildReviewResponse(savedReview);
     }
-
+    
     private void updateReviewerStatus(PullRequest pullRequest, User user, @NotNull ReviewState state) {
-        Reviewer reviewer = (Reviewer) reviewerRepository.findByPullRequestAndUser(pullRequest, user)
+        Reviewer reviewer = reviewerRepository.findByPullRequestAndUser(pullRequest, user)
                 .orElse(null);
-        if (reviewer == null) return;
-
+        if (reviewer == null) {
+            return;
+        }
+        
         reviewer.updateStatus(
-            switch (state) {
-                case APPROVE -> ReviewStatus.APPROVED;
-                case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
-                default -> reviewer.getStatus();
-            }
+                switch (state) {
+                    case APPROVE -> ReviewStatus.APPROVED;
+                    case REQUEST_CHANGES -> ReviewStatus.CHANGES_REQUESTED;
+                    default -> reviewer.getStatus();
+                }
         );
     }
 
@@ -135,33 +138,51 @@ public class ReviewServiceImpl implements ReviewService {
 //        s3Service.deleteFiles(reviewId);
 //
 //    }
-
+    
     @Override
-    public List<ReviewResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId) {
-        List<Review> reviews = reviewRepository.findByPullRequestId(prId);
-        return reviews.stream()
-                .map(this::buildReviewResponse)
-                .collect(Collectors.toList());
+    public List<ReviewDetailResponse> getReviewsByPullRequest(Long accountId, Long repoId, Long prId) {
+        
+        return reviewRepository.findByPullRequestId(prId)
+                .stream()
+                .map(review -> {
+                    List<ReviewCommentDetailResponse> reviewComments = reviewCommentRepository.findAllByReview(review)
+                            .stream()
+                            .map(reviewComment -> {
+                                String voiceFileUrl = null;
+                                if (reviewComment.getRecordKey() != null) {
+                                    try {
+                                        voiceFileUrl = s3Service.generatePresignedUrl(reviewComment.getRecordKey(), 60);
+                                    } catch (Exception e) {
+                                        // URL 생성 실패 시 null 처리
+                                        log.debug("음성 파일 URL 생성 실패: null 반환 {}", e.getMessage());
+                                    }
+                                }
+                                return ReviewCommentDetailResponse.fromEntity(reviewComment, voiceFileUrl);
+                            })
+                            .toList();
+                    return ReviewDetailResponse.fromEntityAndReviewComment(review, reviewComments);
+                })
+                .toList();
     }
-
+    
     @Override
     public ReviewResponse getReviewById(Long accountId, Long repoId, Long prId, Long reviewId) {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new RuntimeException("Review not found: " + reviewId));
-
+        
         return buildReviewResponse(review);
     }
-
+    
     private User findUser(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
     }
-
+    
     private PullRequest findPullRequest(Long prId) {
         return pullRequestRepository.findById(prId)
                 .orElseThrow(() -> new RuntimeException("Pull request not found: " + prId));
     }
-
+    
     private Review saveReview(ReviewRequest reviewRequest, PullRequest pullRequest, User user) {
         Review review = Review.builder()
                 .pullRequest(pullRequest)
@@ -172,38 +193,40 @@ public class ReviewServiceImpl implements ReviewService {
                 .build();
         return reviewRepository.save(review);
     }
-
+    
     private List<ReviewCommentResponse> createReviewCommentsIfExists(Long reviewId,
-                                                                     ReviewRequest reviewRequest,
-                                                                     MultipartFile[] files,
-                                                                     Long userId) {
-        if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments().isEmpty()) {
+            ReviewRequest reviewRequest,
+            MultipartFile[] files,
+            Long userId) {
+        if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments()
+                .isEmpty()) {
             return new ArrayList<>();
         }
-
+        
         ReviewCommentCreateRequest commentCreateRequest = ReviewCommentCreateRequest.builder()
                 .comments(reviewRequest.getReviewComments())
                 .build();
-
+        
         return reviewCommentService.createComments(reviewId, commentCreateRequest, files, userId);
     }
-
+    
     private GithubReviewResponse createReviewOnGithub(Long accountId,
-                                                      Long repoId,
-                                                      PullRequest pullRequest,
-                                                      ReviewRequest reviewRequest,
-                                                      User user,
-                                                      Long reviewId) {
+            Long repoId,
+            PullRequest pullRequest,
+            ReviewRequest reviewRequest,
+            User user,
+            Long reviewId) {
         String repoFullName = repoRepository.findById(repoId)
                 .orElseThrow(() -> new RuntimeException("Repository not found"))
                 .getFullName();
-
+        
         Long installationId = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found"))
                 .getInstallationId();
-
+        
         List<ReviewCommentCreateRequest.CommentItem> commentItems =
-                reviewCommentRepository.findByReviewId(reviewId).stream()
+                reviewCommentRepository.findByReviewId(reviewId)
+                        .stream()
                         .map(comment -> ReviewCommentCreateRequest.CommentItem.builder()
                                 .path(comment.getPath())
                                 .body(comment.getBody())
@@ -216,8 +239,7 @@ public class ReviewServiceImpl implements ReviewService {
                                 .build()
                         )
                         .toList();
-
-
+        
         return reviewGithubService.createReviewOnGithub(
                 installationId,
                 repoFullName,
@@ -228,21 +250,21 @@ public class ReviewServiceImpl implements ReviewService {
                 user.getGithubUsername()
         );
     }
-
+    
     private void updateGithubIdsForComments(Review savedReview,
-                                            List<ReviewCommentResponse> createdComments,
-                                            GithubReviewResponse githubResult,
-                                            User user) {
-
+            List<ReviewCommentResponse> createdComments,
+            GithubReviewResponse githubResult,
+            User user) {
+        
         // Review의 githubId는 이미 상위에서 설정됨 (Race Condition 방지)
-
+        
         Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
         Map<Long, String> commentDiffs = githubResult.getCommentDiffs();
         Map<Long, Integer> commentPositions = githubResult.getCommentPositions();
-
+        
         for (ReviewCommentResponse localComment : createdComments) {
             String formattedBody = COMMENT_TEMPLATE.formatted(user.getGithubUsername(), localComment.getBody());
-
+            
             Long githubCommentId = bodyToGithubCommentId.get(formattedBody);
             if (githubCommentId != null) {
                 reviewCommentRepository.updateGithubId(localComment.getId(), githubCommentId);
@@ -254,17 +276,21 @@ public class ReviewServiceImpl implements ReviewService {
             }
         }
     }
-
+    
     private ReviewResponse buildReviewResponse(Review savedReview) {
-        List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId()).stream()
+        List<ReviewCommentResponse> updatedComments = reviewCommentRepository.findAllByReviewId(savedReview.getId())
+                .stream()
                 .map(this::buildReviewCommentWithVoiceUrl)
                 .toList();
-
+        
         return new ReviewResponse(
                 savedReview.getId(),
-                savedReview.getPullRequest().getId(),
-                savedReview.getPullRequest().getGithubPrNumber(),
-                savedReview.getUser().getGithubUsername(),
+                savedReview.getPullRequest()
+                        .getId(),
+                savedReview.getPullRequest()
+                        .getGithubPrNumber(),
+                savedReview.getUser()
+                        .getGithubUsername(),
                 savedReview.getState(),
                 savedReview.getBody(),
                 savedReview.getCommitSha(),
@@ -274,13 +300,14 @@ public class ReviewServiceImpl implements ReviewService {
                 savedReview.getModifiedAt()
         );
     }
-
+    
     private ReviewCommentResponse buildReviewCommentWithVoiceUrl(ReviewComment comment) {
         ReviewCommentResponse response = ReviewCommentResponse.from(comment);
         
         log.debug("Processing review comment id: {}, recordKey: '{}'", comment.getId(), comment.getRecordKey());
         
-        if (comment.getRecordKey() != null && !comment.getRecordKey().isEmpty()) {
+        if (comment.getRecordKey() != null && !comment.getRecordKey()
+                .isEmpty()) {
             try {
                 log.info("Generating presigned URL for recordKey: {}", comment.getRecordKey());
                 String presignedUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60);
@@ -289,7 +316,7 @@ public class ReviewServiceImpl implements ReviewService {
                         .voiceFileUrl(presignedUrl)
                         .build();
             } catch (Exception e) {
-                log.error("Failed to generate presigned URL for recordKey: {}, error: {}", 
+                log.error("Failed to generate presigned URL for recordKey: {}, error: {}",
                         comment.getRecordKey(), e.getMessage(), e);
             }
         } else {
@@ -298,6 +325,6 @@ public class ReviewServiceImpl implements ReviewService {
         
         return response;
     }
-
-
+    
+    
 }

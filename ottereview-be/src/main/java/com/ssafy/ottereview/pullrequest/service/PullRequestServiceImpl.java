@@ -3,19 +3,16 @@ package com.ssafy.ottereview.pullrequest.service;
 import com.ssafy.ottereview.account.service.UserAccountService;
 import com.ssafy.ottereview.common.config.utils.CursorUtils;
 import com.ssafy.ottereview.common.exception.BusinessException;
-import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
-import com.ssafy.ottereview.description.dto.DescriptionResponse;
-import com.ssafy.ottereview.description.exception.DescriptionErrorCde;
 import com.ssafy.ottereview.description.repository.DescriptionRepository;
-import com.ssafy.ottereview.description.service.DescriptionService;
 import com.ssafy.ottereview.githubapp.client.GithubApiClient;
 import com.ssafy.ottereview.githubapp.dto.GithubPrResponse;
-import com.ssafy.ottereview.preparation.dto.DescriptionInfo;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
-import com.ssafy.ottereview.priority.entity.Priority;
+import com.ssafy.ottereview.priority.entity.PriorityFile;
+import com.ssafy.ottereview.priority.repository.PriorityFileRepository;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
+import com.ssafy.ottereview.pullrequest.dto.info.MergeStatusResult;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestDescriptionInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestPriorityInfo;
 import com.ssafy.ottereview.pullrequest.dto.info.PullRequestReviewCommentInfo;
@@ -34,7 +31,6 @@ import com.ssafy.ottereview.repo.entity.Repo;
 import com.ssafy.ottereview.repo.exception.RepoErrorCode;
 import com.ssafy.ottereview.repo.repository.RepoRepository;
 import com.ssafy.ottereview.review.repository.ReviewRepository;
-import com.ssafy.ottereview.reviewcomment.entity.ReviewComment;
 import com.ssafy.ottereview.reviewcomment.repository.ReviewCommentRepository;
 import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
@@ -45,15 +41,10 @@ import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
-
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHIssueState;
@@ -79,10 +70,10 @@ public class PullRequestServiceImpl implements PullRequestService {
     private final DescriptionRepository descriptionRepository;
     private final PullRequestMapper pullRequestMapper;
     private final PreparationRedisRepository preparationRedisRepository;
-    private final DescriptionService descriptionService;
     private final ReviewRepository reviewRepository;
     private final ReviewCommentRepository reviewCommentRepository;
     private final S3Service s3Service;
+    private final PriorityFileRepository priorityFileRepository;
 
     @Override
     public List<PullRequestResponse> getPullRequests(CustomUserDetail customUserDetail, Long repoId, Integer limit, String cursor) {
@@ -106,45 +97,24 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 3. Pull Request 목록을 DTO로 변환하여 반환
         return pullRequests.stream()
                 .map(pullRequest -> {
-                    return PullRequestResponse.fromEntityAndIsApproved(pullRequest, checkMergeStatus(pullRequest));
+                    MergeStatusResult mergeStatus = checkMergeStatus(pullRequest);
+                    return PullRequestResponse.fromEntityAndMergeStatus(pullRequest, mergeStatus);
                 })
                 .toList();
     }
 
-    private Boolean checkMergeStatus(PullRequest pullRequest) {
+    private MergeStatusResult checkMergeStatus(PullRequest pullRequest) {
         // Reviewer 모두 APPROVED인지 확인
         List<Reviewer> reviewers = reviewerRepository.findByPullRequest(pullRequest);
-        return reviewers.stream()
+        
+        int approveCount = (int) reviewers.stream()
+                .mapToLong(r -> r.getStatus() == ReviewStatus.APPROVED ? 1 : 0)
+                .sum();
+        
+        boolean allApproved = reviewers.stream()
                 .allMatch(r -> r.getStatus() == ReviewStatus.APPROVED);
-    }
-
-    @Override
-    public List<PullRequestResponse> getPullRequestsByGithub(CustomUserDetail userDetail,
-            Long repoId) {
-
-        Repo targetRepo = userAccountService.validateUserPermission(userDetail.getUser()
-                .getId(), repoId);
-
-        // 2. Repo 엔티티에서 GitHub 저장소 이름과 설치 ID를 가져온다.
-        String repositoryFullName = targetRepo.getFullName();
-        Long installationId = targetRepo.getAccount()
-                .getInstallationId();
-
-        // 3. GitHub API를 호출하여 해당 레포지토리의 Pull Request 목록을 가져온다.
-        List<GithubPrResponse> githubPrResponses = githubApiClient.getPullRequests(installationId,
-                repositoryFullName);
-
-        // 4~8. GitHub PR과 DB PR 동기화
-        synchronizePullRequestsWithGithub(githubPrResponses, targetRepo, userDetail.getUser());
-
-        // 9. 최종 결과 조회 및 반환 (삭제된 PR 제외)
-//        Pageable pageable = PageRequest.of(0,6, Sort.by(Sort.Direction.DESC,"githubCreatedAt"));
-
-        List<PullRequest> finalPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        return finalPullRequests.stream()
-                .map(pullRequestMapper::PullRequestToResponse)
-                .toList();
+        
+        return new MergeStatusResult(allApproved, approveCount);
     }
 
     @Override
@@ -238,7 +208,13 @@ public class PullRequestServiceImpl implements PullRequestService {
         // 우선순위 추가
         List<PullRequestPriorityInfo> priorities = priorityRepository.findAllByPullRequest(pullRequest)
                 .stream()
-                .map(PullRequestPriorityInfo::fromEntity)
+                .map(priority -> {
+                    List<PriorityFile> allByPriority = priorityFileRepository.findAllByPriority(priority);
+                    List<String> relatedFiles = allByPriority.stream()
+                            .map(PriorityFile::getFileName)
+                            .toList();
+                    return PullRequestPriorityInfo.fromEntityAndFiles(priority, relatedFiles);
+                })
                 .toList();
 
         pullRequestDetailResponse.enrollDescription(descriptions);
@@ -285,60 +261,21 @@ public class PullRequestServiceImpl implements PullRequestService {
             // PR 생성 검증
             validatePullRequestCreation(prepareInfo, repo);
 
-            // PR 생성
+            // GitHub에 PR 생성 (DB 저장은 Webhook에서 처리)
             prResponse = GithubPrResponse.from(githubApiClient.createPullRequest(repo.getAccount()
                     .getInstallationId(), repo.getFullName(), prepareInfo.getTitle(), prepareInfo.getBody(), request.getSource(), request.getTarget())
             );
 
-            // PR 저장
-            PullRequest pullRequest = pullRequestMapper.githubPrResponseToEntity(prResponse, customUserDetail.getUser(), repo);
-            PrUserInfo prepareAuthor = prepareInfo.getAuthor();
-            User author = userRepository.findById(prepareAuthor.getId())
-                    .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
-
-            pullRequest.enrollAuthor(author);
-
-            pullRequest.enrollSummary(prepareInfo.getSummary());
-            PullRequest savePullRequest = pullRequestRepository.save(pullRequest);
-
-            // 리뷰어 저장
-            if (prepareInfo.getReviewers() != null) {
-                List<PrUserInfo> reviewers = prepareInfo.getReviewers();
-
-                List<User> userList = reviewers.stream()
-                        .map(this::getUserFromUserInfo)
-                        .toList();
-
-                List<Reviewer> reviewerList = userList.stream()
-                        .map(user -> Reviewer.builder()
-                                .pullRequest(savePullRequest)
-                                .user(user)
-                                .status(ReviewStatus.NONE)
-                                .build())
-                        .toList();
-
-                reviewerRepository.saveAll(reviewerList);
-                log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
+            // 파일 정보를 Redis에 저장 (Webhook에서 사용하기 위해)
+            if (mediaFiles != null && mediaFiles.length > 0) {
+                String filesCacheKey = String.format("pr_files:%d:%s:%s", repoId, request.getSource(), request.getTarget());
+                preparationRedisRepository.saveMediaFiles(filesCacheKey, mediaFiles);
+                log.info("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", filesCacheKey, mediaFiles.length);
             }
-            // 우선 순위 저장
-            if (prepareInfo.getPriorities() != null) {
 
-                List<Priority> priorityList = prepareInfo.getPriorities()
-                        .stream()
-                        .map((priorityInfo) -> Priority.builder()
-                                .pullRequest(savePullRequest)
-                                .title(priorityInfo.getTitle())
-                                .level(priorityInfo.getLevel())
-                                .content(priorityInfo.getContent())
-                                .build())
-                        .toList();
-
-                priorityRepository.saveAll(priorityList);
-                log.debug("우선 순위 저장 완료, 우선 순위 수: {}", priorityList.size());
-            }
-            // 작성자 설명 저장 - 새로운 일괄 생성 방식 사용
-            createDescriptionsWithService(prepareInfo, savePullRequest, customUserDetail.getUser()
-                    .getId(), mediaFiles);
+            log.info("GitHub PR 생성 완료 - PR #{}: {}", prResponse.getGithubPrNumber(), prResponse.getTitle());
+            log.info("DB 저장은 Webhook에서 처리됩니다.");
+            
         } catch (Exception e) {
             log.error("Pull Request 생성 중 오류 발생: {}", e.getMessage(), e);
             // 오류 발생 시 Github PR 삭제
@@ -354,54 +291,6 @@ public class PullRequestServiceImpl implements PullRequestService {
                 log.error("Pull Request 삭제 중 오류 발생: {}", deleteEx.getMessage(), deleteEx);
                 throw new BusinessException(PullRequestErrorCode.PR_CREATE_FAILED, "PR 생성 중 오류가 발생하였고, PR 삭제에도 실패하였습니다.");
             }
-        }
-    }
-
-    /**
-     * DescriptionService를 사용한 설명 일괄 생성 develop 브랜치의 PreparationResult 구조에 맞춰 수정
-     */
-    private void createDescriptionsWithService(PreparationResult prepareInfo, PullRequest pullRequest,
-            Long userId, MultipartFile[] files) {
-        // prepareInfo에서 descriptions가 없거나 비어있는 경우 처리
-        List<DescriptionInfo> descriptions = Optional.ofNullable(prepareInfo.getDescriptions())
-                .orElse(List.of());
-
-        if (descriptions.isEmpty() && (files == null || files.length == 0)) {
-            log.debug("생성할 설명이 없어 설명 저장을 건너뜁니다.");
-            return;
-        }
-
-        // DescriptionInfo를 DescriptionBulkCreateRequest.DescriptionItemRequest로 변환
-        List<DescriptionBulkCreateRequest.DescriptionItemRequest> descriptionItems = descriptions.stream()
-                .map(info -> DescriptionBulkCreateRequest.DescriptionItemRequest.builder()
-                        .path(info.getPath())
-                        .body(info.getBody())
-                        .position(info.getPosition())
-                        .line(info.getLine())
-                        .side(info.getSide())
-                        .startLine(info.getStartLine())
-                        .startSide(info.getStartSide())
-                        .diffHunk(info.getDiffHunk())
-                        .fileIndex(null) // 파일 매핑은 서비스에서 처리
-                        .build())
-                .toList();
-
-        // 파일만 있고 description 정보가 없는 경우를 위한 처리
-        if (descriptionItems.isEmpty() && files != null && files.length > 0) {
-            throw new BusinessException(DescriptionErrorCde.DESCRIPTION_CREATE_FAILED, "설명 정보가 없고, 파일만 있는 경우는 허용되지 않습니다.");
-        }
-
-        if (!descriptionItems.isEmpty()) {
-            DescriptionBulkCreateRequest bulkRequest = DescriptionBulkCreateRequest.builder()
-                    .pullRequestId(pullRequest.getId())
-                    .descriptions(descriptionItems)
-                    .build();
-
-            // DescriptionService를 통한 일괄 생성
-            List<DescriptionResponse> createdDescriptions = descriptionService.createDescriptionsBulk(
-                    bulkRequest, userId, files);
-
-            log.debug("설명 일괄 생성 완료, 생성된 설명 수: {}", createdDescriptions.size());
         }
     }
 
@@ -466,6 +355,9 @@ public class PullRequestServiceImpl implements PullRequestService {
                                         .status(ReviewStatus.NONE)
                                         .build());
                     }
+                    if(pullRequestRepository.existsByGithubId(pullRequest.getGithubId())){
+                        continue;
+                    }
                     newPullRequests.add(pullRequest);
                 }
 
@@ -510,59 +402,6 @@ public class PullRequestServiceImpl implements PullRequestService {
     private void validatePullRequestCreation(PreparationResult preparationResult, Repo repo) {
         if (preparationResult.getSource() == null || preparationResult.getTarget() == null || preparationResult.getTitle() == null || repo.getFullName() == null) {
             throw new BusinessException(PullRequestErrorCode.PR_VALIDATION_FAILED);
-        }
-    }
-
-    /**
-     * GitHub에서 가져온 PR 정보와 DB의 PR을 동기화하는 메서드
-     *
-     * @param githubPrResponses GitHub에서 가져온 PR 목록
-     * @param targetRepo        대상 저장소
-     * @param user              사용자 정보
-     */
-    private void synchronizePullRequestsWithGithub(List<GithubPrResponse> githubPrResponses,
-            Repo targetRepo, User user) {
-
-        List<PullRequest> existingPullRequests = pullRequestRepository.findAllByRepo(targetRepo);
-
-        Map<Integer, PullRequest> existingPrMap = existingPullRequests.stream()
-                .collect(Collectors.toMap(PullRequest::getGithubPrNumber, pr -> pr));
-
-        // 5. GitHub에서 가져온 PR 번호 Set
-        Set<Integer> githubPrNumbers = githubPrResponses.stream()
-                .map(GithubPrResponse::getGithubPrNumber)
-                .collect(Collectors.toSet());
-
-        // 6. 새로운 PR과 기존 PR을 비교하여 저장할 Pull Request 목록을 준비한다.
-        List<PullRequest> pullRequestsToSave = new ArrayList<>();
-
-        for (GithubPrResponse githubPr : githubPrResponses) {
-            PullRequest existingPr = existingPrMap.get(githubPr.getGithubPrNumber());
-
-            if (existingPr == null) {
-                // 6-1. 새로운 PR: 생성
-                PullRequest newPr = pullRequestMapper.githubPrResponseToEntity(githubPr, user, targetRepo);
-                newPr.enrollRepo(targetRepo);
-                pullRequestsToSave.add(newPr);
-            } else {
-                // 6-2. 기존 PR: 업데이트 (변경사항이 있는 경우만)
-                if (existingPr.hasChangedFrom(githubPr)) {
-                    existingPr.updateFromGithub(githubPr);
-                    pullRequestsToSave.add(existingPr);
-                }
-            }
-        }
-
-        // 7. 깃허브에 없는 PR들을 삭제 처리한다.
-        List<PullRequest> prsToMarkAsDeleted = existingPullRequests.stream()
-                .filter(pr -> !githubPrNumbers.contains(pr.getGithubPrNumber()))
-                .toList();
-
-        pullRequestRepository.deleteAll(prsToMarkAsDeleted);
-
-        if (!pullRequestsToSave.isEmpty()) {
-            pullRequestRepository.saveAll(pullRequestsToSave);
-            log.info("총 {}개의 PR이 동기화되었습니다.", pullRequestsToSave.size());
         }
     }
 
