@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle, X, FileText, Search } from 'lucide-react'
+import { AlertTriangle, CheckCircle, X, FileText, Search, Settings } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -20,6 +20,7 @@ const PRCreateStep1 = ({
   const [prCheckResult, setPrCheckResult] = useState(null)
   const [existingPRData, setExistingPRData] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const [isValidatingBranches, setIsValidatingBranches] = useState(false)
 
   const [source, setSource] = useState(selectedBranches.source || '')
   const [target, setTarget] = useState(selectedBranches.target || '')
@@ -36,6 +37,9 @@ const PRCreateStep1 = ({
   }, [source, target, updateSelectedBranches])
 
   const handleValidateBranches = async () => {
+    if (isValidatingBranches) return // 중복 실행 방지
+
+    setIsValidatingBranches(true)
     try {
       const data = await validateBranches({
         repoId,
@@ -48,6 +52,8 @@ const PRCreateStep1 = ({
       console.log('ValidateBranches', data)
     } catch (err) {
       console.error('브랜치 검증 실패:', err)
+    } finally {
+      setIsValidatingBranches(false)
     }
   }
 
@@ -247,8 +253,8 @@ const PRCreateStep1 = ({
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={existingPR ? false : !canValidateBranches}
-            className={`btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 ${
+            disabled={existingPR ? false : (!canValidateBranches || isValidatingBranches)}
+            className={`btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none ${
               existingPR
                 ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
                 : ''
@@ -261,8 +267,17 @@ const PRCreateStep1 = ({
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <Search className="w-4 h-4" />
-                <span>브랜치 검증</span>
+                {isValidatingBranches ? (
+                  <>
+                    <Settings className="w-4 h-4 animate-spin" />
+                    <span>브랜치 검증 중...</span>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-4 h-4" />
+                    <span>브랜치 검증</span>
+                  </>
+                )}
               </span>
             )}
           </Button>

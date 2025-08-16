@@ -86,6 +86,7 @@ const Dashboard = () => {
     fetchData()
   }, [user?.id])
 
+
   // user 객체 구조 확인을 위한 console.log
   console.log('User 객체:', user)
   console.log('User profile_image_url:', user?.profile_image_url)
@@ -122,9 +123,10 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
+
         </Box>
 
-        <div className="flex-1 lg:w-1/2">
+        <div className="lg:w-1/2">
           <ChatRoomList />
         </div>
       </div>
