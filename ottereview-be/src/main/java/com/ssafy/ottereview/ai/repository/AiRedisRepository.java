@@ -30,8 +30,6 @@ public class AiRedisRepository {
             redisTemplate.opsForValue()
                     .set(mainKey, jsonData, CACHE_TTL);
             
-            log.info("Ai 정보 저장 완료: {}", mainKey);
-            
         } catch (Exception e) {
             log.error("Ai 정보 저장 실패", e);
             throw new RuntimeException("Redis 저장 실패", e);
@@ -71,7 +69,7 @@ public class AiRedisRepository {
             // 메인 데이터 삭제
             redisTemplate.delete(mainKey);
             
-            log.info("Ai 정보 삭제 완료: {}", mainKey);
+            log.debug("Ai 정보 삭제 완료: {}", mainKey);
         } catch (Exception e) {
             log.error("Ai 정보 삭제 실패", e);
         }
