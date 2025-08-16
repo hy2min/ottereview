@@ -5,7 +5,7 @@ import { requestAIConvention, requestAIOthers } from './prApi'
 const Box = ({ children, shadow = false, className = '' }) => {
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg p-4 ${shadow ? 'shadow-lg' : ''} ${className}`}
+      className={`theme-bg-primary theme-border border rounded-lg p-4 ${shadow ? 'shadow-lg' : ''} ${className}`}
     >
       {children}
     </div>
@@ -50,13 +50,13 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
   if (as === 'select') {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium theme-text">
           {label}
         </label>
         <select
           value={value}
           onChange={onChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          className="w-full px-3 py-2 theme-border border-2 theme-bg-primary rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 theme-text"
           {...props}
         >
           {options.map((option) => (
@@ -71,11 +71,11 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+      <label className="block text-sm font-medium theme-text">{label}</label>
       <input
         value={value}
         onChange={onChange}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+        className="w-full px-3 py-2 theme-border border-2 theme-bg-primary rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 theme-text"
         {...props}
       />
     </div>
@@ -159,7 +159,7 @@ const PRCreateStep2 = ({
           return (
             <div
               key={index}
-              className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border-l-4 border-orange-400"
+              className="theme-bg-secondary rounded-lg p-4 border-l-4 border-orange-400"
             >
               {lines.map((line, lineIndex) => {
                 // 파일 경로인지 확인 (경로가 포함된 긴 텍스트)
@@ -201,7 +201,7 @@ const PRCreateStep2 = ({
                   )
                 } else {
                   return (
-                    <div key={lineIndex} className="text-sm text-gray-600 dark:text-gray-300 ml-6">
+                    <div key={lineIndex} className="text-sm theme-text-secondary ml-6">
                       {line}
                     </div>
                   )
@@ -239,8 +239,8 @@ const PRCreateStep2 = ({
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">컨벤션 검사</h2>
-        <p className="text-gray-600 dark:text-gray-400">
+        <h2 className="text-2xl font-semibold theme-text mb-2">컨벤션 검사</h2>
+        <p className="theme-text-secondary">
           코딩 규칙을 설정하고 AI 피드백을 받아보세요
         </p>
       </div>
@@ -297,7 +297,7 @@ const PRCreateStep2 = ({
         <Box shadow className="w-full md:w-2/3 md:order-1 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <div className="font-semibold text-lg text-gray-900 dark:text-white flex items-center space-x-2">
+              <div className="font-semibold text-lg theme-text flex items-center space-x-2">
                 <span>🤖</span>
                 <span>AI 피드백</span>
               </div>
@@ -318,27 +318,27 @@ const PRCreateStep2 = ({
               </Button>
             </div>
 
-            <Box className="h-96 overflow-y-auto bg-gray-50 dark:bg-gray-800">
+            <Box className="h-96 overflow-y-auto theme-bg-secondary">
               <div className="space-y-3 p-2">
                 {aiLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="flex flex-col items-center space-y-2">
                       <Settings className="w-8 h-8 animate-spin text-orange-500" />
-                      <div className="text-gray-600 dark:text-gray-400">분석 중...</div>
+                      <div className="theme-text-secondary">분석 중...</div>
                     </div>
                   </div>
                 ) : aiConvention?.result ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-4">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="font-medium text-gray-900 dark:text-white">
+                      <span className="font-medium theme-text">
                         컨벤션 분석 완료
                       </span>
                     </div>
                     {renderAIConvention(aiConvention.result)}
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  <div className="flex items-center justify-center h-full theme-text-muted">
                     피드백 받기 버튼을 클릭하여 AI 분석을 시작하세요
                   </div>
                 )}
