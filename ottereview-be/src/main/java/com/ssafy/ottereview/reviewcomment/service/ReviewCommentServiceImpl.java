@@ -64,7 +64,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                                                       MultipartFile[] files,
                                                       Long userId) {
 
-        log.info("댓글 일괄 작성 시작 - Review: {}, User: {}, 댓글 수: {}, 파일 수: {}",
+        log.debug("댓글 일괄 작성 시작 - Review: {}, User: {}, 댓글 수: {}, 파일 수: {}",
                 reviewId, userId, request.getComments().size(),
                 files != null ? files.length : 0);
 
@@ -83,7 +83,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
             List<ReviewComment> savedComments = reviewCommentRepository.saveAll(comments);
 
-            log.info("댓글 일괄 작성 완료 - 생성된 댓글 수: {}", savedComments.size());
+            log.debug("댓글 일괄 작성 완료 - 생성된 댓글 수: {}", savedComments.size());
 
             return savedComments.stream()
                     .map(ReviewCommentResponse::from)
@@ -275,7 +275,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
 
         // DB 삭제 (트랜잭션 안에서)
         reviewCommentRepository.deleteById(commentId);
-        log.info("댓글 DB 삭제 완료 - CommentId: {}", commentId);
+        log.debug("댓글 DB 삭제 완료 - CommentId: {}", commentId);
 
         // 트랜잭션 커밋 이후 외부 리소스 삭제
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -286,7 +286,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                     if (recordKey != null && !recordKey.isEmpty()) {
                         try {
                             s3Service.deleteFile(recordKey);
-                            log.info("S3 파일 삭제 완료 - CommentId: {}, RecordKey: {}", commentId, recordKey);
+                            log.debug("S3 파일 삭제 완료 - CommentId: {}, RecordKey: {}", commentId, recordKey);
                         } catch (Exception e) {
                             log.error("S3 파일 삭제 실패 - CommentId: {}, RecordKey: {}", commentId, recordKey, e);
                         }
@@ -299,7 +299,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
                                 .getInstallationId();
 
                         reviewGithubService.deleteReviewCommentOnGithub(installationId, repoFullName, githubId);
-                        log.info("GitHub 리뷰 코멘트 삭제 완료 - CommentId: {}, GithubId: {}", commentId, githubId);
+                        log.debug("GitHub 리뷰 코멘트 삭제 완료 - CommentId: {}, GithubId: {}", commentId, githubId);
                     } catch (Exception e) {
                         log.error("GitHub 리뷰 코멘트 삭제 실패 - GithubId: {}", githubId, e);
                     }
@@ -490,7 +490,7 @@ public class ReviewCommentServiceImpl implements ReviewCommentService {
             
             reviewCommentRepository.save(reply);
 
-            log.info("GitHub 답글 생성 성공 - 답글 ID: {}, GitHub 댓글 ID: {}", reply.getId(), githubComment.getId());
+            log.debug("GitHub 답글 생성 성공 - 답글 ID: {}, GitHub 댓글 ID: {}", reply.getId(), githubComment.getId());
 
         } catch (Exception e) {
             log.error("GitHub 답글 생성 실패", e);

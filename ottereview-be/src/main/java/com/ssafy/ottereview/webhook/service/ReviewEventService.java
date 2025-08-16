@@ -108,8 +108,6 @@ public class ReviewEventService {
 
         event.getReview().changeBody(extractReviewContent(event.getReview().getBody()));
 
-        log.info(event.getReview().getBody());
-
         review.updateBodyAndCreateAt(event.getReview()
                 .getBody(), event.getReview()
                 .getSubmittedAt());
@@ -131,7 +129,6 @@ public class ReviewEventService {
                         .getUser()));
         event.getReview().changeBody(extractReviewContent(event.getReview().getBody()));
 
-        log.info(event.getReview().getBody());
         // 3. Review 생성
         Review review = Review.builder()
                 .githubId(event.getReview()

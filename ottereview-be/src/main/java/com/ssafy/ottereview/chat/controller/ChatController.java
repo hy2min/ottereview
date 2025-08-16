@@ -27,7 +27,7 @@ public class ChatController {
     // 서버 → 클라이언트: /topic/meetings/{meetingroom-id}/chat
     @MessageMapping("/chat")
     public void sendMessage(@DestinationVariable("meetingroom-id") String roomId, @Payload ChatMessageDto message, Principal principal) {
-        log.info("roomId={} message={}", roomId, message);
+        log.debug("roomId={} message={}", roomId, message);
         Long userId = Long.valueOf(principal.getName());
         User user = userService.getUserById(userId);
         message = ChatMessageDto.builder()
@@ -44,7 +44,7 @@ public class ChatController {
     // 서버 → 클라이언트: /topic/meetings/{meetingroom-id}/whiteboard
     @MessageMapping("/whiteboard")
     public void drawWhiteBoard(@DestinationVariable("meetingroom-id") String roomId, @Payload WhiteBoardDto whiteBoard, Principal principal) {
-        log.info("roomId={} whiteBoard={}", roomId, whiteBoard);
+        log.debug("roomId={} whiteBoard={}", roomId, whiteBoard);
         Long userId = Long.valueOf(principal.getName());
         User user = userService.getUserById(userId);
         whiteBoard = WhiteBoardDto.builder()

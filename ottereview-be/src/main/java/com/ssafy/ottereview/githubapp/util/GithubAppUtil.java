@@ -148,7 +148,6 @@ public class GithubAppUtil {
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
         
         try {
-            log.info("Sending token exchange request to GitHub...");
             ResponseEntity<Map<String, Object>> responseEntity = restTemplate.exchange(
                     url,
                     HttpMethod.POST,
@@ -163,9 +162,6 @@ public class GithubAppUtil {
                 log.error("GitHub response body is null");
                 throw new BusinessException(GithubAppErrorCode.GITHUB_TOKEN_REQUEST_FAILED, "GitHub 응답이 비어 있습니다.");
             }
-            
-            log.info("GitHub response status: {}", responseEntity.getStatusCode());
-            log.info("GitHub response keys: {}", response.keySet());
             
             // 에러 응답 체크
             if (response.containsKey("error")) {

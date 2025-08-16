@@ -31,11 +31,11 @@ public class RepoEventService {
             log.debug("DTO로 받은 Repository event: {}", formattedPayload);
             switch(event.getAction()){
                 case "publicized":
-                    log.info("Repo publicized handler start");
+                    log.debug("Repo publicized handler start");
                     RepoPublicized(event);
                     break;
                 case "privatized":
-                    log.info("Repo privatized handler start");
+                    log.debug("Repo privatized handler start");
                     RepoPrivatized(event);
                     break;
                 default:
@@ -50,7 +50,7 @@ public class RepoEventService {
         Repo repo =  repoRepository.findByRepoId(event.getRepository().getRepoId()).orElseThrow(()->
                 new IllegalArgumentException("Repository not found for id: " + event.getRepository().getRepoId())
         );
-        log.info("Repo public으로 변경중");
+        log.debug("Repo public으로 변경중");
         repo.changeOpenType(false);
         repoRepository.save(repo);
     }
@@ -58,7 +58,7 @@ public class RepoEventService {
         Repo repo =  repoRepository.findByRepoId(event.getRepository().getRepoId()).orElseThrow(()->
                 new IllegalArgumentException("Repository not found for id: " + event.getRepository().getRepoId())
         );
-        log.info("Repo private으로 변경중");
+        log.debug("Repo private으로 변경중");
         repo.changeOpenType(true);
         repoRepository.save(repo);
     }
