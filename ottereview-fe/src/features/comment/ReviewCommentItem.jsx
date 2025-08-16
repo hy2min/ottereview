@@ -5,20 +5,25 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
-import { applyCushionLanguage, createReviewCommentReply, deleteReviewComment, updateReviewComment } from '@/features/pullRequest/prApi'
+import {
+  applyCushionLanguage,
+  createReviewCommentReply,
+  deleteReviewComment,
+  updateReviewComment,
+} from '@/features/pullRequest/prApi'
 import { useUserStore } from '@/store/userStore'
 
 const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
   const user = useUserStore((state) => state.user)
-  
+
   // 편집 상태
   const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
   const [editingReviewCommentContent, setEditingReviewCommentContent] = useState('')
-  
+
   // 답글 상태
   const [replyingToCommentId, setReplyingToCommentId] = useState(null)
   const [replyContent, setReplyContent] = useState('')
-  
+
   // 쿠션어 모달 상태 관리
   const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
   const [originalContent, setOriginalContent] = useState('')
@@ -37,28 +42,28 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
     setEditingReviewCommentId(commentToEdit.id)
     setEditingReviewCommentContent(commentToEdit.body || '')
   }
-  
+
   // 기존 리뷰 댓글 편집 취소
   const handleCancelEditReviewComment = () => {
     setEditingReviewCommentId(null)
     setEditingReviewCommentContent('')
   }
-  
+
   // 기존 리뷰 댓글 편집 저장
   const handleSaveEditReviewComment = async (commentToEdit) => {
     if (!editingReviewCommentContent.trim()) return
-    
+
     try {
       const requestBody = {
-        body: editingReviewCommentContent.trim()
+        body: editingReviewCommentContent.trim(),
       }
-      
+
       await updateReviewComment(commentToEdit.reviewId, commentToEdit.id, requestBody)
-      
+
       // 편집 상태 초기화
       setEditingReviewCommentId(null)
       setEditingReviewCommentContent('')
-      
+
       // PR 데이터 새로고침
       if (onDataRefresh) {
         await onDataRefresh()
@@ -68,14 +73,14 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       alert('댓글 수정에 실패했습니다.')
     }
   }
-  
+
   // 기존 리뷰 댓글 삭제
   const handleDeleteReviewComment = async (commentToDelete) => {
     if (!confirm('이 댓글을 삭제하시겠습니까?')) return
-    
+
     try {
       await deleteReviewComment(commentToDelete.reviewId, commentToDelete.id)
-      
+
       // PR 데이터 새로고침
       if (onDataRefresh) {
         await onDataRefresh()
@@ -85,33 +90,33 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       alert('댓글 삭제에 실패했습니다.')
     }
   }
-  
+
   // 답글 작성 시작
   const handleStartReply = (commentId) => {
     setReplyingToCommentId(commentId)
     setReplyContent('')
   }
-  
+
   // 답글 작성 취소
   const handleCancelReply = () => {
     setReplyingToCommentId(null)
     setReplyContent('')
   }
-  
+
   // 답글 제출
   const handleSubmitReply = async (parentComment) => {
     if (!replyContent.trim()) return
-    
+
     // 즉시 폼 닫기 및 상태 초기화
     setReplyingToCommentId(null)
     setReplyContent('')
-    
+
     try {
       await createReviewCommentReply(parentComment.reviewId, {
         parentCommentId: parentComment.id,
         body: replyContent.trim(),
       })
-      
+
       // PR 데이터 새로고침
       if (onDataRefresh) {
         await onDataRefresh()
@@ -121,7 +126,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       alert('답글 작성에 실패했습니다.')
     }
   }
-  
+
   // 쿠션어 적용 처리
   const handleApplyCushion = async (content, targetType) => {
     if (!content?.trim()) return
@@ -168,11 +173,14 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
         <Box shadow className="space-y-3 max-w-xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
-                  {comment.reviewer?.[0] || 'R'}
-                </span>
-              </div>
+              <img
+                src={`https://github.com/${comment.reviewer}.png`}
+                alt={comment.reviewer || 'Reviewer'}
+                className="w-8 h-8 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                onError={(e) => {
+                  e.target.src = 'https://github.com/identicons/jasonlong.png'
+                }}
+              />
               <div>
                 <span className="font-medium theme-text text-base">
                   {comment.reviewer || 'Unknown'}
@@ -199,26 +207,28 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               </div>
             </div>
             {/* 수정/삭제 버튼 - ReviewComment에 실제 작성자가 있고 현재 사용자와 같을 때만 표시 */}
-            {comment.authorName && comment.authorName === user?.githubUsername && !comment.voiceFileUrl && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleEditReviewComment(comment)}
-                  className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                  title="댓글 수정"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDeleteReviewComment(comment)}
-                  className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
-                  title="댓글 삭제"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
+            {comment.authorName &&
+              comment.authorName === user?.githubUsername &&
+              !comment.voiceFileUrl && (
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleEditReviewComment(comment)}
+                    className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
+                    title="댓글 수정"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDeleteReviewComment(comment)}
+                    className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
+                    title="댓글 삭제"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
           </div>
-          
+
           {/* 편집 모드인지 확인 */}
           {editingReviewCommentId === comment.id ? (
             <div className="space-y-2">
@@ -243,7 +253,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     </Button>
                   )}
                 </div>
-                
+
                 {/* 오른쪽: 취소/저장 버튼 */}
                 <div className="flex gap-2">
                   <Button
@@ -284,7 +294,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               )}
             </>
           )}
-          
+
           {/* 답글 버튼 (편집 모드가 아니고 답글 작성 폼이 열려있지 않을 때만) */}
           {editingReviewCommentId !== comment.id && replyingToCommentId !== comment.id && (
             <div className="mt-2 flex items-center justify-end">
@@ -297,7 +307,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               </button>
             </div>
           )}
-          
+
           {/* 답글 작성 폼 */}
           {replyingToCommentId === comment.id && (
             <div className="mt-3 space-y-2">
@@ -322,7 +332,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     </Button>
                   )}
                 </div>
-                
+
                 {/* 오른쪽: 취소/작성 버튼 */}
                 <div className="flex gap-2">
                   <Button
@@ -348,7 +358,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
           )}
         </Box>
       </div>
-      
+
       {/* 답글들 */}
       {replies.length > 0 && (
         <div className="ml-4 space-y-2">
@@ -357,11 +367,14 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               <Box shadow className="space-y-3 max-w-lg bg-gray-50 dark:bg-gray-800">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900 border-2 border-green-500 dark:border-green-400 flex items-center justify-center">
-                      <span className="text-xs font-medium text-green-700 dark:text-green-200">
-                        {reply.reviewer?.[0] || 'R'}
-                      </span>
-                    </div>
+                    <img
+                      src={`https://github.com/${reply.reviewer}.png`}
+                      alt={reply.reviewer || 'Reviewer'}
+                      className="w-6 h-6 rounded-full border-2 border-green-500 dark:border-green-400"
+                      onError={(e) => {
+                        e.target.src = 'https://github.com/identicons/jasonlong.png'
+                      }}
+                    />
                     <div>
                       <span className="font-medium theme-text text-sm">
                         {reply.reviewer || 'Unknown'}
@@ -372,26 +385,28 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     </div>
                   </div>
                   {/* 수정/삭제 버튼 - 답글 작성자만 볼 수 있음 */}
-                  {reply.authorName && reply.authorName === user?.githubUsername && !reply.voiceFileUrl && (
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => handleEditReviewComment(reply)}
-                        className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                        title="답글 수정"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteReviewComment(reply)}
-                        className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
-                        title="답글 삭제"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
+                  {reply.authorName &&
+                    reply.authorName === user?.githubUsername &&
+                    !reply.voiceFileUrl && (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEditReviewComment(reply)}
+                          className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
+                          title="답글 수정"
+                        >
+                          <Edit className="w-3 h-3" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteReviewComment(reply)}
+                          className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
+                          title="답글 삭제"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                 </div>
-                
+
                 {/* 답글 내용 */}
                 {editingReviewCommentId === reply.id ? (
                   <div className="space-y-2">
@@ -416,7 +431,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                           </Button>
                         )}
                       </div>
-                      
+
                       {/* 오른쪽: 취소/저장 버튼 */}
                       <div className="flex gap-2">
                         <Button
@@ -457,7 +472,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
           ))}
         </div>
       )}
-      
+
       {/* 쿠션어 적용 모달 */}
       <Modal
         isOpen={isCushionModalOpen}
