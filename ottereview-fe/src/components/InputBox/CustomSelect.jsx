@@ -20,7 +20,6 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
   const selectedOption = options.find((option) => option.value === value)
 
   const handleSelect = (optionValue) => {
-    console.log('Selected:', optionValue)
     onChange({ target: { value: optionValue } })
     setIsOpen(false)
   }

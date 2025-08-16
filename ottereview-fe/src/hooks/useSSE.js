@@ -16,12 +16,10 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
 
     // 기존 연결이 있으면 먼저 종료
     if (eventSourceRef.current) {
-      console.log('🔌 기존 Push SSE 연결 해제')
       eventSourceRef.current.close()
       eventSourceRef.current = null
     }
 
-    console.log('🔌 Push SSE 연결 시작 (토큰:', accessToken.substring(0, 10) + '...)')
 
     // push 이벤트 구독 (브랜치 추가/푸시) - 모든 페이지에서 필요
     const pushEventSource = new EventSource(
@@ -32,7 +30,6 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
 
     // push 이벤트 처리
     pushEventSource.addEventListener('push', (event) => {
-      console.log('📤 푸시 이벤트 (전역):', event.data)
 
       try {
         const pushData = JSON.parse(event.data)
@@ -48,14 +45,12 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
             timestamp: new Date(),
           })
         }
-        console.log('푸시데이터 : ', pushData)
       } catch (error) {
         console.error('푸시 이벤트 파싱 오류:', error)
       }
     })
 
     pushEventSource.onopen = () => {
-      console.log('🔌 Push SSE 연결 성공')
     }
     
     pushEventSource.onerror = (error) => {
@@ -72,7 +67,6 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
     setSseReconnectCallback(connectSSE)
 
     return () => {
-      console.log('🔌 Push SSE 연결 해제')
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
         eventSourceRef.current = null
@@ -86,7 +80,6 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
-        console.log('🔌 컴포넌트 언마운트로 인한 Push SSE 연결 해제')
         eventSourceRef.current.close()
         eventSourceRef.current = null
       }
