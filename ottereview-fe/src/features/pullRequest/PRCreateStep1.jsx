@@ -143,17 +143,17 @@ const PRCreateStep1 = ({
   const canValidateBranches = canCreatePR && !isSameBranch && !hasError
 
   return (
-    <div className="space-y-6 animate-slide-in-right">
+    <div className="mt-8 space-y-6 animate-slide-in-right">
       <Box shadow className="space-y-6 w-full max-w-3xl mx-auto premium-card">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold theme-text mb-2">브랜치 선택</h2>
           <p className="theme-text-secondary">비교할 브랜치를 선택해주세요</p>
         </div>
 
-        {/* 드롭다운 컨테이너에 적절한 z-index와 간격 추가 - 애니메이션 효과 제거 */}
-        <div className="space-y-8 animate-fade-in-up animate-delay-200">
+        {/* 드롭다운 컨테이너 */}
+        <div className="space-y-8">
           {/* 소스 브랜치 드롭다운 */}
-          <div className="relative z-20">
+          <div className="relative">
             <InputBox
               label="소스 브랜치"
               as="select"
@@ -164,12 +164,11 @@ const PRCreateStep1 = ({
                 setSource(e.target.value)
               }}
               placeholder="소스 브랜치를 선택하세요"
-              className="relative z-20"
             />
           </div>
 
           {/* 타겟 브랜치 드롭다운 */}
-          <div className="relative z-10 animate-delay-100">
+          <div className="relative">
             <InputBox
               label="타겟 브랜치"
               as="select"
@@ -180,13 +179,12 @@ const PRCreateStep1 = ({
                 setTarget(e.target.value)
               }}
               placeholder="타겟 브랜치를 선택하세요"
-              className="relative z-10"
             />
           </div>
         </div>
 
-        {/* 고정된 메시지 영역 - z-index를 낮게 설정 */}
-        <div className="relative z-5 min-h-[80px] flex items-center justify-center animate-fade-in-up animate-delay-300">
+        {/* 고정된 메시지 영역 */}
+        <div className="min-h-[80px] flex items-center justify-center">
           {isSameBranch && (
             <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg text-red-800 dark:text-red-300 w-full animate-wiggle shadow-md">
               <div className="flex items-center space-x-2">
@@ -244,8 +242,8 @@ const PRCreateStep1 = ({
           )}
         </div>
 
-        {/* 고정된 버튼 영역 - z-index를 낮게 설정 */}
-        <div className="relative z-5 flex justify-end animate-fade-in-up animate-delay-400">
+        {/* 고정된 버튼 영역 */}
+        <div className="flex justify-end">
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
@@ -271,8 +269,8 @@ const PRCreateStep1 = ({
         </div>
       </Box>
 
-      {/* 하단 네비게이션 버튼 영역도 z-index 조정 */}
-      <div className="relative z-5 mx-auto animate-fade-in-up animate-delay-500">
+      {/* 하단 네비게이션 버튼 영역 */}
+      <div className="mx-auto">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {

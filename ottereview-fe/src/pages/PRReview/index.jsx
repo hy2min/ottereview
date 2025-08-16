@@ -357,11 +357,11 @@ const PRReview = () => {
                 #{prDetail.githubPrNumber}
               </Badge>
             </div>
-            <Badge variant="sky">
+            <Badge variant="primary">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{prDetail.headBranch?.name || 'unknown'}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 text-gray-800" />
                 <span>{prDetail.baseBranch?.name || 'unknown'}</span>
               </div>
             </Badge>
@@ -387,8 +387,9 @@ const PRReview = () => {
                     padding: '12px',
                     fontSize: '14px',
                     lineHeight: '1.6',
+                    color: 'inherit',
                   }}
-                  className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
+                  className="markdown-content"
                 />
               </div>
             )}
@@ -538,29 +539,31 @@ const PRReview = () => {
         </Box>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {/* 리뷰어 목록 */}
-        {prDetail.reviewers && prDetail.reviewers.length > 0 && (
-          <Box shadow className="p-3">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              <h3 className="font-medium theme-text">리뷰어</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {prDetail.reviewers.map((reviewer) => (
-                <div
-                  key={reviewer.id}
-                  className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
-                >
-                  <span>{reviewer.githubUsername}</span>
-                </div>
-              ))}
-            </div>
-          </Box>
-        )}
+      {/* 리뷰어나 우선순위가 있을 때만 그리드 컨테이너 표시 */}
+      {((prDetail.reviewers && prDetail.reviewers.length > 0) || (prDetail.priorities && prDetail.priorities.length > 0)) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* 리뷰어 목록 */}
+          {prDetail.reviewers && prDetail.reviewers.length > 0 && (
+            <Box shadow className="p-3">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <h3 className="font-medium theme-text">리뷰어</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {prDetail.reviewers.map((reviewer) => (
+                  <div
+                    key={reviewer.id}
+                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
+                  >
+                    <span>{reviewer.githubUsername}</span>
+                  </div>
+                ))}
+              </div>
+            </Box>
+          )}
 
-        {/* 우선순위 목록 */}
-        {prDetail.priorities && prDetail.priorities.length > 0 && (
+          {/* 우선순위 목록 */}
+          {prDetail.priorities && prDetail.priorities.length > 0 && (
           <Box shadow className="p-3">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -653,8 +656,9 @@ const PRReview = () => {
               })}
             </div>
           </Box>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <Box shadow className="p-3">
         <div className="relative">
@@ -703,6 +707,7 @@ const PRReview = () => {
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 enableAudio={false}
+                enableCushion={true}
                 reviewState={reviewState}
                 onReviewStateChange={setReviewState}
                 showReviewState={true}
