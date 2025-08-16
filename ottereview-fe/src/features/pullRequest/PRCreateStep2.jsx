@@ -86,6 +86,7 @@ const PRCreateStep2 = ({
   goToStep,
   repoId,
   validationBranches,
+  selectedBranches,
   aiConvention,
   setAIConvention,
   aiOthers,
@@ -286,7 +287,7 @@ const PRCreateStep2 = ({
       setAIOthers(othersData)
     }, 3000)
 
-    // 즉시 다음 단계로 이동
+    // 다음 단계로 이동
     goToStep(3)
   }
 
