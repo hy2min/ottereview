@@ -7,8 +7,20 @@ const AudioControls = ({
   isSpeakerMuted, 
   toggleMicrophone, 
   toggleSpeaker,
+  handleUserInteraction,
+  needsUserInteraction,
   colors 
 }) => {
+  
+  const handleSpeakerToggle = async () => {
+    // 음성 활성화가 필요한 경우 먼저 실행
+    if (needsUserInteraction) {
+      await handleUserInteraction()
+    }
+    // 그 다음 스피커 토글
+    toggleSpeaker()
+  }
+
   return (
     <div
       style={{
@@ -28,7 +40,7 @@ const AudioControls = ({
         </Button>
 
         <Button
-          onClick={toggleSpeaker}
+          onClick={handleSpeakerToggle}
           variant={isSpeakerMuted ? 'danger' : 'success'}
           size="sm"
           className="flex items-center gap-1"
