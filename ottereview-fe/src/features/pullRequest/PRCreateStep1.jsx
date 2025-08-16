@@ -150,7 +150,7 @@ const PRCreateStep1 = ({
 
   return (
     <div className="mt-8 space-y-6 animate-slide-in-right">
-      <Box shadow className="space-y-6 w-full max-w-3xl mx-auto premium-card">
+      <Box className="space-y-6 w-full max-w-3xl mx-auto premium-card">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold theme-text mb-2">브랜치 선택</h2>
           <p className="theme-text-secondary">비교할 브랜치를 선택해주세요</p>
@@ -170,6 +170,7 @@ const PRCreateStep1 = ({
                 setSource(e.target.value)
               }}
               placeholder="소스 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
 
@@ -185,6 +186,7 @@ const PRCreateStep1 = ({
                 setTarget(e.target.value)
               }}
               placeholder="타겟 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
         </div>
@@ -200,23 +202,6 @@ const PRCreateStep1 = ({
             </div>
           )}
 
-          {source &&
-            target &&
-            !isSameBranch &&
-            !existingPR &&
-            !hasError &&
-            (!validationBranches || validationBranches.isPossible === true) && (
-              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-4 rounded-lg text-blue-800 dark:text-blue-300 break-words w-full animate-scale-in shadow-md">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🔄</span>
-                  <span>
-                    <strong className="text-orange-600 dark:text-orange-400">{source}</strong> 에서{' '}
-                    <strong className="text-orange-600 dark:text-orange-400">{target}</strong> 로의
-                    변경을 생성합니다.
-                  </span>
-                </div>
-              </div>
-            )}
 
           {existingPR && (
             <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
