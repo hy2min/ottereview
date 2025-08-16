@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle, FileText, Search, X, Settings } from 'lucide-react'
+import { AlertTriangle, CheckCircle, FileText, Search, Settings, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -150,7 +150,7 @@ const PRCreateStep1 = ({
 
   return (
     <div className="mt-8 space-y-6 animate-slide-in-right">
-      <Box shadow className="space-y-6 w-full max-w-3xl mx-auto premium-card">
+      <Box className="space-y-6 w-full max-w-3xl mx-auto premium-card">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold theme-text mb-2">브랜치 선택</h2>
           <p className="theme-text-secondary">비교할 브랜치를 선택해주세요</p>
@@ -170,6 +170,7 @@ const PRCreateStep1 = ({
                 setSource(e.target.value)
               }}
               placeholder="소스 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
 
@@ -185,6 +186,7 @@ const PRCreateStep1 = ({
                 setTarget(e.target.value)
               }}
               placeholder="타겟 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
         </div>
@@ -199,13 +201,6 @@ const PRCreateStep1 = ({
               </div>
             </div>
           )}
-
-          {source &&
-            target &&
-            !isSameBranch &&
-            !existingPR &&
-            !hasError &&
-            (!validationBranches || validationBranches.isPossible === true)}
 
           {existingPR && (
             <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
