@@ -70,7 +70,7 @@ const PRCreateStep5 = ({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-1">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <FileText className="w-5 h-5 text-orange-500" />
                   <span className="font-semibold theme-text">PR 제목</span>
@@ -78,7 +78,7 @@ const PRCreateStep5 = ({
                 <p className="theme-text-secondary pl-6">{prTitle || '설정되지 않음'}</p>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-2">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">🔄</span>
                   <span className="font-semibold theme-text">브랜치 정보</span>
@@ -92,7 +92,7 @@ const PRCreateStep5 = ({
                 </div>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-3">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">👥</span>
                   <span className="font-semibold theme-text">리뷰어</span>
@@ -114,7 +114,7 @@ const PRCreateStep5 = ({
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-4">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-lg">📜</span>
                   <span className="font-semibold theme-text">PR 설명</span>
@@ -124,7 +124,7 @@ const PRCreateStep5 = ({
                 </div>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-5">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-lg">🤖</span>
                   <span className="font-semibold theme-text">AI 요약</span>
@@ -137,7 +137,7 @@ const PRCreateStep5 = ({
           </div>
         </div>
       </Box>
-      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+      <div className="mx-auto z-10 animate-fade-in-up">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {

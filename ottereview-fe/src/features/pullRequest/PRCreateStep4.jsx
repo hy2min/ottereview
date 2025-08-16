@@ -160,7 +160,7 @@ const PRCreateStep4 = ({
           </div>
         </Box>
 
-        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-right animate-delay-200">
+        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-right">
           <h3 className="mb-3 flex-shrink-0 text-lg font-semibold theme-text flex items-center space-x-2">
             <CheckCircle className="w-4 h-4" />
             <span>선택된 리뷰어</span>
@@ -210,7 +210,7 @@ const PRCreateStep4 = ({
           </div>
         </Box>
       </div>
-      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+      <div className="mx-auto z-10 animate-fade-in-up">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
