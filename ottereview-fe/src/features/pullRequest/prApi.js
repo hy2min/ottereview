@@ -13,7 +13,7 @@ export const fetchReviewerPRs = async () => {
 }
 
 // 레포의 PR 목록 (커서 기반)
-export const fetchRepoPRList = async (repoId, { limit = 20, cursor = '' } = {}) => {
+export const fetchRepoPRList = async (repoId, { limit = 10000, cursor = '' } = {}) => {
   const res = await api.get(`/api/repositories/${repoId}/pull-requests`, {
     params: {
       limit,
@@ -247,18 +247,18 @@ export const deleteReview = async (reviewId) => {
 
 export const updateReviewComment = async (reviewId, reviewCommentId, requestBody, file = null) => {
   const formData = new FormData()
-  
+
   // ReviewCommentUpdateRequest를 JSON Blob으로 추가
   const requestBlob = new Blob([JSON.stringify(requestBody)], {
     type: 'application/json',
   })
   formData.append('request', requestBlob)
-  
+
   // 파일이 있으면 추가
   if (file) {
     formData.append('file', file)
   }
-  
+
   const res = await api.put(`/api/reviews/${reviewId}/comments/${reviewCommentId}`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',

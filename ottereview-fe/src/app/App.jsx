@@ -109,7 +109,6 @@ const App = () => {
                 {protectedRoutes.map(({ path, element }) => (
                   <Route key={path} path={path} element={element} />
                 ))}
-                <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
           } 

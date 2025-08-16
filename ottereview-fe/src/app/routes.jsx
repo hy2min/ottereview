@@ -19,6 +19,5 @@ export const protectedRoutes = [
   { path: '/:repoId/pr/:prId/conflict', element: <Conflict />, title: '충돌 해결' },
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
   { path: '/:repoId', element: <RepositoryDetail />, title: '레포지토리 상세' },
+  { path: '*', element: <NotFound />, title: '페이지를 찾을 수 없음' },
 ]
-
-export { NotFound }
