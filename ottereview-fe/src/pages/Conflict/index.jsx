@@ -423,14 +423,7 @@ function hello() {
               <div className="text-sm text-gray-500">사용 가능한 멤버가 없습니다.</div>
             )}
 
-            {(user || selectedMembers.length > 0) && (
-              <div className="mt-3 text-sm text-blue-600 bg-blue-50 rounded-md p-2">
-                선택된 참여자:{' '}
-                {user
-                  ? `${user.githubUsername} (나)${selectedMembers.length > 0 ? `, ${selectedMembers.join(', ')}` : ''}`
-                  : selectedMembers.join(', ')}
-              </div>
-            )}
+            {(user || selectedMembers.length > 0) && <div></div>}
           </div>
 
           {/* 충돌 파일 선택 */}
@@ -469,9 +462,7 @@ function hello() {
 
             <div className="mt-3">
               {selectedFiles.length > 0 ? (
-                <div className="text-sm text-green-600 bg-green-50 rounded-md p-2">
-                  선택된 파일: {selectedFiles.join(', ')}
-                </div>
+                <div></div>
               ) : (
                 <div className="text-sm text-red-600 bg-red-50 rounded-md p-2">
                   충돌 파일을 최소 1개 이상 선택해주세요.
