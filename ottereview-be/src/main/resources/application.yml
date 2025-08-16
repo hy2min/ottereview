@@ -112,7 +112,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+      ddl-auto: create  # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
     show-sql: true
 
   sql:
@@ -147,7 +147,7 @@ logging:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
 
   sql:
