@@ -1,6 +1,5 @@
 package com.ssafy.ottereview.webhook.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ssafy.ottereview.common.exception.BusinessException;
 import com.ssafy.ottereview.description.dto.DescriptionBulkCreateRequest;
@@ -8,7 +7,6 @@ import com.ssafy.ottereview.description.dto.DescriptionResponse;
 import com.ssafy.ottereview.description.exception.DescriptionErrorCde;
 import com.ssafy.ottereview.description.service.DescriptionService;
 import com.ssafy.ottereview.preparation.dto.DescriptionInfo;
-import com.ssafy.ottereview.preparation.dto.PriorityInfo;
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
 import com.ssafy.ottereview.preparation.dto.PreparationResult;
 import com.ssafy.ottereview.preparation.repository.PreparationRedisRepository;
@@ -27,13 +25,14 @@ import com.ssafy.ottereview.reviewer.entity.ReviewStatus;
 import com.ssafy.ottereview.reviewer.entity.Reviewer;
 import com.ssafy.ottereview.reviewer.repository.ReviewerRepository;
 import com.ssafy.ottereview.reviewer.service.ReviewerService;
-import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
+import com.ssafy.ottereview.user.exception.UserErrorCode;
 import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.RepositoryInfo;
 import com.ssafy.ottereview.webhook.dto.PullRequestWebhookInfo;
+import com.ssafy.ottereview.webhook.dto.UserWebhookInfo;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -65,14 +64,10 @@ public class PullRequestEventService {
     public void processPullRequestEvent(String payload) {
         try {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
-//            String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
-//                    .writeValueAsString(event);
-//            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
-            JsonNode json = objectMapper.readTree(payload);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
-                    .writeValueAsString(json);
+                    .writeValueAsString(event);
+            log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
 
-            log.debug("전체 페이로드 출력:\n{}", formattedPayload);
             switch (event.getAction()) {
                 case "opened":
                     // mergeable 값 null
@@ -189,19 +184,17 @@ public class PullRequestEventService {
     }
 
     private void registerPullRequest(PullRequestEventDto event){
+        log.debug("PR 등록로직");
         PullRequestWebhookInfo pullRequest = event.getPullRequest();
         RepositoryInfo repo = event.getRepository();
 
         Repo targetRepo = repoRepository.findByRepoId(repo.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "해당 repository ID에 해당하는 Repo가 존재하지 않습니다.: " + repo.getId()));
-
+        
         User author = userRepository.findByGithubId(pullRequest.getUser()
-                        .getId())
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "해당 사용자 ID에 해당하는 User가 존재하지 않습니다.: " + pullRequest.getUser()
-                                .getId()));
-
+                        .getId()).orElseGet(() -> registerUser(pullRequest.getUser()));
+        
         PullRequest newPullRequest = PullRequest.builder()
                 .githubId(pullRequest.getId())
                 .githubPrNumber(event.getNumber())
@@ -430,5 +423,24 @@ public class PullRequestEventService {
     private User getUserFromUserInfo(PrUserInfo userInfo) {
         return userRepository.findById(userInfo.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userInfo.getId()));
+    }
+    
+    private User registerUser(UserWebhookInfo userInfo) {
+        try {
+            User user = User.builder()
+                    .githubId(userInfo.getId())
+                    .githubUsername(userInfo.getLogin())
+                    .githubEmail(userInfo.getEmail() != null ? userInfo.getEmail() : null)
+                    .type(userInfo.getType())
+                    .profileImageUrl(userInfo.getAvatarUrl() != null ? userInfo.getAvatarUrl()
+                            .toString() : null)
+                    .rewardPoints(0)
+                    .userGrade("BASIC")
+                    .build();
+            
+            return userRepository.save(user);
+        } catch (Exception e) {
+            throw new BusinessException(UserErrorCode.USER_REGISTRATION_FAILED);
+        }
     }
 }
