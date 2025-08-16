@@ -26,7 +26,7 @@ const Chat = ({ roomId }) => {
 
   // WebSocket 연결
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/api/ws')
+    const socket = new SockJS('https://i13c108.p.ssafy.io/api/ws')
     const stompClient = Stomp.over(socket)
 
     const token = useAuthStore.getState().accessToken
