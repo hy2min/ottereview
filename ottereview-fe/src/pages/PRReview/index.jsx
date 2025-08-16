@@ -375,7 +375,7 @@ const PRReview = () => {
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{prDetail.headBranch?.name || 'unknown'}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 theme-text-muted" />
                 <span>{prDetail.baseBranch?.name || 'unknown'}</span>
               </div>
             </Badge>
@@ -566,8 +566,22 @@ const PRReview = () => {
                         style={{ animationDelay: '1s' }}
                       />
                     </div>
-                  )
-                })()}
+                    
+                    {/* 진행률 텍스트 - 중앙에 표시 */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold theme-text drop-shadow-sm">
+                        {Math.round(
+                          prDetail.headBranch?.minApproveCnt
+                            ? ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) * 100
+                            : 0
+                        )}%
+                      </span>
+                    </div>
+                    
+                    {/* 외곽 글로우 효과 */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -755,7 +769,7 @@ const PRReview = () => {
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-all duration-200 flex-1 sm:flex-initial justify-center sm:justify-start ${
                       activeTab === tab.id
                         ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm font-medium'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
+                        : 'theme-text-secondary hover:theme-text hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
