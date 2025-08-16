@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Clock,
   FileText,
+  FilterX,
   FolderCode,
   GitBranch,
   GitCommit,
@@ -67,6 +68,7 @@ const PRReview = () => {
   const [reviewState, setReviewState] = useState('COMMENT') // 리뷰 상태 관리
   const [closingPR, setClosingPR] = useState(false) // PR 닫기 로딩
   const [reopeningPR, setReopeningPR] = useState(false) // PR 재오픈 로딩
+  const [selectedPriorityIndex, setSelectedPriorityIndex] = useState(null) // 선택된 우선순위 인덱스
 
   const loadingDots = useLoadingDots(loading, loading ? 300 : 0) // 로딩 중일 때만 애니메이션
 
@@ -276,13 +278,21 @@ const PRReview = () => {
     }
   }
 
-  const prFiles =
+  // 전체 파일 목록
+  const allPrFiles =
     prDetail?.files?.map(({ filename, additions, deletions, patch }) => ({
       filename,
       additions,
       deletions,
       patch,
     })) ?? []
+
+  // 선택된 우선순위에 따라 필터링된 파일 목록
+  const prFiles = selectedPriorityIndex !== null
+    ? allPrFiles.filter(file => 
+        prDetail.priorities[selectedPriorityIndex]?.related_files?.includes(file.filename)
+      )
+    : allPrFiles
 
   const commits = prDetail?.commits ?? []
 
@@ -636,9 +646,22 @@ const PRReview = () => {
         {/* 우선순위 목록 */}
         {prDetail.priorities && prDetail.priorities.length > 0 && (
           <Box shadow className="p-3">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <h3 className="font-medium theme-text">우선순위</h3>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <h3 className="font-medium theme-text">우선순위</h3>
+              </div>
+              {selectedPriorityIndex !== null && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSelectedPriorityIndex(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
+                >
+                  <FilterX className="w-4 h-4 mr-1" />
+                  해제
+                </Button>
+              )}
             </div>
             <div className="space-y-2">
               {prDetail.priorities.map((priority, index) => {
@@ -658,26 +681,31 @@ const PRReview = () => {
                   }
                 }
 
-                const getPriorityBadgeStyle = (level) => {
+                const getPriorityBadgeStyle = (level, isSelected) => {
+                  const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
                   switch (level?.toLowerCase()) {
                     case 'high':
                     case '높음':
-                      return 'bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700'
+                      return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
                     case 'medium':
                     case '보통':
-                      return 'bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700'
+                      return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
                     case 'low':
                     case '낮음':
-                      return 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700'
+                      return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
                     default:
-                      return 'bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+                      return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
                   }
                 }
+
+                const relatedFilesCount = priority.related_files?.length || 0
+                const isSelected = selectedPriorityIndex === index
 
                 return (
                   <div
                     key={index}
-                    className={`flex items-start gap-3 px-3 py-2 rounded-lg border transition-colors ${getPriorityBadgeStyle(priority.level)}`}
+                    className={`flex items-start gap-3 px-3 py-2 rounded-lg border transition-all ${getPriorityBadgeStyle(priority.level, isSelected)}`}
+                    onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}
                   >
                     <div className="flex-shrink-0 mt-0.5">{getPriorityIcon(priority.level)}</div>
                     <div className="min-w-0 flex-1">
@@ -696,6 +724,11 @@ const PRReview = () => {
                         >
                           {priority.level}
                         </Badge>
+                        {relatedFilesCount > 0 && (
+                          <Badge variant="sky" size="xs">
+                            파일 {relatedFilesCount}개
+                          </Badge>
+                        )}
                       </div>
                       <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
                     </div>
