@@ -2,6 +2,7 @@ import { LogOut, Moon, Plus, Sun } from 'lucide-react'
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
+import Button from '@/components/Button'
 import { useAuthStore } from '@/features/auth/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
@@ -77,7 +78,7 @@ const Header = () => {
           <div className="flex items-center">
             <button
               onClick={() => navigate(isLoggedIn ? '/dashboard' : '/')}
-              className="group flex items-center gap-3 hover:scale-105 transition-all duration-300"
+              className="group flex items-center gap-3 hover:scale-105 transition-all duration-300 cursor-pointer"
             >
               {/* Logo Image */}
               <div className="relative">
@@ -112,40 +113,46 @@ const Header = () => {
           <div className="flex items-center gap-3 ml-auto">
             {/* Import Repository Button - 대시보드에서만 표시 */}
             {isLoggedIn && isDashboard && (
-              <button
+              <Button
+                variant="header"
+                size="xl"
                 onClick={handleImportRepo}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="새 레포지토리 연결"
               >
-                <Plus size={16} className="text-gray-600 dark:text-gray-300" />
+                <Plus size={16} className="text-white" />
                 <span className="hidden sm:inline">레포 연결</span>
-              </button>
+              </Button>
             )}
 
             {/* Logout Button - 로그인된 상태에서만 표시 */}
             {isLoggedIn && (
-              <button
+              <Button
+                variant="danger"
+                size="xl"
                 onClick={handleLogout}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                className="gap-2"
                 title="로그아웃"
               >
                 <LogOut size={16} />
                 <span className="hidden sm:inline">로그아웃</span>
-              </button>
+              </Button>
             )}
             
             {/* Theme Toggle */}
-            <button
+            <Button
+              variant="theme"
+              size="xs"
               onClick={toggleTheme}
-              className="p-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200"
+              className="p-2.5 theme-bg-secondary border theme-border hover:theme-bg-tertiary rounded-lg transition-all duration-200 theme-shadow"
               title={theme === 'light' ? '다크 모드로 변경' : '라이트 모드로 변경'}
             >
               {theme === 'light' ? (
-                <Moon size={18} className="text-gray-600 dark:text-gray-300" />
+                <Moon size={18} className="theme-text" />
               ) : (
-                <Sun size={18} className="text-gray-600 dark:text-gray-300" />
+                <Sun size={18} className="theme-text" />
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

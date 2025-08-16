@@ -132,7 +132,7 @@ const RepositoryDetail = () => {
 
           {/* 새 PR 생성 버튼 */}
           <div className="flex-shrink-0 ml-auto">
-            <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create`)}>
+            <Button variant="primary" size="lg" onClick={() => navigate(`/${repoId}/pr/create?repoName=${encodeURIComponent(repo.fullName)}`)}>
               <Plus className="w-4 h-4 mr-2 mb-[2px]" />새 PR 생성하기
             </Button>
           </div>

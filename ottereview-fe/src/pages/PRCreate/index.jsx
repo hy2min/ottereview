@@ -1,6 +1,8 @@
+import { FolderCode } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
+import Box from '@/components/Box'
 import StepIndicator from '@/components/StepIndicator'
 import PRCreateStep1 from '@/features/pullRequest/PRCreateStep1'
 import PRCreateStep2 from '@/features/pullRequest/PRCreateStep2'
@@ -12,6 +14,8 @@ import { useCommentManager } from '@/hooks/useCommentManager'
 
 const PRCreate = () => {
   const { repoId } = useParams()
+  const [searchParams] = useSearchParams()
+  const repoName = searchParams.get('repoName')
   const [step, setStep] = useState(1)
 
   // 선택된 브랜치 정보 관리 (Step1에서 선택, 최종 PR 생성시 사용)
@@ -185,10 +189,24 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="relative min-h-screen pb-[100px]">
-      <div className="max-w-4xl mx-auto space-y-4 py-4">
+    <div className="relative min-h-screen pb-[100px] theme-bg-primary">
+      <div className="max-w-5xl mx-auto space-y-6 py-6 px-4">
+        <div className="text-center mb-8 animate-fade-in-up">
+          <h1 className="text-3xl font-bold theme-text mb-2 text-gradient-animated">
+            Pull Request 생성
+          </h1>
+          <p className="theme-text-secondary text-lg">
+            단계별로 진행하여 완벽한 PR을 만들어보세요
+          </p>
+        </div>
+        
         <StepIndicator currentStep={step} steps={steps} />
-        <div>{renderStepComponent()}</div>
+        
+        <div className="animate-fade-in-up animate-delay-200">
+          <div className="step-transition-container">
+            {renderStepComponent()}
+          </div>
+        </div>
       </div>
     </div>
   )

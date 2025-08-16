@@ -469,7 +469,7 @@ public class MergeService {
                         reviewers,
                         priorities);
                 
-                aiClient.saveVectorDb(mergedPullRequestInfo);
+                aiClient.saveVectorDb(mergedPullRequestInfo).subscribe();
                 
                 return true;
                 
