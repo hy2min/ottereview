@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import SockJS from 'sockjs-client'
 
 import { useAuthStore } from '@/features/auth/authStore'
+import { useUserStore } from '@/store/userStore'
 
 const Chat = ({ roomId }) => {
   const [messages, setMessages] = useState([])
@@ -11,6 +12,7 @@ const Chat = ({ roomId }) => {
   const stompClientRef = useRef(null)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const user = useUserStore((state) => state.user)
 
   // 메시지 목록 끝으로 스크롤
   const scrollToBottom = () => {
@@ -118,25 +120,48 @@ const Chat = ({ roomId }) => {
             <p className="text-sm opacity-75">첫 번째 메시지를 보내보세요!</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className="soft-card p-4 max-w-[85%] self-start hover:scale-102 transition-all duration-200 border-l-4 border-l-orange-500"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-semibold text-sm theme-text text-orange-600">
-                    {msg.senderName || '익명'}
-                  </span>
-                  <span className="text-xs theme-text-muted">
-                    {formatTime(msg.timestamp)}
-                  </span>
+          <div className="flex flex-col gap-2">
+            {messages.map((msg, i) => {
+              // 디버그용 로그
+              if (i === 0) {
+                console.log('Message data:', msg)
+                console.log('User data:', user)
+              }
+              const isMyMessage = user && (
+                msg.senderName === user.username || 
+                msg.senderName === user.login || 
+                msg.senderName === user.name ||
+                msg.senderId === user.id
+              )
+              return (
+                <div
+                  key={i}
+                  className={`flex ${isMyMessage ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[70%] p-3 rounded-2xl transition-all duration-200 ${
+                      isMyMessage
+                        ? 'bg-primary-500 text-white rounded-br-md'
+                        : 'theme-bg-secondary theme-text rounded-bl-md'
+                    }`}
+                  >
+                    {!isMyMessage && (
+                      <div className="text-xs font-medium mb-1 text-primary-600 dark:text-primary-400">
+                        {msg.senderName || '익명'}
+                      </div>
+                    )}
+                    <div className="text-sm leading-relaxed break-words">
+                      {msg.message}
+                    </div>
+                    <div className={`text-xs mt-1 opacity-70 ${
+                      isMyMessage ? 'text-right text-white/80' : 'theme-text-muted'
+                    }`}>
+                      {formatTime(msg.timestamp)}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-sm theme-text leading-relaxed break-words">
-                  {msg.message}
-                </div>
-              </div>
-            ))}
+              )
+            })}
             <div ref={messagesEndRef} />
           </div>
         )}

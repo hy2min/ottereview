@@ -1,11 +1,21 @@
 import React, { useState } from 'react'
-import { Bot, Sparkles, Eye, EyeOff, TrendingUp, FileText, Settings, MessageSquare } from 'lucide-react'
+import {
+  Bot,
+  Sparkles,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  FileText,
+  Settings,
+  MessageSquare,
+} from 'lucide-react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
-import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import Modal from '@/components/Modal'
+import { applyCushionLanguage, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -31,6 +41,11 @@ const PRCreateStep3 = ({
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
 
+  // 쿠션어 모달 상태 관리
+  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
+  const [originalContent, setOriginalContent] = useState('')
+  const [cushionedContent, setCushionedContent] = useState('')
+  const [isCushionLoading, setIsCushionLoading] = useState(false)
 
   // 템플릿 정의
   const templates = [
@@ -70,9 +85,6 @@ close #이슈번호
   // 로딩 중일 때만 애니메이션 활성화
   const loadingDots = useLoadingDots(isAiTitleLoading, isAiTitleLoading ? 300 : 0)
   const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
-  
-  // AI 우선순위 로딩 상태 확인
-  const isAiPriorityLoading = !aiOthers?.priority?.result
 
   // 따옴표 제거 함수
   const removeQuotes = (str) => {
@@ -103,24 +115,51 @@ close #이슈번호
     }
   }
 
+  // 쿠션어 적용 처리
+  const handleApplyCushion = async () => {
+    if (!prBody.trim()) return
+
+    setOriginalContent(prBody)
+    setIsCushionModalOpen(true)
+    setIsCushionLoading(true)
+    setCushionedContent('')
+
+    try {
+      const response = await applyCushionLanguage(prBody)
+
+      if (response?.result) {
+        setCushionedContent(response.result)
+      }
+    } catch (error) {
+      console.error('쿠션어 적용 실패:', error)
+      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
+    } finally {
+      setIsCushionLoading(false)
+    }
+  }
+
+  // 쿠션어 적용 확정
+  const handleApplyCushionConfirm = () => {
+    setPrBody(cushionedContent)
+    setIsCushionModalOpen(false)
+  }
+
+  // 쿠션어 적용 취소
+  const handleApplyCushionCancel = () => {
+    setIsCushionModalOpen(false)
+  }
 
   // 다음 버튼 활성화 조건 확인
-  const isNextButtonEnabled = 
-    prTitle.trim() !== '' && 
-    prBody.trim() !== '' && 
-    !isAiTitleLoading && 
-    !isAiPriorityLoading
+  const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
 
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
-    const missingItems = []
-    if (prTitle.trim() === '') missingItems.push('제목')
-    if (prBody.trim() === '') missingItems.push('설명')
-    if (isAiTitleLoading) missingItems.push('AI 제목 추천 완료')
-    if (isAiPriorityLoading) missingItems.push('AI 우선순위 분석 완료')
+    const missingFields = []
+    if (prTitle.trim() === '') missingFields.push('제목')
+    if (prBody.trim() === '') missingFields.push('설명')
 
-    if (missingItems.length === 0) return ''
-    return `${missingItems.join(', ')}이(가) 필요합니다`
+    if (missingFields.length === 0) return ''
+    return `${missingFields.join(', ')}을(를) 입력해주세요`
   }
 
   const handleNextStep = async () => {
@@ -177,15 +216,20 @@ close #이슈번호
         <h2 className="text-2xl font-semibold theme-text mb-2">PR 정보 입력</h2>
         <p className="theme-text-secondary">제목과 설명을 작성하고 코드 리뷰를 진행해보세요</p>
       </div>
-      
+
       <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:gap-6">
         {/* 왼쪽 박스 */}
-        <div className={`w-full ${showPriorities ? 'md:w-2/3 md:order-1' : 'md:w-full'} animate-slide-in-left`}>
+        <div
+          className={`w-full ${showPriorities ? 'md:w-2/3 md:order-1' : 'md:w-full'} animate-slide-in-left`}
+        >
           <Box shadow className="flex flex-col h-full premium-card">
             <div className="flex flex-col h-full mt-2">
               <div className="relative space-y-3 mb-4 animate-fade-in-up animate-delay-200">
                 <div className="flex items-center justify-between">
-                  <label htmlFor="aiTitle" className="block font-semibold text-lg theme-text flex items-center space-x-2">
+                  <label
+                    htmlFor="aiTitle"
+                    className="block font-semibold text-lg theme-text flex items-center space-x-2"
+                  >
                     <Bot className="w-5 h-5 text-orange-500" />
                     <span>AI 추천 제목</span>
                   </label>
@@ -201,13 +245,17 @@ close #이슈번호
                         <span>적용</span>
                       </span>
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={handleTogglePriorities}
                       className="btn-interactive transform transition-all duration-300 hover:scale-105"
                     >
                       <span className="flex items-center space-x-1">
-                        {showPriorities ? <EyeOff className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+                        {showPriorities ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <TrendingUp className="w-4 h-4" />
+                        )}
                         <span>{showPriorities ? '우선순위 숨김' : '우선순위 보기'}</span>
                       </span>
                     </Button>
@@ -286,7 +334,10 @@ close #이슈번호
               </div>
               <div className="space-y-4 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
-                  <Box key={index} className={`p-4 glass-effect hover:scale-[1.02] transition-all duration-300 animate-fade-in-up stagger-${index + 1}`}>
+                  <Box
+                    key={index}
+                    className={`p-4 glass-effect hover:scale-[1.02] transition-all duration-300 animate-fade-in-up stagger-${index + 1}`}
+                  >
                     {priority ? (
                       <div className="space-y-3 min-h-24">
                         <div className="flex flex-wrap items-center gap-2">
@@ -326,7 +377,9 @@ close #이슈번호
             <FileText className="w-5 h-5 text-orange-500" />
             <span>변경된 파일 목록</span>
           </h3>
-          <p className="theme-text-secondary text-sm mt-1">파일을 클릭하여 코드 리뷰 코멘트를 작성해보세요</p>
+          <p className="theme-text-secondary text-sm mt-1">
+            파일을 클릭하여 코드 리뷰 코멘트를 작성해보세요
+          </p>
         </div>
         <PRFileList
           files={validationBranches?.files || []}
@@ -357,9 +410,9 @@ close #이슈번호
             onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <Button 
-              onClick={handleNextStep} 
-              variant="primary" 
+            <Button
+              onClick={handleNextStep}
+              variant="primary"
               disabled={!isNextButtonEnabled}
               className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
             >
