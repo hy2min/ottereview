@@ -113,11 +113,11 @@ const PRCardDetail = ({ pr }) => {
 
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-4 text-sm">
-            <Badge variant="sky">
+            <Badge variant="primary">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{headBranch}</span>
-                <ArrowRight className="w-4 h-4 theme-text-muted" />
+                <ArrowRight className="w-4 h-4 text-gray-800" />
                 <span>{baseBranch}</span>
               </div>
             </Badge>

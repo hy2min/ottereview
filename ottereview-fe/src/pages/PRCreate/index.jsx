@@ -202,7 +202,7 @@ const PRCreate = () => {
         
         <StepIndicator currentStep={step} steps={steps} />
         
-        <div className="animate-fade-in-up animate-delay-200">
+        <div className="animate-fade-in-up animate-delay-200 relative z-20">
           <div className="step-transition-container">
             {renderStepComponent()}
           </div>
