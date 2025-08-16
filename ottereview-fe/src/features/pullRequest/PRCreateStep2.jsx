@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Sparkles, Settings, RotateCcw, AlertCircle, CheckCircle, FileText } from 'lucide-react'
+import { requestAIConvention, requestAIOthers } from './prApi'
 
 const Box = ({ children, shadow = false, className = '' }) => {
   return (
@@ -24,7 +25,7 @@ const Button = ({
     'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
 
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
+        primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
   }
 
@@ -55,7 +56,7 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
         <select
           value={value}
           onChange={onChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           {...props}
         >
           {options.map((option) => (
@@ -74,7 +75,7 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
       <input
         value={value}
         onChange={onChange}
-        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
         {...props}
       />
     </div>
@@ -91,6 +92,7 @@ const PRCreateStep2 = ({
   setAIOthers,
   conventionRules,
   setConventionRules,
+  selectedBranches,
 }) => {
   const [aiLoading, setAiLoading] = useState(false)
 
@@ -117,94 +119,152 @@ const PRCreateStep2 = ({
     try {
       setAiLoading(true)
 
-      // Mock API call - replace with actual API
-      const conventionData = await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            result: `- 파일명: demo/demo/src/main/java/com/example/demo/webhook/WebhookDto.java
-  - [함수명] 'handleWebhook'은(는) camelCase 규칙을 위반합니다. 'handleWebhook'으로 수정하세요.
-- [변수명] 'branchProtectionEventService'은(는) camelCase 규칙을 위반합니다. 'branchProtectionEventService'로 수정하세요.
-- [변수명] 'repoEventService'은(는) camelCase 규칙을 위반합니다. 'repoEventService'로 수정하세요.
-- [변수명] 'log'은(는) camelCase 규칙을 위반합니다. 'log'로 수정하세요.
-- [변수명] 'og'은(는) camelCase 규칙을 위반합니다. 'og'로 수정하세요.
-- [파일명] 'WebhookDto.java'은(는) camelCase 규칙을 위반합니다. 'webhookDto.java'로 수정하세요.`,
-          })
-        }, 2000)
+      // 실제 API 호출
+      const conventionData = await requestAIConvention({
+        repoId,
+        source: selectedBranches.source,
+        target: selectedBranches.target,
+        rules: rules,
       })
 
       console.log('AI 컨벤션 응답:', conventionData)
       setAIConvention(conventionData)
     } catch (e) {
       console.error('AI 컨벤션 요청 에러:', e)
+      // 에러 발생 시 사용자에게 알림
+      setAIConvention({
+        error: true,
+        message: '컨벤션 분석 중 오류가 발생했습니다. 다시 시도해주세요.',
+      })
     } finally {
       setAiLoading(false)
     }
   }
 
-  const renderAIConvention = (text) => {
-    if (!text) return null
+  const renderAIConvention = (data) => {
+    if (!data) return null
 
-    // 텍스트를 '-' 기준으로 분할하여 각 항목을 리스트로 만듦
-    const items = text
-      .split(/^- /gm) // 줄 시작의 '- '로 분할
-      .filter((item) => item.trim()) // 빈 항목 제거
-      .map((item) => item.trim())
+    // 에러 상태 처리
+    if (data.error) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center space-y-2 text-red-500">
+            <AlertCircle className="w-8 h-8" />
+            <div className="text-sm text-center">{data.message}</div>
+          </div>
+        </div>
+      )
+    }
+
+    const text = data.result || data
+    if (!text || typeof text !== 'string') return null
+
+    // 텍스트를 줄 단위로 분할하고 '-' 로 시작하는 항목들을 찾음
+    const lines = text
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line)
+    const items = []
+    let currentItem = null
+
+    for (const line of lines) {
+      if (line.startsWith('-') || line.startsWith('•')) {
+        // 새로운 항목 시작
+        if (currentItem) {
+          items.push(currentItem)
+        }
+        currentItem = [line.replace(/^[-•]\s*/, '')]
+      } else if (currentItem && line.trim()) {
+        // 기존 항목에 추가 정보
+        currentItem.push(line)
+      } else if (!currentItem && line.trim()) {
+        // 첫 번째 항목이 '-'로 시작하지 않는 경우
+        currentItem = [line]
+      }
+    }
+
+    if (currentItem) {
+      items.push(currentItem)
+    }
 
     if (items.length === 0) return null
 
     return (
       <div className="space-y-3">
-        {items.map((item, index) => {
-          // 각 항목에서 파일 경로와 내용 분리
-          const lines = item.split('\n').filter((line) => line.trim())
-
+        {items.map((itemLines, index) => {
           return (
             <div
               key={index}
               className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border-l-4 border-orange-400"
             >
-              {lines.map((line, lineIndex) => {
-                // 파일 경로인지 확인 (경로가 포함된 긴 텍스트)
-                const isFilePath = line.includes('/') && line.length > 30
+              {itemLines.map((line, lineIndex) => {
+                // 파일 경로인지 확인 (확장자가 있고 경로 구분자가 있는 경우)
+                const isFilePath =
+                  (line.includes('/') || line.includes('\\')) &&
+                  (line.includes('.java') ||
+                    line.includes('.js') ||
+                    line.includes('.py') ||
+                    line.includes('.ts') ||
+                    line.includes('.jsx') ||
+                    line.includes('.tsx') ||
+                    (line.includes('.') && line.length > 20))
+
                 // 규칙 위반 내용인지 확인 ([함수명], [변수명] 등이 포함된 텍스트)
-                const isViolation = line.includes('[') && line.includes(']')
+                const isViolation =
+                  line.includes('[') &&
+                  line.includes(']') &&
+                  (line.includes('함수명') ||
+                    line.includes('변수명') ||
+                    line.includes('클래스명') ||
+                    line.includes('파일명') ||
+                    line.includes('상수명'))
 
                 if (isFilePath) {
                   return (
                     <div key={lineIndex} className="flex items-start gap-2 mb-2">
                       <FileText className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
                       <div className="text-sm font-mono text-blue-600 dark:text-blue-400 break-all">
-                        {line}
+                        파일: {line}
                       </div>
                     </div>
                   )
                 } else if (isViolation) {
-                  // [함수명], [변수명] 등을 강조 표시
-                  const parts = line.split(/(\[[^\]]+\])/)
+                  // [함수명], [변수명] 등을 강조 표시하고 백틱 제거
+                  const renderTextWithFormatting = (text) => {
+                    // 백틱 제거
+                    const textWithoutBackticks = text.replace(/`([^`]+)`/g, '$1')
+                    
+                    // [함수명], [변수명] 등의 태그를 처리
+                    const tagParts = textWithoutBackticks.split(/(\[[^\]]+\])/)
+
+                    return tagParts.map((tagPart, tagIndex) => {
+                      if (tagPart.startsWith('[') && tagPart.endsWith(']')) {
+                        return (
+                          <span
+                            key={tagIndex}
+                            className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded text-xs font-medium mr-1"
+                          >
+                            {tagPart}
+                          </span>
+                        )
+                      }
+                      return <span key={tagIndex}>{tagPart}</span>
+                    })
+                  }
+
                   return (
                     <div key={lineIndex} className="flex items-start gap-2">
                       <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
-                      <div className="text-sm">
-                        {parts.map((part, partIndex) => {
-                          if (part.startsWith('[') && part.endsWith(']')) {
-                            return (
-                              <span
-                                key={partIndex}
-                                className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded text-xs font-medium"
-                              >
-                                {part}
-                              </span>
-                            )
-                          }
-                          return <span key={partIndex}>{part}</span>
-                        })}
-                      </div>
+                      <div className="text-sm">{renderTextWithFormatting(line)}</div>
                     </div>
                   )
                 } else {
+                  // 일반 텍스트에서 백틱 제거
+                  const textWithoutBackticks = line.replace(/`([^`]+)`/g, '$1')
+
                   return (
                     <div key={lineIndex} className="text-sm text-gray-600 dark:text-gray-300 ml-6">
-                      {line}
+                      {textWithoutBackticks}
                     </div>
                   )
                 }
