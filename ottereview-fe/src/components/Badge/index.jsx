@@ -11,7 +11,7 @@ const Badge = ({
 }) => {
   const base = 'inline-flex items-center rounded-full font-medium'
   const variantClasses = {
-    default: 'theme-bg-tertiary theme-text border theme-border',
+    default: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-600',
     success: 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700',
     warning: 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700',
     danger: 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700',
