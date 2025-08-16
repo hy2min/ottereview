@@ -32,7 +32,12 @@ const App = () => {
 
   // 푸시 이벤트 핸들러
   const handlePushEvent = useCallback((pushData) => {
-    setToasts((prev) => [...prev, pushData])
+    console.log('🍞 토스트 추가:', pushData)
+    setToasts((prev) => {
+      const newToasts = [...prev, pushData]
+      console.log('🍞 현재 토스트 목록:', newToasts)
+      return newToasts
+    })
   }, [])
 
   // 테마 초기화
@@ -66,6 +71,7 @@ const App = () => {
   }, [])
 
   // 로그인된 사용자에게 전역 SSE 연결 제공
+  console.log('🔍 useSSE 호출:', { isLoggedIn, hasHandler: !!handlePushEvent })
   useSSE(isLoggedIn, handlePushEvent)
 
   // 조건부 렌더링들은 모든 hooks 다음에
@@ -109,7 +115,6 @@ const App = () => {
                 {protectedRoutes.map(({ path, element }) => (
                   <Route key={path} path={path} element={element} />
                 ))}
-                <Route path="*" element={<NotFound />} />
               </Routes>
             </main>
           } 

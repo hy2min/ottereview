@@ -14,6 +14,14 @@ const RepositoryDetail = () => {
   const { repoId } = useParams()
   const navigate = useNavigate()
 
+  // repoId가 숫자가 아니면 notfound로 리다이렉트
+  useEffect(() => {
+    if (isNaN(Number(repoId))) {
+      navigate('/notfound', { replace: true })
+      return
+    }
+  }, [repoId, navigate])
+
   const repos = useRepoStore((state) => state.repos)
   const repo = repos.find((r) => r.id === Number(repoId))
 
@@ -28,12 +36,10 @@ const RepositoryDetail = () => {
     const load = async () => {
       try {
         const repoPRsData = await fetchRepoPRList(repoId)
-        console.log('repoPRsdata : ', repoPRsData)
         setRepoPRs(repoPRsData)
 
         if (repo?.accountId && repoId) {
           const branchData = await fetchBrancheListByRepoId(repoId)
-          console.log('branchdata : ', branchData)
           setBranches(branchData)
         }
       } catch (err) {

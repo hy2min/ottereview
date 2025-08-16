@@ -20,7 +20,6 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
   const selectedOption = options.find((option) => option.value === value)
 
   const handleSelect = (optionValue) => {
-    console.log('Selected:', optionValue)
     onChange({ target: { value: optionValue } })
     setIsOpen(false)
   }
@@ -30,12 +29,12 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
   const selectClasses = twMerge(
     baseClasses,
     'px-3 py-2 theme-text cursor-pointer',
-    isOpen ? 'rounded-t-lg border-b-0' : 'rounded-lg'
+    isOpen ? 'rounded-t-lg border-b-transparent' : 'rounded-lg'
   )
 
   const dropdownClasses = twMerge(
-    baseClasses,
-    'absolute z-50 top-full left-0 right-0 max-h-60 overflow-y-auto rounded-b-lg border-t-0 bg-white dark:bg-gray-800'
+    'border theme-border w-full box-border theme-bg-secondary',
+    'absolute z-50 top-full left-0 right-0 max-h-60 overflow-y-auto rounded-b-lg border-t-transparent'
   )
 
   return (
@@ -60,8 +59,10 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
             <div
               key={option.value || `empty-${option.label}`}
               className={twMerge(
-                'px-3 py-2 cursor-pointer theme-text',
-                option.value === value ? 'bg-orange-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                'px-3 py-2 cursor-pointer',
+                option.value === value 
+                  ? 'bg-orange-500 text-white' 
+                  : 'theme-text hover:bg-gray-200 hover:!text-gray-900 dark:hover:bg-black/20 dark:hover:!text-white'
               )}
               onClick={() => handleSelect(option.value)}
             >
