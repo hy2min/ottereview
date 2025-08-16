@@ -23,7 +23,7 @@ const Whiteboard = ({ roomId }) => {
     const doc = new Y.Doc()
     console.log('roomId:', roomId)
     // JWT 토큰 없이 WebSocket URL, roomId만 경로에 포함
-    const wsUrl = `ws://localhost:8080/api/yjs`
+    const wsUrl = `wss://i13c108.p.ssafy.io/api/yjs`
     const provider = new WebsocketProvider(wsUrl, roomId, doc)
 
     // 로컬 사용자 상태 설정 (임의 이름과 색상)
