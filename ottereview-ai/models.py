@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional, Any
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Dict, Optional, Any, Union
 from datetime import datetime
 
 
@@ -71,6 +71,13 @@ class RepoInfo(BaseModel):
     id: int
     fullName: str
 
+class RepoResponse(BaseModel):
+    id: int
+    repoId: int
+    fullName: str
+    accountId: int
+    private: bool  # Java에서 'private'로 보내고 있음
+    cushion: bool  # Java에서 'cushion'으로 보내고 있음
 
 class PrUserInfo(BaseModel):
     """사용자 정보 - 자바 PrUserInfo 기반"""
@@ -114,11 +121,20 @@ class PullRequestCommitInfo(BaseModel):
     message: str
     url: str
     authorName: str
-    authorEmail: str
-    authorDate: str
+    authorEmail: Optional[str] = None
+    authorDate: Union[str, List[int]]
     committerName: str
-    committerEmail: str
-    committerDate: str
+    committerEmail: Optional[str] = None
+    committerDate: Union[str, List[int]]
+    
+    @field_validator('authorDate', 'committerDate')
+    @classmethod
+    def validate_date(cls, v):
+        if isinstance(v, list) and len(v) >= 6:
+            # Java LocalDateTime 배열을 ISO 문자열로 변환
+            year, month, day, hour, minute, second = v[:6]
+            return f"{year:04d}-{month:02d}-{day:02d}T{hour:02d}:{minute:02d}:{second:02d}"
+        return str(v) if v is not None else ""
 
 
 class PullRequestUserInfo(BaseModel):
@@ -143,7 +159,7 @@ class PullRequestPriorityInfo(BaseModel):
     level: str
     title: str
     content: str
-
+    relatedFiles: Optional[List[str]] = None
 
 # PreparationResult에 맞춘 주요 데이터 모델
 class PreparationResult(BaseModel):
@@ -194,8 +210,8 @@ class PRDetailData(BaseModel):
     base: str
     head: str
     mergeable: Optional[bool] = None
-    githubCreatedAt: str
-    githubUpdatedAt: str
+    githubCreatedAt: Union[str, List[int]]
+    githubUpdatedAt: Union[str, List[int]]
     commitCnt: int
     changedFilesCnt: int
     commentCnt: int
@@ -209,8 +225,17 @@ class PRDetailData(BaseModel):
     
     # 객체 정보 - MergedPullRequestInfo 순서대로
     author: PullRequestUserInfo
-    repo: RepoInfo
+    repo: RepoResponse
     files: List[PullRequestFileInfo]
     commits: List[PullRequestCommitInfo]
     reviewers: List[PullRequestReviewerInfo]
     priorities: List[PullRequestPriorityInfo]
+    
+    @field_validator('githubCreatedAt', 'githubUpdatedAt')
+    @classmethod
+    def validate_github_date(cls, v):
+        if isinstance(v, list) and len(v) >= 6:
+            # Java LocalDateTime 배열을 ISO 문자열로 변환
+            year, month, day, hour, minute, second = v[:6]
+            return f"{year:04d}-{month:02d}-{day:02d}T{hour:02d}:{minute:02d}:{second:02d}"
+        return str(v) if v is not None else ""
