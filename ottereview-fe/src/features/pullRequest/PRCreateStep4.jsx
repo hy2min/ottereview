@@ -117,16 +117,16 @@ const PRCreateStep4 = ({
                 .map((reviewer, index) => (
                   <div
                     key={reviewer.githubUsername}
-                    className={`flex justify-between items-center p-3 mr-2 rounded-lg theme-bg-tertiary hover:theme-bg-secondary transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
+                    className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-all duration-200`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
                         {reviewer.githubUsername.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                        <span className="text-gray-900 font-medium">{reviewer.githubUsername}</span>
                         {isAIRecommended(reviewer.githubUsername) && (
-                          <Badge variant="primary" size="sm" className="mt-1 animate-pulse">
+                          <Badge variant="primary" size="sm" className="mt-1 animate-pulse w-fit">
                             <span className="flex items-center space-x-1">
                               <span>🤖</span>
                               <span>AI 추천</span>
@@ -160,7 +160,7 @@ const PRCreateStep4 = ({
           </div>
         </Box>
 
-        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-right animate-delay-200">
+        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-right">
           <h3 className="mb-3 flex-shrink-0 text-lg font-semibold theme-text flex items-center space-x-2">
             <CheckCircle className="w-4 h-4" />
             <span>선택된 리뷰어</span>
@@ -170,16 +170,16 @@ const PRCreateStep4 = ({
               selectedReviewers.map((reviewer, index) => (
                 <div
                   key={reviewer.githubUsername}
-                  className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
+                  className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 transition-all duration-200`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
                       {reviewer.githubUsername.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
-                      <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                      <span className="text-gray-900 font-medium">{reviewer.githubUsername}</span>
                       {isAIRecommended(reviewer.githubUsername) && (
-                        <Badge variant="primary" size="xs" className="mt-1">
+                        <Badge variant="primary" size="xs" className="mt-1 w-fit">
                           <span className="flex items-center space-x-1">
                             <span>🤖</span>
                             <span>AI</span>
@@ -210,7 +210,7 @@ const PRCreateStep4 = ({
           </div>
         </Box>
       </div>
-      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+      <div className="mx-auto z-10 animate-fade-in-up">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
