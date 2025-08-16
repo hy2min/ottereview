@@ -3,8 +3,8 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useAuthStore } from '@/features/auth/authStore'
 import { useUserStore } from '@/store/userStore'
 
-// 전역 push 이벤트만 관리하는 훅
-export const useSSE = (shouldConnect = true, onPushEvent = null) => {
+// 전역 SSE 이벤트 관리하는 훅 (push + update)
+export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent = null) => {
   const accessToken = useAuthStore((state) => state.accessToken)
   const setSseReconnectCallback = useAuthStore((state) => state.setSseReconnectCallback)
   const user = useUserStore((state) => state.user)
@@ -21,17 +21,17 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
       eventSourceRef.current = null
     }
 
-    console.log('🔌 Push SSE 연결 시작 (토큰:', accessToken.substring(0, 10) + '...)')
+    console.log('🔌 SSE 연결 시작 (토큰:', accessToken.substring(0, 10) + '...)')
 
-    // push 이벤트 구독 (브랜치 추가/푸시) - 모든 페이지에서 필요
-    const pushEventSource = new EventSource(
+    // 통합 SSE 이벤트 구독 (push + update)
+    const eventSource = new EventSource(
       `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
     )
 
-    eventSourceRef.current = pushEventSource
+    eventSourceRef.current = eventSource
 
     // push 이벤트 처리
-    pushEventSource.addEventListener('push', (event) => {
+    eventSource.addEventListener('push', (event) => {
       console.log('📤 푸시 이벤트 (전역):', event.data)
 
       try {
@@ -54,14 +54,23 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
       }
     })
 
-    pushEventSource.onopen = () => {
-      console.log('🔌 Push SSE 연결 성공')
+    // update 이벤트 처리
+    eventSource.addEventListener('update', (event) => {
+      console.log('🔄 업데이트 이벤트 (전역):', event.data)
+      
+      if (onUpdateEvent) {
+        onUpdateEvent(event.data)
+      }
+    })
+
+    eventSource.onopen = () => {
+      console.log('🔌 SSE 연결 성공')
     }
     
-    pushEventSource.onerror = (error) => {
-      console.error('❌ Push SSE 오류:', error)
+    eventSource.onerror = (error) => {
+      console.error('❌ SSE 오류:', error)
     }
-  }, [shouldConnect, accessToken, user?.githubId, onPushEvent])
+  }, [shouldConnect, accessToken, user?.githubId, onPushEvent, onUpdateEvent])
 
   // 초기 연결 및 재연결 콜백 등록
   useEffect(() => {
@@ -72,7 +81,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
     setSseReconnectCallback(connectSSE)
 
     return () => {
-      console.log('🔌 Push SSE 연결 해제')
+      console.log('🔌 SSE 연결 해제')
       if (eventSourceRef.current) {
         eventSourceRef.current.close()
         eventSourceRef.current = null
@@ -86,7 +95,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null) => {
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
-        console.log('🔌 컴포넌트 언마운트로 인한 Push SSE 연결 해제')
+        console.log('🔌 컴포넌트 언마운트로 인한 SSE 연결 해제')
         eventSourceRef.current.close()
         eventSourceRef.current = null
       }
