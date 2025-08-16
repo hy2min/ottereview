@@ -574,15 +574,15 @@ const PRReview = () => {
 
         {/* 리뷰어 목록 */}
         <div className="w-56 flex-shrink-0">
-          {prDetail.reviewers && prDetail.reviewers.length > 0 && (
-            <Box shadow className="p-3 h-40">
-              <div className="flex flex-col h-full">
-                <div className="flex items-center gap-3 mb-3 flex-shrink-0">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <h3 className="font-medium theme-text">리뷰어</h3>
-                </div>
-                <div className="space-y-2 overflow-y-auto flex-1">
-                  {prDetail.reviewers.map((reviewer) => {
+          <Box shadow className="p-3 h-40">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                <h3 className="font-medium theme-text">리뷰어</h3>
+              </div>
+              <div className="space-y-2 overflow-y-auto flex-1">
+                {prDetail.reviewers && prDetail.reviewers.length > 0 ? (
+                  prDetail.reviewers.map((reviewer) => {
                     const getStatusInfo = (state) => {
                       switch (state) {
                         case 'APPROVED':
@@ -630,21 +630,25 @@ const PRReview = () => {
                         </div>
                       </div>
                     )
-                  })}
-                </div>
+                  })
+                ) : (
+                  <div className="flex items-start justify-start h-full text-gray-500 dark:text-gray-400 text-sm italic pt-2">
+                    지정된 리뷰어가 없습니다
+                  </div>
+                )}
               </div>
-            </Box>
-          )}
+            </div>
+          </Box>
         </div>
       </div>
 
       {/* 우선순위 별개 섹션 */}
-      {prDetail.priorities && prDetail.priorities.length > 0 && (
-        <Box shadow className="p-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-            <h3 className="font-medium theme-text">우선순위</h3>
-          </div>
+      <Box shadow className="p-3">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+          <h3 className="font-medium theme-text">우선순위</h3>
+        </div>
+        {prDetail.priorities && prDetail.priorities.length > 0 ? (
           <div className="flex gap-3 xl:grid xl:grid-cols-3 overflow-x-auto xl:overflow-x-visible">
             {prDetail.priorities.slice(0, 3).map((priority, index) => {
             const getPriorityIcon = (level) => {
@@ -735,8 +739,12 @@ const PRReview = () => {
               )
             })}
           </div>
-        </Box>
-      )}
+        ) : (
+          <div className="flex items-start justify-start py-2 text-gray-500 dark:text-gray-400 text-sm italic">
+            AI 우선순위가 생성되지 않았습니다
+          </div>
+        )}
+      </Box>
 
 
       <Box shadow className="p-3">
