@@ -63,7 +63,7 @@ public class PullRequestEventDto {
         private UserWebhookInfo owner;
     }
     @JsonProperty("sender")
-    private PushEventDto.Sender sender;
+    private Sender sender;
 
     @Data
     @Getter
