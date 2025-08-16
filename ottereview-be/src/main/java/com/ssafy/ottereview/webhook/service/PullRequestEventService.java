@@ -16,6 +16,7 @@ import com.ssafy.ottereview.priority.repository.PriorityFileRepository;
 import com.ssafy.ottereview.priority.repository.PriorityRepository;
 import com.ssafy.ottereview.pullrequest.entity.PrState;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
+import com.ssafy.ottereview.pullrequest.exception.PullRequestErrorCode;
 import com.ssafy.ottereview.pullrequest.repository.PullRequestRepository;
 import com.ssafy.ottereview.pullrequest.service.PullRequestService;
 import com.ssafy.ottereview.repo.entity.Repo;
@@ -60,14 +61,14 @@ public class PullRequestEventService {
     private final DescriptionService descriptionService;
     private final PullRequestService pullRequestService;
     private final EventSendController eventSendController;
-
+    
     public void processPullRequestEvent(String payload) {
         try {
             PullRequestEventDto event = objectMapper.readValue(payload, PullRequestEventDto.class);
             String formattedPayload = objectMapper.writerWithDefaultPrettyPrinter()
                     .writeValueAsString(event);
             log.debug("DTO로 받은 PR 이벤트 정보: {}\n", formattedPayload);
-
+            
             switch (event.getAction()) {
                 case "opened":
                     // mergeable 값 null
@@ -91,23 +92,20 @@ public class PullRequestEventService {
                 case "assigned":
                     log.debug("PR에 assigned가 할당된 경우 발생하는 callback");
                     break;
-                    
+                
                 case "review_request_removed":
                     log.debug("PR에 리뷰어 요청이 제거된 경우 발생하는 callback");
                     break;
-                    
+                
                 case "synchronize":
-                    log.debug("PR이 업데이트된 경우 발생하는 callback");
                     handlePullRequestSynchronize(event);
                     break;
-                    
+                
                 case "reopened":
-                    log.debug("PR이 다시 열린 경우 발생하는 callback");
                     handlePullRequestReopened(event);
                     break;
-                    
+                
                 case "edited":
-                    log.debug("깃허브 웹페이지에서 PR이 수정된 경우 발생하는 callback");
                     handlePullRequestSynchronize(event);
                     break;
                 
@@ -120,47 +118,50 @@ public class PullRequestEventService {
     }
     
     private void handlePullRequestReopened(PullRequestEventDto event) {
-        log.debug("[웹훅 PR 재오픈 로직 실행]");
-        Long githubId = event.getPullRequest().getId();
+        Long githubId = event.getPullRequest()
+                .getId();
         
         PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
+                .orElseThrow(() -> new BusinessException(PullRequestErrorCode.PR_NOT_FOUND));
         
         // PR 상태를 OPEN으로 변경
         pullRequest.updateState(PrState.OPEN);
-        
-        log.info("Pull Request with GitHub PR number {} has been reopened.", githubId);
     }
     
     // mergeable 값을 못가져옴..
     private void handlePullRequestSynchronize(PullRequestEventDto event) {
         log.debug("[웹훅 PR 동기화 로직 실행]");
-        Long githubId = event.getPullRequest().getId();
+        Long githubId = event.getPullRequest()
+                .getId();
         
         PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
                 .orElseThrow(() -> new IllegalArgumentException(
                         "깃허브 PR ID에 해당하는 PR이 존재하지 않습니다.: " + githubId));
-
+        
         List<ReviewerResponse> reviewerList = reviewerService.getReviewerByPullRequest(pullRequest.getId());
         // reviewer들의 state를 none으로 바꿔야한다.
-        List<Reviewer> reviewers = reviewerList.stream().map(r -> Reviewer.builder()
-                .id(r.getId())
-                .user(User.to(r.getUser()))
-                .status(ReviewStatus.NONE)
-                .pullRequest(PullRequest.to(r.getPullRequest())).build()).toList();
-
+        List<Reviewer> reviewers = reviewerList.stream()
+                .map(r -> Reviewer.builder()
+                        .id(r.getId())
+                        .user(User.to(r.getUser()))
+                        .status(ReviewStatus.NONE)
+                        .pullRequest(PullRequest.to(r.getPullRequest()))
+                        .build())
+                .toList();
+        
         // 만약 Synchronize 가 들어오면 모든 Reviewr들의 state를 None으로 초기화한다.
         reviewerRepository.saveAll(reviewers);
-
+        
         pullRequest.synchronizedByWebhook(event);
-        log.info("sync 온다~~~~~₩!!!!!!");
-        eventSendController.push(event.getSender().getId(),"synchronize", "synchronize");
+        log.debug("sync 온다~~~~~₩!!!!!!");
+        eventSendController.push(event.getSender()
+                .getId(), "synchronize", "synchronize");
     }
     
     private void handlePullRequestOpened(PullRequestEventDto event) {
         
-        Long githubId = event.getPullRequest().getId();
+        Long githubId = event.getPullRequest()
+                .getId();
         
         pullRequestRepository.findByGithubId(githubId)
                 .ifPresentOrElse(
@@ -171,7 +172,8 @@ public class PullRequestEventService {
     
     private void handlePullRequestClosed(PullRequestEventDto event) {
         
-        Long githubId = event.getPullRequest().getId();
+        Long githubId = event.getPullRequest()
+                .getId();
         
         PullRequest pullRequest = pullRequestRepository.findByGithubId(githubId)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -179,21 +181,22 @@ public class PullRequestEventService {
         
         // PR 상태를 CLOSED로 변경
         pullRequest.updateState(PrState.CLOSED);
-
-        log.info("Pull Request with GitHub PR number {} has been closed.", githubId);
+        
+        log.debug("Pull Request with GitHub PR number {} has been closed.", githubId);
     }
-
-    private void registerPullRequest(PullRequestEventDto event){
-        log.debug("PR 등록로직");
+    
+    private void registerPullRequest(PullRequestEventDto event) {
+        log.info("PR 등록로직");
         PullRequestWebhookInfo pullRequest = event.getPullRequest();
         RepositoryInfo repo = event.getRepository();
-
+        
         Repo targetRepo = repoRepository.findByRepoId(repo.getId())
                 .orElseThrow(() -> new IllegalArgumentException(
                         "해당 repository ID에 해당하는 Repo가 존재하지 않습니다.: " + repo.getId()));
         
         User author = userRepository.findByGithubId(pullRequest.getUser()
-                        .getId()).orElseGet(() -> registerUser(pullRequest.getUser()));
+                        .getId())
+                .orElseGet(() -> registerUser(pullRequest.getUser()));
         
         PullRequest newPullRequest = PullRequest.builder()
                 .githubId(pullRequest.getId())
@@ -221,31 +224,35 @@ public class PullRequestEventService {
                 .repo(targetRepo)
                 .approveCnt(0)
                 .build();
-
+        
         PullRequest savedPullRequest = pullRequestRepository.save(newPullRequest);
-
+        
         // Redis에서 prepareInfo 조회 후 관련 데이터 저장
-        saveRelatedDataFromRedis(savedPullRequest, targetRepo.getId(), pullRequest.getHead().getRef(), pullRequest.getBase().getRef());
-
+        saveRelatedDataFromRedis(savedPullRequest, targetRepo.getId(), pullRequest.getHead()
+                .getRef(), pullRequest.getBase()
+                .getRef());
+        
         // PR 등록 완료 후 Redis 데이터 정리
-        cleanupRedisData(targetRepo.getId(), pullRequest.getHead().getRef(), pullRequest.getBase().getRef());
-
-        log.info("Pull Request with GitHub PR number {} has been registered.", event.getNumber());
+        cleanupRedisData(targetRepo.getId(), pullRequest.getHead()
+                .getRef(), pullRequest.getBase()
+                .getRef());
     }
-
+    
     private void saveRelatedDataFromRedis(PullRequest pullRequest, Long repoId, String source, String target) {
         try {
             // Redis에서 prepareInfo 조회
             PreparationResult prepareInfo = preparationRedisRepository.getPrepareInfo(repoId, source, target);
             
             if (prepareInfo == null) {
-                log.info("Redis에 prepareInfo가 없습니다. - repoId: {}, source: {}, target: {}", repoId, source, target);
+                log.debug("Redis에 prepareInfo가 없습니다. - repoId: {}, source: {}, target: {}", repoId, source, target);
                 return;
             }
             
-            log.info("Redis에서 prepareInfo 조회 성공 - repoId: {}, source: {}, target: {}", repoId, source, target);
-            
             pullRequest.enrollAuthor(getUserFromUserInfo(prepareInfo.getAuthor()));
+            
+            if (prepareInfo.getSummary() != null) {
+                pullRequest.enrollSummary(prepareInfo.getSummary());
+            }
             
             // 1. 리뷰어 저장
             saveReviewers(pullRequest, prepareInfo);
@@ -257,13 +264,14 @@ public class PullRequestEventService {
             saveDescriptions(pullRequest, prepareInfo, repoId, source, target);
             
         } catch (Exception e) {
-            log.warn("Redis에서 prepareInfo 조회 및 관련 데이터 저장 실패 - repoId: {}, source: {}, target: {}", 
+            log.warn("Redis에서 prepareInfo 조회 및 관련 데이터 저장 실패 - repoId: {}, source: {}, target: {}",
                     repoId, source, target, e);
         }
     }
     
     private void saveReviewers(PullRequest pullRequest, PreparationResult prepareInfo) {
-        if (prepareInfo.getReviewers() == null || prepareInfo.getReviewers().isEmpty()) {
+        if (prepareInfo.getReviewers() == null || prepareInfo.getReviewers()
+                .isEmpty()) {
             log.debug("저장할 리뷰어가 없습니다.");
             return;
         }
@@ -272,7 +280,7 @@ public class PullRequestEventService {
         List<User> userList = reviewers.stream()
                 .map(this::getUserFromUserInfo)
                 .toList();
-
+        
         List<Reviewer> reviewerList = userList.stream()
                 .map(user -> Reviewer.builder()
                         .pullRequest(pullRequest)
@@ -280,13 +288,14 @@ public class PullRequestEventService {
                         .status(ReviewStatus.NONE)
                         .build())
                 .toList();
-
+        
         reviewerRepository.saveAll(reviewerList);
-        log.info("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
+        log.debug("리뷰어 저장 완료, 리뷰어 수: {}", reviewerList.size());
     }
     
     private void savePriorities(PullRequest pullRequest, PreparationResult prepareInfo) {
-        if (prepareInfo.getPriorities() == null || prepareInfo.getPriorities().isEmpty()) {
+        if (prepareInfo.getPriorities() == null || prepareInfo.getPriorities()
+                .isEmpty()) {
             log.debug("저장할 우선순위가 없습니다.");
             return;
         }
@@ -300,16 +309,19 @@ public class PullRequestEventService {
                         .content(priorityInfo.getContent())
                         .build())
                 .toList();
-
+        
         List<Priority> savedPriorities = priorityRepository.saveAll(priorityList);
-        log.info("우선 순위 저장 완료, 우선 순위 수: {}", savedPriorities.size());
-
+        log.debug("우선 순위 저장 완료, 우선 순위 수: {}", savedPriorities.size());
+        
         // 각 우선 순위와 관련 파일들을 매핑하여 저장
-        for (int i = 0; i < prepareInfo.getPriorities().size(); i++) {
-            var priorityInfo = prepareInfo.getPriorities().get(i);
+        for (int i = 0; i < prepareInfo.getPriorities()
+                .size(); i++) {
+            var priorityInfo = prepareInfo.getPriorities()
+                    .get(i);
             Priority savedPriority = savedPriorities.get(i);
             
-            if (priorityInfo.getRelatedFiles() != null && !priorityInfo.getRelatedFiles().isEmpty()) {
+            if (priorityInfo.getRelatedFiles() != null && !priorityInfo.getRelatedFiles()
+                    .isEmpty()) {
                 List<PriorityFile> priorityFiles = priorityInfo.getRelatedFiles()
                         .stream()
                         .map(fileName -> PriorityFile.builder()
@@ -319,8 +331,8 @@ public class PullRequestEventService {
                         .toList();
                 
                 priorityFileRepository.saveAll(priorityFiles);
-                log.debug("우선 순위 ID: {} 관련 파일 저장 완료, 파일 수: {}", 
-                         savedPriority.getId(), priorityFiles.size());
+                log.debug("우선 순위 ID: {} 관련 파일 저장 완료, 파일 수: {}",
+                        savedPriority.getId(), priorityFiles.size());
             }
         }
     }
@@ -340,16 +352,18 @@ public class PullRequestEventService {
             MultipartFile[] mediaFiles = preparationRedisRepository.getMediaFiles(filesCacheKey);
             
             // 기존 서비스 메서드 호출
-            createDescriptionsWithService(prepareInfo, pullRequest, pullRequest.getAuthor().getId(), mediaFiles);
+            createDescriptionsWithService(prepareInfo, pullRequest, pullRequest.getAuthor()
+                    .getId(), mediaFiles);
             
-            log.info("설명 저장 완료 - 기존 서비스 메서드 사용");
+            log.debug("설명 저장 완료 - 기존 서비스 메서드 사용");
             
         } catch (Exception e) {
-            log.warn("파일 정보 조회 실패, 파일 없이 설명만 저장 - repoId: {}, source: {}, target: {}", 
+            log.warn("파일 정보 조회 실패, 파일 없이 설명만 저장 - repoId: {}, source: {}, target: {}",
                     repoId, source, target, e);
             
             // 파일 없이 설명만 저장
-            createDescriptionsWithService(prepareInfo, pullRequest, pullRequest.getAuthor().getId(), null);
+            createDescriptionsWithService(prepareInfo, pullRequest, pullRequest.getAuthor()
+                    .getId(), null);
         }
     }
     
@@ -413,13 +427,13 @@ public class PullRequestEventService {
             String filesCacheKey = String.format("pr_files:%d:%s:%s", repoId, source, target);
             preparationRedisRepository.deleteMediaFiles(filesCacheKey);
             
-            log.info("Redis 데이터 정리 완료 - repoId: {}, source: {}, target: {}", repoId, source, target);
+            log.debug("Redis 데이터 정리 완료 - repoId: {}, source: {}, target: {}", repoId, source, target);
             
         } catch (Exception e) {
             log.warn("Redis 데이터 정리 실패 - repoId: {}, source: {}, target: {}", repoId, source, target, e);
         }
     }
-
+    
     private User getUserFromUserInfo(PrUserInfo userInfo) {
         return userRepository.findById(userInfo.getId())
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userInfo.getId()));

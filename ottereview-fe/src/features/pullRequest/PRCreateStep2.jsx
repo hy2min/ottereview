@@ -25,7 +25,7 @@ const Button = ({
     'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
 
   const variants = {
-        primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
+    primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
   }
 
@@ -233,7 +233,7 @@ const PRCreateStep2 = ({
                   const renderTextWithFormatting = (text) => {
                     // 백틱 제거
                     const textWithoutBackticks = text.replace(/`([^`]+)`/g, '$1')
-                    
+
                     // [함수명], [변수명] 등의 태그를 처리
                     const tagParts = textWithoutBackticks.split(/(\[[^\]]+\])/)
 
