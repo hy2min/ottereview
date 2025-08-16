@@ -123,10 +123,18 @@ const PRCardDetail = ({ pr }) => {
             </Badge>
 
             <div className="flex items-center space-x-3">
-              {/* 병합 검토 - Red */}
+              {/* 병합 상태 */}
               <div className="flex items-center space-x-1">
-                <div className="w-2 h-2 bg-red-500 rounded-full" />
-                <span className="text-xs theme-text-secondary">{mergeable ? '병합 가능' : '병합 검토'}</span>
+                <div className={`w-2 h-2 rounded-full ${
+                  !pr.isApproved 
+                    ? 'bg-yellow-500' 
+                    : mergeable 
+                      ? 'bg-green-500' 
+                      : 'bg-red-500'
+                }`} />
+                <span className="text-xs theme-text-secondary">
+                  {!pr.isApproved ? '승인 필요' : mergeable ? '병합 가능' : '병합 검토'}
+                </span>
               </div>
               
               {/* 리뷰 - Yellow */}
@@ -172,16 +180,23 @@ const PRCardDetail = ({ pr }) => {
                 } else {
                   // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                   return (
-                    <Button 
-                      variant="primary" 
-                      size="sm" 
-                      onClick={handleIsMergable}
-                      disabled={!isApproved}
-                      title={!isApproved ? "모든 리뷰어의 승인이 필요합니다" : ""}
-                    >
-                      <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-                      머지
-                    </Button>
+                    <div className="relative group">
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        onClick={handleIsMergable}
+                        disabled={!isApproved}
+                      >
+                        <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
+                        머지
+                      </Button>
+                      {!isApproved && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg border border-gray-200 dark:border-gray-700">
+                          승인 필요
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800"></div>
+                        </div>
+                      )}
+                    </div>
                   )
                 }
               })()}
