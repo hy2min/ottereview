@@ -1,6 +1,6 @@
+import { AlertTriangle, CheckCircle, FileText, Search, Settings, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle, X, FileText, Search, Settings } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -202,7 +202,6 @@ const PRCreateStep1 = ({
             </div>
           )}
 
-
           {existingPR && (
             <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
               <div className="flex items-center space-x-2">
@@ -238,7 +237,7 @@ const PRCreateStep1 = ({
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={existingPR ? false : (!canValidateBranches || isValidatingBranches)}
+            disabled={existingPR ? false : !canValidateBranches || isValidatingBranches}
             className={`btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none ${
               existingPR
                 ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'

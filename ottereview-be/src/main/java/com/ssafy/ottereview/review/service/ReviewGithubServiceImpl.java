@@ -76,8 +76,6 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
             RestTemplate restTemplate = createPatchRestTemplate();
             restTemplate.exchange(url, HttpMethod.PATCH, new HttpEntity<>(requestBody, headers), String.class);
 
-            log.info("GitHub Review Comment Updated: commentId={}", githubId);
-
         } catch (HttpStatusCodeException e) {
             log.error("PATCH failed: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("GitHub 리뷰 코멘트 수정 실패: " + e.getMessage(), e);
@@ -97,8 +95,6 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
 
             RestTemplate restTemplate = new RestTemplate();
             restTemplate.exchange(url, HttpMethod.DELETE, new HttpEntity<>(headers), String.class);
-
-            log.info("GitHub Review Comment Deleted: commentId={}", commentId);
 
         } catch (HttpStatusCodeException e) {
             log.error("DELETE Review Comment failed: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString());
@@ -190,7 +186,6 @@ public class ReviewGithubServiceImpl implements ReviewGithubService {
                 commentPositions.put(commentId, position);
             }
         }
-        log.info("GitHub Review Created: reviewId={}, commentIds={}", reviewId, commentIds);
         return new GithubReviewResponse(reviewId, commentIds, commentDiffs, commentPositions, bodyToGithubCommentId);
     }
 

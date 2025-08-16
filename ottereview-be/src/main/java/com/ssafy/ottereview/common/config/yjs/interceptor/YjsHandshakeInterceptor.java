@@ -31,7 +31,7 @@ public class YjsHandshakeInterceptor implements HandshakeInterceptor {
         }
 
         attributes.put("roomId", roomId);
-        log.info("Yjs WebSocket 연결 허용 - roomId: {}", roomId);
+        log.debug("Yjs WebSocket 연결 허용 - roomId: {}", roomId);
         return true;
     }
 
@@ -41,7 +41,7 @@ public class YjsHandshakeInterceptor implements HandshakeInterceptor {
         if (exception != null) {
             log.error("WebSocket 핸드셰이크 중 에러 발생", exception);
         } else {
-            log.info("WebSocket 핸드셰이크 완료 - 연결 성공");
+            log.debug("WebSocket 핸드셰이크 완료 - 연결 성공");
         }
     }
 

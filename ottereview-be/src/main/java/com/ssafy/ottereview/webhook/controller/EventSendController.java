@@ -30,12 +30,12 @@ public class EventSendController {
     }
 
     public void push(Long userId, String action , Object payload){
-        log.info("SSE 전송 시도: action={}, 클라이언트 수={}", action, clients.size());
+        log.debug("SSE 전송 시도: action={}, 클라이언트 수={}", action, clients.size());
         SseEmitter e = clients.get(userId);
         if( e != null) {
             try {
                 e.send(SseEmitter.event().name(action).data(payload));
-                log.info("SSE 전송 성공: action={}", action);
+                log.debug("SSE 전송 성공: action={}", action);
             } catch (IOException ex) {
                 log.error("SSE 전송 실패: action={}, error={}", action, ex.getMessage());
                 clients.remove(userId);

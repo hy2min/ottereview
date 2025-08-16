@@ -105,7 +105,7 @@ public class RepoServiceImpl implements RepoService {
 
             // db에 저장
             repoRepository.save(repo);
-            log.info("Successfully created repo with id: {}", repo.getRepoId());
+            log.debug("Successfully created repo with id: {}", repo.getRepoId());
         } catch (BusinessException e) {
             log.error("Business error during repo creation", e);
             throw e;
@@ -183,11 +183,11 @@ public class RepoServiceImpl implements RepoService {
             }
             // log 확인용
             for (GHRepository repo : repositories) {
-                log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                log.debug("Repo ID: {}, Full Name: {}, Private: {}",
                         repo.getId(), repo.getFullName(), repo.isPrivate());
             }
 
-            log.info("createRepo List 시작 지점1");
+            log.debug("createRepo List 시작 지점1");
             // github에서 가져온 레포지토리 리스트 우리 db에 저장하는 로직
             createRepoList(repositories, account);
         }catch(BusinessException e) {
@@ -228,7 +228,7 @@ public class RepoServiceImpl implements RepoService {
             branchService.saveAllBranchList(branchesToSave);
             // pullRequestList 저장
             pullRequestService.createPullRequestFromGithub(repoMap);
-            log.info("Successfully created {} repositories with branches and PRs", repoList.size());
+            log.debug("Successfully created {} repositories with branches and PRs", repoList.size());
 
         }catch (BusinessException e) {
             log.error("Business error during repo list creation", e);
@@ -278,9 +278,9 @@ public class RepoServiceImpl implements RepoService {
                 // pullRequestList 저장
                 pullRequestService.createPullRequestFromGithub(repoMap);
 
-                log.info("Successfully updated {} new repositories", repoList.size());
+                log.debug("Successfully updated {} new repositories", repoList.size());
             }else{
-                log.info("No new repositories to update");
+                log.debug("No new repositories to update");
             }
         }catch(BusinessException e) {
             log.error("Business error during repo list update", e);
@@ -305,7 +305,6 @@ public class RepoServiceImpl implements RepoService {
             List<Long> toDelete = dbRepoSet.stream()
                     .filter(id -> !remoteSet.contains(id))
                     .toList();
-            log.info("repo를 다 삭제합니다!!!");
             if (!toDelete.isEmpty()) {
                 repoRepository.deleteByAccount_IdAndRepoIdIn(account.getId(), toDelete);
             }

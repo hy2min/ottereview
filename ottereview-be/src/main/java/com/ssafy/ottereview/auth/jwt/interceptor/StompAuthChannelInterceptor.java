@@ -38,7 +38,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
                     // Principal 생성 (userId를 이름으로 저장) -> 유저 조회는 컨트롤러에서 진행
                     UsernamePasswordAuthenticationToken user =
                             new UsernamePasswordAuthenticationToken(claims.getSubject(), null, Collections.emptyList());
-                    log.info("CONNECT Header: {}", authHeader);
+                    log.debug("CONNECT Header: {}", authHeader);
                     accessor.setUser(user);
                 } else {
                     throw new IllegalArgumentException("Invalid JWT Token");
