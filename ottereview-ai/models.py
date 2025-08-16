@@ -93,6 +93,58 @@ class PriorityInfoPre(BaseModel):
     content: str
 
 
+# Java Info 클래스들과 정확히 일치하는 모델들
+class PullRequestFileInfo(BaseModel):
+    """Java PullRequestFileInfo와 정확히 일치"""
+    filename: str
+    status: str
+    additions: int
+    deletions: int
+    changes: int
+    patch: Optional[str] = None
+    previousFilename: Optional[str] = None
+    sha: Optional[str] = None
+    blobUrl: Optional[str] = None
+    rawUrl: Optional[str] = None
+
+
+class PullRequestCommitInfo(BaseModel):
+    """Java PullRequestCommitInfo와 정확히 일치"""
+    sha: str
+    message: str
+    url: str
+    authorName: str
+    authorEmail: str
+    authorDate: str
+    committerName: str
+    committerEmail: str
+    committerDate: str
+
+
+class PullRequestUserInfo(BaseModel):
+    """Java PullRequestUserInfo와 정확히 일치"""
+    id: int
+    githubUsername: str
+    githubEmail: str
+
+
+class PullRequestReviewerInfo(BaseModel):
+    """Java PullRequestReviewerInfo와 정확히 일치"""
+    id: int
+    userId: int
+    githubUsername: str
+    githubEmail: str
+    state: str
+
+
+class PullRequestPriorityInfo(BaseModel):
+    """Java PullRequestPriorityInfo와 정확히 일치"""
+    id: int
+    level: str
+    title: str
+    content: str
+
+
 # PreparationResult에 맞춘 주요 데이터 모델
 class PreparationResult(BaseModel):
     """PreparationResult - 자바 PreparationResult와 완전히 일치하는 모델"""
@@ -128,9 +180,9 @@ class PRData(PreparationResult):
     """PreparationResult와 동일한 구조 - 하위 호환성을 위해 유지"""
     pass
 
-# 벡터 DB 저장용 확장 모델
+# MergedPullRequestInfo와 완전히 일치하는 모델
 class PRDetailData(BaseModel):
-    """PullRequestDetailResponse 기반 데이터 모델 - 백엔드에서 vector db에 저장용"""
+    """MergedPullRequestInfo와 완전히 일치하는 데이터 모델 - 백엔드에서 vector db에 저장용"""
     # PR 기본 정보
     id: int
     githubId: int
@@ -154,11 +206,11 @@ class PRDetailData(BaseModel):
     diffUrl: Optional[str] = None
     summary: Optional[str] = None
     approveCnt: int
-    reviewers: Optional[List[PrUserInfo]] = None
-    priorities: Optional[List[PriorityInfo]] = None
-
-    # 객체 정보
-    author: PrUserInfo
+    
+    # 객체 정보 - MergedPullRequestInfo 순서대로
+    author: PullRequestUserInfo
     repo: RepoInfo
-    files: List[FileChangeInfo]
-    commits: List[CommitInfo]
+    files: List[PullRequestFileInfo]
+    commits: List[PullRequestCommitInfo]
+    reviewers: List[PullRequestReviewerInfo]
+    priorities: List[PullRequestPriorityInfo]
