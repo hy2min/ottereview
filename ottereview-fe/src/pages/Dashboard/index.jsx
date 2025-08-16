@@ -94,8 +94,8 @@ const Dashboard = () => {
   return (
     <div className="pt-2 space-y-8">
       {/* 환영 메시지와 채팅방 목록 */}
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
-        <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        <Box shadow className="lg:w-1/2 min-h-32 flex-col space-y-3 relative">
           <div className="flex items-center gap-4">
             {/* GitHub Profile Image */}
             <div className="relative">
@@ -115,10 +115,10 @@ const Dashboard = () => {
 
             {/* Welcome Message */}
             <div className="flex-1">
-              <h1 className="text-2xl xl:text-3xl theme-text font-bold">
+              <h1 className="text-2xl lg:text-3xl theme-text font-bold">
                 안녕하세요, {user?.githubUsername}님!
               </h1>
-              <p className="theme-text-secondary text-base xl:text-lg">
+              <p className="theme-text-secondary text-base lg:text-lg">
                 효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
               </p>
             </div>

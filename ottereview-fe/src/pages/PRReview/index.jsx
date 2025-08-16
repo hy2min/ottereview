@@ -357,11 +357,11 @@ const PRReview = () => {
                 #{prDetail.githubPrNumber}
               </Badge>
             </div>
-            <Badge variant="sky">
+            <Badge variant="primary">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{prDetail.headBranch?.name || 'unknown'}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 text-gray-800" />
                 <span>{prDetail.baseBranch?.name || 'unknown'}</span>
               </div>
             </Badge>
