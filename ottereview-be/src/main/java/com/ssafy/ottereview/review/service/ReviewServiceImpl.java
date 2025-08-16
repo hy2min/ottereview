@@ -198,8 +198,7 @@ public class ReviewServiceImpl implements ReviewService {
             ReviewRequest reviewRequest,
             MultipartFile[] files,
             Long userId) {
-        if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments()
-                .isEmpty()) {
+        if (reviewRequest.getReviewComments() == null || reviewRequest.getReviewComments().isEmpty()) {
             return new ArrayList<>();
         }
         
