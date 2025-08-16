@@ -121,7 +121,6 @@ const Dashboard = () => {
                   e.target.src = 'https://github.com/identicons/jasonlong.png'
                 }}
               />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 shadow-sm"></div>
             </div>
 
             {/* Welcome Message */}
