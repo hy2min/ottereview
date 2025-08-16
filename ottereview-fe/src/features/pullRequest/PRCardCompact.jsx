@@ -12,7 +12,6 @@ const PRCardCompact = ({ pr, type }) => {
   const title = pr.title
   const repoName = pr.repo?.fullName || '(레포 정보 없음)'
   const author = pr.author?.githubUsername || '(알 수 없음)'
-  const approveCnt = pr.approveCnt ?? 0
   const reviewCommentCnt = pr.reviewCommentCnt ?? 0
   const isMergeable = pr.mergeable
   const isAuthored = type === 'authored'
@@ -63,12 +62,6 @@ const PRCardCompact = ({ pr, type }) => {
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-red-500 rounded-full" />
             <span className="text-xs theme-text-secondary font-medium">{isMergeable ? '병합 가능' : '병합 검토'}</span>
-          </div>
-          
-          {/* 승인 - Green */}
-          <div className="flex items-center space-x-1">
-            <CheckCircle className="w-3 h-3 text-green-500" />
-            <span className="text-xs theme-text-secondary font-medium">승인 {approveCnt}</span>
           </div>
           
           {/* 리뷰 - Yellow */}
