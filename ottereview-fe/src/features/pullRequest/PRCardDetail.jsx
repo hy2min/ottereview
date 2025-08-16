@@ -111,7 +111,7 @@ const PRCardDetail = ({ pr }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-wrap gap-4 text-sm">
             <Badge variant="primary">
               <div className="flex items-center space-x-1">
@@ -151,11 +151,12 @@ const PRCardDetail = ({ pr }) => {
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               onClick={() => navigate(`/${repoId}/pr/${prId}/review`)}
               variant="outline"
               size="sm"
+              className="whitespace-nowrap"
             >
               <Eye className="w-4 h-4 mr-1 mb-[2px]" />
               리뷰하기
@@ -173,6 +174,7 @@ const PRCardDetail = ({ pr }) => {
                       variant="danger"
                       size="sm"
                       onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                      className="whitespace-nowrap"
                     >
                       충돌 해결
                     </Button>
@@ -186,6 +188,7 @@ const PRCardDetail = ({ pr }) => {
                         size="sm" 
                         onClick={handleIsMergable}
                         disabled={!isApproved}
+                        className="whitespace-nowrap"
                       >
                         <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
                         머지
