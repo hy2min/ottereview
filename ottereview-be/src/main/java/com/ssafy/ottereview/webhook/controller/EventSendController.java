@@ -24,6 +24,8 @@ public class EventSendController {
         clients.put(userId, emitter);
         emitter.onCompletion(()-> clients.remove(userId));
         emitter.onTimeout(() -> clients.remove(userId));
+        
+        log.debug("유저 등록 성공 : github-id {}, 유저 수: {} ", userId, clients.size());
         return emitter;
     }
 

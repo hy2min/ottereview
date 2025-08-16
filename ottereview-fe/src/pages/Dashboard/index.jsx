@@ -9,6 +9,7 @@ import PRList from '@/features/pullRequest/PRList'
 import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryList from '@/features/repository/RepositoryList'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
+import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import { useUserStore } from '@/store/userStore'
 
@@ -68,27 +69,16 @@ const Dashboard = () => {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  // Dashboard 전용 update 이벤트 (레포지토리 업데이트)
-  useEffect(() => {
-    if (!user?.id || !accessToken) return
-
-    const updateEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
-    )
-
-    updateEventSource.addEventListener('update', (event) => {
-      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard):', event.data)
+  // 통합 SSE 훅으로 update 이벤트 처리
+  useSSE(
+    true, // shouldConnect
+    null, // onPushEvent (전역에서 처리)
+    () => {
+      // onUpdateEvent - 레포지토리 업데이트 시 데이터 새로고침
+      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard)')
       fetchData()
-    })
-
-    updateEventSource.onopen = () => console.log('🔌 Update SSE 연결 성공 (Dashboard)')
-    updateEventSource.onerror = (error) => console.error('❌ Update SSE 오류:', error)
-
-    return () => {
-      console.log('🔌 Update SSE 연결 해제 (Dashboard)')
-      updateEventSource.close()
     }
-  }, [user?.id, accessToken])
+  )
 
   // 초기 데이터 로드
   useEffect(() => {
