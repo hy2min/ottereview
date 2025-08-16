@@ -11,10 +11,12 @@ from langchain_openai import OpenAIEmbeddings
 import traceback
 import uuid
 from datetime import datetime
-from collections import defaultdict
+from collections import defaultdict, Counter
 from models import (
-    PreparationResult, PRDetailData, FileChangeInfo, 
-    DiffLine, DiffHunk, DescriptionInfo, CommitInfo,
+    PreparationResult, PRDetailData, 
+    PullRequestFileInfo, PullRequestCommitInfo, PullRequestUserInfo, 
+    PullRequestReviewerInfo, PullRequestPriorityInfo,
+    FileChangeInfo, DiffLine, DiffHunk, DescriptionInfo, CommitInfo,
     RepoInfo, PrUserInfo, PriorityInfo,
     PRData  # 하위 호환성을 위해 유지
 )
@@ -80,7 +82,7 @@ class PineconeVectorDB:
         self.reviewer_patterns_index = self.pc.Index("reviewer-patterns")
         self.priority_patterns_index = self.pc.Index("priority-patterns")
     
-    def _extract_file_categories(self, files: List[FileChangeInfo]) -> Dict[str, int]:
+    def _extract_file_categories(self, files: List[PullRequestFileInfo]) -> Dict[str, int]:
         """파일 확장자별 카테고리 분류"""
         categories = {}
         for file in files:
@@ -240,7 +242,7 @@ class PineconeVectorDB:
                     "metadata": metadata
                 }])
     
-    def _group_detail_files_by_function(self, files: List[FileChangeInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
+    def _group_detail_files_by_function(self, files: List[PullRequestFileInfo], commit_messages: List[str]) -> List[Dict[str, Any]]:
         """PRDetailFileInfo들을 상위 디렉토리 기준으로 그룹화"""
         groups = defaultdict(list)
         for file in files:
@@ -268,7 +270,7 @@ class PineconeVectorDB:
         }
         
         directories = set()
-        extensions = defaultdict(int)
+        extensions = Counter()
         
         for file in pr_detail.files:
             # 디렉토리 분산도 계산
@@ -346,7 +348,7 @@ class PineconeVectorDB:
         
         return analysis
 
-    def _create_detail_functional_group(self, files: List[FileChangeInfo], category: str, 
+    def _create_detail_functional_group(self, files: List[PullRequestFileInfo], category: str, 
                                commit_messages: List[str], priority_indicators: List[str]) -> Dict[str, Any]:
         """PRDetailFileInfo로부터 기능 그룹 생성 - 커밋 패턴 분석 추가"""
         total_changes = sum(f.additions + f.deletions for f in files)
