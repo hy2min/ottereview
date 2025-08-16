@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Rocket } from 'lucide-react'
+import { FileText, Rocket, Settings } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -18,10 +19,14 @@ const PRCreateStep5 = ({
   aiSummary,
 }) => {
   const navigate = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
 
 
   const handleSubmit = async () => {
+    if (isSubmitting) return // 중복 실행 방지
+
+    setIsSubmitting(true)
     try {
       const submitData = {
         source: validationBranches.source,
@@ -43,6 +48,8 @@ const PRCreateStep5 = ({
     } catch (err) {
       console.error(err)
       alert('제출 실패')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -148,11 +155,21 @@ const PRCreateStep5 = ({
           <Button 
             onClick={handleSubmit} 
             variant="primary"
-            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-8 py-3 shadow-lg"
+            disabled={isSubmitting}
+            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-8 py-3 shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
           >
             <span className="flex items-center space-x-2">
-              <Rocket className="w-4 h-4" />
-              <span>PR 생성 완료</span>
+              {isSubmitting ? (
+                <>
+                  <Settings className="w-4 h-4 animate-spin" />
+                  <span>PR 생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-4 h-4" />
+                  <span>PR 생성 완료</span>
+                </>
+              )}
             </span>
           </Button>
         </div>
