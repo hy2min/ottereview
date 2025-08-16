@@ -38,15 +38,22 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
         const pushData = JSON.parse(event.data)
 
         // 토스트 데이터 생성
+        const toastData = {
+          id: Date.now() + Math.random(), // 고유 ID
+          pusherName: pushData.pusher?.name || 'Unknown',
+          repoName: pushData.repository?.full_name || 'Unknown',
+          branchName: pushData.branchName,
+          commitCount: pushData.commits?.length || 0,
+          timestamp: new Date(),
+        }
+        
+        console.log('🍞 토스트 데이터 생성:', toastData)
+        
         if (onPushEvent) {
-          onPushEvent({
-            id: Date.now() + Math.random(), // 고유 ID
-            pusherName: pushData.pusherName,
-            repoName: pushData.repoFullName,
-            branchName: pushData.branchName,
-            commitCount: pushData.commitCount,
-            timestamp: new Date(),
-          })
+          console.log('🍞 onPushEvent 콜백 호출')
+          onPushEvent(toastData)
+        } else {
+          console.log('❌ onPushEvent 콜백이 없음')
         }
         console.log('푸시데이터 : ', pushData)
       } catch (error) {
