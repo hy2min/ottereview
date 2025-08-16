@@ -143,6 +143,7 @@ const PRCreate = () => {
           setAIOthers,
           conventionRules,
           setConventionRules,
+          selectedBranches,
         }
       case 3:
         return step3Props
