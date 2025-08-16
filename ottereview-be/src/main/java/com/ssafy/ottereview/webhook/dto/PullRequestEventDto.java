@@ -1,10 +1,7 @@
 package com.ssafy.ottereview.webhook.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -64,5 +61,14 @@ public class PullRequestEventDto {
 
         @JsonProperty("owner")
         private UserWebhookInfo owner;
+    }
+    @JsonProperty("sender")
+    private PushEventDto.Sender sender;
+
+    @Data
+    @Getter
+    public static class Sender{
+        @JsonProperty("id")
+        private Long id;
     }
 }
