@@ -26,6 +26,16 @@ const Guide = () => {
     window.location.href = githubLoginUrl
   }
 
+  const handleLearnMore = () => {
+    const prerequisitesSection = document.getElementById('prerequisites-section')
+    if (prerequisitesSection) {
+      prerequisitesSection.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
+    }
+  }
+
   useEffect(() => {
     // 부드러운 스크롤을 위한 CSS 추가
     document.documentElement.style.scrollBehavior = 'smooth'
@@ -151,6 +161,7 @@ const Guide = () => {
                 variant="outline"
                 size="lg"
                 className="border-2 hover:border-primary-300 hover:bg-primary-50/50 transition-all flex items-center gap-2"
+                onClick={handleLearnMore}
               >
                 <BookOpen className="w-5 h-5" />더 알아보기
               </Button>
@@ -191,6 +202,75 @@ const Guide = () => {
                     ></div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 사전 확인사항 섹션 */}
+      <section
+        className="relative py-32 bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-black overflow-hidden"
+        id="prerequisites-section"
+        data-animate
+      >
+        {/* 배경 패턴 */}
+        <div className="absolute inset-0 opacity-[0.02]">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
+
+        <div className="relative max-w-6xl mx-auto px-6">
+          <div
+            className={`text-center mb-16 transition-all duration-1000 ${
+              visibleSections.has('prerequisites-section')
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-10'
+            }`}
+          >
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-2xl">
+                <CheckCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <span className="text-orange-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider">
+                  시작하기 전
+                </span>
+                <div className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">필수 확인사항</div>
+              </div>
+            </div>
+
+            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent leading-tight mb-6">
+              시작하기 전
+              <br />
+              <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text">
+                확인사항
+              </span>
+            </h2>
+
+            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mx-auto">
+              원활한 서비스 이용을 위해{' '}
+              <span className="font-semibold text-slate-700 dark:text-slate-200">사전에 확인해야 할 중요한 사항들</span>
+              을 안내드립니다.
+              <br />
+              아래 체크리스트를 먼저 확인해주세요.
+            </p>
+          </div>
+
+          <div
+            className={`flex justify-center transition-all duration-1000 delay-200 ${
+              visibleSections.has('prerequisites-section')
+                ? 'opacity-100 translate-y-0'
+                : 'opacity-0 translate-y-10'
+            }`}
+          >
+            <div className="w-full max-w-4xl">
+              <div className="bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-gray-600/60 rounded-2xl p-8 shadow-2xl shadow-slate-900/5 dark:shadow-black/50">
+                <PreSetupChecklist />
               </div>
             </div>
           </div>
@@ -280,8 +360,6 @@ const Guide = () => {
                 <br />
                 모든 리포지토리와 PR 정보를 자동으로 동기화합니다.
               </p>
-
-              <PreSetupChecklist />
             </div>
             <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
