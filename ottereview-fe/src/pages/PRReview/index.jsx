@@ -1,10 +1,14 @@
 import MDEditor from '@uiw/react-md-editor'
 import {
+  AlertCircle,
+  AlertTriangle,
   ArrowRight,
   FileText,
+  FilterX,
   FolderCode,
   GitBranch,
   GitCommit,
+  Info,
   MessageCircle,
   Users,
 } from 'lucide-react'
@@ -534,25 +538,123 @@ const PRReview = () => {
         </Box>
       </div>
 
-      {/* 리뷰어 목록 */}
-      {prDetail.reviewers && prDetail.reviewers.length > 0 && (
-        <Box shadow className="p-3">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-            <h3 className="font-medium theme-text">리뷰어</h3>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {prDetail.reviewers.map((reviewer) => (
-              <div
-                key={reviewer.id}
-                className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
-              >
-                <span>{reviewer.githubUsername}</span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {/* 리뷰어 목록 */}
+        {prDetail.reviewers && prDetail.reviewers.length > 0 && (
+          <Box shadow className="p-3">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+              <h3 className="font-medium theme-text">리뷰어</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {prDetail.reviewers.map((reviewer) => (
+                <div
+                  key={reviewer.id}
+                  className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
+                >
+                  <span>{reviewer.githubUsername}</span>
+                </div>
+              ))}
+            </div>
+          </Box>
+        )}
+
+        {/* 우선순위 목록 */}
+        {prDetail.priorities && prDetail.priorities.length > 0 && (
+          <Box shadow className="p-3">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                <h3 className="font-medium theme-text">우선순위</h3>
               </div>
-            ))}
-          </div>
-        </Box>
-      )}
+              {selectedPriorityIndex !== null && (
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  onClick={() => setSelectedPriorityIndex(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
+                >
+                  <FilterX className="w-4 h-4 mr-1" />
+                  해제
+                </Button>
+              )}
+            </div>
+            <div className="space-y-2">
+              {prDetail.priorities.map((priority, index) => {
+                const getPriorityIcon = (level) => {
+                  switch (level?.toLowerCase()) {
+                    case 'high':
+                    case '높음':
+                      return <AlertCircle className="w-4 h-4 text-red-500" />
+                    case 'medium':
+                    case '보통':
+                      return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                    case 'low':
+                    case '낮음':
+                      return <Info className="w-4 h-4 text-blue-500" />
+                    default:
+                      return <Info className="w-4 h-4 text-gray-500" />
+                  }
+                }
+
+                const getPriorityBadgeStyle = (level, isSelected) => {
+                  const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
+                  switch (level?.toLowerCase()) {
+                    case 'high':
+                    case '높음':
+                      return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
+                    case 'medium':
+                    case '보통':
+                      return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
+                    case 'low':
+                    case '낮음':
+                      return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
+                    default:
+                      return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
+                  }
+                }
+
+                const relatedFilesCount = priority.related_files?.length || 0
+                const isSelected = selectedPriorityIndex === index
+
+                return (
+                  <div
+                    key={index}
+                    className={`flex items-start gap-3 px-3 py-2 rounded-lg border transition-all ${getPriorityBadgeStyle(priority.level, isSelected)}`}
+                    onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}
+                  >
+                    <div className="flex-shrink-0 mt-0.5">{getPriorityIcon(priority.level)}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-sm">{priority.title}</h4>
+                        <Badge
+                          variant={
+                            priority.level?.toLowerCase() === 'high' || priority.level === '높음'
+                              ? 'danger'
+                              : priority.level?.toLowerCase() === 'medium' ||
+                                  priority.level === '보통'
+                                ? 'warning'
+                                : 'default'
+                          }
+                          size="xs"
+                        >
+                          {priority.level}
+                        </Badge>
+                        {relatedFilesCount > 0 && (
+                          <Badge variant="sky" size="xs">
+                            파일 {relatedFilesCount}개
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </Box>
+        )}
+      </div>
 
       <Box shadow className="p-3">
         <div className="relative">
