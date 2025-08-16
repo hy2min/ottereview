@@ -3,17 +3,21 @@ import {
   AlertCircle,
   AlertTriangle,
   ArrowRight,
+  CheckCircle,
+  Clock,
   FileText,
   FilterX,
   FolderCode,
   GitBranch,
   GitCommit,
+  GitMerge,
   Info,
   MessageCircle,
   Users,
+  XCircle,
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -24,8 +28,10 @@ import CommitList from '@/features/pullRequest/CommitList'
 import {
   closePR,
   deletePRDescription,
+  doMerge,
   fetchPRDetail,
   fetchReviews,
+  IsMergable,
   reopenPR,
   submitReview,
   updatePRDescription,
@@ -37,6 +43,7 @@ import { useUserStore } from '@/store/userStore'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
+  const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
 
   const tabs = [
@@ -67,6 +74,7 @@ const PRReview = () => {
   const [closingPR, setClosingPR] = useState(false) // PR 닫기 로딩
   const [reopeningPR, setReopeningPR] = useState(false) // PR 재오픈 로딩
   const [selectedPriorityIndex, setSelectedPriorityIndex] = useState(null) // 선택된 우선순위 인덱스
+  const [apiMergeable, setApiMergeable] = useState(null) // API 응답에서 받은 mergeable 상태
 
   const loadingDots = useLoadingDots(loading, loading ? 300 : 0) // 로딩 중일 때만 애니메이션
 
@@ -245,6 +253,42 @@ const PRReview = () => {
     }
   }
 
+  // 머지 관련 함수들
+  const handleIsMergable = async () => {
+    try {
+      const mergeState = await IsMergable({ repoId, prId })
+      console.log('mergeState:', mergeState)
+
+      // API 응답의 mergeable 값을 저장 (우선순위가 높음)
+      setApiMergeable(mergeState.mergeable)
+
+      if (mergeState.mergeable) {
+        console.log('머지 가능, doMerge 실행')
+        await handleMerge()
+      } else {
+        console.log('머지 불가능')
+      }
+    } catch (err) {
+      console.error('❌ 머지 가능성 확인 실패:', err)
+    }
+  }
+
+  const handleMerge = async () => {
+    try {
+      const data = await doMerge({ repoId, prId })
+      console.log('머지 성공:', data)
+      
+      // PR 데이터 새로고침
+      const pr = await fetchPRDetail({ repoId, prId })
+      setPrDetail(pr)
+      
+      alert('PR이 성공적으로 머지되었습니다!')
+    } catch (err) {
+      console.error('❌ 머지 실패:', err)
+      alert('머지에 실패했습니다.')
+    }
+  }
+
   // Description 수정 핸들러
   const handleDescriptionUpdate = async (descriptionId, data) => {
     try {
@@ -373,12 +417,20 @@ const PRReview = () => {
     return '아직 AI 요약이 생성되지 않았습니다.'
   }
 
+  // 모든 리뷰어가 승인했는지 확인하는 함수
+  const isAllReviewersApproved = () => {
+    if (!prDetail?.reviewers || prDetail.reviewers.length === 0) {
+      return false // 리뷰어가 없으면 승인된 것으로 간주하지 않음
+    }
+    return prDetail.reviewers.every(reviewer => reviewer.state === 'APPROVED')
+  }
+
   return (
     <div className="pt-1 pb-2 space-y-3">
       {/* PR 제목과 설명 박스 */}
-      <Box shadow className="flex space-y-4 p-4">
-        {/* 레포지토리 정보 */}
-        <div>
+      <Box shadow className="p-4">
+        {/* 레포지토리 정보와 PR 버튼 */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2 text-sm theme-text-secondary">
               <FolderCode className="w-4 h-4" />
@@ -396,303 +448,300 @@ const PRReview = () => {
               </div>
             </Badge>
           </div>
-          <div className="space-y-3">
-            <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
-              {prDetail.title}
-            </h1>
-            {prDetail.author && (
-              <div className="flex items-center gap-2 text-sm theme-text-secondary">
-                <span>작성자:</span>
-                <span className="font-medium bg-orange-50 dark:bg-orange-900 px-2 py-1 rounded text-orange-700 dark:text-orange-300">
-                  {prDetail.author.githubUsername}
-                </span>
-              </div>
+          <div className="flex gap-2 sm:ml-auto">
+            {prDetail.state === 'OPEN' && (
+              <>
+                {/* 머지 버튼 */}
+                {(() => {
+                  // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
+                  const effectiveMergeable = apiMergeable !== null ? apiMergeable : prDetail.mergeable
+                  const isApproved = isAllReviewersApproved()
+
+                  if (!effectiveMergeable) {
+                    // 머지 불가능한 경우 (충돌) - 충돌 해결 버튼
+                    return (
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                      >
+                        충돌 해결
+                      </Button>
+                    )
+                  } else {
+                    // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                    return (
+                      <div className="relative group">
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={handleIsMergable}
+                          disabled={!isApproved}
+                        >
+                          <GitMerge className="w-4 h-4 mr-1" />
+                          머지
+                        </Button>
+                        {!isApproved && (
+                          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg border border-gray-200 dark:border-gray-700">
+                            모든 리뷰어 승인 필요
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800"></div>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  }
+                })()}
+                
+                {/* PR 닫기 버튼 */}
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="px-4 py-2"
+                  onClick={handleClosePR}
+                  disabled={closingPR}
+                >
+                  {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
+                </Button>
+              </>
             )}
-            {prDetail.body && prDetail.body.trim() && (
-              <div className="rounded-lg border-l-4 border-orange-500 overflow-hidden">
-                <MDEditor.Markdown
-                  source={prDetail.body}
-                  style={{
-                    backgroundColor: 'transparent',
-                    padding: '12px',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
-                    color: 'inherit',
-                  }}
-                  className="markdown-content"
-                />
-              </div>
+            
+            {prDetail.state === 'CLOSED' && (
+              <Button
+                variant="success"
+                size="sm"
+                className="px-4 py-2"
+                onClick={handleReopenPR}
+                disabled={reopeningPR}
+              >
+                {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
+              </Button>
             )}
-            {/* PR 상태별 버튼 */}
           </div>
         </div>
-        <div className="ml-auto">
-          {prDetail.state === 'OPEN' ? (
-            <Button
-              variant="danger"
-              size="sm"
-              className="px-4 py-2"
-              onClick={handleClosePR}
-              disabled={closingPR}
-            >
-              {closingPR ? 'PR 닫는 중...' : 'PR 닫기'}
-            </Button>
-          ) : prDetail.state === 'CLOSED' ? (
-            <Button
-              variant="success"
-              size="sm"
-              className="px-4 py-2"
-              onClick={handleReopenPR}
-              disabled={reopeningPR}
-            >
-              {reopeningPR ? 'PR 여는 중...' : 'PR 재오픈'}
-            </Button>
-          ) : null}
+        
+        {/* PR 제목과 내용 */}
+        <div className="space-y-3">
+          <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
+            {prDetail.title}
+          </h1>
+          {prDetail.author && (
+            <div className="flex items-center gap-2 text-sm theme-text-secondary">
+              <span>작성자:</span>
+              <span className="font-medium bg-orange-50 dark:bg-orange-900 px-2 py-1 rounded text-orange-700 dark:text-orange-300">
+                {prDetail.author.githubUsername}
+              </span>
+            </div>
+          )}
+          {prDetail.body && prDetail.body.trim() && (
+            <div className="rounded-lg border-l-4 border-orange-500 overflow-hidden">
+              <MDEditor.Markdown
+                source={prDetail.body}
+                style={{
+                  backgroundColor: 'transparent',
+                  padding: '12px',
+                  fontSize: '14px',
+                  lineHeight: '1.6',
+                  color: 'inherit',
+                }}
+                className="markdown-content"
+              />
+            </div>
+          )}
         </div>
       </Box>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        <div className="lg:col-span-2">
-          <Box shadow className="h-full p-3">
-            <div className="flex items-start gap-3">
+      <div className="flex gap-3">
+        {/* AI 요약 */}
+        <div className="flex-1 min-w-0">
+          <Box shadow className="p-3 h-40">
+            <div className="flex items-start gap-3 h-full">
               <div className="flex-shrink-0">
                 <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="font-medium theme-text mb-2">AI 요약</h4>
-                <p
-                  className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
-                >
-                  {getSummaryContent()}
-                </p>
+              <div className="min-w-0 flex-1 flex flex-col">
+                <h4 className="font-medium theme-text mb-2 flex-shrink-0">AI 요약</h4>
+                <div className="flex-1 overflow-y-auto">
+                  <p
+                    className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
+                  >
+                    {getSummaryContent()}
+                  </p>
+                </div>
               </div>
             </div>
           </Box>
         </div>
 
-        <Box shadow className="p-3">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <h4 className="font-medium theme-text">승인 현황</h4>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                {prDetail.headBranch?.minApproveCnt === 0 ? (
-                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                    승인 불필요
-                  </span>
-                ) : (
-                  <span className="text-sm theme-text-secondary font-medium">
-                    {prDetail.approveCnt || 0} / {prDetail.headBranch?.minApproveCnt || 0}
-                  </span>
-                )}
-              </div>
-              <div className="relative">
-                {prDetail.headBranch?.minApproveCnt === 0 ? (
-                  /* 승인 불필요 상태 */
-                  <div className="relative h-6 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-full border border-green-200 dark:border-green-700 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full">
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.2s'}} />
-                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.4s'}} />
+        {/* 리뷰어 목록 */}
+        <div className="w-56 flex-shrink-0">
+          {prDetail.reviewers && prDetail.reviewers.length > 0 && (
+            <Box shadow className="p-3 h-40">
+              <div className="flex flex-col h-full">
+                <div className="flex items-center gap-3 mb-3 flex-shrink-0">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                  <h3 className="font-medium theme-text">리뷰어</h3>
+                </div>
+                <div className="space-y-2 overflow-y-auto flex-1">
+                  {prDetail.reviewers.map((reviewer) => {
+                    const getStatusInfo = (state) => {
+                      switch (state) {
+                        case 'APPROVED':
+                          return {
+                            icon: <CheckCircle className="w-4 h-4 text-green-500" />,
+                            text: '승인',
+                            bgColor: 'bg-green-50 dark:bg-green-900',
+                            textColor: 'text-green-700 dark:text-green-300',
+                            borderColor: 'border-green-200 dark:border-green-700'
+                          }
+                        case 'CHANGES_REQUESTED':
+                          return {
+                            icon: <XCircle className="w-4 h-4 text-red-500" />,
+                            text: '변경요청',
+                            bgColor: 'bg-red-50 dark:bg-red-900',
+                            textColor: 'text-red-700 dark:text-red-300',
+                            borderColor: 'border-red-200 dark:border-red-700'
+                          }
+                        case 'NONE':
+                        default:
+                          return {
+                            icon: <Clock className="w-4 h-4 text-gray-500" />,
+                            text: '대기중',
+                            bgColor: 'bg-orange-50 dark:bg-orange-900',
+                            textColor: 'text-orange-700 dark:text-orange-300',
+                            borderColor: 'border-orange-200 dark:border-orange-700'
+                          }
+                      }
+                    }
+
+                    const statusInfo = getStatusInfo(reviewer.state)
+
+                    return (
+                      <div
+                        key={reviewer.id}
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
+                      >
+                        <div className="flex items-center min-w-0 flex-1">
+                          <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">{reviewer.githubUsername}</span>
+                        </div>
+                        <div className="flex items-center ml-2 flex-shrink-0">
+                          {statusInfo.icon}
+                          <span className="ml-1 text-xs font-medium">{statusInfo.text}</span>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  /* 일반 승인 진행 상태 */
-                  <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
-                    {/* 배경 그라데이션 효과 */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 via-red-50/30 to-orange-50/50 dark:from-orange-900/20 dark:via-red-900/10 dark:to-orange-900/20" />
-                    
-                    {/* 진행 바 */}
-                    <div
-                      className="relative h-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 transition-all duration-1000 ease-out rounded-full shadow-lg"
-                      style={{
-                        width: `${
-                          prDetail.headBranch?.minApproveCnt
-                            ? Math.min(
-                                ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) *
-                                  100,
-                                100
-                              )
-                            : 0
-                        }%`,
-                      }}
-                    >
-                      {/* 반짝이는 오버레이 효과 */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
-                      
-                      {/* 움직이는 하이라이트 효과 */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse" style={{animationDelay: '0.5s'}} />
-                      
-                      {/* 끝부분 글로우 효과 */}
-                      <div className="absolute right-0 top-0 w-4 h-full bg-gradient-to-l from-white/50 to-transparent rounded-r-full" />
-                      
-                      {/* 완료 상태일 때 특별 효과 */}
-                      {prDetail.approveCnt >= prDetail.headBranch?.minApproveCnt && (
-                        <>
-                          <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full animate-pulse" />
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="flex gap-0.5">
-                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
-                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    
-                    {/* 진행률 텍스트 - 중앙에 표시 */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-xs font-bold theme-text drop-shadow-sm">
-                        {Math.round(
-                          prDetail.headBranch?.minApproveCnt
-                            ? ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) * 100
-                            : 0
-                        )}%
-                      </span>
-                    </div>
-                    
-                    {/* 외곽 글로우 효과 */}
-                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Box>
-      </div>
-
-      {/* 리뷰어나 우선순위가 있을 때만 그리드 컨테이너 표시 */}
-      {((prDetail.reviewers && prDetail.reviewers.length > 0) || (prDetail.priorities && prDetail.priorities.length > 0)) && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* 리뷰어 목록 */}
-          {prDetail.reviewers && prDetail.reviewers.length > 0 && (
-            <Box shadow className="p-3">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                <h3 className="font-medium theme-text">리뷰어</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {prDetail.reviewers.map((reviewer) => (
-                  <div
-                    key={reviewer.id}
-                    className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm bg-orange-50 dark:bg-orange-900 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-800 transition-colors"
-                  >
-                    <span>{reviewer.githubUsername}</span>
-                  </div>
-                ))}
+                    )
+                  })}
+                </div>
               </div>
             </Box>
           )}
+        </div>
+      </div>
 
-          {/* 우선순위 목록 */}
-          {prDetail.priorities && prDetail.priorities.length > 0 && (
-          <Box shadow className="p-3">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                <h3 className="font-medium theme-text">우선순위</h3>
-              </div>
-              {selectedPriorityIndex !== null && (
-                <Button
-                  variant="ghost"
-                  size="xs"
-                  onClick={() => setSelectedPriorityIndex(null)}
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
-                >
-                  <FilterX className="w-4 h-4 mr-1" />
-                  해제
-                </Button>
-              )}
-            </div>
-            <div className="space-y-2">
-              {prDetail.priorities.map((priority, index) => {
-                const getPriorityIcon = (level) => {
-                  switch (level?.toLowerCase()) {
-                    case 'high':
-                    case '높음':
-                      return <AlertCircle className="w-4 h-4 text-red-500" />
-                    case 'medium':
-                    case '보통':
-                      return <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                    case 'low':
-                    case '낮음':
-                      return <Info className="w-4 h-4 text-blue-500" />
-                    default:
-                      return <Info className="w-4 h-4 text-gray-500" />
-                  }
-                }
+      {/* 우선순위 별개 섹션 */}
+      {prDetail.priorities && prDetail.priorities.length > 0 && (
+        <Box shadow className="p-3">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+            <h3 className="font-medium theme-text">우선순위</h3>
+          </div>
+          <div className="flex gap-3 xl:grid xl:grid-cols-3 overflow-x-auto xl:overflow-x-visible">
+            {prDetail.priorities.slice(0, 3).map((priority, index) => {
+            const getPriorityIcon = (level) => {
+              switch (level?.toLowerCase()) {
+                case 'high':
+                case '높음':
+                  return <AlertCircle className="w-4 h-4 text-red-500" />
+                case 'medium':
+                case '보통':
+                  return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                case 'low':
+                case '낮음':
+                  return <Info className="w-4 h-4 text-blue-500" />
+                default:
+                  return <Info className="w-4 h-4 text-gray-500" />
+              }
+            }
 
-                const getPriorityBadgeStyle = (level, isSelected) => {
-                  const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
-                  switch (level?.toLowerCase()) {
-                    case 'high':
-                    case '높음':
-                      return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
-                    case 'medium':
-                    case '보통':
-                      return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
-                    case 'low':
-                    case '낮음':
-                      return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
-                    default:
-                      return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
-                  }
-                }
+            const getPriorityBadgeStyle = (level, isSelected) => {
+              const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
+              switch (level?.toLowerCase()) {
+                case 'high':
+                case '높음':
+                  return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
+                case 'medium':
+                case '보통':
+                  return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
+                case 'low':
+                case '낮음':
+                  return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
+                default:
+                  return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
+              }
+            }
 
-                const relatedFilesCount = priority.related_files?.length || 0
-                const isSelected = selectedPriorityIndex === index
+            const relatedFilesCount = priority.related_files?.length || 0
+            const isSelected = selectedPriorityIndex === index
 
-                return (
+              return (
+                <div key={index} className="flex-1 min-w-80 xl:w-auto xl:flex-initial">
                   <div
-                    key={index}
-                    className={`flex items-start gap-3 px-3 py-2 rounded-lg border transition-all ${getPriorityBadgeStyle(priority.level, isSelected)}`}
+                    className={`flex flex-col gap-2 p-3 rounded-lg border transition-all h-32 shadow-sm ${getPriorityBadgeStyle(priority.level, isSelected)}`}
                     onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}
                   >
-                    <div className="flex-shrink-0 mt-0.5">{getPriorityIcon(priority.level)}</div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-medium text-sm">{priority.title}</h4>
-                        <Badge
-                          variant={
-                            priority.level?.toLowerCase() === 'high' || priority.level === '높음'
-                              ? 'danger'
-                              : priority.level?.toLowerCase() === 'medium' ||
-                                  priority.level === '보통'
-                                ? 'warning'
-                                : 'default'
-                          }
-                          size="xs"
-                        >
-                          {priority.level}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {getPriorityIcon(priority.level)}
+                      <h4 className="font-medium text-sm truncate">{priority.title}</h4>
+                      <Badge
+                        variant={
+                          priority.level?.toLowerCase() === 'high' || priority.level === '높음'
+                            ? 'danger'
+                            : priority.level?.toLowerCase() === 'medium' ||
+                                priority.level === '보통'
+                              ? 'warning'
+                              : 'default'
+                        }
+                        size="xs"
+                      >
+                        {priority.level}
+                      </Badge>
+                      {relatedFilesCount > 0 && (
+                        <Badge variant="sky" size="xs">
+                          파일 {relatedFilesCount}개
                         </Badge>
-                        {relatedFilesCount > 0 && (
-                          <Badge variant="sky" size="xs">
-                            파일 {relatedFilesCount}개
-                          </Badge>
-                        )}
-                      </div>
+                      )}
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
                       <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
                     </div>
+                    {selectedPriorityIndex === index && (
+                      <div className="mt-2 text-right">
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedPriorityIndex(null)
+                          }}
+                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
+                        >
+                          <FilterX className="w-4 h-4 mr-1" />
+                          해제
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                )
-              })}
-            </div>
-          </Box>
-          )}
-        </div>
+                </div>
+              )
+            })}
+          </div>
+        </Box>
       )}
+
 
       <Box shadow className="p-3">
         <div className="relative">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg w-full sm:w-auto">
               {tabs.map((tab) => {
                 const Icon = tab.icon
@@ -714,7 +763,7 @@ const PRReview = () => {
                 )
               })}
             </div>
-            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-3 flex-shrink-0">
               {reviewComments.length > 0 && (
                 <Badge variant="warning">임시 댓글 {reviewComments.length}개</Badge>
               )}
