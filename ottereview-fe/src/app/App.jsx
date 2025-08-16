@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
+import FloatingGuideButton from '@/components/FloatingGuideButton'
 import Header from '@/components/Header'
 import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -91,6 +92,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        <FloatingGuideButton />
       </div>
     )
   }
@@ -123,6 +125,9 @@ const App = () => {
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
+      
+      {/* 플로팅 가이드 버튼 */}
+      <FloatingGuideButton />
     </div>
   )
 }
