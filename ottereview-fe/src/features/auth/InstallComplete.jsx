@@ -38,9 +38,9 @@ const InstallComplete = () => {
     <div className="min-h-screen flex items-center justify-center">
       <Box shadow className="text-center max-w-md">
         <div className="mb-6">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg
-              className="w-8 h-8 text-green-500"
+              className="w-8 h-8 text-green-500 dark:text-green-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -53,15 +53,15 @@ const InstallComplete = () => {
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">GitHub 앱 설치 완료!</h1>
-          <p className="text-gray-600">레포지토리가 성공적으로 연결되었습니다.</p>
+          <h1 className="text-2xl font-bold theme-text mb-2">GitHub 앱 설치 완료!</h1>
+          <p className="theme-text-secondary">레포지토리가 성공적으로 연결되었습니다.</p>
         </div>
 
-        <div className="text-sm text-gray-500">{countdown}초 후 창이 자동으로 닫힙니다...</div>
+        <div className="text-sm theme-text-muted">{countdown}초 후 창이 자동으로 닫힙니다...</div>
 
         <button
           onClick={() => window.close()}
-          className="mt-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors"
+          className="mt-4 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
         >
           수동으로 닫기
         </button>

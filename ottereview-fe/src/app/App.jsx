@@ -76,7 +76,7 @@ const App = () => {
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen w-full">
         <Header />
         <main>
           <Routes>
@@ -90,17 +90,31 @@ const App = () => {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       <Header />
-      <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
-        <Routes>
-          <Route path="/" element={<Guide />} />
-          {protectedRoutes.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            <main>
+              <Guide />
+            </main>
+          } 
+        />
+        <Route 
+          path="*" 
+          element={
+            <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
+              <Routes>
+                {protectedRoutes.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+          } 
+        />
+      </Routes>
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
