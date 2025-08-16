@@ -22,9 +22,14 @@ const PRCommentList = ({ reviews = [] }) => {
           .map((review) => (
           <Box key={review.id} shadow className="space-y-3">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
-                <span className="text-sm font-medium text-blue-700 dark:text-blue-200">{review.githubUsername?.[0] || 'U'}</span>
-              </div>
+              <img
+                src={`https://github.com/${review.githubUsername}.png`}
+                alt={review.githubUsername || 'Reviewer'}
+                className="w-8 h-8 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                onError={(e) => {
+                  e.target.src = 'https://github.com/identicons/jasonlong.png'
+                }}
+              />
               <div>
                 <span className="font-medium theme-text text-base">{review.githubUsername || 'Unknown'}</span>
                 <span className="text-sm theme-text-muted ml-2">
