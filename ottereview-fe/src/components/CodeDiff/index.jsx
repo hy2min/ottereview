@@ -577,11 +577,18 @@ const CodeDiff = ({
                             <Box shadow className="space-y-3 theme-bg-tertiary max-w-xl">
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
-                                    <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
-                                      {prAuthor.githubUsername?.[0] || 'A'}
-                                    </span>
-                                  </div>
+                                  <img
+                                    src={
+                                      prAuthor?.profileImageUrl ||
+                                      prAuthor?.profile_image_url ||
+                                      `https://github.com/${prAuthor?.githubUsername}.png`
+                                    }
+                                    alt={prAuthor?.githubUsername || 'Author'}
+                                    className="w-8 h-8 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                                    onError={(e) => {
+                                      e.target.src = 'https://github.com/identicons/jasonlong.png'
+                                    }}
+                                  />
                                   <div>
                                     <span className="font-medium theme-text text-base">
                                       {prAuthor.githubUsername || 'PR 작성자'}
@@ -645,11 +652,18 @@ const CodeDiff = ({
                         <Box shadow className="space-y-3 theme-bg-tertiary max-w-xl">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
-                                <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
-                                  {user?.githubUsername?.[0] || 'U'}
-                                </span>
-                              </div>
+                              <img
+                                src={
+                                  user?.profileImageUrl ||
+                                  user?.profile_image_url ||
+                                  `https://github.com/${user?.githubUsername}.png`
+                                }
+                                alt={user?.githubUsername || 'User'}
+                                className="w-8 h-8 rounded-full border-2 border-blue-500 dark:border-blue-400"
+                                onError={(e) => {
+                                  e.target.src = 'https://github.com/identicons/jasonlong.png'
+                                }}
+                              />
                               <div>
                                 <span className="font-medium theme-text text-base">
                                   {user?.githubUsername || '사용자'}
