@@ -1,6 +1,6 @@
+import { AlertTriangle, CheckCircle, FileText, Search, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle, X, FileText, Search } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
