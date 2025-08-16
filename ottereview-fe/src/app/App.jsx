@@ -101,16 +101,16 @@ const App = () => {
     <div className="min-h-screen w-full">
       <Header />
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <main>
               <Guide />
             </main>
-          } 
+          }
         />
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
               <Routes>
@@ -119,7 +119,7 @@ const App = () => {
                 ))}
               </Routes>
             </main>
-          } 
+          }
         />
       </Routes>
 
