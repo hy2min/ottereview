@@ -1,9 +1,11 @@
 package com.ssafy.ottereview.ai.client;
 
 import com.ssafy.ottereview.account.service.UserAccountService;
+import com.ssafy.ottereview.ai.dto.AiCushionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiConventionRequest;
 import com.ssafy.ottereview.ai.dto.request.AiRequest;
 import com.ssafy.ottereview.ai.dto.response.AiConventionResponse;
+import com.ssafy.ottereview.ai.dto.response.AiCushionResponse;
 import com.ssafy.ottereview.ai.dto.response.AiPriorityResponse;
 import com.ssafy.ottereview.ai.dto.response.AiResult;
 import com.ssafy.ottereview.ai.dto.response.AiReviewerResponse;
@@ -115,6 +117,22 @@ public class AiClient {
     }
     
     /**
+     * 쿠션어 변환
+     */
+    public Mono<AiCushionResponse> applyCushion(AiCushionRequest request) {
+        
+        return aiWebClient.post()
+                .uri("/ai/review/cushion")
+                .bodyValue(request)
+                .retrieve()
+                .bodyToMono(AiCushionResponse.class)
+                .timeout(Duration.ofMinutes(1))
+                .doOnSuccess(conventions -> log.info("쿠션어 변환 완료"))
+                .doOnError(error -> log.error("쿠션어 변환 실패", error))
+                .onErrorReturn(createDefaultCushionResponse());
+    }
+    
+    /**
      * 모든 AI 분석을 병렬로 실행
      */
     public Mono<AiResult> analyzeAll(CustomUserDetail customUserDetail, AiRequest request) {
@@ -190,6 +208,8 @@ public class AiClient {
         
         // 5. 모든 결과를 조합하고 캐시 저장
         return Mono.zip(titleMono, reviewersMono, priorityMono)
+                .doOnSubscribe(sub -> log.info("모든 AI API 호출 시작 - Mono.zip 진입"))
+                .doOnNext(results -> log.info("모든 AI API 호출 완료 - 결과 조합 중"))
                 .map(results -> {
                     AiResult analysisResult = AiResult.builder()
                             .title(results.getT1())
@@ -198,24 +218,33 @@ public class AiClient {
                             .analysisTime(startTime)
                             .build();
                     
-                    log.debug("AI 분석 결과 생성 완료");
+                    log.info("AI 분석 결과 생성 완료");
                     return analysisResult;
                 })
+                .doOnNext(result -> log.info("캐시 저장 로직 시작"))
                 // 6. 의미있는 값일 때만 캐시 저장을 비동기로 수행
                 .flatMap(result -> {
-                    if (isValidForCaching(result)) {
-                        log.info("의미있는 AI 분석 결과 - 캐시에 저장합니다");
-                        return saveToCache(request, result)
-                                .thenReturn(result)
-                                .onErrorResume(cacheError -> {
-                                    log.warn("캐시 저장 실패, 결과는 정상 반환", cacheError);
-                                    return Mono.just(result);
-                                });
-                    } else {
-                        log.info("기본값이 포함된 AI 분석 결과 - 캐시에 저장하지 않습니다");
+                    try {
+                        if (isValidForCaching(result)) {
+                            log.info("의미있는 AI 분석 결과 - 캐시에 저장합니다");
+                            return saveToCache(request, result)
+                                    .doOnSuccess(v -> log.info("캐시 저장 성공"))
+                                    .thenReturn(result)
+                                    .onErrorResume(cacheError -> {
+                                        log.warn("캐시 저장 실패, 결과는 정상 반환", cacheError);
+                                        return Mono.just(result);
+                                    });
+                        } else {
+                            log.info("기본값이 포함된 AI 분석 결과 - 캐시에 저장하지 않습니다");
+                            return Mono.just(result);
+                        }
+                    } catch (Exception e) {
+                        log.error("캐시 저장 로직에서 예외 발생", e);
                         return Mono.just(result);
                     }
-                });
+                })
+                .doOnSuccess(result -> log.info("전체 AI 분석 프로세스 완료"))
+                .doOnError(error -> log.error("전체 AI 분석 프로세스 실패", error));
     }
     
     
@@ -247,17 +276,19 @@ public class AiClient {
     
     // 8. 캐시 저장을 비동기로 수행
     private Mono<Void> saveToCache(AiRequest request, AiResult result) {
-        return Mono.fromRunnable(() -> {
+        return Mono.fromCallable(() -> {
                     try {
                         aiRedisRepository.saveAiInfo(request, result);
                         log.debug("AI 분석 결과 캐시 저장 완료");
+                        return null;
                     } catch (Exception e) {
                         log.warn("캐시 저장 중 오류 발생", e);
-                        throw new RuntimeException("캐시 저장 실패", e);
+                        return null; // 예외를 던지지 않고 null 반환
                     }
                 })
                 .subscribeOn(Schedulers.boundedElastic())  // I/O 스레드에서 실행
-                .then();
+                .then()
+                .doOnError(error -> log.error("캐시 저장 비동기 처리 중 오류", error));
     }
     
     // 9. 기본값 생성 메소드들 (각 API 실패 시 사용)
@@ -279,6 +310,10 @@ public class AiClient {
     
     private AiConventionResponse createDefaultConventionResponse() {
         return new AiConventionResponse("컨벤션 검사를 수행할 수 없습니다.");
+    }
+    
+    private AiCushionResponse createDefaultCushionResponse() {
+        return new AiCushionResponse("쿠션어 변환에 실패하였습니다.");
     }
     
     // 10. 부분 실패 처리 개선

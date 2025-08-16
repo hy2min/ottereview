@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -26,6 +26,10 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
+
+  // 툴팁 표시 상태
+  const [showTooltip, setShowTooltip] = useState(false)
+
 
   // 템플릿 정의
   const templates = [
@@ -65,6 +69,9 @@ close #이슈번호
   // 로딩 중일 때만 애니메이션 활성화
   const loadingDots = useLoadingDots(isAiTitleLoading, isAiTitleLoading ? 300 : 0)
   const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
+  
+  // AI 우선순위 로딩 상태 확인
+  const isAiPriorityLoading = !aiOthers?.priority?.result
 
   // 따옴표 제거 함수
   const removeQuotes = (str) => {
@@ -95,12 +102,37 @@ close #이슈번호
     }
   }
 
+
+  // 다음 버튼 활성화 조건 확인
+  const isNextButtonEnabled = 
+    prTitle.trim() !== '' && 
+    prBody.trim() !== '' && 
+    !isAiTitleLoading && 
+    !isAiPriorityLoading
+
+  // 툴팁 메시지 생성
+  const getDisabledTooltip = () => {
+    const missingItems = []
+    if (prTitle.trim() === '') missingItems.push('제목')
+    if (prBody.trim() === '') missingItems.push('설명')
+    if (isAiTitleLoading) missingItems.push('AI 제목 추천 완료')
+    if (isAiPriorityLoading) missingItems.push('AI 우선순위 분석 완료')
+
+    if (missingItems.length === 0) return ''
+    return `${missingItems.join(', ')}이(가) 필요합니다`
+  }
+
   const handleNextStep = async () => {
+    // 타이틀과 설명이 없으면 실행하지 않음
+    if (!isNextButtonEnabled) {
+      return
+    }
+
     try {
       const formattedDescriptions = reviewComments.map((comment) => ({
         author_id: user?.id,
         path: comment.path,
-        body: comment.content || '',
+        body: comment.body || comment.content || '',
         position: comment.position,
         start_line: comment.startLine,
         start_side: comment.startSide,
@@ -116,6 +148,7 @@ close #이슈번호
         level: priority.priority_level,
         title: priority.title,
         content: priority.reason,
+        related_files: priority.related_files || [],
       }))
 
       // 전체 추가 정보 구성
@@ -173,7 +206,7 @@ close #이슈번호
                       ? `추천받는 중${loadingDots}`
                       : removeQuotes(aiOthers?.title?.result || '')
                   }
-                  className="bg-white border-2 border-black rounded-[8px] w-full px-2 py-1"
+                  className="theme-bg-primary theme-border border-2 rounded-[8px] w-full px-2 py-1 theme-text"
                 />
               </div>
               <div className="mb-2">
@@ -218,7 +251,7 @@ close #이슈번호
         {showPriorities && (
           <div className="w-full md:w-1/3 md:order-2">
             <Box shadow className="h-[450px] flex flex-col">
-              <div className="font-medium mt-2 mb-3">AI 우선순위 추천</div>
+              <div className="font-medium mt-2 mb-3 theme-text">AI 우선순위 추천</div>
               <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
                   <Box key={index} className="p-3">
@@ -231,14 +264,16 @@ close #이슈번호
                           >
                             {priority.priority_level}
                           </Badge>
-                          <span className="text-sm text-gray-800 font-medium leading-tight">
+                          <span className="text-sm theme-text font-medium leading-tight">
                             {priority.title}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm leading-relaxed">{priority.reason}</p>
+                        <p className="theme-text-secondary text-sm leading-relaxed">
+                          {priority.reason}
+                        </p>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-22 text-sm text-gray-400">
+                      <div className="flex items-center justify-center h-22 text-sm theme-text-muted">
                         추천 없음
                       </div>
                     )}
@@ -257,6 +292,7 @@ close #이슈번호
           onAddComment={onAddComment}
           onRemoveComment={onRemoveComment}
           fileComments={fileComments}
+          commentMode="description"
         />
       </Box>
       <div className="mx-auto z-10">
@@ -270,11 +306,24 @@ close #이슈번호
             이전
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary">
-            다음
-          </Button>
+          <div
+            className="relative"
+            onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
+          >
+            <Button onClick={handleNextStep} variant="primary" disabled={!isNextButtonEnabled}>
+              다음
+            </Button>
+            {showTooltip && !isNextButtonEnabled && (
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-50">
+                {getDisabledTooltip()}
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
     </div>
   )
 }

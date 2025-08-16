@@ -15,6 +15,8 @@ import com.ssafy.ottereview.user.repository.UserRepository;
 import com.ssafy.ottereview.webhook.dto.ReviewEventDto;
 import com.ssafy.ottereview.webhook.exception.WebhookErrorCode;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -34,7 +36,8 @@ public class ReviewEventService {
     private final ReviewRepository reviewRepository;
     private final UserEventService userEventService;
     private final ReviewerRepository reviewerRepository;
-    
+    private static final Pattern REVIEW_PATTERN = Pattern.compile(">\\s*(.+)");
+
     public void processReviewEvent(String payload) {
         
         try {
@@ -64,6 +67,12 @@ public class ReviewEventService {
     }
     
     private void handleReviewSubmittedAndEdited(ReviewEventDto event) {
+
+        if(event.getReview().getBody() == null){
+            log.warn("리뷰 본문이 비어있습니다. 리뷰를 등록하지 않습니다.");
+            return;
+        }
+
         Long reviewGithubId = event.getReview()
                 .getId();
         try {
@@ -81,8 +90,26 @@ public class ReviewEventService {
             updateReview(event, existingReview);
         }
     }
-    
+
+    public static String extractReviewContent(String comment) {
+        if (comment == null || comment.trim().isEmpty()) {
+            return null;
+        }
+
+        Matcher matcher = REVIEW_PATTERN.matcher(comment);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return null;
+    }
+
     private void updateReview(ReviewEventDto event, Review review) {
+
+        event.getReview().changeBody(extractReviewContent(event.getReview().getBody()));
+
+        log.info(event.getReview().getBody());
+
         review.updateBodyAndCreateAt(event.getReview()
                 .getBody(), event.getReview()
                 .getSubmittedAt());
@@ -102,7 +129,9 @@ public class ReviewEventService {
                         .getId())
                 .orElseGet(() -> userEventService.registerUser(event.getReview()
                         .getUser()));
-        
+        event.getReview().changeBody(extractReviewContent(event.getReview().getBody()));
+
+        log.info(event.getReview().getBody());
         // 3. Review 생성
         Review review = Review.builder()
                 .githubId(event.getReview()

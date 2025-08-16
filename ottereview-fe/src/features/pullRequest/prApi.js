@@ -157,6 +157,25 @@ export const generateAISummary = async ({ source, target, repoId }) => {
   return res.data
 }
 
+// 리뷰 댓글에 답글 작성
+export const createReviewCommentReply = async (reviewId, replyData) => {
+  const payload = {
+    parent_comment_id: replyData.parentCommentId,
+    body: replyData.body,
+  }
+  const res = await api.post(`/api/reviews/${reviewId}/comments/replies`, payload)
+  return res.data
+}
+
+// 쿠션어 적용
+export const applyCushionLanguage = async (content) => {
+  const payload = {
+    content,
+  }
+  const res = await api.post('/api/ai/cushions', payload)
+  return res.data
+}
+
 // PR 리뷰 목록 가져오기
 export const fetchPRReviews = async ({ accountId, repoId, prId }) => {
   const res = await api.get(
@@ -200,5 +219,50 @@ export const updatePRDescription = async (prId, descriptionId, data) => {
 // PR description 삭제
 export const deletePRDescription = async (prId, descriptionId) => {
   const res = await api.delete(`/api/pull-requests/${prId}/descriptions/${descriptionId}`)
+  return res.data
+}
+
+export const deleteReviewComment = async (reviewId, reviewCommentId) => {
+  const res = await api.delete(`/api/reviews/${reviewId}/comments/${reviewCommentId}`)
+  return res.data
+}
+
+// Review 수정 (더미 함수)
+export const updateReview = async (reviewId, requestBody) => {
+  console.log('Review 수정 더미 함수:', reviewId, requestBody)
+  // TODO: 실제 API 엔드포인트 구현 필요
+  // const res = await api.put(`/api/reviews/${reviewId}`, requestBody)
+  // return res.data
+  return { success: true }
+}
+
+// Review 삭제 (더미 함수)
+export const deleteReview = async (reviewId) => {
+  console.log('Review 삭제 더미 함수:', reviewId)
+  // TODO: 실제 API 엔드포인트 구현 필요
+  // const res = await api.delete(`/api/reviews/${reviewId}`)
+  // return res.data
+  return { success: true }
+}
+
+export const updateReviewComment = async (reviewId, reviewCommentId, requestBody, file = null) => {
+  const formData = new FormData()
+  
+  // ReviewCommentUpdateRequest를 JSON Blob으로 추가
+  const requestBlob = new Blob([JSON.stringify(requestBody)], {
+    type: 'application/json',
+  })
+  formData.append('request', requestBlob)
+  
+  // 파일이 있으면 추가
+  if (file) {
+    formData.append('file', file)
+  }
+  
+  const res = await api.put(`/api/reviews/${reviewId}/comments/${reviewCommentId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
   return res.data
 }

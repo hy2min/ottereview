@@ -1,8 +1,10 @@
 package com.ssafy.ottereview.webhook.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -18,6 +20,7 @@ public class PushEventDto {
     private String branchName;
     private String repoFullName;
     private Long repoId;
+    private Long repoGithubId;
     private String defaultBranch;
     private String pusherName;
     private String pusherEmail;
@@ -29,4 +32,13 @@ public class PushEventDto {
     private List<String> commitShas;
     private int commitCount;
     private Long installationId;
+    @JsonProperty("sender")
+    private Sender sender;
+
+    @Data
+    @Getter
+    public static class Sender{
+        @JsonProperty("id")
+        private Long id;
+    }
 }

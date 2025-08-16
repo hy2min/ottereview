@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
-import { NotFound, protectedRoutes } from '@/app/routes'
+import { protectedRoutes } from '@/app/routes'
 import Header from '@/components/Header'
 import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -13,6 +13,7 @@ import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Guide from '@/pages/Guide'
 import Landing from '@/pages/Landing'
+import NotFound from '@/pages/NotFound'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
 
@@ -57,10 +58,6 @@ const App = () => {
     }
   }, [user, accessToken, setUser, clearUser, clearTokens])
 
-  if (pathname === '/chatroom/test') return <ChatRoom />
-  if (pathname === '/audiotest') return <AudioChatRoom />
-  if (pathname === '/install-complete') return <InstallComplete />
-
   const isLoggedIn = !!user
 
   // 토스트 닫기 핸들러
@@ -71,31 +68,53 @@ const App = () => {
   // 로그인된 사용자에게 전역 SSE 연결 제공
   useSSE(isLoggedIn, handlePushEvent)
 
+  // 조건부 렌더링들은 모든 hooks 다음에
+  if (pathname === '/chatroom/test') return <ChatRoom />
+  if (pathname === '/audiotest') return <AudioChatRoom />
+  if (pathname === '/install-complete') return <InstallComplete />
+  if (pathname.startsWith('/oauth/github/callback')) return <OAuthCallbackPage />
+
   if (!isLoggedIn) {
     return (
-      <main>
-        <Routes>
-          <Route path="/" element={<Guide />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/oauth/github/callback" element={<OAuthCallbackPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <div className="min-h-screen w-full">
+        <Header />
+        <main>
+          <Routes>
+            <Route path="/" element={<Guide />} />
+            <Route path="/landing" element={<Landing />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </div>
     )
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full">
       <Header />
-      <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
-        <Routes>
-          <Route path="/" element={<Guide />} />
-          {protectedRoutes.map(({ path, element }) => (
-            <Route key={path} path={path} element={element} />
-          ))}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route 
+          path="/" 
+          element={
+            <main>
+              <Guide />
+            </main>
+          } 
+        />
+        <Route 
+          path="*" 
+          element={
+            <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
+              <Routes>
+                {protectedRoutes.map(({ path, element }) => (
+                  <Route key={path} path={path} element={element} />
+                ))}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+          } 
+        />
+      </Routes>
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
