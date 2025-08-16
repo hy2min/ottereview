@@ -136,6 +136,10 @@ spring:
     activate:
       on-profile: docker
 
+logging:
+  level:
+    com.ssafy.ottereview: INFO
+
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -143,7 +147,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create
     show-sql: false
 
   sql:

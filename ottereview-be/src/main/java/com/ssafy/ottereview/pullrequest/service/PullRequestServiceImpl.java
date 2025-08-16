@@ -270,11 +270,8 @@ public class PullRequestServiceImpl implements PullRequestService {
             if (mediaFiles != null && mediaFiles.length > 0) {
                 String filesCacheKey = String.format("pr_files:%d:%s:%s", repoId, request.getSource(), request.getTarget());
                 preparationRedisRepository.saveMediaFiles(filesCacheKey, mediaFiles);
-                log.info("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", filesCacheKey, mediaFiles.length);
+                log.debug("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", filesCacheKey, mediaFiles.length);
             }
-
-            log.info("GitHub PR 생성 완료 - PR #{}: {}", prResponse.getGithubPrNumber(), prResponse.getTitle());
-            log.info("DB 저장은 Webhook에서 처리됩니다.");
             
         } catch (Exception e) {
             log.error("Pull Request 생성 중 오류 발생: {}", e.getMessage(), e);
@@ -300,7 +297,7 @@ public class PullRequestServiceImpl implements PullRequestService {
         try {
             //6. Repo 별 PR 생성
             for (GHRepository repo : githubRepositories) {
-                log.info("Repo ID: {}, Full Name: {}, Private: {}",
+                log.debug("Repo ID: {}, Full Name: {}, Private: {}",
                         repo.getId(), repo.getFullName(), repo.isPrivate());
 
                 List<GithubPrResponse> githubPrResponses = repo.queryPullRequests()
@@ -320,19 +317,6 @@ public class PullRequestServiceImpl implements PullRequestService {
                 List<Reviewer> newReviewers = new ArrayList<>();
                 for (GithubPrResponse githubPr : githubPrResponses) {
 
-                    log.info("github title: {}", githubPr.getTitle());
-
-                    log.info("github id: {} ", githubPr.getAuthor()
-                            .getId());
-                    log.info("github name: {}", githubPr.getAuthor()
-                            .getName());
-                    log.info("github email: {}", githubPr.getAuthor()
-                            .getEmail());
-                    log.info("github Login: {}", githubPr.getAuthor()
-                            .getLogin());
-                    log.info("github type: {}", githubPr.getAuthor()
-                            .getType());
-
                     User author = userRepository.findByGithubId(githubPr.getAuthor()
                                     .getId())
                             .orElseGet(() -> registerUser(githubPr.getAuthor()));
@@ -344,9 +328,6 @@ public class PullRequestServiceImpl implements PullRequestService {
                         User reviewer = userRepository.findByGithubId(user
                                         .getId())
                                 .orElseGet(() -> registerUser(user));
-
-                        log.info("reviewer 추가 로직, 이름: " + user.getName() + "pullrequest Id: "
-                                + pullRequest.getId());
 
                         newReviewers.add(
                                 Reviewer.builder()

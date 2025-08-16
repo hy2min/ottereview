@@ -308,9 +308,9 @@ public class ReviewServiceImpl implements ReviewService {
         if (comment.getRecordKey() != null && !comment.getRecordKey()
                 .isEmpty()) {
             try {
-                log.info("Generating presigned URL for recordKey: {}", comment.getRecordKey());
+                log.debug("Generating presigned URL for recordKey: {}", comment.getRecordKey());
                 String presignedUrl = s3Service.generatePresignedUrl(comment.getRecordKey(), 60);
-                log.info("Generated presigned URL successfully for recordKey: {}", comment.getRecordKey());
+                log.debug("Generated presigned URL successfully for recordKey: {}", comment.getRecordKey());
                 response = response.toBuilder()
                         .voiceFileUrl(presignedUrl)
                         .build();
