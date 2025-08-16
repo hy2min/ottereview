@@ -1,4 +1,4 @@
-import { useMemo,useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
@@ -13,19 +13,19 @@ const RepositoryList = () => {
 
   // 고유한 account 목록 생성 (커스텀 셀렉트용 옵션 형태로)
   const accountOptions = useMemo(() => {
-    const uniqueAccounts = [...new Set(repos.map(repo => repo.fullName.split('/')[0]))]
+    const uniqueAccounts = [...new Set(repos.map((repo) => repo.fullName.split('/')[0]))]
     const sortedAccounts = uniqueAccounts.sort()
-    
+
     return [
       { value: 'all', label: '전체 계정' },
-      ...sortedAccounts.map(account => ({ value: account, label: account }))
+      ...sortedAccounts.map((account) => ({ value: account, label: account })),
     ]
   }, [repos])
 
   // 필터링된 레포 목록
   const filteredRepos = useMemo(() => {
     if (selectedAccount === 'all') return repos
-    return repos.filter(repo => repo.fullName.split('/')[0] === selectedAccount)
+    return repos.filter((repo) => repo.fullName.split('/')[0] === selectedAccount)
   }, [repos, selectedAccount])
 
   const handleRepoClick = (repo) => {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle, FileText, Settings } from 'lucide-react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
@@ -92,11 +93,19 @@ const PRCreateStep4 = ({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex space-x-4">
-        <Box shadow className="w-1/2 h-80 flex flex-col">
-          <h3 className="mb-2 flex-shrink-0">리뷰어 목록</h3>
-          <div className="flex-1 overflow-y-auto">
+    <div className="space-y-6 animate-slide-in-left">
+      <div className="text-center mb-6 animate-fade-in-up">
+        <h2 className="text-2xl font-semibold theme-text mb-2">리뷰어 선택</h2>
+        <p className="theme-text-secondary">코드 리뷰를 받을 리뷰어를 선택해주세요</p>
+      </div>
+      
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-6">
+        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-left">
+          <h3 className="mb-3 flex-shrink-0 text-lg font-semibold theme-text flex items-center space-x-2">
+            <span>👥</span>
+            <span>리뷰어 목록</span>
+          </h3>
+          <div className="flex-1 overflow-y-auto space-y-2">
             {reviewers.length > 0 ? (
               reviewers
                 .filter(
@@ -105,82 +114,136 @@ const PRCreateStep4 = ({
                       (selected) => selected.githubUsername === reviewer.githubUsername
                     )
                 )
-                .map((reviewer) => (
+                .map((reviewer, index) => (
                   <div
                     key={reviewer.githubUsername}
-                    className="flex justify-between items-center my-4 mr-2"
+                    className={`flex justify-between items-center p-3 mr-2 rounded-lg theme-bg-tertiary hover:theme-bg-secondary transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
                   >
-                    <div className="flex items-center space-x-2">
-                      <span>{reviewer.githubUsername}</span>
-                      {isAIRecommended(reviewer.githubUsername) && (
-                        <Badge variant="primary" size="md">
-                          AI 추천
-                        </Badge>
-                      )}
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {reviewer.githubUsername.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                        {isAIRecommended(reviewer.githubUsername) && (
+                          <Badge variant="primary" size="sm" className="mt-1 animate-pulse">
+                            <span className="flex items-center space-x-1">
+                              <span>🤖</span>
+                              <span>AI 추천</span>
+                            </span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <Button
                       onClick={() => handleSelect(reviewer.githubUsername)}
                       disabled={selectedReviewers.some(
                         (selected) => selected.githubUsername === reviewer.githubUsername
                       )}
-                      variant=""
+                      variant="primary"
                       size="sm"
+                      className="btn-interactive transform transition-all duration-300 hover:scale-105"
                     >
-                      추가
+                      <span className="flex items-center space-x-1">
+                        <span>+</span>
+                        <span>추가</span>
+                      </span>
                     </Button>
                   </div>
                 ))
             ) : (
-              <div className="text-gray-500 text-sm py-4">리뷰 요청 가능한 협업자가 없습니다.</div>
+              <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                <div className="text-4xl mb-2 opacity-50">👥</div>
+                <div className="theme-text-muted text-sm">리뷰 요청 가능한 협업자가 없습니다.</div>
+              </div>
             )}
           </div>
         </Box>
 
-        <Box shadow className="w-1/2 h-80 flex flex-col">
-          <h3 className="mb-2 flex-shrink-0">선택된 리뷰어</h3>
-          <div className="flex-1 overflow-y-auto">
+        <Box shadow className="w-full md:w-1/2 h-96 flex flex-col premium-card animate-slide-in-right animate-delay-200">
+          <h3 className="mb-3 flex-shrink-0 text-lg font-semibold theme-text flex items-center space-x-2">
+            <CheckCircle className="w-4 h-4" />
+            <span>선택된 리뷰어</span>
+          </h3>
+          <div className="flex-1 overflow-y-auto space-y-2">
             {selectedReviewers.length > 0 ? (
-              selectedReviewers.map((reviewer) => (
+              selectedReviewers.map((reviewer, index) => (
                 <div
                   key={reviewer.githubUsername}
-                  className="flex justify-between items-center my-4 mr-2"
+                  className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
                 >
-                  <div className="flex items-center space-x-2">
-                    <span>{reviewer.githubUsername}</span>
-                    {isAIRecommended(reviewer.githubUsername) && (
-                      <Badge variant="primary" size="xs">
-                        AI
-                      </Badge>
-                    )}
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
+                      {reviewer.githubUsername.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                      {isAIRecommended(reviewer.githubUsername) && (
+                        <Badge variant="primary" size="xs" className="mt-1">
+                          <span className="flex items-center space-x-1">
+                            <span>🤖</span>
+                            <span>AI</span>
+                          </span>
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   <Button
                     onClick={() => handleDeselect(reviewer.githubUsername)}
-                    variant=""
+                    variant="danger"
                     size="sm"
+                    className="btn-interactive transform transition-all duration-300 hover:scale-105"
                   >
-                    제거
+                    <span className="flex items-center space-x-1">
+                      <span>✗</span>
+                      <span>제거</span>
+                    </span>
                   </Button>
                 </div>
               ))
             ) : (
-              <div className="text-gray-500 text-sm py-4">선택된 리뷰어가 없습니다.</div>
+              <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                <FileText className="w-16 h-16 mb-2 opacity-30 text-orange-500" />
+                <div className="theme-text-muted text-sm">선택된 리뷰어가 없습니다.</div>
+              </div>
             )}
           </div>
         </Box>
       </div>
-      <div className="mx-auto z-10">
-        <div className="flex justify-center items-center space-x-3">
+      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+        <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
               goToStep(3)
             }}
             variant="secondary"
+            className="btn-interactive transform transition-all duration-300 hover:scale-105"
           >
-            이전
+            <span className="flex items-center space-x-2">
+              <span>←</span>
+              <span>이전</span>
+            </span>
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary" disabled={isGenerating}>
-            {isGenerating ? 'AI 요약 생성중...' : '다음'}
+          <Button 
+            onClick={handleNextStep} 
+            variant="primary" 
+            disabled={isGenerating}
+            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
+          >
+            <span className="flex items-center space-x-2">
+              {isGenerating ? (
+                <>
+                  <Settings className="w-4 h-4 animate-spin" />
+                  <span>AI 요약 생성중...</span>
+                </>
+              ) : (
+                <>
+                  <span>다음</span>
+                  <span>→</span>
+                </>
+              )}
+            </span>
           </Button>
         </div>
       </div>

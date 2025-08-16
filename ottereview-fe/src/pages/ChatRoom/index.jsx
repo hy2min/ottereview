@@ -179,15 +179,16 @@ const ChatRoom = () => {
         {/* 상단: 제목과 관리 버튼 */}
         <div className="flex justify-between items-center mb-3">
           <div>
-            <h2 className="m-0 text-2xl theme-text">🧪 협업 개발실</h2>
+            <h2 className="m-0 text-2xl theme-text font-bold">🚀 실시간 협업 워크스페이스</h2>
             <p className="mt-1 mb-0 text-sm theme-text-secondary">
-              🔒 Room ID: <strong>{roomId}</strong>
-              {roomInfo && (
-                <>
-                  <span style={{ margin: '0 1rem' }}>•</span>
-                  📝 {roomInfo.name}
-                </>
-              )}
+              <span className="inline-flex items-center gap-2">
+                <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-md text-xs font-medium">
+                  Room {roomId}
+                </span>
+                {roomInfo && (
+                  <span className="text-orange-600 font-medium">• {roomInfo.name}</span>
+                )}
+              </span>
             </p>
           </div>
 
@@ -206,23 +207,23 @@ const ChatRoom = () => {
         {/* 하단: 탭 전환 및 상태 정보 */}
         <div className="flex justify-between items-center">
           {/* 탭 전환 버튼들 */}
-          <div className="flex bg-theme-bg-tertiary rounded-lg p-1">
+          <div className="flex bg-orange-50 dark:bg-orange-900/20 rounded-xl p-1.5 border border-orange-200 dark:border-orange-700">
             <button
               onClick={() => setActiveTab('code')}
-              className={`px-4 py-2 rounded-md cursor-pointer text-sm font-medium transition-all duration-200 ${
+              className={`px-5 py-2.5 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 ${
                 activeTab === 'code'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'theme-text hover:theme-bg-secondary'
+                  ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700'
+                  : 'theme-text hover:bg-orange-100 dark:hover:bg-orange-800/50'
               }`}
             >
               📝 코드편집기
             </button>
             <button
               onClick={() => setActiveTab('whiteboard')}
-              className={`px-4 py-2 rounded-md cursor-pointer text-sm font-medium transition-all duration-200 ${
+              className={`px-5 py-2.5 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 ${
                 activeTab === 'whiteboard'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'theme-text hover:theme-bg-secondary'
+                  ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700'
+                  : 'theme-text hover:bg-orange-100 dark:hover:bg-orange-800/50'
               }`}
             >
               🎨 화이트보드
@@ -242,8 +243,8 @@ const ChatRoom = () => {
         <div className="mt-3 flex gap-2 flex-wrap">
           {/* 로딩 상태 */}
           {loading && (
-            <div className="px-3 py-2 bg-blue-100 dark:bg-blue-900 border border-blue-500 dark:border-blue-400 rounded-md text-sm text-blue-700 dark:text-blue-300">
-              🔄 미팅룸 정보 로딩 중...
+            <div className="px-3 py-2 bg-orange-100 dark:bg-orange-900 border border-orange-500 dark:border-orange-400 rounded-md text-sm text-orange-700 dark:text-orange-300">
+              🔄 워크스페이스 로딩 중...
             </div>
           )}
 
@@ -263,7 +264,7 @@ const ChatRoom = () => {
 
           {/* 파일 없음 상태 */}
           {!loading && !error && conflictFiles.length === 0 && (
-            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded-md text-sm text-gray-600 dark:text-gray-300">
+            <div className="px-3 py-2 bg-gray-100 dark:bg-gray-700 border border-gray-400 dark:border-gray-500 rounded-md text-sm theme-text-secondary">
               📭 편집할 파일이 없습니다
             </div>
           )}
