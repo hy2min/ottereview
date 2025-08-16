@@ -199,18 +199,7 @@ const PRCreateStep1 = ({
             !isSameBranch &&
             !existingPR &&
             !hasError &&
-            (!validationBranches || validationBranches.isPossible === true) && (
-              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-4 rounded-lg text-blue-800 dark:text-blue-300 break-words w-full animate-scale-in shadow-md">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🔄</span>
-                  <span>
-                    <strong className="text-orange-600 dark:text-orange-400">{source}</strong> 에서{' '}
-                    <strong className="text-orange-600 dark:text-orange-400">{target}</strong> 로의
-                    변경을 생성합니다.
-                  </span>
-                </div>
-              </div>
-            )}
+            (!validationBranches || validationBranches.isPossible === true)}
 
           {existingPR && (
             <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
