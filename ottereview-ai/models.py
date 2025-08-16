@@ -125,7 +125,7 @@ class PullRequestUserInfo(BaseModel):
     """Java PullRequestUserInfo와 정확히 일치"""
     id: int
     githubUsername: str
-    githubEmail: str
+    githubEmail: Optional[str] = None
 
 
 class PullRequestReviewerInfo(BaseModel):
@@ -133,7 +133,7 @@ class PullRequestReviewerInfo(BaseModel):
     id: int
     userId: int
     githubUsername: str
-    githubEmail: str
+    githubEmail: Optional[str] = None
     state: str
 
 
