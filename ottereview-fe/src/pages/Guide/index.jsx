@@ -14,7 +14,6 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import Button from '@/components/Button'
-import PreSetupChecklist from '@/components/onboarding/PreSetupChecklist'
 
 const Guide = () => {
   const [visibleSections, setVisibleSections] = useState(new Set())
@@ -127,7 +126,7 @@ const Guide = () => {
             <div className="inline-block">
               <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/95 backdrop-blur-sm border border-primary-200/50 dark:border-gray-600/50 rounded-full px-4 py-2 shadow-lg shadow-primary-500/10">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-sm font-medium theme-text-secondary">
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   AI 기반 코드 리뷰 플랫폼
                 </span>
               </div>
@@ -141,10 +140,10 @@ const Guide = () => {
               </span>
             </h1>
 
-            <p className="text-xl theme-text-secondary leading-relaxed max-w-lg">
+            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg">
               GitHub 기반의 지능형 코드 리뷰 플랫폼으로
               <br />
-              <span className="font-semibold theme-text">개발 워크플로우를 혁신하세요</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">개발 워크플로우를 혁신하세요</span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -188,8 +187,8 @@ const Guide = () => {
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
                 <div className="relative text-center space-y-3">
-                  <div className="theme-text-secondary font-medium text-lg">실시간 협업</div>
-                  <div className="theme-text-muted text-sm">코드 리뷰 & 토론</div>
+                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">실시간 협업</div>
+                  <div className="text-slate-500 dark:text-slate-400 text-sm">코드 리뷰 & 토론</div>
                   <div className="flex justify-center gap-1">
                     <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
                     <div
@@ -208,69 +207,160 @@ const Guide = () => {
         </div>
       </section>
 
-      {/* 사전 확인사항 섹션 */}
+      {/* 시작하기 전 확인사항 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-100 via-slate-50 to-white dark:from-gray-800 dark:via-gray-900 dark:to-black overflow-hidden"
+        className="relative py-24 bg-gradient-to-br from-red-50/50 via-orange-50/30 to-amber-50/50 dark:from-red-950/30 dark:via-orange-950/20 dark:to-amber-950/30 overflow-hidden"
         id="prerequisites-section"
         data-animate
       >
-        {/* 배경 패턴 */}
-        <div className="absolute inset-0 opacity-[0.02]">
+        {/* 배경 장식 */}
+        <div className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]">
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ff6b35' fill-opacity='0.6'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
             }}
           />
         </div>
 
         <div className="relative max-w-6xl mx-auto px-6">
           <div
-            className={`text-center mb-16 transition-all duration-1000 ${
+            className={`text-center transition-all duration-1000 ${
               visibleSections.has('prerequisites-section')
                 ? 'opacity-100 translate-y-0'
                 : 'opacity-0 translate-y-10'
             }`}
           >
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-2xl">
-                <CheckCircle className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <span className="text-orange-600 dark:text-orange-400 font-semibold text-sm uppercase tracking-wider">
-                  시작하기 전
-                </span>
-                <div className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">필수 확인사항</div>
+            {/* 강조 헤더 */}
+            <div className="flex justify-center mb-6">
+              <div className="inline-flex items-center gap-3 bg-gradient-to-r from-red-500/10 to-orange-500/10 dark:from-red-500/20 dark:to-orange-500/20 border-2 border-red-300/50 dark:border-red-600/50 rounded-2xl px-6 py-3 backdrop-blur-sm">
+                <span className="text-3xl animate-pulse">⚠️</span>
+                <div className="text-left">
+                  <div className="text-red-700 dark:text-red-300 font-bold text-lg">
+                    필수 확인사항
+                  </div>
+                  <div className="text-red-600 dark:text-red-400 text-sm">
+                    서비스 이용 전 반드시 확인해주세요
+                  </div>
+                </div>
               </div>
             </div>
 
-            <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent leading-tight mb-6">
-              시작하기 전
+            <h2 className="text-3xl lg:text-4xl font-bold mb-4">
+              <span className="bg-gradient-to-r from-red-700 via-orange-600 to-amber-600 dark:from-red-400 dark:via-orange-400 dark:to-amber-400 bg-clip-text text-transparent">
+                시작하기 전에
+              </span>
               <br />
-              <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text">
-                확인사항
+              <span className="text-slate-900 dark:text-white">
+                꼭 확인하세요!
               </span>
             </h2>
 
-            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl mx-auto">
-              원활한 서비스 이용을 위해{' '}
-              <span className="font-semibold text-slate-700 dark:text-slate-200">사전에 확인해야 할 중요한 사항들</span>
-              을 안내드립니다.
+            <p className="text-lg text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto">
+              원활한 서비스 이용을 위해 아래 사항들을 미리 준비해주시기 바랍니다.
               <br />
-              아래 체크리스트를 먼저 확인해주세요.
+              <span className="font-semibold text-red-600 dark:text-red-400">
+                모든 조건을 충족해야 협업 기능을 사용할 수 있습니다.
+              </span>
             </p>
-          </div>
 
-          <div
-            className={`flex justify-center transition-all duration-1000 delay-200 ${
-              visibleSections.has('prerequisites-section')
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-10'
-            }`}
-          >
-            <div className="w-full max-w-4xl">
-              <div className="bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-gray-600/60 rounded-2xl p-8 shadow-2xl shadow-slate-900/5 dark:shadow-black/50">
-                <PreSetupChecklist />
+            {/* 확인사항 카드들 */}
+            <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {/* GitHub Public Email */}
+              <div className="bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm border-2 border-slate-200/60 dark:border-gray-600/60 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <span className="text-white text-2xl">📧</span>
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-3">
+                  GitHub Public Email 설정
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">
+                  GitHub 프로필에서 이메일 주소를 공개로 설정해야 합니다.
+                </p>
+                <a 
+                  href="https://github.com/settings/profile" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm transition-colors"
+                >
+                  설정하러 가기
+                  <span className="text-xs">↗</span>
+                </a>
+              </div>
+
+              {/* GitHub Organization */}
+              <div className="bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm border-2 border-orange-200/60 dark:border-orange-600/60 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-gradient-to-l from-orange-500/20 to-transparent w-20 h-20 rounded-bl-full"></div>
+                <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center mb-4 mx-auto relative z-10">
+                  <span className="text-white text-2xl">🏢</span>
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-3">
+                  Organization 소속 필수
+                </h3>
+                <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 rounded-lg p-3 mb-4">
+                  <p className="text-orange-800 dark:text-orange-200 text-sm font-medium">
+                    ⚠️ 개인 계정 리포지토리는 협업 기능을 사용할 수 없습니다
+                  </p>
+                </div>
+                <a 
+                  href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium text-sm transition-colors"
+                >
+                  더 알아보기
+                  <span className="text-xs">↗</span>
+                </a>
+              </div>
+
+              {/* Organization 권한 */}
+              <div className="bg-white/80 dark:bg-gray-900/90 backdrop-blur-sm border-2 border-purple-200/60 dark:border-purple-600/60 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2">
+                <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                  <span className="text-white text-2xl">🔐</span>
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-3">
+                  Organization 권한 승인
+                </h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">
+                  Organization 관리자가 GitHub App 설치 및 권한을 허용해야 합니다.
+                </p>
+                <a 
+                  href="https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-sm transition-colors"
+                >
+                  가이드 보기
+                  <span className="text-xs">↗</span>
+                </a>
+              </div>
+            </div>
+
+            {/* 도움말 박스 */}
+            <div className="bg-blue-50/50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-2xl p-6 mt-8 max-w-4xl mx-auto backdrop-blur-sm">
+              <div className="flex items-start gap-4">
+                <span className="text-3xl">💡</span>
+                <div className="text-left">
+                  <h4 className="font-bold text-blue-900 dark:text-blue-200 text-lg mb-2">
+                    Organization이 없다면?
+                  </h4>
+                  <p className="text-blue-800 dark:text-blue-300 leading-relaxed">
+                    GitHub에서 새로운 Organization을 생성하거나, 기존 Organization에 참여 요청을 보내세요.
+                    <br />
+                    <span className="font-semibold">Organization 생성은 무료</span>이며, 팀 협업을 위한 필수 요소입니다.
+                  </p>
+                  <div className="mt-4">
+                    <a 
+                      href="https://github.com/organizations/new" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
+                    >
+                      Organization 생성하기
+                      <span className="text-xs">↗</span>
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -279,7 +369,7 @@ const Guide = () => {
 
       {/* GitHub 연동 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-50 to-white dark:from-gray-900 dark:to-black overflow-hidden"
+        className="relative py-32 bg-gradient-to-br from-slate-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
         id="github-section"
         data-animate
       >
@@ -334,11 +424,11 @@ const Guide = () => {
             }`}
           >
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-primary-100 rounded-2xl">
-                <BookOpen className="w-6 h-6 text-primary-600" />
+              <div className="p-3 bg-primary-100 dark:bg-primary-800/30 rounded-2xl">
+                <BookOpen className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
-                <span className="text-primary-600 font-semibold text-sm uppercase tracking-wider">
+                <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">
                   STEP 01
                 </span>
                 <div className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">연동 설정</div>
@@ -363,8 +453,8 @@ const Guide = () => {
             </div>
             <div className="space-y-4">
               <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
-                <div className="p-2 bg-primary-100 rounded-xl shrink-0">
-                  <CheckCircle className="w-4 h-4 text-primary-600" />
+                <div className="p-2 bg-primary-100 dark:bg-primary-800/30 rounded-xl shrink-0">
+                  <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
                   <div className="font-semibold text-slate-800 dark:text-slate-200">원클릭 GitHub OAuth 로그인</div>
@@ -375,8 +465,8 @@ const Guide = () => {
               </div>
 
               <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
-                <div className="p-2 bg-secondary-100 rounded-xl shrink-0">
-                  <CheckCircle className="w-4 h-4 text-secondary-600" />
+                <div className="p-2 bg-secondary-100 dark:bg-secondary-800/30 rounded-xl shrink-0">
+                  <CheckCircle className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                 </div>
                 <div>
                   <div className="font-semibold text-slate-800 dark:text-slate-200">자동 리포지토리 동기화</div>
@@ -387,8 +477,8 @@ const Guide = () => {
               </div>
 
               <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
-                <div className="p-2 bg-accent-100 rounded-xl shrink-0">
-                  <CheckCircle className="w-4 h-4 text-accent-600" />
+                <div className="p-2 bg-accent-100 dark:bg-accent-800/30 rounded-xl shrink-0">
+                  <CheckCircle className="w-4 h-4 text-accent-600 dark:text-accent-400" />
                 </div>
                 <div>
                   <div className="font-semibold text-slate-800 dark:text-slate-200">실시간 브랜치 정보 업데이트</div>
@@ -404,7 +494,7 @@ const Guide = () => {
 
       {/* AI 스마트 기능 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/20 dark:from-gray-900 dark:via-gray-800 dark:to-black overflow-hidden"
+        className="relative py-32 bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
         id="ai-section"
         data-animate
       >
@@ -442,15 +532,15 @@ const Guide = () => {
             }}
           >
             <div className="flex items-center gap-3">
-              <div className="relative p-3 bg-gradient-to-r from-primary-100 to-secondary-100 rounded-2xl">
-                <GitPullRequest className="w-6 h-6 text-primary-600" />
+              <div className="relative p-3 bg-gradient-to-r from-primary-100 to-secondary-100 dark:from-primary-800/30 dark:to-secondary-800/30 rounded-2xl">
+                <GitPullRequest className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-accent-400 to-accent-500 rounded-full animate-ping"></div>
               </div>
               <div>
-                <span className="text-primary-600 font-semibold text-sm uppercase tracking-wider">
+                <span className="text-primary-600 dark:text-primary-400 font-semibold text-sm uppercase tracking-wider">
                   STEP 02
                 </span>
-                <div className="text-slate-400 text-xs mt-0.5">AI 기능</div>
+                <div className="text-slate-400 dark:text-slate-500 text-xs mt-0.5">AI 기능</div>
               </div>
             </div>
 
@@ -490,8 +580,8 @@ const Guide = () => {
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-primary-300/50 dark:hover:border-primary-500/50 transition-all">
-                  <div className="p-2 bg-gradient-to-r from-primary-100 to-primary-200 rounded-xl shrink-0">
-                    <CheckCircle className="w-4 h-4 text-primary-600" />
+                  <div className="p-2 bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-800/30 dark:to-primary-700/30 rounded-xl shrink-0">
+                    <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div>
                     <div className="font-semibold text-slate-800 dark:text-slate-200">
@@ -507,8 +597,8 @@ const Guide = () => {
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-secondary-500/10 to-accent-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-secondary-300/50 dark:hover:border-secondary-500/50 transition-all">
-                  <div className="p-2 bg-gradient-to-r from-secondary-100 to-secondary-200 rounded-xl shrink-0">
-                    <CheckCircle className="w-4 h-4 text-secondary-600" />
+                  <div className="p-2 bg-gradient-to-r from-secondary-100 to-secondary-200 dark:from-secondary-800/30 dark:to-secondary-700/30 rounded-xl shrink-0">
+                    <CheckCircle className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                   </div>
                   <div>
                     <div className="font-semibold text-slate-800 dark:text-slate-200">우선순위 자동 추천</div>
@@ -522,8 +612,8 @@ const Guide = () => {
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-accent-500/10 to-primary-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-accent-300/50 dark:hover:border-accent-500/50 transition-all">
-                  <div className="p-2 bg-gradient-to-r from-accent-100 to-accent-200 rounded-xl shrink-0">
-                    <CheckCircle className="w-4 h-4 text-accent-600" />
+                  <div className="p-2 bg-gradient-to-r from-accent-100 to-accent-200 dark:from-accent-800/30 dark:to-accent-700/30 rounded-xl shrink-0">
+                    <CheckCircle className="w-4 h-4 text-accent-600 dark:text-accent-400" />
                   </div>
                   <div>
                     <div className="font-semibold text-slate-800 dark:text-slate-200">최적 리뷰어 추천 시스템</div>
@@ -593,7 +683,7 @@ const Guide = () => {
 
       {/* 실시간 협업 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-50 to-secondary-50/10 dark:from-gray-900 dark:to-black overflow-hidden"
+        className="relative py-32 bg-gradient-to-br from-slate-50 to-secondary-50/10 dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
         id="collab-section"
         data-animate
       >
@@ -615,13 +705,13 @@ const Guide = () => {
             }`}
           >
             <div className="flex items-center gap-3">
-              <MessageSquare className="w-8 h-8 text-primary-600" />
-              <span className="text-primary-600 font-semibold">STEP 03</span>
+              <MessageSquare className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+              <span className="text-primary-600 dark:text-primary-400 font-semibold">STEP 03</span>
             </div>
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white">
               팀원들과
               <br />
-              <span className="text-primary-600">실시간으로 소통</span>
+              <span className="text-primary-600 dark:text-primary-400">실시간으로 소통</span>
             </h2>
             <p className="text-xl text-stone-600 dark:text-slate-300 leading-relaxed">
               실시간 채팅, 음성 댓글, 공유 화이트보드로
@@ -630,15 +720,15 @@ const Guide = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">실시간 채팅 및 알림</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">음성 댓글 지원</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">공유 화이트보드</span>
               </div>
             </div>
@@ -647,7 +737,7 @@ const Guide = () => {
       </section>
 
       {/* 충돌 해결 섹션 */}
-      <section className="py-24 bg-stone-50 dark:bg-gray-900" id="conflict-section" data-animate>
+      <section className="py-24 bg-stone-50 dark:bg-gray-950" id="conflict-section" data-animate>
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div
             className={`space-y-6 transition-all duration-1000 ${
@@ -657,13 +747,13 @@ const Guide = () => {
             }`}
           >
             <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-primary-600" />
-              <span className="text-primary-600 font-semibold">STEP 04</span>
+              <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+              <span className="text-primary-600 dark:text-primary-400 font-semibold">STEP 04</span>
             </div>
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white">
               머지 충돌도
               <br />
-              <span className="text-primary-600">함께 해결</span>
+              <span className="text-primary-600 dark:text-primary-400">함께 해결</span>
             </h2>
             <p className="text-xl text-stone-600 dark:text-slate-300 leading-relaxed">
               머지 충돌 발생 시 팀원들과 실시간으로 협력하여
@@ -672,15 +762,15 @@ const Guide = () => {
             </p>
             <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">시각적 충돌 해결 인터페이스</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">실시간 협업 편집</span>
               </div>
               <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600" />
+                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-slate-700 dark:text-slate-300">안전한 머지 프로세스</span>
               </div>
             </div>

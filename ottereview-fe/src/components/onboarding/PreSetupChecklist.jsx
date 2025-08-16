@@ -37,10 +37,12 @@ const PreSetupChecklist = () => {
           <span className="text-primary-600 dark:text-primary-400 mt-1">•</span>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="theme-text font-medium">GitHub Organization 소속 필수</span>
-              <a
-                href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations"
-                target="_blank"
+              <span className="theme-text font-medium">
+                GitHub Organization 소속 필수
+              </span>
+              <a 
+                href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations" 
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm underline underline-offset-2 transition-colors"
               >
@@ -49,8 +51,7 @@ const PreSetupChecklist = () => {
               </a>
             </div>
             <div className="text-sm theme-text-secondary mt-1">
-              <span className="font-medium text-orange-600 dark:text-orange-400">⚠️ 중요:</span>{' '}
-              개인 계정이 아닌 Organization에 속한 리포지토리만 협업 기능을 사용할 수 있습니다
+              <span className="font-medium text-orange-600 dark:text-orange-400">⚠️ 중요:</span> 개인 계정이 아닌 Organization에 속한 리포지토리만 협업 기능을 사용할 수 있습니다
             </div>
           </div>
         </div>
@@ -59,10 +60,12 @@ const PreSetupChecklist = () => {
           <span className="text-primary-600 dark:text-primary-400 mt-1">•</span>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <span className="theme-text font-medium">Organization 권한 승인 필요</span>
-              <a
-                href="https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps"
-                target="_blank"
+              <span className="theme-text font-medium">
+                Organization 권한 승인 필요
+              </span>
+              <a 
+                href="https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps" 
+                target="_blank" 
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm underline underline-offset-2 transition-colors"
               >
@@ -84,8 +87,8 @@ const PreSetupChecklist = () => {
                 Organization이 없다면?
               </div>
               <div className="text-blue-700 dark:text-blue-300 text-sm">
-                GitHub에서 새로운 Organization을 생성하거나, 기존 Organization에 참여 요청을
-                보내세요. Organization 생성은 무료이며, 팀 협업을 위한 필수 요소입니다.
+                GitHub에서 새로운 Organization을 생성하거나, 기존 Organization에 참여 요청을 보내세요.
+                Organization 생성은 무료이며, 팀 협업을 위한 필수 요소입니다.
               </div>
             </div>
           </div>

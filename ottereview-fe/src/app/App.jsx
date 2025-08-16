@@ -125,7 +125,7 @@ const App = () => {
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
-
+      
       {/* 플로팅 가이드 버튼 */}
       <FloatingGuideButton />
     </div>

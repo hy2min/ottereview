@@ -58,10 +58,9 @@ const FloatingGuideButton = () => {
             px-4 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-gray-600
             whitespace-nowrap font-medium text-sm
             transition-all duration-300 ease-out
-            ${
-              isExpanded
-                ? 'opacity-100 translate-x-0 scale-100'
-                : 'opacity-0 translate-x-4 scale-95 pointer-events-none'
+            ${isExpanded 
+              ? 'opacity-100 translate-x-0 scale-100' 
+              : 'opacity-0 translate-x-4 scale-95 pointer-events-none'
             }
           `}
         >
@@ -87,14 +86,14 @@ const FloatingGuideButton = () => {
           style={{
             animationDuration: '2s',
             animationIterationCount: '3',
-            animationDelay: '0.5s',
+            animationDelay: '0.5s'
           }}
         >
           <BookOpen className="w-6 h-6" />
-
+          
           {/* 리플 효과 */}
           <div className="absolute inset-0 rounded-full bg-primary-400/30 animate-ping"></div>
-
+          
           {/* 글로우 효과 */}
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary-400/20 to-primary-500/20 blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         </button>
@@ -108,7 +107,7 @@ const FloatingGuideButton = () => {
             ${isVisible ? 'opacity-100' : 'opacity-0'}
           `}
           style={{
-            animation: isVisible ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 3' : 'none',
+            animation: isVisible ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 3' : 'none'
           }}
         >
           !
