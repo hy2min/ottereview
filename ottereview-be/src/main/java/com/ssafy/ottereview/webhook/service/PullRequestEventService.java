@@ -30,6 +30,7 @@ import com.ssafy.ottereview.reviewer.service.ReviewerService;
 import com.ssafy.ottereview.user.dto.UserResponseDto;
 import com.ssafy.ottereview.user.entity.User;
 import com.ssafy.ottereview.user.repository.UserRepository;
+import com.ssafy.ottereview.webhook.controller.EventSendController;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto;
 import com.ssafy.ottereview.webhook.dto.PullRequestEventDto.RepositoryInfo;
 import com.ssafy.ottereview.webhook.dto.PullRequestWebhookInfo;
@@ -59,6 +60,7 @@ public class PullRequestEventService {
     private final PriorityFileRepository priorityFileRepository;
     private final DescriptionService descriptionService;
     private final PullRequestService pullRequestService;
+    private final EventSendController eventSendController;
 
     public void processPullRequestEvent(String payload) {
         try {
@@ -157,6 +159,8 @@ public class PullRequestEventService {
         reviewerRepository.saveAll(reviewers);
 
         pullRequest.synchronizedByWebhook(event);
+        log.info("sync 온다~~~~~₩!!!!!!");
+        eventSendController.push(event.getSender().getId(),"synchronize", "synchronize");
     }
     
     private void handlePullRequestOpened(PullRequestEventDto event) {
