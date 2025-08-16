@@ -5,8 +5,7 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
-import Modal from '@/components/Modal'
-import { applyCushionLanguage, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -32,11 +31,6 @@ const PRCreateStep3 = ({
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
 
-  // 쿠션어 모달 상태 관리
-  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
-  const [originalContent, setOriginalContent] = useState('')
-  const [cushionedContent, setCushionedContent] = useState('')
-  const [isCushionLoading, setIsCushionLoading] = useState(false)
 
   // 템플릿 정의
   const templates = [
@@ -76,6 +70,9 @@ close #이슈번호
   // 로딩 중일 때만 애니메이션 활성화
   const loadingDots = useLoadingDots(isAiTitleLoading, isAiTitleLoading ? 300 : 0)
   const isAiTitleError = aiOthers?.title?.result === '분석 중 오류 발생'
+  
+  // AI 우선순위 로딩 상태 확인
+  const isAiPriorityLoading = !aiOthers?.priority?.result
 
   // 따옴표 제거 함수
   const removeQuotes = (str) => {
@@ -106,51 +103,24 @@ close #이슈번호
     }
   }
 
-  // 쿠션어 적용 처리
-  const handleApplyCushion = async () => {
-    if (!prBody.trim()) return
-
-    setOriginalContent(prBody)
-    setIsCushionModalOpen(true)
-    setIsCushionLoading(true)
-    setCushionedContent('')
-
-    try {
-      const response = await applyCushionLanguage(prBody)
-
-      if (response?.result) {
-        setCushionedContent(response.result)
-      }
-    } catch (error) {
-      console.error('쿠션어 적용 실패:', error)
-      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
-    } finally {
-      setIsCushionLoading(false)
-    }
-  }
-
-  // 쿠션어 적용 확정
-  const handleApplyCushionConfirm = () => {
-    setPrBody(cushionedContent)
-    setIsCushionModalOpen(false)
-  }
-
-  // 쿠션어 적용 취소
-  const handleApplyCushionCancel = () => {
-    setIsCushionModalOpen(false)
-  }
 
   // 다음 버튼 활성화 조건 확인
-  const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
+  const isNextButtonEnabled = 
+    prTitle.trim() !== '' && 
+    prBody.trim() !== '' && 
+    !isAiTitleLoading && 
+    !isAiPriorityLoading
 
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
-    const missingFields = []
-    if (prTitle.trim() === '') missingFields.push('제목')
-    if (prBody.trim() === '') missingFields.push('설명')
+    const missingItems = []
+    if (prTitle.trim() === '') missingItems.push('제목')
+    if (prBody.trim() === '') missingItems.push('설명')
+    if (isAiTitleLoading) missingItems.push('AI 제목 추천 완료')
+    if (isAiPriorityLoading) missingItems.push('AI 우선순위 분석 완료')
 
-    if (missingFields.length === 0) return ''
-    return `${missingFields.join(', ')}을(를) 입력해주세요`
+    if (missingItems.length === 0) return ''
+    return `${missingItems.join(', ')}이(가) 필요합니다`
   }
 
   const handleNextStep = async () => {

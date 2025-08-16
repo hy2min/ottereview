@@ -142,7 +142,7 @@ const PRCardDetail = ({ pr }) => {
                 <span className="text-xs theme-text-secondary">리뷰 {reviewCommentCnt}</span>
               </div>
               
-              {/* 파일 - Blue */}
+              {/* 파일 - Orange */}
               <div className="flex items-center space-x-1">
                 <FileDiff className="w-3 h-3 text-orange-500" />
                 <span className="text-xs theme-text-secondary">파일 {changedFilesCnt}</span>
@@ -163,21 +163,34 @@ const PRCardDetail = ({ pr }) => {
               (() => {
                 // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
                 const effectiveMergeable = apiMergeable !== null ? apiMergeable : mergeable
+                const isApproved = pr.isApproved !== false // isApproved가 false가 아닌 경우 승인된 것으로 간주
 
-                return effectiveMergeable ? (
-                  <Button variant="primary" size="sm" onClick={handleIsMergable}>
-                    <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-                    머지
-                  </Button>
-                ) : (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
-                  >
-                    충돌 해결
-                  </Button>
-                )
+                if (!effectiveMergeable) {
+                  // 머지 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
+                  return (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                    >
+                      충돌 해결
+                    </Button>
+                  )
+                } else {
+                  // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                  return (
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      onClick={handleIsMergable}
+                      disabled={!isApproved}
+                      title={!isApproved ? "승인이 필요합니다" : ""}
+                    >
+                      <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
+                      머지
+                    </Button>
+                  )
+                }
               })()}
           </div>
         </div>

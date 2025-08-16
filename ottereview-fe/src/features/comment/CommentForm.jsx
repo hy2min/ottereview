@@ -3,6 +3,8 @@ import { useState } from 'react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import Modal from '@/components/Modal'
+import { applyCushionLanguage } from '@/features/pullRequest/prApi'
 
 const CommentForm = ({
   value,
@@ -19,11 +21,18 @@ const CommentForm = ({
   mode = 'review', // 'review' 또는 'description' 모드
   disableReviewOptions = false, // 리뷰 옵션 비활성화 여부
   audioFile: initialAudioFile = null, // 초기 음성 파일 (편집 모드용)
+  enableCushion = false, // 쿠션어 기능 활성화 여부
 }) => {
   const [audioFile, setAudioFile] = useState(initialAudioFile)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // 쿠션어 모달 상태 관리
+  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
+  const [originalContent, setOriginalContent] = useState('')
+  const [cushionedContent, setCushionedContent] = useState('')
+  const [isCushionLoading, setIsCushionLoading] = useState(false)
 
   // 리뷰 상태 옵션들
   const reviewStates = [
@@ -124,6 +133,40 @@ const CommentForm = ({
       setIsSubmitting(false)
     }
   }
+  
+  // 쿠션어 적용 처리
+  const handleApplyCushion = async () => {
+    if (!value?.trim()) return
+
+    setOriginalContent(value)
+    setIsCushionModalOpen(true)
+    setIsCushionLoading(true)
+    setCushionedContent('')
+
+    try {
+      const response = await applyCushionLanguage(value)
+
+      if (response?.result) {
+        setCushionedContent(response.result)
+      }
+    } catch (error) {
+      console.error('쿠션어 적용 실패:', error)
+      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
+    } finally {
+      setIsCushionLoading(false)
+    }
+  }
+
+  // 쿠션어 적용 확정
+  const handleApplyCushionConfirm = () => {
+    onChange?.({ target: { value: cushionedContent } })
+    setIsCushionModalOpen(false)
+  }
+
+  // 쿠션어 적용 취소
+  const handleApplyCushionCancel = () => {
+    setIsCushionModalOpen(false)
+  }
 
   return (
     <Box
@@ -218,7 +261,7 @@ const CommentForm = ({
 
       {/* 하단 버튼들 - 음성녹음과 취소/제출을 같은 라인에 */}
       <div className={`flex items-center justify-between ${config.gap} mt-2`}>
-        {/* 왼쪽: 음성 녹음 버튼 */}
+        {/* 왼쪽: 음성 녹음 버튼 & 쿠션어 적용 버튼 */}
         <div className="flex items-center gap-2">
           {enableAudio && !audioFile && (
             <Button
@@ -230,6 +273,17 @@ const CommentForm = ({
             >
               {isRecording ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
               {isRecording ? '녹음 중지' : '음성 녹음'}
+            </Button>
+          )}
+          {enableCushion && !audioFile && value?.trim() && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleApplyCushion}
+              disabled={disabled || isSubmitting}
+              className="hover:!bg-purple-50 dark:hover:!bg-purple-900 hover:!text-purple-700 dark:hover:!text-purple-300"
+            >
+              쿠션어 적용
             </Button>
           )}
         </div>
@@ -256,6 +310,56 @@ const CommentForm = ({
           </Button>
         </div>
       </div>
+      
+      {/* 쿠션어 적용 모달 */}
+      <Modal
+        isOpen={isCushionModalOpen}
+        onClose={handleApplyCushionCancel}
+        title="쿠션어 적용 결과"
+        size="lg"
+        footer={
+          <>
+            <Button variant="secondary" onClick={handleApplyCushionCancel}>
+              취소
+            </Button>
+            <Button
+              variant="primary"
+              onClick={handleApplyCushionConfirm}
+              disabled={isCushionLoading || !cushionedContent}
+            >
+              적용
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          {/* 원본 내용 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">원본 내용</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                {originalContent}
+              </pre>
+            </Box>
+          </div>
+
+          {/* 쿠션어 적용 결과 */}
+          <div>
+            <h4 className="font-medium mb-2 theme-text">쿠션어 적용 결과</h4>
+            <Box className="max-h-40 overflow-y-auto">
+              {isCushionLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-sm theme-text-secondary">변환 중...</div>
+                </div>
+              ) : (
+                <pre className="whitespace-pre-wrap text-sm theme-text-secondary">
+                  {cushionedContent}
+                </pre>
+              )}
+            </Box>
+          </div>
+        </div>
+      </Modal>
     </Box>
   )
 }

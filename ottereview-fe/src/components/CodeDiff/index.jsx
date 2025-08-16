@@ -5,16 +5,8 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import CommentForm from '@/features/comment/CommentForm'
-import { updateReviewComment, deleteReviewComment } from '@/features/pullRequest/prApi'
+import ReviewCommentList from '@/features/comment/ReviewCommentList'
 import { useUserStore } from '@/store/userStore'
-
-// 리뷰 댓글 텍스트 정리 함수
-const cleanReviewCommentBody = (body) => {
-  if (!body) return ''
-
-  // \n을 실제 줄바꿈으로 변환 (백엔드에서 전처리되므로 간단하게)
-  return body.replace(/\\n/g, '\n')
-}
 
 const CodeDiff = ({
   patch,
@@ -26,10 +18,8 @@ const CodeDiff = ({
   descriptions = [],
   prAuthor = {},
   showDiffHunk = false,
-  prId,
-  onDescriptionUpdate,
-  onDescriptionDelete,
   commentMode = 'review', // 'review' 또는 'description' 모드
+  onDataRefresh, // PR 데이터 새로고침 콜백
 }) => {
   const user = useUserStore((state) => state.user)
   const [activeCommentLines, setActiveCommentLines] = useState(new Set())
@@ -44,23 +34,48 @@ const CodeDiff = ({
   const [dragStart, setDragStart] = useState(null)
   const [dragEnd, setDragEnd] = useState(null)
 
-  // description 편집 관련 상태
-  const [editingDescriptionId, setEditingDescriptionId] = useState(null)
-  const [editingDescriptionBody, setEditingDescriptionBody] = useState('')
-  
   // 임시 댓글 편집 관련 상태
   const [editingCommentId, setEditingCommentId] = useState(null)
   const [editingCommentContent, setEditingCommentContent] = useState('')
   const [editingCommentAudio, setEditingCommentAudio] = useState(null)
-  
-  // 기존 리뷰 댓글 편집 관련 상태
-  const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
-  const [editingReviewCommentContent, setEditingReviewCommentContent] = useState('')
+
+  // 전역 마우스업 이벤트 핸들러
+  const handleGlobalMouseUp = useCallback(() => {
+    // 드래그 상태일 때만 처리
+    if (isDragging && dragStart !== null && dragEnd !== null) {
+      const start = Math.min(dragStart, dragEnd)
+      const end = Math.max(dragStart, dragEnd)
+
+      setSelectedLines((prev) => {
+        const newSet = new Set(prev)
+        for (let i = start; i <= end; i++) {
+          newSet.add(i)
+        }
+        return newSet
+      })
+    }
+
+    // 드래그 상태 초기화
+    setIsDragging(false)
+    setDragStart(null)
+    setDragEnd(null)
+  }, [isDragging, dragStart, dragEnd])
 
   // initialSubmittedComments가 변경될 때 submittedComments 업데이트
   useEffect(() => {
     setSubmittedComments(initialSubmittedComments)
   }, [initialSubmittedComments])
+
+  // 전역 마우스업 이벤트
+  useEffect(() => {
+    // 드래깅 중일 때만 이벤트 리스너 추가
+    if (isDragging) {
+      document.addEventListener('mouseup', handleGlobalMouseUp)
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp)
+      }
+    }
+  }, [isDragging, handleGlobalMouseUp])
 
   if (!patch) return null
 
@@ -138,38 +153,6 @@ const CodeDiff = ({
     setClickedLine(clickedLine === lineIndex ? null : lineIndex)
   }
 
-  // 전역 마우스업 이벤트 핸들러
-  const handleGlobalMouseUp = useCallback(() => {
-    // 드래그 상태일 때만 처리
-    if (isDragging && dragStart !== null && dragEnd !== null) {
-      const start = Math.min(dragStart, dragEnd)
-      const end = Math.max(dragStart, dragEnd)
-
-      setSelectedLines((prev) => {
-        const newSet = new Set(prev)
-        for (let i = start; i <= end; i++) {
-          newSet.add(i)
-        }
-        return newSet
-      })
-    }
-
-    // 드래그 상태 초기화
-    setIsDragging(false)
-    setDragStart(null)
-    setDragEnd(null)
-  }, [isDragging, dragStart, dragEnd])
-
-  // 전역 마우스업 이벤트
-  useEffect(() => {
-    // 드래깅 중일 때만 이벤트 리스너 추가
-    if (isDragging) {
-      document.addEventListener('mouseup', handleGlobalMouseUp)
-      return () => {
-        document.removeEventListener('mouseup', handleGlobalMouseUp)
-      }
-    }
-  }, [isDragging, handleGlobalMouseUp])
 
   const handleCommentChange = (lineIndex, content, audioFile = null) => {
     setComments((prevComments) => ({
@@ -353,141 +336,53 @@ const CodeDiff = ({
     return lineIndex >= start && lineIndex <= end
   }
 
-  // description 편집 시작
-  const handleEditDescription = (desc) => {
-    setEditingDescriptionId(desc.id)
-    setEditingDescriptionBody(desc.body)
-  }
-
-  // description 편집 취소
-  const handleCancelEditDescription = () => {
-    setEditingDescriptionId(null)
-    setEditingDescriptionBody('')
-  }
-
-  // description 편집 저장
-  const handleSaveDescription = async (descId) => {
-    if (onDescriptionUpdate && editingDescriptionBody.trim()) {
-      try {
-        await onDescriptionUpdate(descId, { body: editingDescriptionBody.trim() })
-        setEditingDescriptionId(null)
-        setEditingDescriptionBody('')
-      } catch (error) {
-        console.error('Description 수정 실패:', error)
-        alert('설명 수정에 실패했습니다.')
-      }
-    }
-  }
-
-  // description 삭제
-  const handleDeleteDescription = async (descId) => {
-    if (onDescriptionDelete && confirm('이 설명을 삭제하시겠습니까?')) {
-      try {
-        await onDescriptionDelete(descId)
-      } catch (error) {
-        console.error('Description 삭제 실패:', error)
-        alert('설명 삭제에 실패했습니다.')
-      }
-    }
-  }
-  
   // 임시 댓글 편집 시작
   const handleEditComment = (lineIndex, comment) => {
     setEditingCommentId(`${lineIndex}-${comment.id}`)
     setEditingCommentContent(comment.content || '')
     setEditingCommentAudio(comment.audioFile || null)
   }
-  
+
   // 임시 댓글 편집 취소
   const handleCancelEditComment = () => {
     setEditingCommentId(null)
     setEditingCommentContent('')
     setEditingCommentAudio(null)
   }
-  
+
   // 임시 댓글 편집 저장
   const handleSaveEditComment = (lineIndex, comment) => {
     const hasTextContent = editingCommentContent.trim()
     const hasAudioFile = editingCommentAudio
-    
+
     // 텍스트나 음성 중 하나라도 있어야 저장 가능
     if (hasTextContent || hasAudioFile) {
       setSubmittedComments((prev) => ({
         ...prev,
-        [lineIndex]: prev[lineIndex].map((c) => 
-          c.id === comment.id 
-            ? { 
-                ...c, 
+        [lineIndex]: prev[lineIndex].map((c) =>
+          c.id === comment.id
+            ? {
+                ...c,
                 content: hasAudioFile ? '' : editingCommentContent.trim(),
-                audioFile: editingCommentAudio
+                audioFile: editingCommentAudio,
               }
             : c
-        )
+        ),
       }))
-      
+
       // 편집 상태 초기화
       setEditingCommentId(null)
       setEditingCommentContent('')
       setEditingCommentAudio(null)
     }
   }
-  
+
   // 편집 중 음성 파일 변경 핸들러
   const handleEditCommentAudioChange = (audioFile) => {
     setEditingCommentAudio(audioFile)
     // 음성 파일이 있으면 텍스트 내용 초기화
     if (audioFile) {
       setEditingCommentContent('')
-    }
-  }
-  
-  // 기존 리뷰 댓글 편집 시작
-  const handleEditReviewComment = (comment) => {
-    setEditingReviewCommentId(comment.id)
-    setEditingReviewCommentContent(comment.body || '')
-  }
-  
-  // 기존 리뷰 댓글 편집 취소
-  const handleCancelEditReviewComment = () => {
-    setEditingReviewCommentId(null)
-    setEditingReviewCommentContent('')
-  }
-  
-  // 기존 리뷰 댓글 편집 저장
-  const handleSaveEditReviewComment = async (comment) => {
-    if (!editingReviewCommentContent.trim()) return
-    
-    try {
-      const requestBody = {
-        body: editingReviewCommentContent.trim()
-      }
-      
-      await updateReviewComment(comment.reviewId, comment.id, requestBody)
-      
-      // 편집 상태 초기화
-      setEditingReviewCommentId(null)
-      setEditingReviewCommentContent('')
-      
-      // 페이지 새로고침으로 업데이트된 댓글 반영
-      window.location.reload()
-    } catch (error) {
-      console.error('리뷰 댓글 수정 실패:', error)
-      alert('댓글 수정에 실패했습니다.')
-    }
-  }
-  
-  // 기존 리뷰 댓글 삭제
-  const handleDeleteReviewComment = async (comment) => {
-    if (!confirm('이 댓글을 삭제하시겠습니까?')) return
-    
-    try {
-      await deleteReviewComment(comment.reviewId, comment.id)
-      
-      // 페이지 새로고침으로 삭제된 댓글 반영
-      window.location.reload()
-    } catch (error) {
-      console.error('리뷰 댓글 삭제 실패:', error)
-      alert('댓글 삭제에 실패했습니다.')
     }
   }
 
@@ -702,71 +597,20 @@ const CodeDiff = ({
                                     )}
                                   </div>
                                 </div>
-                                {/* 수정/삭제 버튼 */}
-                                {prId && onDescriptionUpdate && onDescriptionDelete && (
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => handleEditDescription(desc)}
-                                      className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                                      title="설명 수정"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteDescription(desc.id)}
-                                      className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
-                                      title="설명 삭제"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
                               </div>
-                              {/* 편집 모드 */}
-                              {editingDescriptionId === desc.id ? (
-                                <div className="space-y-2">
-                                  <textarea
-                                    value={editingDescriptionBody}
-                                    onChange={(e) => setEditingDescriptionBody(e.target.value)}
-                                    className="w-full p-2 border theme-border rounded theme-bg-primary theme-text text-base resize-none"
-                                    rows={3}
-                                    placeholder="설명을 입력하세요..."
-                                  />
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEditDescription}
-                                      className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
-                                    >
-                                      취소
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      onClick={() => handleSaveDescription(desc.id)}
-                                      className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
-                                    >
-                                      저장
-                                    </Button>
-                                  </div>
-                                </div>
+                              {/* 설명 내용 (읽기 전용) */}
+                              {desc.voiceFileUrl ? (
+                                <audio
+                                  controls
+                                  src={desc.voiceFileUrl}
+                                  className="h-8 rounded-full border border-gray-300 "
+                                >
+                                  브라우저가 오디오를 지원하지 않습니다.
+                                </audio>
                               ) : (
-                                <>
-                                  {desc.voiceFileUrl ? (
-                                    <audio
-                                      controls
-                                      src={desc.voiceFileUrl}
-                                      className="h-8 rounded-full border border-gray-300 "
-                                    >
-                                      브라우저가 오디오를 지원하지 않습니다.
-                                    </audio>
-                                  ) : (
-                                    <p className="theme-text whitespace-pre-wrap text-base font-medium">
-                                      {desc.body}
-                                    </p>
-                                  )}
-                                </>
+                                <p className="theme-text whitespace-pre-wrap text-base font-medium">
+                                  {desc.body}
+                                </p>
                               )}
                             </Box>
                           </div>
@@ -786,121 +630,12 @@ const CodeDiff = ({
                       ? commentsForLine.filter((comment) => comment.side === currentSide)
                       : []
 
-                    // body나 voiceFileUrl이 있는 댓글만 필터링
-                    const validComments = filteredComments.filter(
-                      (comment) =>
-                        (comment.body !== null &&
-                          comment.body !== undefined &&
-                          comment.body !== '') ||
-                        comment.voiceFileUrl
+                    return (
+                      <ReviewCommentList
+                        comments={filteredComments}
+                        onDataRefresh={onDataRefresh}
+                      />
                     )
-
-                    return validComments.length > 0
-                      ? validComments.map((comment) => (
-                          <div key={comment.id} className="mx-2 mb-2 font-sans max-w-4xl">
-                            <Box shadow className="space-y-3 max-w-xl">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900 border-2 border-blue-500 dark:border-blue-400 flex items-center justify-center">
-                                    <span className="text-sm font-medium text-blue-700 dark:text-blue-200">
-                                      {comment.reviewer?.[0] || 'R'}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    <span className="font-medium theme-text text-base">
-                                      {comment.reviewer || 'Unknown'}
-                                    </span>
-                                    <span className="text-sm theme-text-muted ml-2">
-                                      {new Date(comment.submittedAt).toLocaleString()}
-                                    </span>
-                                    <Badge
-                                      variant={
-                                        comment.reviewState === 'APPROVED'
-                                          ? 'success'
-                                          : comment.reviewState === 'CHANGES_REQUESTED'
-                                            ? 'danger'
-                                            : 'primary'
-                                      }
-                                      className="ml-3"
-                                    >
-                                      {comment.reviewState === 'APPROVED'
-                                        ? '승인'
-                                        : comment.reviewState === 'CHANGES_REQUESTED'
-                                          ? '변경 요청'
-                                          : '코멘트'}
-                                    </Badge>
-                                  </div>
-                                </div>
-                                {/* 수정/삭제 버튼 - ReviewComment에 실제 작성자가 있고 현재 사용자와 같을 때만 표시 */}
-                                {comment.commentAuthor && comment.commentAuthor === user?.githubUsername && !comment.voiceFileUrl && (
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      onClick={() => handleEditReviewComment(comment)}
-                                      className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
-                                      title="댓글 수정"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleDeleteReviewComment(comment)}
-                                      className="p-1 text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900 rounded transition-colors"
-                                      title="댓글 삭제"
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                              {/* 편집 모드인지 확인 */}
-                              {editingReviewCommentId === comment.id ? (
-                                <div className="space-y-2">
-                                  <textarea
-                                    value={editingReviewCommentContent}
-                                    onChange={(e) => setEditingReviewCommentContent(e.target.value)}
-                                    className="w-full p-2 border theme-border rounded theme-bg-primary theme-text text-base resize-none"
-                                    rows={3}
-                                    placeholder="댓글을 수정하세요..."
-                                  />
-                                  <div className="flex gap-2 justify-end">
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEditReviewComment}
-                                      className="hover:!bg-gray-100 dark:hover:!bg-gray-700 hover:!text-gray-900 dark:hover:!text-gray-100 hover:!shadow-md"
-                                    >
-                                      취소
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="secondary"
-                                      onClick={() => handleSaveEditReviewComment(comment)}
-                                      className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
-                                    >
-                                      저장
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {comment.voiceFileUrl ? (
-                                    <audio
-                                      controls
-                                      src={comment.voiceFileUrl}
-                                      className="h-8 rounded-full border border-gray-300 "
-                                    >
-                                      브라우저가 오디오를 지원하지 않습니다.
-                                    </audio>
-                                  ) : (
-                                    <p className="theme-text whitespace-pre-wrap text-base">
-                                      {cleanReviewCommentBody(comment.body)}
-                                    </p>
-                                  )}
-                                </>
-                              )}
-                            </Box>
-                          </div>
-                        ))
-                      : null
                   })()}
 
                   {/* 제출된 댓글들 표시 (폼 위쪽) */}
@@ -982,20 +717,19 @@ const CodeDiff = ({
                               </div>
                             ) : (
                               <>
-                                <p className="theme-text text-base">{comment.content || ''}</p>
-                                {comment.audioFile && (
-                                  <div className="flex items-center gap-2">
-                                    <audio
-                                      controls
-                                      className="h-8 rounded-full border border-gray-300 "
-                                    >
-                                      <source
-                                        src={URL.createObjectURL(comment.audioFile)}
-                                        type={comment.audioFile.type}
-                                      />
-                                      브라우저가 오디오를 지원하지 않습니다.
-                                    </audio>
-                                  </div>
+                                {/* 댓글 내용 */}
+                                {comment.audioFile ? (
+                                  <audio
+                                    controls
+                                    src={URL.createObjectURL(comment.audioFile)}
+                                    className="h-8 rounded-full border border-gray-300"
+                                  >
+                                    브라우저가 오디오를 지원하지 않습니다.
+                                  </audio>
+                                ) : (
+                                  <p className="theme-text whitespace-pre-wrap text-base">
+                                    {comment.content}
+                                  </p>
                                 )}
                               </>
                             )}
@@ -1004,25 +738,19 @@ const CodeDiff = ({
                       </div>
                     ))}
 
-                  {/* 댓글 폼 */}
+                  {/* 댓글 추가 영역 */}
                   {activeCommentLines.has(idx) && (
-                    <div
-                      className="font-sans mx-2 mb-2"
-                      onMouseEnter={(e) => e.stopPropagation()}
-                      onMouseLeave={(e) => e.stopPropagation()}
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="mx-2 mb-2 font-sans max-w-4xl">
                       <CommentForm
-                        size="normal"
                         value={comments[idx]?.content || ''}
                         onChange={(e) => handleCommentChange(idx, e.target.value)}
-                        onAudioChange={(audioFile) =>
-                          handleCommentChange(idx, comments[idx]?.content || '', audioFile)
-                        }
+                        onAudioChange={(file) => handleCommentChange(idx, '', file)}
                         onSubmit={() => handleCommentSubmit(idx)}
                         onCancel={() => closeCommentForm(idx)}
                         enableAudio={true}
+                        enableCushion={commentMode === 'review'}
                         mode={commentMode}
+                        audioFile={comments[idx]?.audioFile}
                       />
                     </div>
                   )}
@@ -1035,4 +763,4 @@ const CodeDiff = ({
   )
 }
 
-export default React.memo(CodeDiff)
+export default CodeDiff
