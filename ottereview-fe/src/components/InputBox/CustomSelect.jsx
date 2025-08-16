@@ -3,7 +3,6 @@ import { twMerge } from 'tailwind-merge'
 
 const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요', ...props }) => {
   const [isOpen, setIsOpen] = useState(false)
-  const selectedOption = options.find((option) => option.value === value) || null
   const selectRef = useRef(null)
 
   useEffect(() => {
@@ -18,68 +17,58 @@ const CustomSelect = ({ options, value, onChange, placeholder = '선택하세요
     }
   }, [])
 
-  const handleOptionClick = (optionValue) => {
+  const selectedOption = options.find((option) => option.value === value)
+
+  const handleSelect = (optionValue) => {
+    console.log('Selected:', optionValue)
     onChange({ target: { value: optionValue } })
     setIsOpen(false)
   }
 
-  const baseBoxClasses = 'theme-bg-secondary border theme-border w-full box-border'
-
-  const selectBoxClasses = twMerge(
-    baseBoxClasses,
-    'px-3 py-2 theme-text',
-    isOpen ? 'rounded-t-lg rounded-b-none border-b-transparent' : 'rounded-lg',
-    'cursor-pointer transition-colors hover:theme-bg-tertiary'
+  const baseClasses = 'theme-bg-secondary border theme-border w-full box-border'
+  
+  const selectClasses = twMerge(
+    baseClasses,
+    'px-3 py-2 theme-text cursor-pointer',
+    isOpen ? 'rounded-t-lg border-b-0' : 'rounded-lg'
   )
 
-  const dropdownBoxClasses = twMerge(
-    baseBoxClasses,
-    'absolute z-10 top-full left-0 max-h-60 overflow-y-auto theme-shadow-lg border-t-0',
-    'rounded-b-lg rounded-t-none'
+  const dropdownClasses = twMerge(
+    baseClasses,
+    'absolute z-50 top-full left-0 right-0 max-h-60 overflow-y-auto rounded-b-lg border-t-0 bg-white dark:bg-gray-800'
   )
-
-  const getOptionClass = (optionValue) => {
-    const isSelected = optionValue === selectedOption?.value
-    return twMerge(
-      'px-3 py-2 cursor-pointer transition-colors theme-text',
-      isSelected ? 'bg-orange-500 text-white' : 'hover:theme-bg-tertiary'
-    )
-  }
 
   return (
     <div ref={selectRef} className="relative w-full" {...props}>
-      <div className={selectBoxClasses} onClick={() => setIsOpen(!isOpen)}>
+      <div 
+        className={selectClasses} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
         <div className="flex justify-between items-center">
           <span className={selectedOption ? 'theme-text' : 'theme-text-muted'}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <svg
-            className={`w-4 h-4 transform transition-transform theme-text-secondary ${isOpen ? 'rotate-180' : ''}`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
+          <span className="theme-text-secondary">
+            {isOpen ? '▲' : '▼'}
+          </span>
         </div>
       </div>
 
       {isOpen && (
-        <ul className={dropdownBoxClasses}>
+        <div className={dropdownClasses}>
           {options.map((option) => (
-            <li
-              key={option.value}
-              className={getOptionClass(option.value)}
-              onClick={(e) => {
-                e.stopPropagation()
-                handleOptionClick(option.value)
-              }}
+            <div
+              key={option.value || `empty-${option.label}`}
+              className={twMerge(
+                'px-3 py-2 cursor-pointer theme-text',
+                option.value === value ? 'bg-orange-500 text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+              )}
+              onClick={() => handleSelect(option.value)}
             >
               {option.label}
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   )
