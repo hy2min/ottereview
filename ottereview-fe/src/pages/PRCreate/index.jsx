@@ -135,6 +135,7 @@ const PRCreate = () => {
       case 2:
         return {
           ...baseProps,
+          selectedBranches,
           validationBranches,
           aiConvention,
           setAIConvention,
