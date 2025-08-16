@@ -12,7 +12,7 @@ const Toast = ({ toast, onClose }) => {
     const timer = setTimeout(() => {
       setIsVisible(false)
       setTimeout(() => onClose(toast.id), 300) // 애니메이션 완료 후 제거
-    }, 5000)
+    }, 10000)
 
     return () => clearTimeout(timer)
   }, [toast.id, onClose])
@@ -38,7 +38,7 @@ const Toast = ({ toast, onClose }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
             <p className="font-semibold text-sm theme-text">
-              {toast.pusherName}님이 푸시했습니다
+              {toast.pusherName}님이 <span className="text-orange-600 dark:text-orange-400">{toast.branchName}</span> 브랜치에 푸시했습니다
             </p>
             <button 
               onClick={handleClose}
@@ -49,7 +49,7 @@ const Toast = ({ toast, onClose }) => {
           </div>
           
           <p className="text-sm theme-text-secondary mt-1">
-            <span className="font-medium">{toast.repoName}</span> → {toast.branchName}
+            <span className="font-medium">{toast.repoName}</span>
           </p>
           
           <p className="text-xs theme-text-muted mt-1">
@@ -62,10 +62,15 @@ const Toast = ({ toast, onClose }) => {
 }
 
 const ToastContainer = ({ toasts, onCloseToast }) => {
-  if (toasts.length === 0) return null
+  console.log('🍞 ToastContainer 렌더링:', toasts)
+  
+  if (toasts.length === 0) {
+    console.log('🍞 토스트 없음')
+    return null
+  }
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-[9999] space-y-2">
       {toasts.map((toast) => (
         <Toast 
           key={toast.id} 
