@@ -7,7 +7,6 @@ import {
   TrendingUp,
   FileText,
   Settings,
-  MessageSquare,
 } from 'lucide-react'
 
 import Badge from '@/components/Badge'
@@ -15,7 +14,7 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
 import Modal from '@/components/Modal'
-import { applyCushionLanguage, savePRAdditionalInfo } from '@/features/pullRequest/prApi'
+import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
@@ -41,11 +40,6 @@ const PRCreateStep3 = ({
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
 
-  // 쿠션어 모달 상태 관리
-  const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
-  const [originalContent, setOriginalContent] = useState('')
-  const [cushionedContent, setCushionedContent] = useState('')
-  const [isCushionLoading, setIsCushionLoading] = useState(false)
 
   // 템플릿 정의
   const templates = [
@@ -115,39 +109,6 @@ close #이슈번호
     }
   }
 
-  // 쿠션어 적용 처리
-  const handleApplyCushion = async () => {
-    if (!prBody.trim()) return
-
-    setOriginalContent(prBody)
-    setIsCushionModalOpen(true)
-    setIsCushionLoading(true)
-    setCushionedContent('')
-
-    try {
-      const response = await applyCushionLanguage(prBody)
-
-      if (response?.result) {
-        setCushionedContent(response.result)
-      }
-    } catch (error) {
-      console.error('쿠션어 적용 실패:', error)
-      setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
-    } finally {
-      setIsCushionLoading(false)
-    }
-  }
-
-  // 쿠션어 적용 확정
-  const handleApplyCushionConfirm = () => {
-    setPrBody(cushionedContent)
-    setIsCushionModalOpen(false)
-  }
-
-  // 쿠션어 적용 취소
-  const handleApplyCushionCancel = () => {
-    setIsCushionModalOpen(false)
-  }
 
   // 다음 버튼 활성화 조건 확인
   const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
@@ -302,12 +263,6 @@ close #이슈번호
                         { value: 'remove', label: '템플릿 제거' },
                       ]}
                     />
-                    <div className="-mt-[4px]">
-                      <Button size="sm" onClick={handleApplyCushion} disabled={!prBody.trim()}>
-                        <MessageSquare className="w-4 h-4 mr-1" />
-                        쿠션어 적용
-                      </Button>
-                    </div>
                   </div>
                 </div>
                 <div className="flex-1 min-h-0">
@@ -434,64 +389,6 @@ close #이슈번호
         </div>
       </div>
 
-      {/* 쿠션어 적용 모달 */}
-      <Modal
-        isOpen={isCushionModalOpen}
-        onClose={handleApplyCushionCancel}
-        title="쿠션어 적용 결과"
-        size="lg"
-        footer={
-          <>
-            <Button variant="secondary" onClick={handleApplyCushionCancel}>
-              취소
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleApplyCushionConfirm}
-              disabled={isCushionLoading || !cushionedContent}
-            >
-              적용
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-6">
-          {/* 원본 내용 */}
-          <div>
-            <h4 className="font-medium mb-3 theme-text flex items-center gap-2">
-              <FileText className="w-4 h-4 text-orange-500" />
-              원본 내용
-            </h4>
-            <Box className="max-h-64 overflow-y-auto p-4 theme-bg-tertiary">
-              <pre className="whitespace-pre-wrap text-sm theme-text leading-relaxed">
-                {originalContent}
-              </pre>
-            </Box>
-          </div>
-
-          {/* 쿠션어 적용 결과 */}
-          <div>
-            <h4 className="font-medium mb-3 theme-text flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-500" />
-              쿠션어 적용 결과
-            </h4>
-            <Box className="max-h-64 overflow-y-auto p-4 theme-bg-tertiary">
-              {isCushionLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-center">
-                    <Settings className="w-8 h-8 animate-spin text-orange-500 mb-2 mx-auto" />
-                    <div className="text-sm theme-text-secondary">부드러운 표현으로 변환 중...</div>
-                  </div>
-                </div>
-              ) : (
-                <pre className="whitespace-pre-wrap text-sm theme-text leading-relaxed">
-                  {cushionedContent}
-                </pre>
-              )}
-            </Box>
-          </div>
-        </div>
-      </Modal>
     </div>
   )
 }
