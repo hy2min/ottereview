@@ -14,10 +14,10 @@ const RepositoryDetail = () => {
   const { repoId } = useParams()
   const navigate = useNavigate()
 
-  // repoId가 숫자가 아니면 404로 리다이렉트
+  // repoId가 숫자가 아니면 notfound로 리다이렉트
   useEffect(() => {
     if (isNaN(Number(repoId))) {
-      navigate('/404', { replace: true })
+      navigate('/notfound', { replace: true })
       return
     }
   }, [repoId, navigate])

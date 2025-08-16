@@ -15,6 +15,7 @@ export const protectedRoutes = [
   { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
   { path: '/install-complete', element: <InstallComplete />, title: 'Ottereview 설치' },
   { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
+  { path: '/notfound', element: <NotFound />, title: '페이지를 찾을 수 없음' },
   { path: '/:repoId/pr/:prId/review', element: <PRreview />, title: 'PR 리뷰' },
   { path: '/:repoId/pr/:prId/conflict', element: <Conflict />, title: '충돌 해결' },
   { path: '/:repoId/pr/create', element: <PRCreate />, title: 'PR 생성' },
