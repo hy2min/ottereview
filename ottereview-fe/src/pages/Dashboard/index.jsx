@@ -96,14 +96,6 @@ const Dashboard = () => {
     fetchData()
   }, [user?.id])
 
-  const handleTest = async () => {
-    try {
-      const res = await api.post(`/api/meetings/1/join`)
-      console.log('응답: ', res.data)
-    } catch (err) {
-      console.error('요청 실패: ', err)
-    }
-  }
 
   // user 객체 구조 확인을 위한 console.log
   console.log('User 객체:', user)
@@ -142,16 +134,9 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <button
-            onClick={handleTest}
-            className="theme-btn text-xs px-2 py-1 absolute top-2 right-2"
-            title="API 응답 테스트"
-          >
-            응답테스트
-          </button>
         </Box>
 
-        <div className="xl:w-1/2">
+        <div className="lg:w-1/2">
           <ChatRoomList />
         </div>
       </div>

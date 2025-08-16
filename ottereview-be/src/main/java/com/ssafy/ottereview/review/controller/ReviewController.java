@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.review.controller;
 
 import com.ssafy.ottereview.common.annotation.MvcController;
+import com.ssafy.ottereview.review.dto.ReviewDetailResponse;
 import com.ssafy.ottereview.review.dto.ReviewRequest;
 import com.ssafy.ottereview.review.dto.ReviewResponse;
 import com.ssafy.ottereview.review.service.ReviewService;
@@ -90,13 +91,13 @@ public class ReviewController {
 //    }
 
     @GetMapping
-    public ResponseEntity<List<ReviewResponse>> getReviewsByPullRequest(
+    public ResponseEntity<List<ReviewDetailResponse>> getReviewsByPullRequest(
             @PathVariable("account-id") Long accountId,
             @PathVariable("repo-id") Long repoId,
             @PathVariable("pr-id") Long prId) {
 
         try {
-            List<ReviewResponse> reviews = reviewService.getReviewsByPullRequest(accountId, repoId,
+            List<ReviewDetailResponse> reviews = reviewService.getReviewsByPullRequest(accountId, repoId,
                     prId);
             return ResponseEntity.ok(reviews);
         } catch (Exception e) {
