@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Rocket } from 'lucide-react'
+import { FileText, Rocket, Settings } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -18,10 +19,14 @@ const PRCreateStep5 = ({
   aiSummary,
 }) => {
   const navigate = useNavigate()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
 
 
   const handleSubmit = async () => {
+    if (isSubmitting) return // 중복 실행 방지
+
+    setIsSubmitting(true)
     try {
       const submitData = {
         source: validationBranches.source,
@@ -43,6 +48,8 @@ const PRCreateStep5 = ({
     } catch (err) {
       console.error(err)
       alert('제출 실패')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -63,7 +70,7 @@ const PRCreateStep5 = ({
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-1">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <FileText className="w-5 h-5 text-orange-500" />
                   <span className="font-semibold theme-text">PR 제목</span>
@@ -71,7 +78,7 @@ const PRCreateStep5 = ({
                 <p className="theme-text-secondary pl-6">{prTitle || '설정되지 않음'}</p>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-2">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">🔄</span>
                   <span className="font-semibold theme-text">브랜치 정보</span>
@@ -85,7 +92,7 @@ const PRCreateStep5 = ({
                 </div>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-3">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-lg">👥</span>
                   <span className="font-semibold theme-text">리뷰어</span>
@@ -107,7 +114,7 @@ const PRCreateStep5 = ({
             </div>
             
             <div className="space-y-4">
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-4">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-lg">📜</span>
                   <span className="font-semibold theme-text">PR 설명</span>
@@ -117,7 +124,7 @@ const PRCreateStep5 = ({
                 </div>
               </div>
               
-              <div className="p-4 rounded-lg glass-effect animate-fade-in-up stagger-5">
+              <div className="p-4 rounded-lg glass-effect">
                 <div className="flex items-center space-x-2 mb-3">
                   <span className="text-lg">🤖</span>
                   <span className="font-semibold theme-text">AI 요약</span>
@@ -130,7 +137,7 @@ const PRCreateStep5 = ({
           </div>
         </div>
       </Box>
-      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+      <div className="mx-auto z-10 animate-fade-in-up">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
@@ -148,11 +155,21 @@ const PRCreateStep5 = ({
           <Button 
             onClick={handleSubmit} 
             variant="primary"
-            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-8 py-3 shadow-lg"
+            disabled={isSubmitting}
+            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-8 py-3 shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
           >
             <span className="flex items-center space-x-2">
-              <Rocket className="w-4 h-4" />
-              <span>PR 생성 완료</span>
+              {isSubmitting ? (
+                <>
+                  <Settings className="w-4 h-4 animate-spin" />
+                  <span>PR 생성 중...</span>
+                </>
+              ) : (
+                <>
+                  <Rocket className="w-4 h-4" />
+                  <span>PR 생성 완료</span>
+                </>
+              )}
             </span>
           </Button>
         </div>

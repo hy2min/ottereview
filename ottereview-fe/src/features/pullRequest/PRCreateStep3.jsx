@@ -185,7 +185,7 @@ close #이슈번호
         >
           <Box shadow className="flex flex-col h-full premium-card">
             <div className="flex flex-col h-full mt-2">
-              <div className="relative space-y-3 mb-4 animate-fade-in-up animate-delay-200">
+              <div className="relative space-y-3 mb-4">
                 <div className="flex items-center justify-between">
                   <label
                     htmlFor="aiTitle"
@@ -281,7 +281,7 @@ close #이슈번호
 
         {/* 오른쪽 박스 */}
         {showPriorities && (
-          <div className="w-full md:w-1/3 md:order-2 animate-slide-in-right animate-delay-200">
+          <div className="w-full md:w-1/3 md:order-2 animate-slide-in-right">
             <Box shadow className="h-[480px] flex flex-col premium-card">
               <div className="font-semibold text-lg mt-3 mb-4 theme-text flex items-center space-x-2">
                 <TrendingUp className="w-5 h-5 text-orange-500" />
@@ -291,7 +291,7 @@ close #이슈번호
                 {slots.map((priority, index) => (
                   <Box
                     key={index}
-                    className={`p-4 glass-effect hover:scale-[1.02] transition-all duration-300 animate-fade-in-up stagger-${index + 1}`}
+                    className={`p-4 glass-effect hover:scale-[1.02] transition-all duration-300`}
                   >
                     {priority ? (
                       <div className="space-y-3 min-h-24">
@@ -326,7 +326,7 @@ close #이슈번호
         )}
       </div>
 
-      <Box shadow className="premium-card animate-fade-in-up animate-delay-300">
+      <Box shadow className="premium-card animate-fade-in-up">
         <div className="mb-4">
           <h3 className="text-lg font-semibold theme-text flex items-center space-x-2">
             <FileText className="w-5 h-5 text-orange-500" />
@@ -345,7 +345,7 @@ close #이슈번호
           commentMode="description"
         />
       </Box>
-      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+      <div className="mx-auto z-10 animate-fade-in-up">
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
