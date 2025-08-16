@@ -16,7 +16,6 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
 
     // 기존 연결이 있으면 먼저 종료
     if (eventSourceRef.current) {
-      console.log('🔌 기존 Push SSE 연결 해제')
       eventSourceRef.current.close()
       eventSourceRef.current = null
     }
@@ -55,7 +54,6 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
         } else {
           console.log('❌ onPushEvent 콜백이 없음')
         }
-        console.log('푸시데이터 : ', pushData)
       } catch (error) {
         console.error('푸시 이벤트 파싱 오류:', error)
       }
@@ -64,7 +62,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
     // update 이벤트 처리
     eventSource.addEventListener('update', (event) => {
       console.log('🔄 업데이트 이벤트 (전역):', event.data)
-      
+
       if (onUpdateEvent) {
         onUpdateEvent(event.data)
       }
@@ -73,7 +71,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
     eventSource.onopen = () => {
       console.log('🔌 SSE 연결 성공')
     }
-    
+
     eventSource.onerror = (error) => {
       console.error('❌ SSE 오류:', error)
     }

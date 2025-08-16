@@ -2,12 +2,12 @@ import '@/styles/Loader.css'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 
-import f1 from '@/assets/1.png' // 이동 기본 포즈
-import f2 from '@/assets/2.png' // 줍는 포즈
-import f3 from '@/assets/3.png' // 들고 일어남
-import f4 from '@/assets/4.png' // 들고 이동 준비
-import f5 from '@/assets/5.png' // 행복(중간 피드백)
-import f6 from '@/assets/6.png' // 만세(완료)
+import f1 from '@/assets/otter_1.png' // 이동 기본 포즈
+import f2 from '@/assets/otter_2.png' // 줍는 포즈
+import f3 from '@/assets/otter_3.png' // 들고 일어남
+import f4 from '@/assets/otter_4.png' // 들고 이동 준비
+import f5 from '@/assets/otter_5.png' // 행복(중간 피드백)
+import f6 from '@/assets/otter_6.png' // 만세(완료)
 // 이미지 임포트
 import shellsRow from '@/assets/shells_row.png'
 
