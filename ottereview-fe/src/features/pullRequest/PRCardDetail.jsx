@@ -38,7 +38,6 @@ const PRCardDetail = ({ pr }) => {
   const mergeable = pr.mergeable
   const state = pr.state
 
-  const approveCnt = pr.approveCnt ?? 0
   const reviewCommentCnt = pr.reviewCommentCnt ?? 0
   const changedFilesCnt = pr.changedFilesCnt ?? 0
 
@@ -114,11 +113,11 @@ const PRCardDetail = ({ pr }) => {
 
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-4 text-sm">
-            <Badge variant="sky">
+            <Badge variant="primary">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{headBranch}</span>
-                <ArrowRight className="w-4 h-4 theme-text-muted" />
+                <ArrowRight className="w-4 h-4 text-gray-800" />
                 <span>{baseBranch}</span>
               </div>
             </Badge>
@@ -128,12 +127,6 @@ const PRCardDetail = ({ pr }) => {
               <div className="flex items-center space-x-1">
                 <div className="w-2 h-2 bg-red-500 rounded-full" />
                 <span className="text-xs theme-text-secondary">{mergeable ? '병합 가능' : '병합 검토'}</span>
-              </div>
-              
-              {/* 승인 - Green */}
-              <div className="flex items-center space-x-1">
-                <CheckCircle className="w-3 h-3 text-green-500" />
-                <span className="text-xs theme-text-secondary">승인 {approveCnt}</span>
               </div>
               
               {/* 리뷰 - Yellow */}
@@ -184,7 +177,7 @@ const PRCardDetail = ({ pr }) => {
                       size="sm" 
                       onClick={handleIsMergable}
                       disabled={!isApproved}
-                      title={!isApproved ? "승인이 필요합니다" : ""}
+                      title={!isApproved ? "모든 리뷰어의 승인이 필요합니다" : ""}
                     >
                       <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
                       머지
