@@ -26,7 +26,7 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         String roomId = extractRoomId(session);
-        log.info("YJS WebSocket 연결됨 - roomId: {}, sessionId: {}", roomId, session.getId());
+        log.debug("YJS WebSocket 연결됨 - roomId: {}, sessionId: {}", roomId, session.getId());
 
         // 해당 방에 세션 추가
         roomSessions.computeIfAbsent(roomId, k -> ConcurrentHashMap.newKeySet()).add(session);
@@ -88,12 +88,12 @@ public class YjsWebSocketHandler extends BinaryWebSocketHandler {
                 sessions.remove(session);
                 if (sessions.isEmpty()) {
                     roomSessions.remove(roomId);
-                    log.info("roomId {}의 모든 세션 종료, 방 제거", roomId);
+                    log.debug("roomId {}의 모든 세션 종료, 방 제거", roomId);
                 }
             }
         }
 
-        log.info("YJS WebSocket 연결 종료 - sessionId: {}, status: {}", session.getId(), status);
+        log.debug("YJS WebSocket 연결 종료 - sessionId: {}, status: {}", session.getId(), status);
     }
 
     @Override

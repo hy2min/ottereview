@@ -296,7 +296,7 @@ public class MergeService {
             Long installationId
     ) throws Exception {
         Path tempPath = createServiceTempDirectory();
-        log.info("임시 디렉터리 생성: {}", tempPath);
+        log.debug("임시 디렉터리 생성: {}", tempPath);
         try {
             // 1. clone repo
             Git git = cloneRepository(repoUrl, tempPath.toString(), installationId);
@@ -368,7 +368,7 @@ public class MergeService {
     private void ensureOrigin(Git git, String repoUrl) throws Exception {
         StoredConfig cfg = git.getRepository().getConfig();
         if (cfg.getString("remote", "origin", "url") == null) {
-            log.info("임시로 생성한다");
+            log.debug("임시로 생성한다");
             git.remoteAdd()
                     .setName("origin")
                     .setUri(new URIish(repoUrl))
@@ -447,7 +447,7 @@ public class MergeService {
                 // github에서 가져온 pullRequest 객체로 삭제한다.
                 ghPullRequest.merge("Merge PR #" + pullRequest.getGithubPrNumber() + " " + pullRequest.getHead() + " -> " + pullRequest.getBase());
                 
-                log.info("Merge PR #" + pullRequest.getGithubPrNumber() + " " + pullRequest.getHead() + " -> " + pullRequest.getBase());
+                log.debug("Merge PR #" + pullRequest.getGithubPrNumber() + " " + pullRequest.getHead() + " -> " + pullRequest.getBase());
                 
                 // pullRequest 속성값 업데이트해서 merged로 바꾸기
                 pullRequest.updateState(PrState.MERGED);
