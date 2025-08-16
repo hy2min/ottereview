@@ -191,9 +191,9 @@ const PRReview = () => {
       // 리뷰 데이터만 새로 받아오기
       try {
         const updatedReviews = await fetchReviews(prDetail?.repo.accountId, repoId, prId)
-        setPrDetail(prev => ({
+        setPrDetail((prev) => ({
           ...prev,
-          reviews: updatedReviews
+          reviews: updatedReviews,
         }))
       } catch (err) {
         console.error('리뷰 데이터 새로고침 실패:', err)
@@ -277,11 +277,11 @@ const PRReview = () => {
     try {
       const data = await doMerge({ repoId, prId })
       console.log('머지 성공:', data)
-      
+
       // PR 데이터 새로고침
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
-      
+
       alert('PR이 성공적으로 머지되었습니다!')
     } catch (err) {
       console.error('❌ 머지 실패:', err)
@@ -321,9 +321,9 @@ const PRReview = () => {
   const handleDataRefresh = async () => {
     try {
       const updatedReviews = await fetchReviews(prDetail?.repo.accountId, repoId, prId)
-      setPrDetail(prev => ({
+      setPrDetail((prev) => ({
         ...prev,
-        reviews: updatedReviews
+        reviews: updatedReviews,
       }))
     } catch (err) {
       console.error('리뷰 데이터 새로고침 실패:', err)
@@ -422,7 +422,7 @@ const PRReview = () => {
     if (!prDetail?.reviewers || prDetail.reviewers.length === 0) {
       return false // 리뷰어가 없으면 승인된 것으로 간주하지 않음
     }
-    return prDetail.reviewers.every(reviewer => reviewer.state === 'APPROVED')
+    return prDetail.reviewers.every((reviewer) => reviewer.state === 'APPROVED')
   }
 
   return (
@@ -454,7 +454,8 @@ const PRReview = () => {
                 {/* 머지 버튼 */}
                 {(() => {
                   // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
-                  const effectiveMergeable = apiMergeable !== null ? apiMergeable : prDetail.mergeable
+                  const effectiveMergeable =
+                    apiMergeable !== null ? apiMergeable : prDetail.mergeable
                   const isApproved = isAllReviewersApproved()
 
                   if (!effectiveMergeable) {
@@ -472,9 +473,9 @@ const PRReview = () => {
                     // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                     return (
                       <div className="relative group">
-                        <Button 
-                          variant="primary" 
-                          size="sm" 
+                        <Button
+                          variant="primary"
+                          size="sm"
                           onClick={handleIsMergable}
                           disabled={!isApproved}
                         >
@@ -491,7 +492,7 @@ const PRReview = () => {
                     )
                   }
                 })()}
-                
+
                 {/* PR 닫기 버튼 */}
                 <Button
                   variant="danger"
@@ -504,7 +505,7 @@ const PRReview = () => {
                 </Button>
               </>
             )}
-            
+
             {prDetail.state === 'CLOSED' && (
               <Button
                 variant="success"
@@ -518,7 +519,7 @@ const PRReview = () => {
             )}
           </div>
         </div>
-        
+
         {/* PR 제목과 내용 */}
         <div className="space-y-3">
           <h1 className="text-xl md:text-2xl font-bold theme-text leading-tight">
@@ -591,7 +592,7 @@ const PRReview = () => {
                             text: '승인',
                             bgColor: 'bg-green-50 dark:bg-green-900',
                             textColor: 'text-green-700 dark:text-green-300',
-                            borderColor: 'border-green-200 dark:border-green-700'
+                            borderColor: 'border-green-200 dark:border-green-700',
                           }
                         case 'CHANGES_REQUESTED':
                           return {
@@ -599,7 +600,7 @@ const PRReview = () => {
                             text: '변경요청',
                             bgColor: 'bg-red-50 dark:bg-red-900',
                             textColor: 'text-red-700 dark:text-red-300',
-                            borderColor: 'border-red-200 dark:border-red-700'
+                            borderColor: 'border-red-200 dark:border-red-700',
                           }
                         case 'NONE':
                         default:
@@ -608,7 +609,7 @@ const PRReview = () => {
                             text: '대기중',
                             bgColor: 'bg-orange-50 dark:bg-orange-900',
                             textColor: 'text-orange-700 dark:text-orange-300',
-                            borderColor: 'border-orange-200 dark:border-orange-700'
+                            borderColor: 'border-orange-200 dark:border-orange-700',
                           }
                       }
                     }
@@ -649,71 +650,75 @@ const PRReview = () => {
           <h3 className="font-medium theme-text">우선순위</h3>
         </div>
         {prDetail.priorities && prDetail.priorities.length > 0 ? (
-          <div className="flex gap-3 xl:grid xl:grid-cols-3 overflow-x-auto xl:overflow-x-visible">
+          <div className="flex gap-3 overflow-x-auto pb-2">
             {prDetail.priorities.slice(0, 3).map((priority, index) => {
-            const getPriorityIcon = (level) => {
-              switch (level?.toLowerCase()) {
-                case 'high':
-                case '높음':
-                  return <AlertCircle className="w-4 h-4 text-red-500" />
-                case 'medium':
-                case '보통':
-                  return <AlertTriangle className="w-4 h-4 text-yellow-500" />
-                case 'low':
-                case '낮음':
-                  return <Info className="w-4 h-4 text-blue-500" />
-                default:
-                  return <Info className="w-4 h-4 text-gray-500" />
+              const getPriorityIcon = (level) => {
+                switch (level?.toLowerCase()) {
+                  case 'high':
+                  case '높음':
+                    return <AlertCircle className="w-4 h-4 text-red-500" />
+                  case 'medium':
+                  case '보통':
+                    return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+                  case 'low':
+                  case '낮음':
+                    return <Info className="w-4 h-4 text-blue-500" />
+                  default:
+                    return <Info className="w-4 h-4 text-gray-500" />
+                }
               }
-            }
 
-            const getPriorityBadgeStyle = (level, isSelected) => {
-              const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
-              switch (level?.toLowerCase()) {
-                case 'high':
-                case '높음':
-                  return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
-                case 'medium':
-                case '보통':
-                  return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
-                case 'low':
-                case '낮음':
-                  return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
-                default:
-                  return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
+              const getPriorityBadgeStyle = (level, isSelected) => {
+                const baseStyle = isSelected ? 'ring-2 ring-orange-500 dark:ring-orange-400' : ''
+                switch (level?.toLowerCase()) {
+                  case 'high':
+                  case '높음':
+                    return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
+                  case 'medium':
+                  case '보통':
+                    return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
+                  case 'low':
+                  case '낮음':
+                    return `bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800 cursor-pointer ${baseStyle}`
+                  default:
+                    return `bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer ${baseStyle}`
+                }
               }
-            }
 
-            const relatedFilesCount = priority.related_files?.length || 0
-            const isSelected = selectedPriorityIndex === index
+              const relatedFilesCount = priority.related_files?.length || 0
+              const isSelected = selectedPriorityIndex === index
 
               return (
-                <div key={index} className="flex-1 min-w-80 xl:w-auto xl:flex-initial">
+                <div key={index} className="flex-shrink-0 w-83.5">
                   <div
-                    className={`flex flex-col gap-2 p-3 rounded-lg border transition-all h-32 shadow-sm ${getPriorityBadgeStyle(priority.level, isSelected)}`}
+                    className={`flex flex-col gap-2 p-3 rounded-lg border transition-all h-48 shadow-sm ${getPriorityBadgeStyle(priority.level, isSelected)}`}
                     onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}
                   >
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {getPriorityIcon(priority.level)}
-                      <h4 className="font-medium text-sm truncate">{priority.title}</h4>
-                      <Badge
-                        variant={
-                          priority.level?.toLowerCase() === 'high' || priority.level === '높음'
-                            ? 'danger'
-                            : priority.level?.toLowerCase() === 'medium' ||
-                                priority.level === '보통'
-                              ? 'warning'
-                              : 'default'
-                        }
-                        size="xs"
-                      >
-                        {priority.level}
-                      </Badge>
-                      {relatedFilesCount > 0 && (
-                        <Badge variant="sky" size="xs">
-                          파일 {relatedFilesCount}개
+                    <div className="flex-shrink-0 space-y-2">
+                      <div className="flex items-center gap-2">
+                        {getPriorityIcon(priority.level)}
+                        <h4 className="font-medium text-sm">{priority.title}</h4>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge
+                          variant={
+                            priority.level?.toLowerCase() === 'high' || priority.level === '높음'
+                              ? 'danger'
+                              : priority.level?.toLowerCase() === 'medium' ||
+                                  priority.level === '보통'
+                                ? 'warning'
+                                : 'default'
+                          }
+                          size="xs"
+                        >
+                          {priority.level}
                         </Badge>
-                      )}
+                        {relatedFilesCount > 0 && (
+                          <Badge variant="sky" size="xs">
+                            파일 {relatedFilesCount}개
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
@@ -745,7 +750,6 @@ const PRReview = () => {
           </div>
         )}
       </Box>
-
 
       <Box shadow className="p-3">
         <div className="relative">
