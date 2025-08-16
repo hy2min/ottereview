@@ -44,7 +44,6 @@ public class DescriptionServiceImpl implements DescriptionService {
     @Override
     @Transactional
     public DescriptionResponse createDescription(DescriptionCreateRequest request, Long userId, MultipartFile file) {
-        log.info("Description 생성 시작 - PullRequest: {}, User: {}", request.getPullRequestId(), userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
@@ -93,7 +92,7 @@ public class DescriptionServiceImpl implements DescriptionService {
         }
 
         Description savedDescription = descriptionRepository.save(description);
-        log.info("Description 생성 완료 - ID: {}", savedDescription.getId());
+        log.debug("Description 생성 완료 - ID: {}", savedDescription.getId());
 
         return createResponseWithVoiceUrl(savedDescription);
     }
@@ -101,7 +100,7 @@ public class DescriptionServiceImpl implements DescriptionService {
     @Override
     @Transactional(propagation = Propagation.MANDATORY)
     public List<DescriptionResponse> createDescriptionsBulk(DescriptionBulkCreateRequest request, Long userId, MultipartFile[] files) {
-        log.info("Description 일괄 생성 시작 - PullRequest: {}, User: {}, 설명 수: {}, 파일 수: {}",
+        log.debug("Description 일괄 생성 시작 - PullRequest: {}, User: {}, 설명 수: {}, 파일 수: {}",
                 request.getPullRequestId(), userId,
                 request.getDescriptions() != null ? request.getDescriptions()
                         .size() : 0,
@@ -110,7 +109,7 @@ public class DescriptionServiceImpl implements DescriptionService {
         // null이나 빈 리스트 처리
         if (request.getDescriptions() == null || request.getDescriptions()
                 .isEmpty()) {
-            log.info("Description 목록이 비어있음 - 빈 리스트 반환");
+            log.debug("Description 목록이 비어있음 - 빈 리스트 반환");
             return Collections.emptyList();
         }
 
@@ -176,7 +175,7 @@ public class DescriptionServiceImpl implements DescriptionService {
 
             // DB 저장
             List<Description> savedDescriptions = descriptionRepository.saveAll(descriptions);
-            log.info("Description 일괄 생성 완료 - 생성된 설명 수: {}", savedDescriptions.size());
+            log.debug("Description 일괄 생성 완료 - 생성된 설명 수: {}", savedDescriptions.size());
 
             return savedDescriptions.stream()
                     .map(DescriptionResponse::from)
@@ -215,7 +214,7 @@ public class DescriptionServiceImpl implements DescriptionService {
     @Override
     @Transactional
     public DescriptionResponse updateDescription(Long descriptionId, DescriptionUpdateRequest request, Long userId, MultipartFile file) {
-        log.info("Description 수정 시작 - ID: {}, User: {}", descriptionId, userId);
+        log.debug("Description 수정 시작 - ID: {}, User: {}", descriptionId, userId);
 
         Description description = descriptionRepository.findById(descriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Description not found: " + descriptionId));
@@ -252,14 +251,14 @@ public class DescriptionServiceImpl implements DescriptionService {
         description.updateBodyAndRecordKey(newBody, newRecordKey);
         Description savedDescription = descriptionRepository.save(description);
 
-        log.info("Description 수정 완료 - ID: {}", savedDescription.getId());
+        log.debug("Description 수정 완료 - ID: {}", savedDescription.getId());
         return createResponseWithVoiceUrl(savedDescription);
     }
 
     @Override
     @Transactional
     public void deleteDescription(Long descriptionId, Long userId) {
-        log.info("Description 삭제 시작 - ID: {}, User: {}", descriptionId, userId);
+        log.debug("Description 삭제 시작 - ID: {}, User: {}", descriptionId, userId);
 
         Description description = descriptionRepository.findById(descriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Description not found: " + descriptionId));
@@ -276,7 +275,7 @@ public class DescriptionServiceImpl implements DescriptionService {
         }
 
         descriptionRepository.delete(description);
-        log.info("Description 삭제 완료 - ID: {}", descriptionId);
+        log.debug("Description 삭제 완료 - ID: {}", descriptionId);
     }
 
     /**

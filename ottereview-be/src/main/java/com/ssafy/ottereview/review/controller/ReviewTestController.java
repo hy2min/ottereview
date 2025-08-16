@@ -156,7 +156,7 @@ public class ReviewTestController {
             // 4. 요청된 리뷰어 정보 가져오기
             result.put("requestedReviewers", getRequestedReviewersInfo(pullRequest));
 
-            log.info("Successfully retrieved review info for PR #{} in repo {}", prId,
+            log.debug("Successfully retrieved review info for PR #{} in repo {}", prId,
                     repoFullName);
             return ResponseEntity.ok(result);
 

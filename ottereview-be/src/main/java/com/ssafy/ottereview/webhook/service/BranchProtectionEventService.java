@@ -42,15 +42,15 @@ public class BranchProtectionEventService {
             log.debug("DTO로 받은 BranchProtection event: {}", formattedPayload);
             switch (event.getAction()) {
                 case "created":
-                    log.info("created event handler start");
+                    log.debug("created event handler start");
                     branchProtectionCreatedAndEdited(event);
                     break;
                 case "edited":
-                    log.info("edited event handler start");
+                    log.debug("edited event handler start");
                     branchProtectionCreatedAndEdited(event);
                     break;
                 case "deleted":
-                    log.info("deleted event handler start");
+                    log.debug("deleted event handler start");
                     branchProtectionDeleted(event);
                     break;
                 default:
@@ -74,7 +74,7 @@ public class BranchProtectionEventService {
             GHRepository ghRepository = gitHub.getRepository(repo.getFullName());
 
             for (Branch branch : branchList) {
-                log.info("branch 이름: {}", branch.getName());
+                log.debug("branch 이름: {}", branch.getName());
                 if (isMatchPattern(event.getRule().getName(), branch.getName())) {
                     GHBranchProtection protection = ghRepository.getBranch(branch.getName()).getProtection();
                     if (protection != null && protection.getRequiredReviews().getRequiredReviewers() >=1 ) {
@@ -87,7 +87,7 @@ public class BranchProtectionEventService {
                         branch.settingMinApproveCnt(0);
                         branchRepository.save(branch);
                     }
-                    log.info("최소 승인 인원수 : {}",
+                    log.debug("최소 승인 인원수 : {}",
                             event.getRule().getRequiredApprovingReviewCount());
                 }
             }
@@ -106,10 +106,10 @@ public class BranchProtectionEventService {
                     );
             List<Branch> branchList = branchRepository.findAllByRepo(repo);
             for (Branch branch : branchList) {
-                log.info("branch 이름: {}", branch.getName());
+                log.debug("branch 이름: {}", branch.getName());
                 if (isMatchPattern(event.getRule().getName(), branch.getName())) {
                     branch.settingMinApproveCnt(0);
-                    log.info("설정된 최소 승인 인원수가 사라졌습니다.");
+                    log.debug("설정된 최소 승인 인원수가 사라졌습니다.");
                     branchRepository.save(branch);
                 }
             }

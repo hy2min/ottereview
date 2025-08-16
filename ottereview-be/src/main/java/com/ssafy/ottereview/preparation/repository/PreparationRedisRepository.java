@@ -38,7 +38,7 @@ public class PreparationRedisRepository {
             redisTemplate.opsForValue()
                     .set(mainKey, jsonData, CACHE_TTL);
             
-            log.info("PR 준비 정보 저장 완료: {}", mainKey);
+            log.debug("PR 준비 정보 저장 완료: {}", mainKey);
             
         } catch (Exception e) {
             log.error("PR 준비 정보 저장 실패", e);
@@ -76,7 +76,7 @@ public class PreparationRedisRepository {
             redisTemplate.opsForValue()
                     .set(mainKey, updatedJsonData, CACHE_TTL);
             
-            log.info("PR 준비 정보 업데이트 완료: {}", mainKey);
+            log.debug("PR 준비 정보 업데이트 완료: {}", mainKey);
             
         } catch (Exception e) {
             log.error("PR 준비 정보 업데이트 실패", e);
@@ -94,7 +94,7 @@ public class PreparationRedisRepository {
             // 메인 데이터 삭제
             redisTemplate.delete(mainKey);
             
-            log.info("PR 준비 정보 삭제 완료: {}", mainKey);
+            log.debug("PR 준비 정보 삭제 완료: {}", mainKey);
         } catch (Exception e) {
             log.error("PR 준비 정보 삭제 실패", e);
         }
@@ -133,7 +133,7 @@ public class PreparationRedisRepository {
             // 파일 개수 저장
             redisTemplate.opsForValue().set(cacheKey + ":count", String.valueOf(mediaFiles.length), CACHE_TTL);
             
-            log.info("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", cacheKey, mediaFiles.length);
+            log.debug("미디어 파일 Redis 저장 완료 - Key: {}, 파일 수: {}", cacheKey, mediaFiles.length);
             
         } catch (Exception e) {
             log.error("미디어 파일 Redis 저장 실패 - Key: {}", cacheKey, e);
@@ -177,7 +177,7 @@ public class PreparationRedisRepository {
                 }
             }
             
-            log.info("미디어 파일 Redis 조회 완료 - Key: {}, 조회된 파일 수: {}", cacheKey, files.size());
+            log.debug("미디어 파일 Redis 조회 완료 - Key: {}, 조회된 파일 수: {}", cacheKey, files.size());
             
             return files.toArray(new MultipartFile[0]);
             
@@ -209,7 +209,7 @@ public class PreparationRedisRepository {
                 redisTemplate.delete(cacheKey + ":count");
             }
             
-            log.info("미디어 파일 정보 삭제 완료 - Key: {}", cacheKey);
+            log.debug("미디어 파일 정보 삭제 완료 - Key: {}", cacheKey);
             
         } catch (Exception e) {
             log.error("미디어 파일 정보 삭제 실패 - Key: {}", cacheKey, e);
