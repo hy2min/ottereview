@@ -159,6 +159,7 @@ public class PullRequestEventService {
         reviewerRepository.saveAll(reviewers);
 
         pullRequest.synchronizedByWebhook(event);
+        log.info("sync 온다~~~~~₩!!!!!!");
         eventSendController.push(event.getSender().getId(),"synchronize", "synchronize");
     }
     
