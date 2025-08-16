@@ -19,7 +19,7 @@ public interface ReviewerRepository extends JpaRepository<Reviewer, Long> {
     
     boolean existsByPullRequestAndUser(PullRequest pullRequest, User user);
 
-    Optional<Object> findByPullRequestAndUser(PullRequest pullRequest, User user);
+    Optional<Reviewer> findByPullRequestAndUser(PullRequest pullRequest, User user);
 
     List<Reviewer> findByPullRequest(PullRequest pullRequest);
 }

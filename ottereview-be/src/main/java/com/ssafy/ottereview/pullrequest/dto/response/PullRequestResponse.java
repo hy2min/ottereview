@@ -1,6 +1,7 @@
 package com.ssafy.ottereview.pullrequest.dto.response;
 
 import com.ssafy.ottereview.preparation.dto.PrUserInfo;
+import com.ssafy.ottereview.pullrequest.dto.info.MergeStatusResult;
 import com.ssafy.ottereview.pullrequest.entity.PullRequest;
 import com.ssafy.ottereview.repo.dto.RepoResponse;
 import java.time.LocalDateTime;
@@ -71,8 +72,8 @@ public class PullRequestResponse {
                 .author(PrUserInfo.fromEntity(pullRequest.getAuthor()))
                 .build();
     }
-
-    public static PullRequestResponse fromEntityAndIsApproved(PullRequest pullRequest, Boolean isApproved) {
+    
+    public static PullRequestResponse fromEntityAndMergeStatus(PullRequest pullRequest, MergeStatusResult mergeStatus) {
         return PullRequestResponse.builder()
                 .id(pullRequest.getId())
                 .githubPrNumber(pullRequest.getGithubPrNumber())
@@ -80,11 +81,11 @@ public class PullRequestResponse {
                 .title(pullRequest.getTitle())
                 .body(pullRequest.getBody())
                 .summary(pullRequest.getSummary())
-                .approveCnt(pullRequest.getApproveCnt())
+                .approveCnt(mergeStatus.getApprovedCount()) // 실시간 계산된 값 사용
                 .state(pullRequest.getState().toString())
                 .merged(pullRequest.getMerged())
                 .mergeable(pullRequest.getMergeable())
-                .isApproved(isApproved)
+                .isApproved(mergeStatus.isAllApproved())
                 .head(pullRequest.getHead())
                 .base(pullRequest.getBase())
                 .commitCnt(pullRequest.getCommitCnt())

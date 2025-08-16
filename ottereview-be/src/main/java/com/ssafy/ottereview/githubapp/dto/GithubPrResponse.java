@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHUser;
 
@@ -16,6 +17,7 @@ import org.kohsuke.github.GHUser;
 @NoArgsConstructor
 @Getter
 @Builder
+@Slf4j
 public class GithubPrResponse {
 
     private Long githubId;
@@ -43,7 +45,7 @@ public class GithubPrResponse {
     private URL patchUrl;
     private URL issueUrl;
     private URL diffUrl;
-
+    
     public static GithubPrResponse from(GHPullRequest ghPullRequest) {
         try {
             return GithubPrResponse.builder()
@@ -59,7 +61,7 @@ public class GithubPrResponse {
                     .merged(ghPullRequest.isMerged())
                     .base(ghPullRequest.getBase().getRef())
                     .head(ghPullRequest.getHead().getRef())
-                    .mergeable(ghPullRequest.getMergeable())
+                    .mergeable(ghPullRequest.getMergeable() == null || ghPullRequest.getMergeable())
                     .githubCreatedAt(convertToLocalDateTime(ghPullRequest.getCreatedAt()))
                     .githubUpdatedAt(convertToLocalDateTime(ghPullRequest.getUpdatedAt()))
                     .commitCnt(ghPullRequest.getCommits())
@@ -83,13 +85,11 @@ public class GithubPrResponse {
         }
         try {
             // GitHub API는 java.util.Date를 반환
-            if (dateObj instanceof java.util.Date) {
-                java.util.Date date = (java.util.Date) dateObj;
-                return date.toInstant()
-                        .atZone(ZoneId.of("Asia/Seoul"))
-                        .toLocalDateTime();
+            if (dateObj instanceof java.time.Instant) {
+                java.time.Instant date = (java.time.Instant) dateObj;
+                return date.atZone(ZoneId.of("Asia/Seoul")).toLocalDateTime();
             }
-
+            
             // 만약 다른 타입이라면 toString()으로 파싱 시도
             String dateStr = dateObj.toString();
             return LocalDateTime.parse(dateStr.replace("Z", ""));
