@@ -21,7 +21,6 @@ const ChatRoomList = () => {
       try {
         const fetchedRooms = await fetchChat(accessToken)
         setRooms(fetchedRooms)
-        console.log(fetchedRooms)
       } catch (err) {
         console.error('채팅방 목록 로딩 실패: ', err)
       }

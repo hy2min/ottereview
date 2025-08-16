@@ -9,6 +9,7 @@ import PRList from '@/features/pullRequest/PRList'
 import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryList from '@/features/repository/RepositoryList'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
+import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import { useUserStore } from '@/store/userStore'
 
@@ -68,34 +69,22 @@ const Dashboard = () => {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  // Dashboard 전용 update 이벤트 (레포지토리 업데이트)
-  useEffect(() => {
-    if (!user?.id || !accessToken) return
-
-    const updateEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
-    )
-
-    updateEventSource.addEventListener('update', (event) => {
-      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard):', event.data)
+  // 통합 SSE 훅으로 update 이벤트 처리
+  useSSE(
+    true, // shouldConnect
+    null, // onPushEvent (전역에서 처리)
+    () => {
+      // onUpdateEvent - 레포지토리 업데이트 시 데이터 새로고침
+      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard)')
       fetchData()
-    })
-
-    updateEventSource.onopen = () => console.log('🔌 Update SSE 연결 성공 (Dashboard)')
-    updateEventSource.onerror = (error) => console.error('❌ Update SSE 오류:', error)
-
-    return () => {
-      console.log('🔌 Update SSE 연결 해제 (Dashboard)')
-      updateEventSource.close()
     }
-  }, [user?.id, accessToken])
+  )
 
   // 초기 데이터 로드
   useEffect(() => {
     if (!user?.id) return
     fetchData()
   }, [user?.id])
-
 
   // user 객체 구조 확인을 위한 console.log
   console.log('User 객체:', user)
@@ -104,8 +93,8 @@ const Dashboard = () => {
   return (
     <div className="pt-2 space-y-8">
       {/* 환영 메시지와 채팅방 목록 */}
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
-        <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        <Box shadow className="lg:w-1/2 min-h-32 flex-col space-y-3 relative">
           <div className="flex items-center gap-4">
             {/* GitHub Profile Image */}
             <div className="relative">
@@ -125,18 +114,17 @@ const Dashboard = () => {
 
             {/* Welcome Message */}
             <div className="flex-1">
-              <h1 className="text-2xl xl:text-3xl theme-text font-bold">
+              <h1 className="text-2xl lg:text-3xl theme-text font-bold">
                 안녕하세요, {user?.githubUsername}님!
               </h1>
-              <p className="theme-text-secondary text-base xl:text-lg">
+              <p className="theme-text-secondary text-base lg:text-lg">
                 효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
               </p>
             </div>
           </div>
-
         </Box>
 
-        <div className="lg:w-1/2">
+        <div className="flex-1 lg:w-1/2">
           <ChatRoomList />
         </div>
       </div>
