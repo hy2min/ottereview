@@ -1,4 +1,5 @@
 import 'tldraw/tldraw.css'
+import '@/styles/Whiteboard.css'
 
 import randomColor from 'randomcolor'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -101,7 +102,7 @@ const Whiteboard = ({ roomId }) => {
   }, [store])
 
   return (
-    <div style={{ height: '100vh', width: '100%' }}>
+    <div className="tl-container" style={{ height: '100vh', width: '100%' }}>
       <Tldraw store={store} onMount={onMount} showUi={!loading} autofocus />
     </div>
   )

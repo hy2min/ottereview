@@ -35,7 +35,7 @@ const InputBox = ({
               onChange={(val) => onChange({ target: { value: val || '' } })}
               data-color-mode={theme === 'dark' ? 'dark' : 'light'}
               height="100%"
-              visibleDragBar={false}
+              hideToolbar={false}
               preview="edit"
               className="!border-2 !rounded-[8px] !shadow-none [&_.w-md-editor-toolbar]:!bg-transparent theme-border"
             />

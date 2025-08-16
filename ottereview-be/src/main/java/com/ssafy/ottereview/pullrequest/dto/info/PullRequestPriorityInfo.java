@@ -39,6 +39,7 @@ public class PullRequestPriorityInfo {
                 .level(priority.getLevel())
                 .title(priority.getTitle())
                 .content(priority.getContent())
+                .relatedFiles(relatedFiles)
                 .build();
     }
 }

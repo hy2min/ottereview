@@ -1,9 +1,19 @@
 import React, { useState } from 'react'
+import {
+  Bot,
+  Sparkles,
+  Eye,
+  EyeOff,
+  TrendingUp,
+  FileText,
+  Settings,
+} from 'lucide-react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
+import Modal from '@/components/Modal'
 import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
@@ -26,9 +36,10 @@ const PRCreateStep3 = ({
 }) => {
   // 쿠키로 우선순위 표시 상태 관리
   const [showPriorities, setShowPriorities] = useCookieState('showPriorities', true)
-  
+
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
+
 
   // 템플릿 정의
   const templates = [
@@ -98,15 +109,16 @@ close #이슈번호
     }
   }
 
+
   // 다음 버튼 활성화 조건 확인
   const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
-  
+
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
     const missingFields = []
     if (prTitle.trim() === '') missingFields.push('제목')
     if (prBody.trim() === '') missingFields.push('설명')
-    
+
     if (missingFields.length === 0) return ''
     return `${missingFields.join(', ')}을(를) 입력해주세요`
   }
@@ -137,6 +149,7 @@ close #이슈번호
         level: priority.priority_level,
         title: priority.title,
         content: priority.reason,
+        related_files: priority.related_files || [],
       }))
 
       // 전체 추가 정보 구성
@@ -159,43 +172,74 @@ close #이슈번호
   }
 
   return (
-    <div className="flex flex-col w-full space-y-3">
-      <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:gap-4">
+    <div className="flex flex-col w-full space-y-6 animate-slide-in-right">
+      <div className="text-center mb-6 animate-fade-in-up">
+        <h2 className="text-2xl font-semibold theme-text mb-2">PR 정보 입력</h2>
+        <p className="theme-text-secondary">제목과 설명을 작성하고 코드 리뷰를 진행해보세요</p>
+      </div>
+
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:gap-6">
         {/* 왼쪽 박스 */}
-        <div className={`w-full ${showPriorities ? 'md:w-2/3 md:order-1' : 'md:w-full'}`}>
-          <Box shadow className="flex flex-col h-full">
+        <div
+          className={`w-full ${showPriorities ? 'md:w-2/3 md:order-1' : 'md:w-full'} animate-slide-in-left`}
+        >
+          <Box shadow className="flex flex-col h-full premium-card">
             <div className="flex flex-col h-full mt-2">
-              <div className="relative space-y-1 mb-2">
-                <div className="flex items-center space-x-2">
-                  <label htmlFor="aiTitle" className="block font-medium">
-                    AI 추천 제목
+              <div className="relative space-y-3 mb-4 animate-fade-in-up animate-delay-200">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="aiTitle"
+                    className="block font-semibold text-lg theme-text flex items-center space-x-2"
+                  >
+                    <Bot className="w-5 h-5 text-orange-500" />
+                    <span>AI 추천 제목</span>
                   </label>
-                  <div className="-mt-[16px]">
+                  <div className="flex items-center space-x-2">
                     <Button
                       size="sm"
                       onClick={handleApplyAiTitle}
                       disabled={isAiTitleLoading || isAiTitleError}
+                      className="btn-interactive transform transition-all duration-300 hover:scale-105"
                     >
-                      적용
+                      <span className="flex items-center space-x-1">
+                        <Sparkles className="w-4 h-4" />
+                        <span>적용</span>
+                      </span>
                     </Button>
-                  </div>
-                  <div className="ml-auto -mt-[16px]">
-                    <Button size="sm" onClick={handleTogglePriorities}>
-                      {showPriorities ? '우선순위 숨김' : '우선순위 보기'}
+                    <Button
+                      size="sm"
+                      onClick={handleTogglePriorities}
+                      className="btn-interactive transform transition-all duration-300 hover:scale-105"
+                    >
+                      <span className="flex items-center space-x-1">
+                        {showPriorities ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <TrendingUp className="w-4 h-4" />
+                        )}
+                        <span>{showPriorities ? '우선순위 숨김' : '우선순위 보기'}</span>
+                      </span>
                     </Button>
                   </div>
                 </div>
-                <input
-                  id="aiTitle"
-                  type="text"
-                  readOnly
-                  value={
-                    isAiTitleLoading
-                      ? `추천받는 중${loadingDots}`
-                      : removeQuotes(aiOthers?.title?.result || '')
-                  }
-                  className="theme-bg-primary theme-border border-2 rounded-[8px] w-full px-2 py-1 theme-text"
-                />
+                <div className="relative">
+                  <input
+                    id="aiTitle"
+                    type="text"
+                    readOnly
+                    value={
+                      isAiTitleLoading
+                        ? `추천받는 중${loadingDots}`
+                        : removeQuotes(aiOthers?.title?.result || '')
+                    }
+                    className="theme-bg-primary theme-border border-2 rounded-lg w-full px-4 py-3 theme-text transition-all duration-300 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 glass-effect"
+                  />
+                  {isAiTitleLoading && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Settings className="w-4 h-4 animate-spin text-orange-500" />
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="mb-2">
                 <InputBox
@@ -237,30 +281,41 @@ close #이슈번호
 
         {/* 오른쪽 박스 */}
         {showPriorities && (
-          <div className="w-full md:w-1/3 md:order-2">
-            <Box shadow className="h-[450px] flex flex-col">
-              <div className="font-medium mt-2 mb-3 theme-text">AI 우선순위 추천</div>
-              <div className="space-y-3 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
+          <div className="w-full md:w-1/3 md:order-2 animate-slide-in-right animate-delay-200">
+            <Box shadow className="h-[480px] flex flex-col premium-card">
+              <div className="font-semibold text-lg mt-3 mb-4 theme-text flex items-center space-x-2">
+                <TrendingUp className="w-5 h-5 text-orange-500" />
+                <span>AI 우선순위 추천</span>
+              </div>
+              <div className="space-y-4 flex-1 overflow-y-auto pr-2 -mr-2 min-h-0">
                 {slots.map((priority, index) => (
-                  <Box key={index} className="p-3">
+                  <Box
+                    key={index}
+                    className={`p-4 glass-effect hover:scale-[1.02] transition-all duration-300 animate-fade-in-up stagger-${index + 1}`}
+                  >
                     {priority ? (
-                      <div className="space-y-2 min-h-22">
+                      <div className="space-y-3 min-h-24">
                         <div className="flex flex-wrap items-center gap-2">
                           <Badge
                             variant={priorityVariantMap[priority.priority_level] || 'default'}
-                            className="shrink-0"
+                            className="shrink-0 animate-pulse"
                           >
                             {priority.priority_level}
                           </Badge>
-                          <span className="text-sm theme-text font-medium leading-tight">
+                          <span className="text-sm theme-text font-semibold leading-tight">
                             {priority.title}
                           </span>
                         </div>
-                        <p className="theme-text-secondary text-sm leading-relaxed">{priority.reason}</p>
+                        <p className="theme-text-secondary text-sm leading-relaxed">
+                          {priority.reason}
+                        </p>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center h-22 text-sm theme-text-muted">
-                        추천 없음
+                      <div className="flex items-center justify-center h-24 text-sm theme-text-muted">
+                        <div className="flex flex-col items-center space-y-2">
+                          <TrendingUp className="w-8 h-8 opacity-30" />
+                          <span>추천 없음</span>
+                        </div>
                       </div>
                     )}
                   </Box>
@@ -271,7 +326,16 @@ close #이슈번호
         )}
       </div>
 
-      <Box shadow>
+      <Box shadow className="premium-card animate-fade-in-up animate-delay-300">
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold theme-text flex items-center space-x-2">
+            <FileText className="w-5 h-5 text-orange-500" />
+            <span>변경된 파일 목록</span>
+          </h3>
+          <p className="theme-text-secondary text-sm mt-1">
+            파일을 클릭하여 코드 리뷰 코멘트를 작성해보세요
+          </p>
+        </div>
         <PRFileList
           files={validationBranches?.files || []}
           showDiffHunk={true}
@@ -281,38 +345,50 @@ close #이슈번호
           commentMode="description"
         />
       </Box>
-      <div className="mx-auto z-10">
-        <div className="flex justify-center items-center space-x-3">
+      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+        <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
               goToStep(2)
             }}
             variant="secondary"
+            className="btn-interactive transform transition-all duration-300 hover:scale-105"
           >
-            이전
+            <span className="flex items-center space-x-2">
+              <span>←</span>
+              <span>이전</span>
+            </span>
           </Button>
 
-          <div 
+          <div
             className="relative"
             onMouseEnter={() => !isNextButtonEnabled && setShowTooltip(true)}
             onMouseLeave={() => setShowTooltip(false)}
           >
-            <Button 
-              onClick={handleNextStep} 
-              variant="primary" 
+            <Button
+              onClick={handleNextStep}
+              variant="primary"
               disabled={!isNextButtonEnabled}
+              className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
             >
-              다음
+              <span className="flex items-center space-x-2">
+                <span>다음</span>
+                <span>→</span>
+              </span>
             </Button>
             {showTooltip && !isNextButtonEnabled && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-50">
-                {getDisabledTooltip()}
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-4 py-2 bg-gray-900 dark:bg-gray-800 text-white text-sm rounded-lg whitespace-nowrap z-50 shadow-lg animate-fade-in-up">
+                <div className="flex items-center space-x-2">
+                  <span>⚠️</span>
+                  <span>{getDisabledTooltip()}</span>
+                </div>
+                <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
               </div>
             )}
           </div>
         </div>
       </div>
+
     </div>
   )
 }

@@ -1,5 +1,5 @@
+import { GitBranch,X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { X, GitBranch } from 'lucide-react'
 
 const Toast = ({ toast, onClose }) => {
   const [isVisible, setIsVisible] = useState(false)
@@ -37,22 +37,22 @@ const Toast = ({ toast, onClose }) => {
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-sm text-gray-900">
+            <p className="font-semibold text-sm theme-text">
               {toast.pusherName}님이 푸시했습니다
             </p>
             <button 
               onClick={handleClose}
               className="flex-shrink-0 p-1 hover:bg-gray-100 rounded transition-colors"
             >
-              <X className="w-4 h-4 text-gray-500" />
+              <X className="w-4 h-4 theme-text-secondary" />
             </button>
           </div>
           
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm theme-text-secondary mt-1">
             <span className="font-medium">{toast.repoName}</span> → {toast.branchName}
           </p>
           
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs theme-text-muted mt-1">
             {toast.commitCount}개 커밋 • 방금 전
           </p>
         </div>

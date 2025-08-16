@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { AlertTriangle, CheckCircle, X, FileText, Search } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -32,7 +33,7 @@ const PRCreateStep1 = ({
   // 로컬 상태가 변경되면 즉시 selectedBranches에도 반영
   useEffect(() => {
     updateSelectedBranches({ source, target })
-  }, [source, target]) // updateSelectedBranches 제거
+  }, [source, target, updateSelectedBranches])
 
   const handleValidateBranches = async () => {
     try {
@@ -116,6 +117,9 @@ const PRCreateStep1 = ({
     })),
   ]
 
+  console.log('Branch options:', branchOptions)
+  console.log('Current source:', source, 'Current target:', target)
+
   const handleGoToPRReview = () => {
     if (existingPRData && existingPRData.prId) {
       navigate(`/${repoId}/pr/${existingPRData.prId}/review`)
@@ -139,33 +143,54 @@ const PRCreateStep1 = ({
   const canValidateBranches = canCreatePR && !isSameBranch && !hasError
 
   return (
-    <div className="space-y-4">
-      <Box shadow className="space-y-4 w-2/3 mx-auto">
-        <div className="space-y-2">
-          <InputBox
-            label="소스 브랜치"
-            as="select"
-            options={branchOptions}
-            value={source || ''}
-            onChange={(e) => setSource(e.target.value)}
-            placeholder="소스 브랜치를 선택하세요"
-          />
+    <div className="mt-8 space-y-6 animate-slide-in-right">
+      <Box shadow className="space-y-6 w-full max-w-3xl mx-auto premium-card">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl font-semibold theme-text mb-2">브랜치 선택</h2>
+          <p className="theme-text-secondary">비교할 브랜치를 선택해주세요</p>
+        </div>
 
-          <InputBox
-            label="타겟 브랜치"
-            as="select"
-            options={branchOptions}
-            value={target || ''}
-            onChange={(e) => setTarget(e.target.value)}
-            placeholder="타겟 브랜치를 선택하세요"
-          />
+        {/* 드롭다운 컨테이너 */}
+        <div className="space-y-8">
+          {/* 소스 브랜치 드롭다운 */}
+          <div className="relative">
+            <InputBox
+              label="소스 브랜치"
+              as="select"
+              options={branchOptions}
+              value={source || ''}
+              onChange={(e) => {
+                console.log('Source branch selected:', e.target.value)
+                setSource(e.target.value)
+              }}
+              placeholder="소스 브랜치를 선택하세요"
+            />
+          </div>
+
+          {/* 타겟 브랜치 드롭다운 */}
+          <div className="relative">
+            <InputBox
+              label="타겟 브랜치"
+              as="select"
+              options={branchOptions}
+              value={target || ''}
+              onChange={(e) => {
+                console.log('Target branch selected:', e.target.value)
+                setTarget(e.target.value)
+              }}
+              placeholder="타겟 브랜치를 선택하세요"
+            />
+          </div>
         </div>
 
         {/* 고정된 메시지 영역 */}
-        <div className="min-h-[60px] flex items-center justify-center">
+        <div className="min-h-[80px] flex items-center justify-center">
           {isSameBranch && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
-              소스 브랜치와 타겟 브랜치가 동일합니다.
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg text-red-800 dark:text-red-300 w-full animate-wiggle shadow-md">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                <span>소스 브랜치와 타겟 브랜치가 동일합니다.</span>
+              </div>
             </div>
           )}
 
@@ -175,26 +200,44 @@ const PRCreateStep1 = ({
             !existingPR &&
             !hasError &&
             (!validationBranches || validationBranches.isPossible === true) && (
-              <div className="bg-blue-50 border border-blue-200 p-3 rounded-md text-blue-800 break-words w-full">
-                <strong>{source}</strong> 에서 <strong>{target}</strong> 로의 변경을 생성합니다.
+              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-4 rounded-lg text-blue-800 dark:text-blue-300 break-words w-full animate-scale-in shadow-md">
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl">🔄</span>
+                  <span>
+                    <strong className="text-orange-600 dark:text-orange-400">{source}</strong> 에서{' '}
+                    <strong className="text-orange-600 dark:text-orange-400">{target}</strong> 로의
+                    변경을 생성합니다.
+                  </span>
+                </div>
               </div>
             )}
 
           {existingPR && (
-            <div className="bg-green-50 border border-green-200 p-3 rounded-md w-full">
-              <p className="text-green-800">이미 생성된 Pull Request가 있습니다.</p>
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                <p className="text-green-800 dark:text-green-300">
+                  이미 생성된 Pull Request가 있습니다.
+                </p>
+              </div>
             </div>
           )}
 
           {hasError && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
-              {errorMessage}
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg text-red-800 dark:text-red-300 w-full animate-wiggle shadow-md">
+              <div className="flex items-center space-x-2">
+                <X className="w-5 h-5 text-red-500" />
+                <span>{errorMessage}</span>
+              </div>
             </div>
           )}
 
           {validationBranches && validationBranches.isPossible === false && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-md text-red-800 w-full">
-              PR을 생성할 수 없습니다. 브랜치 정보를 확인해주세요.
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 p-4 rounded-lg text-red-800 dark:text-red-300 w-full animate-wiggle shadow-md">
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                <span>PR을 생성할 수 없습니다. 브랜치 정보를 확인해주세요.</span>
+              </div>
             </div>
           )}
         </div>
@@ -205,25 +248,53 @@ const PRCreateStep1 = ({
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
             disabled={existingPR ? false : !canValidateBranches}
-            className={existingPR ? 'bg-green-600 hover:bg-green-700' : ''}
+            className={`btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 ${
+              existingPR
+                ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
+                : ''
+            }`}
           >
-            {existingPR ? '기존 PR 리뷰하러 가기' : '브랜치 검증'}
+            {existingPR ? (
+              <span className="flex items-center space-x-2">
+                <FileText className="w-4 h-4" />
+                <span>기존 PR 리뷰하러 가기</span>
+              </span>
+            ) : (
+              <span className="flex items-center space-x-2">
+                <Search className="w-4 h-4" />
+                <span>브랜치 검증</span>
+              </span>
+            )}
           </Button>
         </div>
       </Box>
-      <div className="mx-auto z-10">
-        <div className="flex justify-center items-center space-x-3">
+
+      {/* 하단 네비게이션 버튼 영역 */}
+      <div className="mx-auto">
+        <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
               navigate(`/${repoId}`)
             }}
             variant="secondary"
+            className="btn-interactive transform transition-all duration-300 hover:scale-105"
           >
-            이전
+            <span className="flex items-center space-x-2">
+              <span>←</span>
+              <span>이전</span>
+            </span>
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary" disabled={!canGoNext}>
-            다음
+          <Button
+            onClick={handleNextStep}
+            variant="primary"
+            disabled={!canGoNext}
+            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
+          >
+            <span className="flex items-center space-x-2">
+              <span>다음</span>
+              <span>→</span>
+            </span>
           </Button>
         </div>
       </div>

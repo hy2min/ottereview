@@ -419,10 +419,19 @@ def _parse_llm_response(response_text: str, limit: int) -> List[Dict[str, Any]]:
                         # 값이 있으나 int로 변환할 수 없는 경우 None으로 처리
                         github_id = None
 
+                # github_email을 안전하게 처리 (null, 빈 문자열 처리)
+                github_email = rec.get('github_email')
+                if github_email is None or not isinstance(github_email, str):
+                    github_email = None
+                else:
+                    github_email = github_email.strip()
+                    if not github_email:  # 빈 문자열인 경우
+                        github_email = None
+
                 valid_recommendations.append({
                     'github_username': username,
                     'github_id': github_id,  # int 또는 None으로 처리된 값
-                    'github_email': rec.get('github_email', '').strip(),
+                    'github_email': github_email,  # null이나 빈 문자열을 None으로 처리
                     'reason': rec.get('reason', ReviewerRecommendationConfig.DEFAULT_REASON).strip()
                 })
                 # ----- 수정된 부분 끝 -----
@@ -465,9 +474,18 @@ def _fallback_simple_recommendation(similar_patterns: List[Dict[str, Any]], limi
         sorted_reviewers = sorted(reviewer_scores.items(), key=lambda x: x[1]['score'], reverse=True)
         
         for reviewer, data in sorted_reviewers[:limit]:
+            # github_email을 안전하게 처리
+            github_email = data.get('email')
+            if github_email is None or not isinstance(github_email, str):
+                github_email = None
+            else:
+                github_email = github_email.strip()
+                if not github_email:  # 빈 문자열인 경우
+                    github_email = None
+            
             recommendations.append({
                 'github_username': reviewer,
-                'github_email': data['email'],
+                'github_email': github_email,
                 'reason': '유사한 작업 경험을 보유하고 있습니다'
             })
         

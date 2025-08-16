@@ -1,4 +1,4 @@
-import { Clock, FolderCode, Users } from 'lucide-react'
+import { CheckCircle, Clock, FolderCode, Users } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
@@ -12,7 +12,6 @@ const PRCardCompact = ({ pr, type }) => {
   const title = pr.title
   const repoName = pr.repo?.fullName || '(레포 정보 없음)'
   const author = pr.author?.githubUsername || '(알 수 없음)'
-  const approveCnt = pr.approveCnt ?? 0
   const reviewCommentCnt = pr.reviewCommentCnt ?? 0
   const isMergeable = pr.mergeable
   const isAuthored = type === 'authored'
@@ -58,13 +57,17 @@ const PRCardCompact = ({ pr, type }) => {
           </div>
         </div>
 
-        <div className="flex justify-end gap-1 flex-wrap">
-          <Badge variant={isMergeable ? 'primary' : 'danger'}>
-            {isMergeable ? '병합 가능' : '병합 불가'}
-          </Badge>
-          <div className="flex justify-end flex-wrap gap-1">
-            <Badge variant="emerald">승인 {approveCnt}</Badge>
-            <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
+        <div className="flex items-center space-x-3">
+          {/* 병합 검토 - Red */}
+          <div className="flex items-center space-x-1">
+            <div className="w-2 h-2 bg-red-500 rounded-full" />
+            <span className="text-xs theme-text-secondary font-medium">{isMergeable ? '병합 가능' : '병합 검토'}</span>
+          </div>
+          
+          {/* 리뷰 - Yellow */}
+          <div className="flex items-center space-x-1">
+            <Clock className="w-3 h-3 text-yellow-500" />
+            <span className="text-xs theme-text-secondary font-medium">리뷰 {reviewCommentCnt}</span>
           </div>
         </div>
       </div>

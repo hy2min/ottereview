@@ -1,5 +1,6 @@
 import {
   ArrowRight,
+  CheckCircle,
   Clock,
   Eye,
   FileDiff,
@@ -37,7 +38,6 @@ const PRCardDetail = ({ pr }) => {
   const mergeable = pr.mergeable
   const state = pr.state
 
-  const approveCnt = pr.approveCnt ?? 0
   const reviewCommentCnt = pr.reviewCommentCnt ?? 0
   const changedFilesCnt = pr.changedFilesCnt ?? 0
 
@@ -86,10 +86,10 @@ const PRCardDetail = ({ pr }) => {
               <GitPullRequest className="w-5 h-5 -mt-[4px] text-white" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-semibold text-stone-900 mb-1">
-                {title} <span className="text-stone-400 text-sm">{prNumber}</span>
+              <h3 className="font-semibold theme-text mb-1">
+                {title} <span className="theme-text-muted text-sm">{prNumber}</span>
               </h3>
-              <p className="text-sm text-stone-600 line-clamp-2">{description}</p>
+              <p className="text-sm theme-text-secondary line-clamp-2">{description}</p>
             </div>
           </div>
 
@@ -98,7 +98,7 @@ const PRCardDetail = ({ pr }) => {
           </Badge>
         </div>
 
-        <div className="text-stone-600">
+        <div className="theme-text-secondary">
           <div className="flex space-x-4">
             <div className="flex items-center space-x-1">
               <User className="w-4 h-4 mb-[2px]" />
@@ -112,19 +112,35 @@ const PRCardDetail = ({ pr }) => {
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex flex-wrap gap-2 text-sm">
-            <Badge variant="sky">
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Badge variant="primary">
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{headBranch}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 text-gray-800" />
                 <span>{baseBranch}</span>
               </div>
             </Badge>
 
-            <Badge variant="emerald">승인 {approveCnt}</Badge>
-            <Badge variant="amber">리뷰 {reviewCommentCnt}</Badge>
-            <Badge variant="indigo">파일 {changedFilesCnt}</Badge>
+            <div className="flex items-center space-x-3">
+              {/* 병합 검토 - Red */}
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full" />
+                <span className="text-xs theme-text-secondary">{mergeable ? '병합 가능' : '병합 검토'}</span>
+              </div>
+              
+              {/* 리뷰 - Yellow */}
+              <div className="flex items-center space-x-1">
+                <Clock className="w-3 h-3 text-yellow-500" />
+                <span className="text-xs theme-text-secondary">리뷰 {reviewCommentCnt}</span>
+              </div>
+              
+              {/* 파일 - Orange */}
+              <div className="flex items-center space-x-1">
+                <FileDiff className="w-3 h-3 text-orange-500" />
+                <span className="text-xs theme-text-secondary">파일 {changedFilesCnt}</span>
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-2 pt-2">
@@ -140,21 +156,34 @@ const PRCardDetail = ({ pr }) => {
               (() => {
                 // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
                 const effectiveMergeable = apiMergeable !== null ? apiMergeable : mergeable
+                const isApproved = pr.isApproved !== false // isApproved가 false가 아닌 경우 승인된 것으로 간주
 
-                return effectiveMergeable ? (
-                  <Button variant="primary" size="sm" onClick={handleIsMergable}>
-                    <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-                    머지
-                  </Button>
-                ) : (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
-                  >
-                    충돌 해결
-                  </Button>
-                )
+                if (!effectiveMergeable) {
+                  // 머지 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
+                  return (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                    >
+                      충돌 해결
+                    </Button>
+                  )
+                } else {
+                  // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                  return (
+                    <Button 
+                      variant="primary" 
+                      size="sm" 
+                      onClick={handleIsMergable}
+                      disabled={!isApproved}
+                      title={!isApproved ? "모든 리뷰어의 승인이 필요합니다" : ""}
+                    >
+                      <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
+                      머지
+                    </Button>
+                  )
+                }
               })()}
           </div>
         </div>

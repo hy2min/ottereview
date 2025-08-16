@@ -131,18 +131,25 @@ async def store_pr_to_vector_db(pr_request: PRDetailData):
     PR Detail 데이터를 벡터 DB에 저장합니다. (백엔드에서 PRDetailData로 호출)
     """
     try:
+        logger.info(f"벡터 DB 저장 요청 받음 - PR ID: {pr_request.id}, Repo: {pr_request.repo.fullName}")
+        logger.debug(f"요청 데이터: files={len(pr_request.files)}, commits={len(pr_request.commits)}, reviewers={len(pr_request.reviewers)}, priorities={len(pr_request.priorities)}")
+        
         success = await vector_db.store_pr_data(pr_request)
         
         if success:
+            logger.info(f"벡터 DB 저장 성공 - PR ID: {pr_request.id}")
             return {
                 "success": True,
                 "message": f"PR {pr_request.id} 데이터가 성공적으로 저장되었습니다."
             }
         else:
+            logger.error(f"벡터 DB 저장 실패 - PR ID: {pr_request.id}")
             raise HTTPException(status_code=500, detail="벡터 DB 저장에 실패했습니다.")
         
     except Exception as e:
-        logger.error(f"벡터 DB 저장 중 오류: {str(e)}")
+        logger.error(f"벡터 DB 저장 중 오류 - PR ID: {getattr(pr_request, 'id', 'unknown')}: {str(e)}")
+        import traceback
+        logger.error(f"상세 오류: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"벡터 DB 저장 중 오류가 발생했습니다: {str(e)}")
 
 @app.post("/ai/speech/transcribe")

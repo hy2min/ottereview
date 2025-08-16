@@ -1,3 +1,4 @@
+import { Rocket, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import Box from '@/components/Box'
@@ -8,6 +9,7 @@ import PRList from '@/features/pullRequest/PRList'
 import { fetchRepoList } from '@/features/repository/repoApi'
 import RepositoryList from '@/features/repository/RepositoryList'
 import { useRepoStore } from '@/features/repository/stores/repoStore'
+import { useSSE } from '@/hooks/useSSE'
 import { api } from '@/lib/api'
 import { useUserStore } from '@/store/userStore'
 
@@ -67,27 +69,16 @@ const Dashboard = () => {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  // Dashboard 전용 update 이벤트 (레포지토리 업데이트)
-  useEffect(() => {
-    if (!user?.id || !accessToken) return
-
-    const updateEventSource = new EventSource(
-      `${import.meta.env.VITE_API_URL}/api/sse/make-clients?github-id=${user.githubId}`
-    )
-
-    updateEventSource.addEventListener('update', (event) => {
-      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard):', event.data)
+  // 통합 SSE 훅으로 update 이벤트 처리
+  useSSE(
+    true, // shouldConnect
+    null, // onPushEvent (전역에서 처리)
+    () => {
+      // onUpdateEvent - 레포지토리 업데이트 시 데이터 새로고침
+      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard)')
       fetchData()
-    })
-
-    updateEventSource.onopen = () => console.log('🔌 Update SSE 연결 성공 (Dashboard)')
-    updateEventSource.onerror = (error) => console.error('❌ Update SSE 오류:', error)
-
-    return () => {
-      console.log('🔌 Update SSE 연결 해제 (Dashboard)')
-      updateEventSource.close()
     }
-  }, [user?.id, accessToken])
+  )
 
   // 초기 데이터 로드
   useEffect(() => {
@@ -95,37 +86,47 @@ const Dashboard = () => {
     fetchData()
   }, [user?.id])
 
-  const handleTest = async () => {
-    try {
-      const res = await api.post(`/api/meetings/1/join`)
-      console.log('응답: ', res.data)
-    } catch (err) {
-      console.error('요청 실패: ', err)
-    }
-  }
+
+  // user 객체 구조 확인을 위한 console.log
+  console.log('User 객체:', user)
+  console.log('User profile_image_url:', user?.profile_image_url)
 
   return (
     <div className="pt-2 space-y-8">
       {/* 환영 메시지와 채팅방 목록 */}
-      <div className="flex flex-col xl:flex-row gap-6 items-stretch">
-        <Box shadow className="xl:w-1/2 min-h-32 flex-col space-y-3 relative">
-          <h1 className="text-2xl xl:text-3xl theme-text font-bold">
-            안녕하세요, {user?.githubUsername}님! 👋
-          </h1>
-          <p className="theme-text-secondary text-base xl:text-lg">
-            오늘도 수달처럼 꼼꼼하게 코드를 리뷰해보세요!
-          </p>
+      <div className="flex flex-col lg:flex-row gap-6 items-stretch">
+        <Box shadow className="lg:w-1/2 min-h-32 flex-col space-y-3 relative">
+          <div className="flex items-center gap-4">
+            {/* GitHub Profile Image */}
+            <div className="relative">
+              <img
+                src={
+                  user?.profileImageUrl ||
+                  user?.profile_image_url ||
+                  'https://github.com/identicons/jasonlong.png'
+                }
+                alt={`${user?.githubUsername}'s profile`}
+                className="w-16 h-16 rounded-full border-3 border-orange-500 shadow-lg object-cover"
+                onError={(e) => {
+                  e.target.src = 'https://github.com/identicons/jasonlong.png'
+                }}
+              />
+            </div>
 
-          <button
-            onClick={handleTest}
-            className="theme-btn text-xs px-2 py-1 absolute top-2 right-2"
-            title="API 응답 테스트"
-          >
-            응답테스트
-          </button>
+            {/* Welcome Message */}
+            <div className="flex-1">
+              <h1 className="text-2xl lg:text-3xl theme-text font-bold">
+                안녕하세요, {user?.githubUsername}님!
+              </h1>
+              <p className="theme-text-secondary text-base lg:text-lg">
+                효율적인 코드 리뷰로 팀의 생산성을 높여보세요!
+              </p>
+            </div>
+          </div>
+
         </Box>
 
-        <div className="xl:w-1/2">
+        <div className="lg:w-1/2">
           <ChatRoomList />
         </div>
       </div>
@@ -134,7 +135,10 @@ const Dashboard = () => {
       <div className="theme-bg-secondary border theme-border p-6 rounded-xl theme-shadow-lg">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6">
-            <h2 className="text-3xl font-bold theme-text mb-2">🚀 코드 리뷰 워크스페이스</h2>
+            <div className="flex items-center justify-center gap-3 mb-2">
+              <Rocket className="w-8 h-8 text-orange-500" />
+              <h2 className="text-3xl font-bold theme-text">코드 리뷰 워크스페이스</h2>
+            </div>
             <p className="theme-text-muted">Repository와 Pull Request를 효율적으로 관리하세요</p>
           </div>
 
