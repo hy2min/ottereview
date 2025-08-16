@@ -254,11 +254,7 @@ public class ReviewServiceImpl implements ReviewService {
             List<ReviewCommentResponse> createdComments,
             GithubReviewResponse githubResult,
             User user) {
-<<<<<<< HEAD
         
-=======
-
->>>>>>> 33d80ef2a7cb2d7de160f0b34dc44b177e32d4b4
         // Review의 githubId는 이미 상위에서 설정됨 (Race Condition 방지)
         
         Map<String, Long> bodyToGithubCommentId = githubResult.getBodyToGithubCommentId();
