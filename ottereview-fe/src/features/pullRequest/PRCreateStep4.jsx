@@ -117,16 +117,16 @@ const PRCreateStep4 = ({
                 .map((reviewer, index) => (
                   <div
                     key={reviewer.githubUsername}
-                    className={`flex justify-between items-center p-3 mr-2 rounded-lg theme-bg-tertiary hover:theme-bg-secondary transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
+                    className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-800/50 transition-all duration-200`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
                         {reviewer.githubUsername.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex flex-col">
-                        <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                        <span className="text-gray-900 font-medium">{reviewer.githubUsername}</span>
                         {isAIRecommended(reviewer.githubUsername) && (
-                          <Badge variant="primary" size="sm" className="mt-1 animate-pulse">
+                          <Badge variant="primary" size="sm" className="mt-1 animate-pulse w-fit">
                             <span className="flex items-center space-x-1">
                               <span>🤖</span>
                               <span>AI 추천</span>
@@ -170,16 +170,16 @@ const PRCreateStep4 = ({
               selectedReviewers.map((reviewer, index) => (
                 <div
                   key={reviewer.githubUsername}
-                  className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 transition-all duration-300 animate-fade-in-up stagger-${index % 3 + 1}`}
+                  className={`flex justify-between items-center p-3 mr-2 rounded-lg bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-700 transition-all duration-200`}
                 >
                   <div className="flex items-center space-x-3">
                     <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-semibold text-sm">
                       {reviewer.githubUsername.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col">
-                      <span className="theme-text font-medium">{reviewer.githubUsername}</span>
+                      <span className="text-gray-900 font-medium">{reviewer.githubUsername}</span>
                       {isAIRecommended(reviewer.githubUsername) && (
-                        <Badge variant="primary" size="xs" className="mt-1">
+                        <Badge variant="primary" size="xs" className="mt-1 w-fit">
                           <span className="flex items-center space-x-1">
                             <span>🤖</span>
                             <span>AI</span>
