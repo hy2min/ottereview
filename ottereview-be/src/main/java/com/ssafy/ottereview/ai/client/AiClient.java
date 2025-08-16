@@ -47,7 +47,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiTitleResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(title -> log.info("Title 생성 완료: {}", title))
+                .doOnSuccess(title -> log.debug("Title 생성 완료: {}", title))
                 .doOnError(error -> log.error("Title 생성 실패", error))
                 .onErrorReturn(createDefaultTitleResponse());  // 기본값 제공
     }
@@ -63,7 +63,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiSummaryResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(summary -> log.info("Summary 생성 완료"))
+                .doOnSuccess(summary -> log.debug("Summary 생성 완료"))
                 .doOnError(error -> log.error("Summary 생성 실패", error))
                 .onErrorReturn(createDefaultSummaryResponse());
     }
@@ -79,7 +79,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiReviewerResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(reviewers -> log.info("Reviewers 추천 완료: {}", reviewers))
+                .doOnSuccess(reviewers -> log.debug("Reviewers 추천 완료: {}", reviewers))
                 .doOnError(error -> log.error("Reviewers 추천 실패", error))
                 .onErrorReturn(createDefaultReviewersResponse());
     }
@@ -95,7 +95,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiPriorityResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(priority -> log.info("Priority 추천 완료: {}", priority))
+                .doOnSuccess(priority -> log.debug("Priority 추천 완료: {}", priority))
                 .doOnError(error -> log.error("Priority 추천 실패", error))
                 .onErrorReturn(AiPriorityResponse.createDefaultPriorityResponse());
     }
@@ -111,7 +111,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiConventionResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(conventions -> log.info("Coding Convention 검사 완료"))
+                .doOnSuccess(conventions -> log.debug("Coding Convention 검사 완료"))
                 .doOnError(error -> log.error("Coding Convention 검사 실패", error))
                 .onErrorReturn(createDefaultConventionResponse());
     }
@@ -127,7 +127,7 @@ public class AiClient {
                 .retrieve()
                 .bodyToMono(AiCushionResponse.class)
                 .timeout(Duration.ofMinutes(1))
-                .doOnSuccess(conventions -> log.info("쿠션어 변환 완료"))
+                .doOnSuccess(conventions -> log.debug("쿠션어 변환 완료"))
                 .doOnError(error -> log.error("쿠션어 변환 실패", error))
                 .onErrorReturn(createDefaultCushionResponse());
     }
@@ -150,7 +150,7 @@ public class AiClient {
                         // 2. 캐시가 없는 경우에만 실제 분석 수행
                         performFullAnalysis(customUserDetail, request)
                 )
-                .doOnSuccess(result -> log.info("AI 전체 분석 완료"))
+                .doOnSuccess(result -> log.debug("AI 전체 분석 완료"))
                 .doOnError(error -> log.error("AI 전체 분석 실패", error));
     }
     
@@ -166,7 +166,7 @@ public class AiClient {
                 .timeout(Duration.ofMinutes(5))  // 전체 타임아웃 5분
                 .doOnSuccess(result -> {
                     Duration duration = Duration.between(startTime, LocalDateTime.now());
-                    log.info("PR 전체 분석 완료 - 소요시간: {}초", duration.toSeconds());
+                    log.debug("PR 전체 분석 완료 - 소요시간: {}초", duration.toSeconds());
                 })
                 .doOnError(error -> {
                     Duration duration = Duration.between(startTime, LocalDateTime.now());
@@ -181,7 +181,7 @@ public class AiClient {
         // 4. 각 API 호출에 개별 타임아웃과 fallback 추가
         Mono<AiTitleResponse> titleMono = recommendTitle(request)
                 .timeout(Duration.ofMinutes(2))
-                .doOnSubscribe(sub -> log.info("Title 분석 시작"))
+                .doOnSubscribe(sub -> log.debug("Title 분석 시작"))
                 .doOnSuccess(result -> log.debug("Title 분석 완료"))
                 .onErrorResume(error -> {
                     log.warn("Title 분석 실패, 기본값 사용", error);
@@ -190,7 +190,7 @@ public class AiClient {
         
         Mono<AiReviewerResponse> reviewersMono = recommendReviewers(request)
                 .timeout(Duration.ofMinutes(2))
-                .doOnSubscribe(sub -> log.info("Reviewers 분석 시작"))
+                .doOnSubscribe(sub -> log.debug("Reviewers 분석 시작"))
                 .doOnSuccess(result -> log.debug("Reviewers 분석 완료"))
                 .onErrorResume(error -> {
                     log.warn("Reviewers 분석 실패, 기본값 사용", error);
@@ -199,7 +199,7 @@ public class AiClient {
         
         Mono<AiPriorityResponse> priorityMono = recommendPriority(request)
                 .timeout(Duration.ofMinutes(2))
-                .doOnSubscribe(sub -> log.info("Priority 분석 시작"))
+                .doOnSubscribe(sub -> log.debug("Priority 분석 시작"))
                 .doOnSuccess(result -> log.debug("Priority 분석 완료"))
                 .onErrorResume(error -> {
                     log.warn("Priority 분석 실패, 기본값 사용", error);
@@ -208,8 +208,8 @@ public class AiClient {
         
         // 5. 모든 결과를 조합하고 캐시 저장
         return Mono.zip(titleMono, reviewersMono, priorityMono)
-                .doOnSubscribe(sub -> log.info("모든 AI API 호출 시작 - Mono.zip 진입"))
-                .doOnNext(results -> log.info("모든 AI API 호출 완료 - 결과 조합 중"))
+                .doOnSubscribe(sub -> log.debug("모든 AI API 호출 시작 - Mono.zip 진입"))
+                .doOnNext(results -> log.debug("모든 AI API 호출 완료 - 결과 조합 중"))
                 .map(results -> {
                     AiResult analysisResult = AiResult.builder()
                             .title(results.getT1())
@@ -218,24 +218,24 @@ public class AiClient {
                             .analysisTime(startTime)
                             .build();
                     
-                    log.info("AI 분석 결과 생성 완료");
+                    log.debug("AI 분석 결과 생성 완료");
                     return analysisResult;
                 })
-                .doOnNext(result -> log.info("캐시 저장 로직 시작"))
+                .doOnNext(result -> log.debug("캐시 저장 로직 시작"))
                 // 6. 의미있는 값일 때만 캐시 저장을 비동기로 수행
                 .flatMap(result -> {
                     try {
                         if (isValidForCaching(result)) {
-                            log.info("의미있는 AI 분석 결과 - 캐시에 저장합니다");
+                            log.debug("의미있는 AI 분석 결과 - 캐시에 저장합니다");
                             return saveToCache(request, result)
-                                    .doOnSuccess(v -> log.info("캐시 저장 성공"))
+                                    .doOnSuccess(v -> log.debug("캐시 저장 성공"))
                                     .thenReturn(result)
                                     .onErrorResume(cacheError -> {
                                         log.warn("캐시 저장 실패, 결과는 정상 반환", cacheError);
                                         return Mono.just(result);
                                     });
                         } else {
-                            log.info("기본값이 포함된 AI 분석 결과 - 캐시에 저장하지 않습니다");
+                            log.debug("기본값이 포함된 AI 분석 결과 - 캐시에 저장하지 않습니다");
                             return Mono.just(result);
                         }
                     } catch (Exception e) {
@@ -243,21 +243,21 @@ public class AiClient {
                         return Mono.just(result);
                     }
                 })
-                .doOnSuccess(result -> log.info("전체 AI 분석 프로세스 완료"))
+                .doOnSuccess(result -> log.debug("전체 AI 분석 프로세스 완료"))
                 .doOnError(error -> log.error("전체 AI 분석 프로세스 실패", error));
     }
     
     
     
     public Mono<Void> saveVectorDb(MergedPullRequestInfo mergedPullRequestInfo) {
-        log.debug("Vector DB 저장 시작 - PR ID: {}", mergedPullRequestInfo.getId());
+        log.info("Vector DB 저장 시작 - PR ID: {}", mergedPullRequestInfo.getId());
         return aiWebClient.post()
                 .uri("/ai/vector-db/store")
                 .bodyValue(mergedPullRequestInfo)
                 .retrieve()
                 .bodyToMono(Void.class)
                 .timeout(Duration.ofMinutes(2))
-                .doOnSuccess(result -> log.info("Vector DB 저장 완료 - PR ID: {}", mergedPullRequestInfo.getId()))
+                .doOnSuccess(result -> log.debug("Vector DB 저장 완료 - PR ID: {}", mergedPullRequestInfo.getId()))
                 .doOnError(error -> log.error("Vector DB 저장 실패 - PR ID: {}", mergedPullRequestInfo.getId(), error))
                 .onErrorResume(error -> {
                     log.warn("Vector DB 저장 실패하였지만 계속 진행 - PR ID: {}", mergedPullRequestInfo.getId());

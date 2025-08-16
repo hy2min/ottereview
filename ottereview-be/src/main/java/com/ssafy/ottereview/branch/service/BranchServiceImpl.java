@@ -130,7 +130,6 @@ public class BranchServiceImpl implements BranchService{
                 .build();
 
         branchRepository.save(newBranch);
-        log.info(branchRepository.getReferenceById(branchRoleCreateRequest.getId()).getMinApproveCnt()+"");
         return newBranch;
     }
 
