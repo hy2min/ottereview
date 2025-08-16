@@ -45,6 +45,9 @@ api.interceptors.response.use(
 
         const newAccessToken = res.data.accessToken
         useAuthStore.getState().setAccessToken(newAccessToken)
+        
+        // 토큰 갱신 후 SSE 재연결 트리거
+        useAuthStore.getState().triggerSseReconnect()
 
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
         return api(originalRequest)

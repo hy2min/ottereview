@@ -1,5 +1,5 @@
-import Box from '@/components/Box'
 import Badge from '@/components/Badge'
+import Box from '@/components/Box'
 
 // 리뷰 댓글 텍스트 정리 함수
 const cleanReviewCommentBody = (body) => {
