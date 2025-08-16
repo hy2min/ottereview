@@ -131,6 +131,7 @@ public class PreparationService {
             if (request.getSummary() != null && !request.getSummary()
                     .trim()
                     .isEmpty()) {
+                log.debug("요약: {}", request.getSummary());
                 prepareInfo.enrollSummary(request.getSummary());
             }
             

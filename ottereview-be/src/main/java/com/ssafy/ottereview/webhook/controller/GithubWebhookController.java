@@ -63,47 +63,38 @@ public class GithubWebhookController {
                 break;
 
             case "pull_request":
-                log.info("Handling pull request event");
                 pullRequestEventService.processPullRequestEvent(payload);
                 break;
 
             case "pull_request_review":
-                log.info("Handling pull request review event");
                 reviewEventService.processReviewEvent(payload);
                 break;
 
             case "pull_request_review_comment":
-                log.info("Handling pull request review event");
                 reviewCommentEventService.processReviewCommentEvent(payload);
                 break;
 
             case "installation":
-                log.info("Handling installation event");
                 installationEventService.processInstallationEvent(payload);
                 break;
 
             case "installation_repositories":
-                log.info("Handling installation repositories event");
                 installationEventService.processInstallationRepositoriesEvent(payload);
                 break;
 
             case "create":
-                log.info("Handling installation create Branch event");
                 installationEventService.processAddBranchesEvent(payload);
                 break;
 
             case "delete":
-                log.info("Handling installation delete Branch event");
                 installationEventService.processDeleteBranchesEvent(payload);
                 break;
 
             case "branch_protection_rule":
-                log.info("Handling branch protection rule event");
                 branchProtectionEventService.processBranchProtection(payload);
                 break;
 
             case "repository":
-                log.info("Handling repository event");
                 repoEventService.processRepo(payload);
                 break;
 

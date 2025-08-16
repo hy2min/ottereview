@@ -18,7 +18,7 @@ public class PushEventService {
     private final EventSendController eventSendController;
 
     public void processPushEvent(String payload) {
-        log.info("Push Event 프로세스 실행");
+        log.debug("Push Event 프로세스 실행");
         try {
             PushEventDto pushInfo = objectMapper.readValue(payload, PushEventDto.class);
             log.debug("Push Event 파싱 완료: {}", pushInfo);

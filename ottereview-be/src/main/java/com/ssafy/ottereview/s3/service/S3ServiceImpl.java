@@ -134,7 +134,7 @@ public class S3ServiceImpl implements S3Service {
             List<S3Object> objects = listResponse.contents();
 
             if (objects.isEmpty()) {
-                log.info("삭제할 파일이 없음 - review_id: {}", reviewId);
+                log.debug("삭제할 파일이 없음 - review_id: {}", reviewId);
                 return;
             }
 
@@ -152,7 +152,7 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObjects(deleteRequest);
-            log.info("리뷰 파일 삭제 완료 - review_id: {}, 삭제된 파일 수: {}", reviewId, objects.size());
+            log.debug("리뷰 파일 삭제 완료 - review_id: {}, 삭제된 파일 수: {}", reviewId, objects.size());
         } catch (Exception e) {
             log.error("리뷰 파일 삭제 실패 - review_id: {}", reviewId, e);
             throw new RuntimeException("파일 삭제 실패", e);
@@ -172,7 +172,7 @@ public class S3ServiceImpl implements S3Service {
             List<S3Object> objects = listResponse.contents();
 
             if (objects.isEmpty()) {
-                log.info("삭제할 Description 파일이 없음 - pullrequest_id: {}", pullRequestId);
+                log.debug("삭제할 Description 파일이 없음 - pullrequest_id: {}", pullRequestId);
                 return;
             }
 
@@ -190,7 +190,7 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObjects(deleteRequest);
-            log.info("Description 파일 삭제 완료 - pullrequest_id: {}, 삭제된 파일 수: {}", pullRequestId, objects.size());
+            log.debug("Description 파일 삭제 완료 - pullrequest_id: {}, 삭제된 파일 수: {}", pullRequestId, objects.size());
         } catch (Exception e) {
             log.error("Description 파일 삭제 실패 - pullrequest_id: {}", pullRequestId, e);
             throw new RuntimeException("Description 파일 삭제 실패", e);
@@ -206,7 +206,7 @@ public class S3ServiceImpl implements S3Service {
                     .build();
 
             s3Client.deleteObject(deleteObjectRequest);
-            log.info("S3에서 파일 삭제 완료 - Key: {}", fileKey);
+            log.debug("S3에서 파일 삭제 완료 - Key: {}", fileKey);
 
         } catch (S3Exception e) {
             log.error("S3 파일 삭제 실패 - Key: {}, Error: {}", fileKey, e.getMessage());
@@ -285,7 +285,7 @@ public class S3ServiceImpl implements S3Service {
             throw new IllegalArgumentException("파일명에 허용되지 않는 문자가 포함되어 있습니다.");
         }
         
-        log.info("파일 검증 완료 - 파일명: {}, 크기: {}, Content-Type: {}", 
+        log.debug("파일 검증 완료 - 파일명: {}, 크기: {}, Content-Type: {}",
             originalFilename, file.getSize(), contentType);
     }
     
@@ -321,7 +321,7 @@ public class S3ServiceImpl implements S3Service {
             PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
             String presignedUrl = presignedRequest.url().toString();
             
-            log.info("Pre-signed URL 생성 완료 - 파일 키: {}, 만료시간: {}분", fileKey, expirationMinutes);
+            log.debug("Pre-signed URL 생성 완료 - 파일 키: {}, 만료시간: {}분", fileKey, expirationMinutes);
             return presignedUrl;
             
         } catch (Exception e) {
@@ -342,7 +342,7 @@ public class S3ServiceImpl implements S3Service {
                 presignedUrls.put(fileKey, presignedUrl);
             }
             
-            log.info("리뷰 ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", reviewId, presignedUrls.size());
+            log.debug("리뷰 ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", reviewId, presignedUrls.size());
             return presignedUrls;
             
         } catch (Exception e) {
@@ -379,7 +379,7 @@ public class S3ServiceImpl implements S3Service {
                 presignedUrls.put(fileKey, presignedUrl);
             }
             
-            log.info("Pull Request ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", pullRequestId, presignedUrls.size());
+            log.debug("Pull Request ID {}에 대한 {} 개 파일의 Pre-signed URL 생성 완료", pullRequestId, presignedUrls.size());
             return presignedUrls;
             
         } catch (Exception e) {
@@ -393,12 +393,12 @@ public class S3ServiceImpl implements S3Service {
             return;
         }
 
-        log.info("보상 트랜잭션 시작 - 정리할 파일 수: {}", uploadedFileKeys.size());
+        log.debug("보상 트랜잭션 시작 - 정리할 파일 수: {}", uploadedFileKeys.size());
 
         for (String recordKey : uploadedFileKeys) {
             try {
                 deleteFile(recordKey); // commentId는 아직 없으므로 null
-                log.info("보상 트랜잭션 - 파일 정리 완료: {}", recordKey);
+                log.debug("보상 트랜잭션 - 파일 정리 완료: {}", recordKey);
             } catch (Exception cleanupException) {
                 log.error("보상 트랜잭션 - 파일 정리 실패: {}, 오류: {}",
                         recordKey, cleanupException.getMessage());
