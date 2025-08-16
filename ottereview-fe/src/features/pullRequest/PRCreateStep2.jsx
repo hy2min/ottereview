@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Sparkles, Settings, RotateCcw } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -96,9 +97,14 @@ const PRCreateStep2 = ({
 
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col md:flex-row md:items-stretch space-y-3 md:space-y-0 md:gap-4">
-        <Box shadow className="w-full md:w-1/3 md:order-2 space-y-4">
+    <div className="space-y-6 animate-slide-in-left">
+      <div className="text-center mb-6 animate-fade-in-up">
+        <h2 className="text-2xl font-semibold theme-text mb-2">컴벤션 검사</h2>
+        <p className="theme-text-secondary">점드하방줄 규칙을 설정하고 AI 피드백을 받아보세요</p>
+      </div>
+      
+      <div className="flex flex-col md:flex-row md:items-stretch space-y-4 md:space-y-0 md:gap-6">
+        <Box shadow className="w-full md:w-1/3 md:order-2 space-y-4 premium-card animate-slide-in-right">
           <InputBox
             label="파일명 규칙"
             as="select"
@@ -135,35 +141,66 @@ const PRCreateStep2 = ({
             onChange={(e) => setConventionRules(prev => ({ ...prev, constant_names: e.target.value }))}
           />
         </Box>
-        <Box shadow className="w-full md:w-2/3 md:order-1 space-y-3">
-          <div className='space-y-1'>
-            <div className="flex items-center justify-between mt-2">
-              <div className="font-medium">AI 피드백</div>
-              <div className="-mt-[16px]">
-                <Button size="sm" onClick={handleRequestAI}>
-                  {aiLoading ? '분석 중...' : '피드백 받기'}
-                </Button>
+        <Box shadow className="w-full md:w-2/3 md:order-1 space-y-4 premium-card animate-slide-in-left animate-delay-200">
+          <div className='space-y-3'>
+            <div className="flex items-center justify-between">
+              <div className="font-semibold text-lg theme-text flex items-center space-x-2">
+                <span>🤖</span>
+                <span>AI 피드백</span>
               </div>
+              <Button 
+                size="sm" 
+                onClick={handleRequestAI}
+                className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105"
+                disabled={aiLoading}
+              >
+                <span className="flex items-center space-x-2">
+                  {aiLoading ? <RotateCcw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                  <span>{aiLoading ? '분석 중...' : '피드백 받기'}</span>
+                </span>
+              </Button>
             </div>
-            <Box className='h-87.75 overflow-y-auto'>
-              <div className="space-y-2 max-w-full break-words">{renderAIConvention(aiConvention?.result)}</div>
+            <Box className='h-96 overflow-y-auto glass-effect'>
+              <div className="space-y-3 p-2">
+                {aiLoading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-pulse flex flex-col items-center space-y-2">
+                      <Settings className="w-8 h-8 animate-spin text-orange-500" />
+                      <div className="theme-text-secondary">분석 중...</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="animate-fade-in-up">{renderAIConvention(aiConvention?.result)}</div>
+                )}
+              </div>
             </Box>
           </div>
         </Box>
       </div>
-      <div className="mx-auto z-10">
-        <div className="flex justify-center items-center space-x-3">
+      <div className="mx-auto z-10 animate-fade-in-up animate-delay-400">
+        <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={() => {
               goToStep(1)
             }}
             variant="secondary"
+            className="btn-interactive transform transition-all duration-300 hover:scale-105"
           >
-            이전
+            <span className="flex items-center space-x-2">
+              <span>←</span>
+              <span>이전</span>
+            </span>
           </Button>
 
-          <Button onClick={handleNextStep} variant="primary">
-            다음
+          <Button 
+            onClick={handleNextStep} 
+            variant="primary"
+            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105"
+          >
+            <span className="flex items-center space-x-2">
+              <span>다음</span>
+              <span>→</span>
+            </span>
           </Button>
         </div>
       </div>

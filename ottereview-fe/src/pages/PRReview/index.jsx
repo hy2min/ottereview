@@ -258,18 +258,6 @@ const PRReview = () => {
     }
   }
 
-  // PR 데이터 새로고침 핸들러 (답글, 댓글 수정/삭제 후 사용)
-  const handleDataRefresh = async () => {
-    try {
-      const pr = await fetchPRDetail({ repoId, prId })
-      setPrDetail(pr)
-    } catch (error) {
-      console.error('❌ PR 데이터 새로고침 실패:', error)
-      // 실패하면 페이지 새로고침으로 폴백
-      window.location.reload()
-    }
-  }
-
   const prFiles =
     prDetail?.files?.map(({ filename, additions, deletions, patch }) => ({
       filename,
@@ -359,7 +347,7 @@ const PRReview = () => {
               <div className="flex items-center space-x-1">
                 <GitBranch className="w-4 h-4 mb-[2px]" />
                 <span>{prDetail.headBranch?.name || 'unknown'}</span>
-                <ArrowRight className="w-4 h-4 text-stone-400" />
+                <ArrowRight className="w-4 h-4 theme-text-muted" />
                 <span>{prDetail.baseBranch?.name || 'unknown'}</span>
               </div>
             </Badge>
@@ -385,9 +373,8 @@ const PRReview = () => {
                     padding: '12px',
                     fontSize: '14px',
                     lineHeight: '1.6',
-                    color: 'inherit',
                   }}
-                  className="theme-text [&_*]:theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:theme-text-secondary [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:dark:border-gray-600 [&_blockquote]:pl-2 [&_a]:text-blue-600 [&_a]:dark:text-blue-400"
+                  className="theme-text [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm [&_h4]:text-sm [&_h5]:text-xs [&_h6]:text-xs [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_pre]:text-xs [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-2"
                 />
               </div>
             )}
@@ -446,92 +433,91 @@ const PRReview = () => {
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
-                {(() => {
-                  const totalReviewers = prDetail.reviewers?.length || 0
-                  const approvedReviewers = prDetail.reviewers?.filter(reviewer => reviewer.state === 'APPROVED')?.length || 0
-                  
-                  if (totalReviewers === 0) {
-                    return (
-                      <span className="text-sm text-green-600 dark:text-green-400 font-medium">
-                        리뷰어 없음
-                      </span>
-                    )
-                  }
-                  
-                  return (
-                    <span className="text-sm theme-text-secondary font-medium">
-                      {approvedReviewers} / {totalReviewers}
-                    </span>
-                  )
-                })()}
+                {prDetail.headBranch?.minApproveCnt === 0 ? (
+                  <span className="text-sm text-green-600 dark:text-green-400 font-medium">
+                    승인 불필요
+                  </span>
+                ) : (
+                  <span className="text-sm theme-text-secondary font-medium">
+                    {prDetail.approveCnt || 0} / {prDetail.headBranch?.minApproveCnt || 0}
+                  </span>
+                )}
               </div>
               <div className="relative">
-                {(() => {
-                  const totalReviewers = prDetail.reviewers?.length || 0
-                  const approvedReviewers = prDetail.reviewers?.filter(reviewer => reviewer.state === 'APPROVED')?.length || 0
-                  
-                  if (totalReviewers === 0) {
-                    /* 리뷰어 없음 상태 */
-                    return (
-                      <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden">
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <span className="text-xs font-medium text-gray-500 dark:text-gray-400">리뷰어 없음</span>
+                {prDetail.headBranch?.minApproveCnt === 0 ? (
+                  /* 승인 불필요 상태 */
+                  <div className="relative h-6 bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-full border border-green-200 dark:border-green-700 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="flex items-center gap-1">
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.2s'}} />
+                          <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" style={{animationDelay: '0.4s'}} />
                         </div>
                       </div>
-                    )
-                  }
-                  
-                  const approvalPercentage = (approvedReviewers / totalReviewers) * 100
-                  const isFullyApproved = approvedReviewers >= totalReviewers
-                  
-                  return (
-                    <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
-                      {/* 배경 그라데이션 효과 */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 via-red-50/30 to-orange-50/50 dark:from-orange-900/20 dark:via-red-900/10 dark:to-orange-900/20" />
-                      
-                      {/* 진행 바 */}
-                      <div
-                        className="relative h-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 transition-all duration-1000 ease-out rounded-full shadow-lg"
-                        style={{
-                          width: `${Math.min(approvalPercentage, 100)}%`,
-                        }}
-                      >
-                        {/* 반짝이는 오버레이 효과 */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
-                        
-                        {/* 움직이는 하이라이트 효과 */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse" style={{animationDelay: '0.5s'}} />
-                        
-                        {/* 끝부분 글로우 효과 */}
-                        <div className="absolute right-0 top-0 w-4 h-full bg-gradient-to-l from-white/50 to-transparent rounded-r-full" />
-                        
-                        {/* 완료 상태일 때 특별 효과 */}
-                        {isFullyApproved && (
-                          <>
-                            <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full animate-pulse" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="flex gap-0.5">
-                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
-                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
-                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
-                              </div>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      
-                      {/* 진행률 텍스트 - 중앙에 표시 */}
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-700 dark:text-gray-300 drop-shadow-sm">
-                          {Math.round(approvalPercentage)}%
-                        </span>
-                      </div>
-                      
-                      {/* 외곽 글로우 효과 */}
-                      <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
                     </div>
-                  )
-                })()}
+                  </div>
+                ) : (
+                  /* 일반 승인 진행 상태 */
+                  <div className="relative h-6 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full border border-gray-300 dark:border-gray-600 overflow-hidden shadow-inner">
+                    {/* 배경 그라데이션 효과 */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-50/50 via-red-50/30 to-orange-50/50 dark:from-orange-900/20 dark:via-red-900/10 dark:to-orange-900/20" />
+                    
+                    {/* 진행 바 */}
+                    <div
+                      className="relative h-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 transition-all duration-1000 ease-out rounded-full shadow-lg"
+                      style={{
+                        width: `${
+                          prDetail.headBranch?.minApproveCnt
+                            ? Math.min(
+                                ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) *
+                                  100,
+                                100
+                              )
+                            : 0
+                        }%`,
+                      }}
+                    >
+                      {/* 반짝이는 오버레이 효과 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-pulse" />
+                      
+                      {/* 움직이는 하이라이트 효과 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 animate-pulse" style={{animationDelay: '0.5s'}} />
+                      
+                      {/* 끝부분 글로우 효과 */}
+                      <div className="absolute right-0 top-0 w-4 h-full bg-gradient-to-l from-white/50 to-transparent rounded-r-full" />
+                      
+                      {/* 완료 상태일 때 특별 효과 */}
+                      {prDetail.approveCnt >= prDetail.headBranch?.minApproveCnt && (
+                        <>
+                          <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 rounded-full animate-pulse" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="flex gap-0.5">
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.1s'}} />
+                              <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{animationDelay: '0.2s'}} />
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* 진행률 텍스트 - 중앙에 표시 */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-xs font-bold theme-text drop-shadow-sm">
+                        {Math.round(
+                          prDetail.headBranch?.minApproveCnt
+                            ? ((prDetail.approveCnt || 0) / prDetail.headBranch.minApproveCnt) * 100
+                            : 0
+                        )}%
+                      </span>
+                    </div>
+                    
+                    {/* 외곽 글로우 효과 */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-orange-500/20 via-red-500/20 to-orange-600/20 rounded-full blur-sm opacity-0 animate-pulse" style={{animationDelay: '1s'}} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -573,7 +559,7 @@ const PRReview = () => {
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md transition-all duration-200 flex-1 sm:flex-initial justify-center sm:justify-start ${
                       activeTab === tab.id
                         ? 'bg-white dark:bg-gray-600 text-orange-600 dark:text-orange-400 shadow-sm font-medium'
-                        : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
+                        : 'theme-text-secondary hover:theme-text hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -605,7 +591,6 @@ const PRReview = () => {
                 onSubmit={handleSubmit}
                 onCancel={handleCancel}
                 enableAudio={false}
-                enableCushion={true}
                 reviewState={reviewState}
                 onReviewStateChange={setReviewState}
                 showReviewState={true}
@@ -628,7 +613,6 @@ const PRReview = () => {
             prId={prId}
             onDescriptionUpdate={handleDescriptionUpdate}
             onDescriptionDelete={handleDescriptionDelete}
-            onDataRefresh={handleDataRefresh}
           />
         )}
         {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
