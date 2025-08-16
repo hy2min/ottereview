@@ -691,6 +691,42 @@ html {
   }
 }
 
+/* Step transition animations */
+.step-transition-container {
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes stepSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes stepSlideOut {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-100px) scale(0.95);
+  }
+}
+
+.step-enter {
+  animation: stepSlideIn 0.6s ease-out forwards;
+}
+
+.step-exit {
+  animation: stepSlideOut 0.4s ease-in forwards;
+}
+
 .morphing-blob {
   animation: morphing 8s ease-in-out infinite;
 }
@@ -722,6 +758,17 @@ html {
     90deg,
     transparent 0%,
     rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
     transparent 100%
   );
   background-size: 200% 100%;
@@ -901,6 +948,47 @@ html {
 .stagger-4 { animation-delay: 0.4s; }
 .stagger-5 { animation-delay: 0.5s; }
 .stagger-6 { animation-delay: 0.6s; }
+
+/* PR Create specific animations */
+@keyframes prStepFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pr-step-animation {
+  animation: prStepFadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Enhanced button interactions */
+.btn-primary-enhanced {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  box-shadow: 
+    0 4px 14px 0 rgba(249, 115, 22, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-primary-enhanced:hover {
+  background: linear-gradient(135deg, #ea580c, #c2410c);
+  box-shadow: 
+    0 6px 20px 0 rgba(249, 115, 22, 0.4),
+    0 0 0 2px rgba(249, 115, 22, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-primary-enhanced:active {
+  transform: translateY(0);
+  box-shadow: 
+    0 2px 8px 0 rgba(249, 115, 22, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
 
 /* ===== 개선된 타이포그래피 ===== */
 .text-display {

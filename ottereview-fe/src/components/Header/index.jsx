@@ -117,10 +117,10 @@ const Header = () => {
                 variant="header"
                 size="xl"
                 onClick={handleImportRepo}
-                className="gap-2"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="새 레포지토리 연결"
               >
-                <Plus size={16} className="text-gray-600 dark:text-gray-300" />
+                <Plus size={16} className="text-white" />
                 <span className="hidden sm:inline">레포 연결</span>
               </Button>
             )}
@@ -144,12 +144,13 @@ const Header = () => {
               variant="theme"
               size="xs"
               onClick={toggleTheme}
+              className="p-2.5 theme-bg-secondary border theme-border hover:theme-bg-tertiary rounded-lg transition-all duration-200 theme-shadow"
               title={theme === 'light' ? '다크 모드로 변경' : '라이트 모드로 변경'}
             >
               {theme === 'light' ? (
-                <Moon size={18} className="text-gray-600 dark:text-gray-300" />
+                <Moon size={18} className="theme-text" />
               ) : (
-                <Sun size={18} className="text-gray-600 dark:text-gray-300" />
+                <Sun size={18} className="theme-text" />
               )}
             </Button>
           </div>
