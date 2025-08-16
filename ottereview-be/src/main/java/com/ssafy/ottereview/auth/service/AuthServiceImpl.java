@@ -114,7 +114,7 @@ public class AuthServiceImpl implements AuthService {
 
 
     private String requestGithubAccessToken(String code) {
-        log.info("clientId={}, clientSecret={}", clientId, clientSecret);
+        log.debug("clientId={}, clientSecret={}", clientId, clientSecret);
         String url = "https://github.com/login/oauth/access_token";
 
         HttpHeaders headers = new HttpHeaders();
