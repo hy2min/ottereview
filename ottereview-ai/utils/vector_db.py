@@ -11,7 +11,7 @@ from langchain_openai import OpenAIEmbeddings
 import traceback
 import uuid
 from datetime import datetime
-from collections import defaultdict
+from collections import defaultdict, Counter
 from models import (
     PreparationResult, PRDetailData, 
     PullRequestFileInfo, PullRequestCommitInfo, PullRequestUserInfo, 
@@ -270,7 +270,7 @@ class PineconeVectorDB:
         }
         
         directories = set()
-        extensions = defaultdict(int)
+        extensions = Counter()
         
         for file in pr_detail.files:
             # 디렉토리 분산도 계산
