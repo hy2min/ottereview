@@ -2,7 +2,7 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
   const progressPercent = (currentStep / steps.length) * 100
 
   return (
-    <div className="pt-4 mb-8 space-y-6 text-sm animate-fade-in-up">
+    <div className="pt-4 space-y-6 text-sm animate-fade-in-up relative z-10">
       {/* 텍스트 인디케이터 */}
       <div className="flex justify-between items-center relative">
         {/* 배경 연결선 */}
@@ -15,7 +15,7 @@ const StepIndicator = ({ currentStep = 1, steps = [] }) => {
           const animationDelay = `animate-delay-${index * 200}`
 
           return (
-            <div key={label} className="flex-1 text-center relative z-10">
+            <div key={label} className="flex-1 text-center relative z-0">
               <div className={`animate-scale-in ${animationDelay}`}>
                 <div className="mb-2">
                   <span
