@@ -9,6 +9,20 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
   const setSseReconnectCallback = useAuthStore((state) => state.setSseReconnectCallback)
   const user = useUserStore((state) => state.user)
   const eventSourceRef = useRef(null)
+  const onPushEventRef = useRef(onPushEvent)
+  const onUpdateEventRef = useRef(onUpdateEvent)
+
+  // 콜백 ref 업데이트
+  onPushEventRef.current = onPushEvent
+  onUpdateEventRef.current = onUpdateEvent
+  
+  console.log('🔍 useSSE - 콜백 상태:', { 
+    onPushEvent: !!onPushEvent, 
+    onPushEventRef: !!onPushEventRef.current,
+    shouldConnect,
+    accessToken: !!accessToken,
+    githubId: user?.githubId 
+  })
 
   // SSE 연결 함수
   const connectSSE = useCallback(() => {
@@ -45,13 +59,18 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
           branchName: pushData.branchName,
           commitCount: pushData.commits?.length || 0,
           timestamp: new Date(),
+          prCreateUrl: `/${pushData.repository?.id || ''}/pr/create?branch=${pushData.branchName}`, // 우리 서비스 PR 생성 페이지
         }
         
         console.log('🍞 토스트 데이터 생성:', toastData)
+        console.log('🔍 이벤트 시점 콜백 상태:', { 
+          onPushEventRef: !!onPushEventRef.current,
+          refType: typeof onPushEventRef.current
+        })
         
-        if (onPushEvent) {
+        if (onPushEventRef.current) {
           console.log('🍞 onPushEvent 콜백 호출')
-          onPushEvent(toastData)
+          onPushEventRef.current(toastData)
         } else {
           console.log('❌ onPushEvent 콜백이 없음')
         }
@@ -65,8 +84,8 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
     eventSource.addEventListener('update', (event) => {
       console.log('🔄 업데이트 이벤트 (전역):', event.data)
       
-      if (onUpdateEvent) {
-        onUpdateEvent(event.data)
+      if (onUpdateEventRef.current) {
+        onUpdateEventRef.current(event.data)
       }
     })
 
@@ -77,7 +96,7 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
     eventSource.onerror = (error) => {
       console.error('❌ SSE 오류:', error)
     }
-  }, [shouldConnect, accessToken, user?.githubId, onPushEvent, onUpdateEvent])
+  }, [shouldConnect, accessToken, user?.githubId])
 
   // 초기 연결 및 재연결 콜백 등록
   useEffect(() => {
