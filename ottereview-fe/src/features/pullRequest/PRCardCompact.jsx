@@ -62,19 +62,19 @@ const PRCardCompact = ({ pr, type }) => {
           {/* 병합 검토 - Red */}
           <div className="flex items-center space-x-1">
             <div className="w-2 h-2 bg-red-500 rounded-full" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">{isMergeable ? '병합 가능' : '병합 검토'}</span>
+            <span className="text-xs theme-text-secondary font-medium">{isMergeable ? '병합 가능' : '병합 검토'}</span>
           </div>
           
           {/* 승인 - Green */}
           <div className="flex items-center space-x-1">
             <CheckCircle className="w-3 h-3 text-green-500" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">승인 {approveCnt}</span>
+            <span className="text-xs theme-text-secondary font-medium">승인 {approveCnt}</span>
           </div>
           
           {/* 리뷰 - Yellow */}
           <div className="flex items-center space-x-1">
             <Clock className="w-3 h-3 text-yellow-500" />
-            <span className="text-xs text-gray-700 dark:text-gray-300">리뷰 {reviewCommentCnt}</span>
+            <span className="text-xs theme-text-secondary font-medium">리뷰 {reviewCommentCnt}</span>
           </div>
         </div>
       </div>

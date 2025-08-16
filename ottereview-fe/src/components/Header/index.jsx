@@ -114,10 +114,10 @@ const Header = () => {
             {isLoggedIn && isDashboard && (
               <button
                 onClick={handleImportRepo}
-                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 theme-text hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
+                className="group relative inline-flex items-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-medium text-sm rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
                 title="새 레포지토리 연결"
               >
-                <Plus size={16} className="theme-text-secondary" />
+                <Plus size={16} className="text-white" />
                 <span className="hidden sm:inline">레포 연결</span>
               </button>
             )}
@@ -137,13 +137,13 @@ const Header = () => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg border border-gray-200 dark:border-gray-600 transition-colors duration-200"
+              className="p-2.5 theme-bg-secondary border theme-border hover:theme-bg-tertiary rounded-lg transition-all duration-200 theme-shadow"
               title={theme === 'light' ? '다크 모드로 변경' : '라이트 모드로 변경'}
             >
               {theme === 'light' ? (
-                <Moon size={18} className="theme-text-secondary" />
+                <Moon size={18} className="theme-text" />
               ) : (
-                <Sun size={18} className="theme-text-secondary" />
+                <Sun size={18} className="theme-text" />
               )}
             </button>
           </div>
