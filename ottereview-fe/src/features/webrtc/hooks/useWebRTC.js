@@ -219,6 +219,20 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           mirror: false,
         })
 
+        console.log('✅ 퍼블리셔 생성 완료')
+        setPublisher(myPublisher)
+        
+        // 퍼블리셔 발행
+        await mySession.publish(myPublisher)
+        console.log('✅ 퍼블리셔 발행 완료')
+        
+        setIsSessionJoined(true)
+        setConnectionStatus('connected')
+        
+      } catch (publishError) {
+        console.error('퍼블리셔 생성/발행 실패:', publishError)
+        throw publishError
+      }
     } catch (error) {
       setConnectionStatus('error')
       setErrorMessage(getErrorMessage(null, error))
@@ -416,6 +430,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
         console.log('✅ 오디오 스트림 구독 성공')
       } catch (error) {
+        console.error('스트림 처리 중 오류:', error)
       }
     })
 
@@ -470,6 +485,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
             audio.remove()
           }
         } catch (error) {
+          console.error('연결 삭제 처리 중 오류:', error)
         }
       })
     }
@@ -493,6 +509,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           }
           audio.remove()
         } catch (error) {
+          console.error('오디오 요소 정리 중 오류:', error)
         }
       })
       audioContainer.current.innerHTML = ''
