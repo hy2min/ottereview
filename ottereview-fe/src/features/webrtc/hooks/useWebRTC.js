@@ -308,7 +308,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         } catch (error) {
           console.error('연결 데이터 파싱 에러:', error)
         }
-      } catch (error) {
       }
     })
 
