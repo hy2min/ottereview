@@ -6,7 +6,6 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  FilterX,
   FolderCode,
   GitBranch,
   GitCommit,
@@ -598,7 +597,7 @@ const PRReview = () => {
           <h3 className="font-medium theme-text">우선순위</h3>
         </div>
         {prDetail.priorities && prDetail.priorities.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto p-2">
             {prDetail.priorities.slice(0, 3).map((priority, index) => {
               const getPriorityIcon = (level) => {
                 switch (level?.toLowerCase()) {
@@ -621,7 +620,7 @@ const PRReview = () => {
                 switch (level?.toLowerCase()) {
                   case 'high':
                   case '높음':
-                    return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
+                    return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-950 cursor-pointer ${baseStyle}`
                   case 'medium':
                   case '보통':
                     return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
@@ -671,22 +670,6 @@ const PRReview = () => {
                     <div className="flex-1 overflow-y-auto">
                       <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
                     </div>
-                    {selectedPriorityIndex === index && (
-                      <div className="mt-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedPriorityIndex(null)
-                          }}
-                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
-                        >
-                          <FilterX className="w-4 h-4 mr-1" />
-                          해제
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )
