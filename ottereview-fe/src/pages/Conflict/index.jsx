@@ -56,7 +56,6 @@ const Conflict = () => {
         try {
           await memoizedFetchConflictData(repoId, prId)
         } catch (err) {
-          console.error('Failed to fetch conflict data:', err)
         }
       }
     }
@@ -105,7 +104,6 @@ const Conflict = () => {
 
   const toggleReviewer = useCallback(
     (member) => {
-      console.log('🔄 토글 멤버:', member.githubUsername, '현재 선택:', selectedMembers)
       toggleMember(member.githubUsername)
     },
     [toggleMember, selectedMembers]
@@ -113,7 +111,6 @@ const Conflict = () => {
 
   const handleToggleFile = useCallback(
     (filename) => {
-      console.log('📁 토글 파일:', filename, '현재 선택:', selectedFiles)
       toggleFile(filename)
     },
     [toggleFile, selectedFiles]
@@ -122,7 +119,6 @@ const Conflict = () => {
   // Yorkie 문서 생성 및 초기 코드 설정 함수
   const createYorkieDocuments = async (roomId) => {
     try {
-      console.log('🚀 Yorkie 문서 생성 시작...')
       setYorkieInitializing(true)
 
       // 환경변수 확인
@@ -148,7 +144,6 @@ const Conflict = () => {
 
       for (const fileName of selectedFiles) {
         const documentKey = `${roomId}_${fileName.replace(/[^a-zA-Z0-9_-]/g, '_')}`
-        console.log(`📄 문서 생성 중: ${documentKey}`)
 
         try {
           // Yorkie 문서 생성
@@ -169,7 +164,6 @@ const Conflict = () => {
               let initialCode = ''
               if (fileHeadContent) {
                 initialCode = fileHeadContent
-                console.log(`✅ ${fileName}: 원본 코드 설정 (${fileHeadContent.length}자)`)
               } else {
                 initialCode = `// 파일: ${fileName}
 // 충돌 해결용 코드 편집기
@@ -181,7 +175,6 @@ function hello() {
 
 // TODO: 충돌을 해결하고 올바른 코드를 작성하세요
 `
-                console.log(`✅ ${fileName}: 기본 템플릿 설정`)
               }
 
               root.content.edit(0, 0, initialCode)
@@ -194,17 +187,14 @@ function hello() {
           // 문서 연결 해제 (ChatRoom에서 다시 연결할 예정)
           await client.detach(doc)
         } catch (docError) {
-          console.error(`❌ 문서 ${fileName} 생성 실패:`, docError)
           // 개별 파일 실패는 전체 프로세스를 중단하지 않음
         }
       }
 
       await client.deactivate()
 
-      console.log('🎉 Yorkie 문서 생성 완료:', createdDocs)
       return createdDocs
     } catch (error) {
-      console.error('❌ Yorkie 문서 생성 실패:', error)
       throw error
     } finally {
       setYorkieInitializing(false)
@@ -213,7 +203,6 @@ function hello() {
 
   const handleCreateChat = async () => {
     try {
-      console.log('🚀 채팅방 생성 시작')
 
       // 유효성 검사
       const trimmedRoomName = roomName.trim()
@@ -226,7 +215,6 @@ function hello() {
         alert('충돌 파일을 최소 1개 이상 선택해주세요.')
         return
       }
-      console.log(selectedFiles)
 
       // 현재 사용자를 포함한 선택된 멤버들의 ID 추출
       const allSelectedMembers = user ? [user.githubUsername, ...selectedMembers] : selectedMembers
@@ -238,12 +226,6 @@ function hello() {
         console.warn('일부 멤버의 ID를 찾을 수 없습니다.')
       }
 
-      console.log('📤 API 요청 데이터:', {
-        prId: Number(prId),
-        roomName: trimmedRoomName,
-        inviteeIds: selectedMemberIds,
-        selectedMemberUsernames: allSelectedMembers,
-      })
 
       // 채팅방 생성 API 호출
       const result = await createChat({
@@ -253,7 +235,6 @@ function hello() {
         files: selectedFiles,
       })
 
-      console.log('✅ API 응답:', result)
 
       // API 응답에서 채팅방 ID 추출
       const roomId = result.roomId || result.id || result.chatRoomId
@@ -262,7 +243,6 @@ function hello() {
       }
 
       // Yorkie 문서들 생성 및 초기 코드 설정
-      console.log('📄 Yorkie 문서 생성 중...')
       const yorkieDocs = await createYorkieDocuments(roomId)
 
       // 채팅방 정보를 sessionStorage에 저장
@@ -279,17 +259,13 @@ function hello() {
 
       try {
         sessionStorage.setItem(`room_${roomId}`, JSON.stringify(roomInfo))
-        console.log('💾 채팅방 정보 저장:', roomInfo)
       } catch (storageError) {
-        console.warn('sessionStorage 저장 실패:', storageError)
       }
 
       // 채팅방 페이지로 이동
       navigate(`/chatroom/${roomId}`)
 
-      console.log('✅ 채팅방 생성 완료, 페이지 이동 중...')
     } catch (err) {
-      console.error('❌ 채팅방 생성 실패:', err)
       const errorMessage = err.message || '알 수 없는 오류가 발생했습니다.'
       alert(`채팅방 생성에 실패했습니다: ${errorMessage}`)
     }

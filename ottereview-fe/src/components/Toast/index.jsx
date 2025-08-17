@@ -14,7 +14,7 @@ const Toast = ({ toast, onClose }) => {
     const timer = setTimeout(() => {
       setIsVisible(false)
       setTimeout(() => onClose(toast.id), 300) // 애니메이션 완료 후 제거
-    }, 10000)
+    }, 5000)
 
     return () => clearTimeout(timer)
   }, [toast.id, onClose])
@@ -75,10 +75,8 @@ const Toast = ({ toast, onClose }) => {
 }
 
 const ToastContainer = ({ toasts, onCloseToast }) => {
-  console.log('🍞 ToastContainer 렌더링:', toasts)
   
   if (toasts.length === 0) {
-    console.log('🍞 토스트 없음')
     return null
   }
 

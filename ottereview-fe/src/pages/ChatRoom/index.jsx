@@ -32,10 +32,8 @@ const ChatRoom = () => {
         setLoading(true)
         setError(null)
 
-        console.log(`📡 미팅룸 ${roomId} 정보 요청 중...`)
         const response = await api.get(`/api/meetings/${roomId}`)
 
-        console.log('📋 미팅룸 API 응답:', response.data)
 
         // 미팅룸 기본 정보 설정
         if (response.data) {
@@ -49,7 +47,6 @@ const ChatRoom = () => {
           }
           setRoomInfo(roomData)
 
-          console.log('👥 미팅룸 참가자 정보:', response.data.participants)
 
           // chatStore에 방 정보 추가/업데이트
           const existingRoom = rooms.find((r) => r.id === Number(roomId))
@@ -87,14 +84,11 @@ const ChatRoom = () => {
           }
         }
 
-        console.log(`✅ 추출된 파일 목록:`, files)
         setConflictFiles(files)
 
         if (files.length === 0) {
-          console.warn('⚠️ 파일 목록이 비어있습니다.')
         }
       } catch (error) {
-        console.error('❌ 미팅룸 정보 요청 실패:', error)
         setError('미팅룸 정보를 불러올 수 없습니다.')
       } finally {
         setLoading(false)
@@ -109,13 +103,11 @@ const ChatRoom = () => {
   // 파일명 추출 헬퍼 함수
   const extractFileNames = (items) => {
     if (!Array.isArray(items)) {
-      console.warn('⚠️ extractFileNames: 입력이 배열이 아닙니다:', items)
       return []
     }
 
     return items
       .map((item, index) => {
-        console.log(`📄 Item ${index}:`, item)
 
         // 문자열인 경우 그대로 반환
         if (typeof item === 'string') {
@@ -126,11 +118,9 @@ const ChatRoom = () => {
         if (typeof item === 'object' && item !== null) {
           const fileName = item.file_name || item.fileName || item.filename || item.name || null
 
-          console.log(`📄 객체에서 추출된 파일명:`, fileName)
           return fileName
         }
 
-        console.log(`📄 처리할 수 없는 항목:`, item)
         return null
       })
       .filter((fileName) => fileName && typeof fileName === 'string' && fileName.trim() !== '')
@@ -156,7 +146,6 @@ const ChatRoom = () => {
 
       alert('채팅방이 성공적으로 삭제되었습니다.')
     } catch (error) {
-      console.error('❌ 채팅방 삭제 실패:', error)
       alert('채팅방 삭제에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setIsDeleting(false)

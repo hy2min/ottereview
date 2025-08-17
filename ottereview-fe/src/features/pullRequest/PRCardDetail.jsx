@@ -51,28 +51,22 @@ const PRCardDetail = ({ pr }) => {
   const handleIsMergable = async () => {
     try {
       const mergeState = await IsMergable({ repoId, prId })
-      console.log('mergeState:', mergeState)
 
       // API 응답의 mergeable 값을 저장 (우선순위가 높음)
       setApiMergeable(mergeState.mergeable)
 
       if (mergeState.mergeable) {
-        console.log('머지 가능, doMerge 실행')
         await handleMerge()
       } else {
-        console.log('머지 불가능')
       }
     } catch (err) {
-      console.log(err)
     }
   }
 
   const handleMerge = async () => {
     try {
       const data = await doMerge({ repoId, prId })
-      console.log(data)
     } catch (err) {
-      console.log(err)
     }
   }
 
