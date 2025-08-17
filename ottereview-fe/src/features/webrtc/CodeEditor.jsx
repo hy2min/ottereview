@@ -38,7 +38,7 @@ const CodeEditor = ({ conflictFiles }) => {
   const isDocumentAttached = (doc) => {
     try {
       return doc && doc.getStatus() === 'attached'
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -52,9 +52,8 @@ const CodeEditor = ({ conflictFiles }) => {
     try {
       if (isDocumentAttached(doc)) {
         await client.detach(doc)
-      } else {
       }
-    } catch (error) {
+    } catch {
       // detach 실패해도 계속 진행
     }
   }
@@ -64,14 +63,12 @@ const CodeEditor = ({ conflictFiles }) => {
     const client = clientRef.current
     if (!client) return
 
-
     for (const [documentKey, docInfo] of attachedDocsRef.current.entries()) {
       // 구독 해제
       if (docInfo.unsubscribeFunc) {
         try {
           docInfo.unsubscribeFunc()
-        } catch (error) {
-        }
+        } catch {}
       }
 
       // 문서 detach
@@ -85,17 +82,16 @@ const CodeEditor = ({ conflictFiles }) => {
   const saveCurrentDocument = async () => {
     const doc = docRef.current
     const view = viewRef.current
-    
+
     if (!doc || !view) {
       return false
     }
 
     try {
-      
       // Yorkie 문서의 변경사항을 강제로 동기화
       const currentContent = view.state.doc.toString()
       const documentContent = doc.getRoot().content?.toString() || ''
-      
+
       if (currentContent !== documentContent) {
         doc.update((root) => {
           if (!root.content) {
@@ -109,14 +105,14 @@ const CodeEditor = ({ conflictFiles }) => {
             root.content.edit(0, 0, currentContent)
           }
         }, `자동 저장: ${selectedFileName}`)
-        
+
         setLastSaveTime(new Date())
         setHasUnsavedChanges(false)
         return true
       } else {
         return true
       }
-    } catch (error) {
+    } catch {
       return false
     }
   }
@@ -127,13 +123,9 @@ const CodeEditor = ({ conflictFiles }) => {
       return
     }
 
-    
     // 현재 파일이 있으면 저장
     if (selectedFileName && docRef.current && viewRef.current) {
-      const saveSuccess = await saveCurrentDocument()
-      if (saveSuccess) {
-      } else {
-      }
+      await saveCurrentDocument()
     }
 
     setSelectedFileName(filename)
@@ -143,7 +135,6 @@ const CodeEditor = ({ conflictFiles }) => {
   // 미팅룸 정보에서 파일 목록 가져오기
   const fetchMeetingRoomFiles = async (roomId) => {
     try {
-
       const response = await api.get(`/api/meetings/${roomId}`)
 
       let files = []
@@ -154,13 +145,9 @@ const CodeEditor = ({ conflictFiles }) => {
           files = extractFileNames(data.files)
         }
 
-
-        if (files.length === 0) {
-        }
-
         return files
       }
-    } catch (error) {
+    } catch {
       throw error
     }
   }
@@ -172,7 +159,7 @@ const CodeEditor = ({ conflictFiles }) => {
     }
 
     return items
-      .map((item, index) => {
+      .map((item) => {
         if (typeof item === 'string') {
           return item.trim()
         }
@@ -196,7 +183,6 @@ const CodeEditor = ({ conflictFiles }) => {
       return
     }
 
-
     const initializeYorkie = async () => {
       try {
         setLoading(true)
@@ -208,7 +194,7 @@ const CodeEditor = ({ conflictFiles }) => {
         try {
           const meetingFiles = await fetchMeetingRoomFiles(roomId)
           filesToUse = meetingFiles
-        } catch (apiError) {
+        } catch {
           filesToUse = Array.isArray(conflictFiles) ? conflictFiles : []
         }
 
@@ -262,8 +248,7 @@ const CodeEditor = ({ conflictFiles }) => {
             await clientRef.current.deactivate()
             clientRef.current = null
           }
-        } catch (error) {
-        }
+        } catch {}
       }
       cleanup()
     }
@@ -272,13 +257,8 @@ const CodeEditor = ({ conflictFiles }) => {
   // 선택된 파일에 대한 문서 연결 및 에디터 초기화
   useEffect(() => {
     if (!currentDocumentKey || !clientRef.current || status !== 'connected') {
-        currentDocumentKey,
-        hasClient: !!clientRef.current,
-        status,
-      })
       return
     }
-
 
     let view = null
     let doc = null
@@ -313,7 +293,6 @@ const CodeEditor = ({ conflictFiles }) => {
         }
 
         if (!existingDocInfo) {
-
           // 🔧 핵심 수정: disableGC 옵션 추가
           doc = new yorkie.Document(currentDocumentKey, { disableGC: true })
 
@@ -377,8 +356,7 @@ const CodeEditor = ({ conflictFiles }) => {
                 })
               }
             }
-          } catch (syncError) {
-          }
+          } catch {}
         }
 
         // 5. 파일 확장자에 따른 언어 설정
@@ -422,8 +400,7 @@ const CodeEditor = ({ conflictFiles }) => {
                 // 편집 직후 변경사항 저장됨으로 표시 (Yorkie가 실시간 동기화하므로)
                 setHasUnsavedChanges(false)
                 setLastSaveTime(new Date())
-              } catch (editError) {
-              }
+              } catch {}
             })
           }
         })
@@ -437,7 +414,7 @@ const CodeEditor = ({ conflictFiles }) => {
             oneDark,
             updateListener,
             EditorView.domEventHandlers({
-              keydown: (event, view) => {
+              keydown: (event) => {
                 // Ctrl+S 또는 Cmd+S로 수동 저장
                 if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                   event.preventDefault()
@@ -497,7 +474,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
     // 🔧 수정: 에디터만 정리하고 문서는 Map에서 관리
     return () => {
-
       // 에디터만 정리
       if (view) {
         view.destroy()
@@ -511,11 +487,9 @@ const CodeEditor = ({ conflictFiles }) => {
   // 컴포넌트 언마운트 시 정리 (자동 저장 포함)
   useEffect(() => {
     return () => {
-
       // 언마운트 전 현재 변경사항 저장
       if (hasUnsavedChanges && docRef.current && viewRef.current) {
-        saveCurrentDocument().catch((error) => {
-        })
+        saveCurrentDocument().catch(() => {})
       }
 
       if (viewRef.current) {
@@ -573,7 +547,9 @@ const CodeEditor = ({ conflictFiles }) => {
               <span>📄</span>
               <span>{fileName}</span>
               {selectedFileName === fileName && (
-                <span className={`text-xs ${hasUnsavedChanges ? 'text-orange-500' : 'text-green-500'}`}>
+                <span
+                  className={`text-xs ${hasUnsavedChanges ? 'text-orange-500' : 'text-green-500'}`}
+                >
                   {hasUnsavedChanges ? '◯' : '●'}
                 </span>
               )}
@@ -621,7 +597,11 @@ const CodeEditor = ({ conflictFiles }) => {
           </div>
           <div
             className={`px-3 py-1 rounded-full text-xs font-medium text-white ${
-              status === 'connected' ? 'bg-green-500 dark:bg-green-600' : loading ? 'bg-yellow-500 dark:bg-yellow-600' : 'bg-red-500 dark:bg-red-600'
+              status === 'connected'
+                ? 'bg-green-500 dark:bg-green-600'
+                : loading
+                  ? 'bg-yellow-500 dark:bg-yellow-600'
+                  : 'bg-red-500 dark:bg-red-600'
             }`}
           >
             {loading ? '🔄 연결 중...' : status === 'connected' ? '✅ 실시간 협업' : '❌ 연결 실패'}
@@ -662,7 +642,9 @@ const CodeEditor = ({ conflictFiles }) => {
               <div className="space-y-4">
                 <div className="text-3xl">📭</div>
                 <div className="text-lg">사용 가능한 파일이 없습니다</div>
-                <div className="text-sm theme-text-muted">미팅룸에 설정된 충돌 파일이 없습니다.</div>
+                <div className="text-sm theme-text-muted">
+                  미팅룸에 설정된 충돌 파일이 없습니다.
+                </div>
               </div>
             )}
           </div>
