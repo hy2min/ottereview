@@ -13,8 +13,13 @@ export const useSSE = (shouldConnect = true, onPushEvent = null, onUpdateEvent =
   const onUpdateEventRef = useRef(onUpdateEvent)
 
   // 콜백 ref 업데이트
-  onPushEventRef.current = onPushEvent
-  onUpdateEventRef.current = onUpdateEvent
+  useEffect(() => {
+    onPushEventRef.current = onPushEvent
+  }, [onPushEvent])
+  
+  useEffect(() => {
+    onUpdateEventRef.current = onUpdateEvent
+  }, [onUpdateEvent])
   
   console.log('🔍 useSSE - 콜백 상태:', { 
     onPushEvent: !!onPushEvent, 
