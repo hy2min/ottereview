@@ -136,10 +136,6 @@ spring:
     activate:
       on-profile: docker
 
-logging:
-  level:
-    com.ssafy.ottereview: INFO
-
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -158,3 +154,7 @@ logging:
     redis:
       host: redis
       port: 6379
+
+logging:
+  level:
+    com.ssafy.ottereview: INFO

@@ -85,16 +85,23 @@ public class MergeService {
     @Value("${github.app.authentication-jwt-expm}")
     private Long jwtTExpirationMillis;
     
-    public static void deleteDirectoryRecursively(File dir) throws IOException {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    deleteDirectoryRecursively(f);
+    public static void deleteDirectoryRecursively(File dir) {
+        
+        try {
+            log.info("충돌 파일 삭제 진행");
+            if (dir.isDirectory()) {
+                File[] files = dir.listFiles();
+                if (files != null) {
+                    for (File f : files) {
+                        deleteDirectoryRecursively(f);
+                    }
                 }
             }
+            dir.delete();
+        } catch (Exception e) {
+            log.error("디렉터리 삭제 중 오류 발생: {}", dir.getAbsolutePath(), e);
+            throw new BusinessException(MergeErrorCode.MERGE_DELETE_DIR_FAILED);
         }
-        dir.delete();
     }
     
     public String getHttpsUrl(Repo repo) {
@@ -327,36 +334,30 @@ public class MergeService {
                 Set<String> conflictFiles = mergeResult.getConflicts()
                         .keySet();
                 
-                List<String> conflictBlocksList = new ArrayList<>();
-                Map<String, String> baseFileContents = new HashMap<>();
-                Map<String, String> headFileContents = new HashMap<>();
+//                Map<String, String> baseFileContents = new HashMap<>();
+//                Map<String, String> headFileContents = new HashMap<>();
+                Map<String, String> conflictFileContents = new HashMap<>();
                 
                 for (String filePath : conflictFiles) {
-                    // --- base 브랜치 원본 내용 ---
-                    String baseContent = getFileContentFromBranch(git, baseBranch, filePath, installationId);
-                    baseFileContents.put(filePath, baseContent);
+//                    // --- base 브랜치 원본 내용 ---
+//                    String baseContent = getFileContentFromBranch(git, baseBranch, filePath, installationId);
+//                    baseFileContents.put(filePath, baseContent);
+//
+//                    // --- compareBranch(head) 원본 내용 ---
+//                    String headContent = getFileContentFromBranch(git, compareBranch, filePath, installationId);
+//                    headFileContents.put(filePath, headContent);
                     
-                    // --- compareBranch(head) 원본 내용 ---
-                    String headContent = getFileContentFromBranch(git, compareBranch, filePath, installationId);
-                    headFileContents.put(filePath, headContent);
-                    
-                    // --- 워킹 디렉터리에 남은 충돌 마커 블록 ---
-                    StringBuilder blocks = new StringBuilder();
-                    for (String block : extractConflictBlocks(tempPath + "/" + filePath)) {
-                        blocks.append("<<<<<<< CONFLICT in ")
-                                .append(filePath)
-                                .append("\n")
-                                .append(block)
-                                .append(">>>>>>> END CONFLICT\n\n");
-                    }
-                    conflictBlocksList.add(blocks.toString());
+                    // --- 충돌 마커가 포함된 전체 파일 내용 ---
+                    String conflictFileFullPath = tempPath + "/" + filePath;
+                    String conflictFileContent = Files.readString(Paths.get(conflictFileFullPath), StandardCharsets.UTF_8);
+                    conflictFileContents.put(filePath, conflictFileContent);
                 }
                 
                 return MergeResponse.builder()
                         .files(conflictFiles)
-                        .conflictFilesContents(conflictBlocksList)
-                        .baseFileContents(baseFileContents)
-                        .headFileContents(headFileContents)
+//                        .baseFileContents(baseFileContents)
+//                        .headFileContents(headFileContents)
+                        .conflictFileContents(conflictFileContents)
                         .build();
             }
         } finally {
