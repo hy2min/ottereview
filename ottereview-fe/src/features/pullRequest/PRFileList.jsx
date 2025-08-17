@@ -5,7 +5,18 @@ import { useState } from 'react'
 import Box from '@/components/Box'
 import CodeDiff from '@/components/CodeDiff'
 
-const PRFileList = ({ files, onAddComment, onRemoveComment, fileComments = {}, existingReviewComments = {}, descriptions = [], prAuthor = {}, showDiffHunk = false, commentMode = 'review', onDataRefresh }) => {
+const PRFileList = ({
+  files,
+  onAddComment,
+  onRemoveComment,
+  fileComments = {},
+  existingReviewComments = {},
+  descriptions = [],
+  prAuthor = {},
+  showDiffHunk = false,
+  commentMode = 'review',
+  onDataRefresh,
+}) => {
   const [expandedFiles, setExpandedFiles] = useState([]) // 배열로 변경
 
   const toggle = (filename) => {
@@ -53,8 +64,12 @@ const PRFileList = ({ files, onAddComment, onRemoveComment, fileComments = {}, e
                 <CodeDiff
                   patch={f.patch}
                   filePath={f.filename}
-                  onAddComment={(lineIndex, commentData) => onAddComment(f.filename, lineIndex, commentData)}
-                  onRemoveComment={(lineIndex, commentId) => onRemoveComment?.(f.filename, lineIndex, commentId)}
+                  onAddComment={(lineIndex, commentData) =>
+                    onAddComment(f.filename, lineIndex, commentData)
+                  }
+                  onRemoveComment={(lineIndex, commentId) =>
+                    onRemoveComment?.(f.filename, lineIndex, commentId)
+                  }
                   initialSubmittedComments={fileComments[f.filename]?.submittedComments || {}}
                   existingReviewComments={existingReviewComments[f.filename] || {}}
                   descriptions={descriptions}

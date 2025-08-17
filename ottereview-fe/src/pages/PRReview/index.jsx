@@ -6,7 +6,6 @@ import {
   CheckCircle,
   Clock,
   FileText,
-  FilterX,
   FolderCode,
   GitBranch,
   GitCommit,
@@ -27,14 +26,12 @@ import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import {
   closePR,
-  deletePRDescription,
   doMerge,
   fetchPRDetail,
   fetchReviews,
   IsMergable,
   reopenPR,
   submitReview,
-  updatePRDescription,
 } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
@@ -165,14 +162,12 @@ const PRReview = () => {
         files: files, // 녹음 파일들
       }
 
-
       const response = await submitReview({
         accountId: prDetail?.repo.accountId,
         repoId,
         prId,
         reviewData,
       })
-
 
       // 상태 초기화 (beforeunload 이벤트 방지)
       setReviewComments([])
@@ -200,8 +195,7 @@ const PRReview = () => {
           window.location.reload()
         }
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const handleCancel = () => {
@@ -254,10 +248,8 @@ const PRReview = () => {
 
       if (mergeState.mergeable) {
         await handleMerge()
-      } else {
       }
-    } catch (err) {
-    }
+    } catch (err) {}
   }
 
   const handleMerge = async () => {
@@ -271,32 +263,6 @@ const PRReview = () => {
       alert('PR이 성공적으로 머지되었습니다!')
     } catch (err) {
       alert('머지에 실패했습니다.')
-    }
-  }
-
-  // Description 수정 핸들러
-  const handleDescriptionUpdate = async (descriptionId, data) => {
-    try {
-      await updatePRDescription(prId, descriptionId, data)
-
-      // PR 데이터 새로고침하여 수정된 description 반영
-      const pr = await fetchPRDetail({ repoId, prId })
-      setPrDetail(pr)
-    } catch (error) {
-      throw error // CodeDiff에서 에러 처리하도록
-    }
-  }
-
-  // Description 삭제 핸들러
-  const handleDescriptionDelete = async (descriptionId) => {
-    try {
-      await deletePRDescription(prId, descriptionId)
-
-      // PR 데이터 새로고침하여 삭제된 description 반영
-      const pr = await fetchPRDetail({ repoId, prId })
-      setPrDetail(pr)
-    } catch (error) {
-      throw error // CodeDiff에서 에러 처리하도록
     }
   }
 
@@ -537,20 +503,18 @@ const PRReview = () => {
       <div className="flex gap-3">
         {/* AI 요약 */}
         <div className="flex-1 min-w-0">
-          <Box shadow className="p-3 h-40">
-            <div className="flex items-start gap-3 h-full">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1 flex flex-col">
-                <h4 className="font-medium theme-text mb-2 flex-shrink-0">AI 요약</h4>
-                <div className="flex-1 overflow-y-auto">
-                  <p
-                    className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
-                  >
-                    {getSummaryContent()}
-                  </p>
-                </div>
+          <Box shadow className="p-3 h-60">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <h4 className="font-medium theme-text">AI 요약</h4>
+            </div>
+            <div className="min-w-0 flex-1 flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto max-h-44">
+                <p
+                  className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
+                >
+                  {getSummaryContent()}
+                </p>
               </div>
             </div>
           </Box>
@@ -558,7 +522,7 @@ const PRReview = () => {
 
         {/* 리뷰어 목록 */}
         <div className="w-56 flex-shrink-0">
-          <Box shadow className="p-3 h-40">
+          <Box shadow className="p-3 h-60">
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-3 mb-3 flex-shrink-0">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
@@ -633,7 +597,7 @@ const PRReview = () => {
           <h3 className="font-medium theme-text">우선순위</h3>
         </div>
         {prDetail.priorities && prDetail.priorities.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2">
+          <div className="flex gap-3 overflow-x-auto p-2">
             {prDetail.priorities.slice(0, 3).map((priority, index) => {
               const getPriorityIcon = (level) => {
                 switch (level?.toLowerCase()) {
@@ -656,7 +620,7 @@ const PRReview = () => {
                 switch (level?.toLowerCase()) {
                   case 'high':
                   case '높음':
-                    return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-800 cursor-pointer ${baseStyle}`
+                    return `bg-red-50 dark:bg-red-900 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700 hover:bg-red-100 dark:hover:bg-red-950 cursor-pointer ${baseStyle}`
                   case 'medium':
                   case '보통':
                     return `bg-yellow-50 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-800 cursor-pointer ${baseStyle}`
@@ -706,22 +670,6 @@ const PRReview = () => {
                     <div className="flex-1 overflow-y-auto">
                       <p className="text-xs opacity-80 leading-relaxed">{priority.content}</p>
                     </div>
-                    {selectedPriorityIndex === index && (
-                      <div className="mt-2 text-right">
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedPriorityIndex(null)
-                          }}
-                          className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer"
-                        >
-                          <FilterX className="w-4 h-4 mr-1" />
-                          해제
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
               )
@@ -802,8 +750,6 @@ const PRReview = () => {
             prAuthor={prDetail?.author || {}}
             showDiffHunk={false}
             prId={prId}
-            onDescriptionUpdate={handleDescriptionUpdate}
-            onDescriptionDelete={handleDescriptionDelete}
             onDataRefresh={handleDataRefresh}
           />
         )}

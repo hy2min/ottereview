@@ -368,8 +368,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <img
-                      src={`https://github.com/${reply.reviewer}.png`}
-                      alt={reply.reviewer || 'Reviewer'}
+                      src={`https://github.com/${reply.authorName}.png`}
+                      alt={reply.authorName || 'Reviewer'}
                       className="w-6 h-6 rounded-full border-2 border-green-500 dark:border-green-400"
                       onError={(e) => {
                         e.target.src = 'https://github.com/identicons/jasonlong.png'
@@ -377,7 +377,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     />
                     <div>
                       <span className="font-medium theme-text text-sm">
-                        {reply.reviewer || 'Unknown'}
+                        {reply.authorName || 'Unknown'}
                       </span>
                       <span className="text-xs theme-text-muted ml-2">
                         {new Date(reply.submittedAt).toLocaleString()}
