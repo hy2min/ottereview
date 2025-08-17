@@ -1,5 +1,6 @@
+import { AlertCircle, CheckCircle, FileText, RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { Sparkles, Settings, RotateCcw, AlertCircle, CheckCircle, FileText } from 'lucide-react'
+
 import { requestAIConvention, requestAIOthers } from './prApi'
 
 const Box = ({ children, shadow = false, className = '' }) => {
@@ -25,7 +26,7 @@ const Button = ({
     'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
 
   const variants = {
-        primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
+    primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
     secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
   }
 
@@ -50,9 +51,7 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
   if (as === 'select') {
     return (
       <div className="space-y-2">
-        <label className="block text-sm font-medium theme-text">
-          {label}
-        </label>
+        <label className="block text-sm font-medium theme-text">{label}</label>
         <select
           value={value}
           onChange={onChange}
@@ -85,11 +84,9 @@ const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props
 const PRCreateStep2 = ({
   goToStep,
   repoId,
-  validationBranches,
   selectedBranches,
   aiConvention,
   setAIConvention,
-  aiOthers,
   setAIOthers,
   conventionRules,
   setConventionRules,
@@ -128,7 +125,6 @@ const PRCreateStep2 = ({
       })
 
       setAIConvention(conventionData)
-    } catch (e) {
     } finally {
       setAiLoading(false)
     }
@@ -215,9 +211,9 @@ const PRCreateStep2 = ({
   const handleNextStep = () => {
     // 즉시 다음 단계로 이동
     goToStep(3)
-    
+
     // AI Others 요청을 백그라운드에서 시작 (await 없이)
-    
+
     requestAIOthers({
       repoId,
       source: selectedBranches.source,
@@ -227,17 +223,14 @@ const PRCreateStep2 = ({
       .then((othersData) => {
         setAIOthers(othersData)
       })
-      .catch((e) => {
-      })
+      .catch((e) => {})
   }
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-semibold theme-text mb-2">컨벤션 검사</h2>
-        <p className="theme-text-secondary">
-          코딩 규칙을 설정하고 AI 피드백을 받아보세요
-        </p>
+        <p className="theme-text-secondary">코딩 규칙을 설정하고 AI 피드백을 받아보세요</p>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-stretch space-y-4 md:space-y-0 md:gap-6">
@@ -326,9 +319,7 @@ const PRCreateStep2 = ({
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-4">
                       <CheckCircle className="w-5 h-5 text-green-500" />
-                      <span className="font-medium theme-text">
-                        컨벤션 분석 완료
-                      </span>
+                      <span className="font-medium theme-text">컨벤션 분석 완료</span>
                     </div>
                     {renderAIConvention(aiConvention.result)}
                   </div>
