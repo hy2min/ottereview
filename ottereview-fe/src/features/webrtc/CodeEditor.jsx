@@ -46,20 +46,15 @@ const CodeEditor = ({ conflictFiles }) => {
   // 🔧 추가: 안전한 문서 detach 함수
   const safeDetachDocument = async (client, doc, documentKey) => {
     if (!client || !doc) {
-      console.log('🔍 detach 대상 없음:', documentKey)
       return
     }
 
     try {
       if (isDocumentAttached(doc)) {
-        console.log('🔌 문서 detach 시작:', documentKey)
         await client.detach(doc)
-        console.log('✅ 문서 detach 완료:', documentKey)
       } else {
-        console.log('ℹ️ 문서가 이미 detach됨:', documentKey)
       }
     } catch (error) {
-      console.error('❌ 문서 detach 실패:', documentKey, error)
       // detach 실패해도 계속 진행
     }
   }
@@ -69,7 +64,6 @@ const CodeEditor = ({ conflictFiles }) => {
     const client = clientRef.current
     if (!client) return
 
-    console.log('🧹 모든 문서 정리 시작')
 
     for (const [documentKey, docInfo] of attachedDocsRef.current.entries()) {
       // 구독 해제
@@ -77,7 +71,6 @@ const CodeEditor = ({ conflictFiles }) => {
         try {
           docInfo.unsubscribeFunc()
         } catch (error) {
-          console.warn('구독 해제 오류:', error.message)
         }
       }
 
@@ -86,7 +79,6 @@ const CodeEditor = ({ conflictFiles }) => {
     }
 
     attachedDocsRef.current.clear()
-    console.log('✅ 모든 문서 정리 완료')
   }
 
   // 🔧 추가: 현재 문서 저장 함수
@@ -95,19 +87,16 @@ const CodeEditor = ({ conflictFiles }) => {
     const view = viewRef.current
     
     if (!doc || !view) {
-      console.log('💾 저장할 문서나 에디터가 없음')
       return false
     }
 
     try {
-      console.log('💾 현재 문서 저장 중...', selectedFileName)
       
       // Yorkie 문서의 변경사항을 강제로 동기화
       const currentContent = view.state.doc.toString()
       const documentContent = doc.getRoot().content?.toString() || ''
       
       if (currentContent !== documentContent) {
-        console.log('💾 변경사항 발견, 동기화 중...')
         doc.update((root) => {
           if (!root.content) {
             root.content = new yorkie.Text()
@@ -123,14 +112,11 @@ const CodeEditor = ({ conflictFiles }) => {
         
         setLastSaveTime(new Date())
         setHasUnsavedChanges(false)
-        console.log('✅ 문서 저장 완료:', selectedFileName)
         return true
       } else {
-        console.log('💾 변경사항 없음, 저장 생략')
         return true
       }
     } catch (error) {
-      console.error('❌ 문서 저장 실패:', error)
       return false
     }
   }
@@ -138,24 +124,18 @@ const CodeEditor = ({ conflictFiles }) => {
   // 파일 선택 핸들러 (자동 저장 포함)
   const handleFileSelect = async (filename) => {
     if (selectedFileName === filename) {
-      console.log('📝 동일한 파일 선택됨, 무시:', filename)
       return
     }
 
-    console.log('📝 파일 전환 시작:', selectedFileName, '→', filename)
     
     // 현재 파일이 있으면 저장
     if (selectedFileName && docRef.current && viewRef.current) {
-      console.log('💾 파일 전환 전 자동 저장 실행...')
       const saveSuccess = await saveCurrentDocument()
       if (saveSuccess) {
-        console.log('✅ 파일 전환 전 저장 완료')
       } else {
-        console.warn('⚠️ 파일 전환 전 저장 실패, 그래도 전환 진행')
       }
     }
 
-    console.log('📝 파일 선택:', filename, '(이전:', selectedFileName, ')')
     setSelectedFileName(filename)
     setHasUnsavedChanges(false) // 새 파일로 전환하므로 변경사항 초기화
   }
@@ -163,10 +143,8 @@ const CodeEditor = ({ conflictFiles }) => {
   // 미팅룸 정보에서 파일 목록 가져오기
   const fetchMeetingRoomFiles = async (roomId) => {
     try {
-      console.log(`📡 미팅룸 ${roomId} 파일 목록 요청 중...`)
 
       const response = await api.get(`/api/meetings/${roomId}`)
-      console.log('📋 미팅룸 API 전체 응답:', response.data)
 
       let files = []
 
@@ -174,19 +152,15 @@ const CodeEditor = ({ conflictFiles }) => {
         const data = response.data
         if (Array.isArray(data.files)) {
           files = extractFileNames(data.files)
-          console.log('📁 files 배열에서 추출:', files)
         }
 
-        console.log(`✅ 최종 추출된 파일 목록:`, files)
 
         if (files.length === 0) {
-          console.warn('⚠️ 파일 목록이 비어있습니다.')
         }
 
         return files
       }
     } catch (error) {
-      console.error('❌ 미팅룸 파일 목록 요청 실패:', error)
       throw error
     }
   }
@@ -194,7 +168,6 @@ const CodeEditor = ({ conflictFiles }) => {
   // 파일명 추출 헬퍼 함수
   const extractFileNames = (items) => {
     if (!Array.isArray(items)) {
-      console.warn('⚠️ extractFileNames: 입력이 배열이 아닙니다:', items)
       return []
     }
 
@@ -217,14 +190,12 @@ const CodeEditor = ({ conflictFiles }) => {
   // Yorkie 클라이언트 초기화
   useEffect(() => {
     if (!roomId) {
-      console.error('❌ roomId가 없습니다')
       setError('Room ID가 필요합니다.')
       setStatus('error')
       setLoading(false)
       return
     }
 
-    console.log('🚀 Yorkie CodeEditor 초기화 시작:', { roomId, conflictFiles })
 
     const initializeYorkie = async () => {
       try {
@@ -238,7 +209,6 @@ const CodeEditor = ({ conflictFiles }) => {
           const meetingFiles = await fetchMeetingRoomFiles(roomId)
           filesToUse = meetingFiles
         } catch (apiError) {
-          console.warn('⚠️ API에서 파일 목록을 가져올 수 없음, fallback 사용:', apiError)
           filesToUse = Array.isArray(conflictFiles) ? conflictFiles : []
         }
 
@@ -266,7 +236,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
         await client.activate()
         clientRef.current = client
-        console.log('✅ Yorkie 클라이언트 활성화 완료')
 
         // 4. 첫 번째 파일을 기본 선택
         if (filesToUse.length > 0 && !selectedFileName) {
@@ -274,9 +243,7 @@ const CodeEditor = ({ conflictFiles }) => {
         }
 
         setStatus('connected')
-        console.log('✅ Yorkie 클라이언트 초기화 완료')
       } catch (error) {
-        console.error('❌ Yorkie 클라이언트 초기화 실패:', error)
         setError(error.message || '클라이언트 초기화에 실패했습니다.')
         setStatus('error')
       } finally {
@@ -288,7 +255,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
     // 🔧 수정: 모든 문서를 먼저 정리 후 클라이언트 deactivate
     return () => {
-      console.log('🧹 Yorkie 클라이언트 정리 중...')
       const cleanup = async () => {
         try {
           await cleanupAllDocuments()
@@ -297,7 +263,6 @@ const CodeEditor = ({ conflictFiles }) => {
             clientRef.current = null
           }
         } catch (error) {
-          console.error('❌ 클라이언트 정리 실패:', error)
         }
       }
       cleanup()
@@ -307,7 +272,6 @@ const CodeEditor = ({ conflictFiles }) => {
   // 선택된 파일에 대한 문서 연결 및 에디터 초기화
   useEffect(() => {
     if (!currentDocumentKey || !clientRef.current || status !== 'connected') {
-      console.log('📝 에디터 초기화 조건 미충족:', {
         currentDocumentKey,
         hasClient: !!clientRef.current,
         status,
@@ -315,7 +279,6 @@ const CodeEditor = ({ conflictFiles }) => {
       return
     }
 
-    console.log('📝 문서 연결 시작:', currentDocumentKey)
 
     let view = null
     let doc = null
@@ -330,7 +293,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
         // 1. 기존 에디터 정리
         if (viewRef.current) {
-          console.log('🧹 기존 에디터 정리 중...')
           viewRef.current.destroy()
           viewRef.current = null
         }
@@ -341,11 +303,9 @@ const CodeEditor = ({ conflictFiles }) => {
         if (existingDocInfo) {
           // 기존 문서가 여전히 attach되어 있는지 확인
           if (isDocumentAttached(existingDocInfo.doc)) {
-            console.log('♻️ 기존 문서 재사용:', currentDocumentKey)
             doc = existingDocInfo.doc
             unsubscribeFunc = existingDocInfo.unsubscribeFunc
           } else {
-            console.log('🔄 기존 문서가 detach됨, 새로 생성:', currentDocumentKey)
             // 상태에서 제거
             attachedDocsRef.current.delete(currentDocumentKey)
             existingDocInfo = null
@@ -353,17 +313,14 @@ const CodeEditor = ({ conflictFiles }) => {
         }
 
         if (!existingDocInfo) {
-          console.log('🔗 새 Yorkie 문서 생성 및 연결:', currentDocumentKey)
 
           // 🔧 핵심 수정: disableGC 옵션 추가
           doc = new yorkie.Document(currentDocumentKey, { disableGC: true })
 
           try {
             await client.attach(doc, { initialPresence: {} })
-            console.log('✅ Yorkie 문서 연결 완료 (GC 비활성화):', currentDocumentKey)
           } catch (attachError) {
             if (attachError.message.includes('document is attached')) {
-              console.warn('⚠️ 문서가 이미 attach됨, 기존 연결 상태로 진행:', currentDocumentKey)
               // 이미 attach된 상태이므로 그대로 진행
             } else {
               throw attachError
@@ -372,7 +329,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
           // 문서 이벤트 구독
           unsubscribeFunc = doc.subscribe((event) => {
-            console.log('📡 Yorkie 문서 이벤트:', event.type, 'for', currentDocumentKey)
             if (event.type === 'snapshot' || event.type === 'remote-change') {
               syncText()
             }
@@ -392,9 +348,7 @@ const CodeEditor = ({ conflictFiles }) => {
         const existingContent = doc.getRoot().content
         if (existingContent) {
           const contentPreview = existingContent.toString().substring(0, 100)
-          console.log('✅ 기존 문서 내용 발견:', contentPreview + '...')
         } else {
-          console.log('ℹ️ 문서에 content가 없습니다. 초기화합니다.')
           doc.update((root) => {
             if (!root.content) {
               root.content = new yorkie.Text()
@@ -413,7 +367,6 @@ const CodeEditor = ({ conflictFiles }) => {
               const currentContent = currentView.state.doc.toString()
 
               if (newContent !== currentContent) {
-                console.log('🔄 에디터 내용 동기화')
                 currentView.dispatch({
                   changes: {
                     from: 0,
@@ -425,7 +378,6 @@ const CodeEditor = ({ conflictFiles }) => {
               }
             }
           } catch (syncError) {
-            console.error('❌ 동기화 오류:', syncError)
           }
         }
 
@@ -459,7 +411,6 @@ const CodeEditor = ({ conflictFiles }) => {
             tr.changes.iterChanges((from, to, _, __, inserted) => {
               try {
                 const text = inserted.toJSON().join('\n')
-                console.log('✏️ 사용자 편집:', { from, to, textLength: text.length })
 
                 doc.update((root) => {
                   if (!root.content) {
@@ -472,7 +423,6 @@ const CodeEditor = ({ conflictFiles }) => {
                 setHasUnsavedChanges(false)
                 setLastSaveTime(new Date())
               } catch (editError) {
-                console.error('❌ 편집 업데이트 오류:', editError)
               }
             })
           }
@@ -491,7 +441,6 @@ const CodeEditor = ({ conflictFiles }) => {
                 // Ctrl+S 또는 Cmd+S로 수동 저장
                 if ((event.ctrlKey || event.metaKey) && event.key === 's') {
                   event.preventDefault()
-                  console.log('💾 키보드 단축키로 수동 저장 실행...')
                   saveCurrentDocument()
                   return true
                 }
@@ -538,9 +487,7 @@ const CodeEditor = ({ conflictFiles }) => {
 
         // 8. 기존 문서 내용을 에디터에 로드
         syncText()
-        console.log('✅ 에디터 초기화 완료:', selectedFileName)
       } catch (error) {
-        console.error('❌ 에디터 초기화 실패:', error)
         setError(error.message || '에디터 초기화에 실패했습니다.')
         setStatus('error')
       }
@@ -550,7 +497,6 @@ const CodeEditor = ({ conflictFiles }) => {
 
     // 🔧 수정: 에디터만 정리하고 문서는 Map에서 관리
     return () => {
-      console.log('🧹 에디터 cleanup (문서는 Map에서 관리):', currentDocumentKey)
 
       // 에디터만 정리
       if (view) {
@@ -565,13 +511,10 @@ const CodeEditor = ({ conflictFiles }) => {
   // 컴포넌트 언마운트 시 정리 (자동 저장 포함)
   useEffect(() => {
     return () => {
-      console.log('🧹 컴포넌트 언마운트 정리')
 
       // 언마운트 전 현재 변경사항 저장
       if (hasUnsavedChanges && docRef.current && viewRef.current) {
-        console.log('💾 언마운트 전 자동 저장 실행...')
         saveCurrentDocument().catch((error) => {
-          console.error('❌ 언마운트 전 저장 실패:', error)
         })
       }
 
