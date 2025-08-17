@@ -27,14 +27,12 @@ import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
 import {
   closePR,
-  deletePRDescription,
   doMerge,
   fetchPRDetail,
   fetchReviews,
   IsMergable,
   reopenPR,
   submitReview,
-  updatePRDescription,
 } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
@@ -165,14 +163,12 @@ const PRReview = () => {
         files: files, // 녹음 파일들
       }
 
-
       const response = await submitReview({
         accountId: prDetail?.repo.accountId,
         repoId,
         prId,
         reviewData,
       })
-
 
       // 상태 초기화 (beforeunload 이벤트 방지)
       setReviewComments([])
@@ -200,8 +196,7 @@ const PRReview = () => {
           window.location.reload()
         }
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   const handleCancel = () => {
@@ -254,10 +249,8 @@ const PRReview = () => {
 
       if (mergeState.mergeable) {
         await handleMerge()
-      } else {
-      }
-    } catch (err) {
-    }
+      } 
+    } catch (err) {}
   }
 
   const handleMerge = async () => {
@@ -271,32 +264,6 @@ const PRReview = () => {
       alert('PR이 성공적으로 머지되었습니다!')
     } catch (err) {
       alert('머지에 실패했습니다.')
-    }
-  }
-
-  // Description 수정 핸들러
-  const handleDescriptionUpdate = async (descriptionId, data) => {
-    try {
-      await updatePRDescription(prId, descriptionId, data)
-
-      // PR 데이터 새로고침하여 수정된 description 반영
-      const pr = await fetchPRDetail({ repoId, prId })
-      setPrDetail(pr)
-    } catch (error) {
-      throw error // CodeDiff에서 에러 처리하도록
-    }
-  }
-
-  // Description 삭제 핸들러
-  const handleDescriptionDelete = async (descriptionId) => {
-    try {
-      await deletePRDescription(prId, descriptionId)
-
-      // PR 데이터 새로고침하여 삭제된 description 반영
-      const pr = await fetchPRDetail({ repoId, prId })
-      setPrDetail(pr)
-    } catch (error) {
-      throw error // CodeDiff에서 에러 처리하도록
     }
   }
 
@@ -537,7 +504,7 @@ const PRReview = () => {
       <div className="flex gap-3">
         {/* AI 요약 */}
         <div className="flex-1 min-w-0">
-          <Box shadow className="p-3 h-40">
+          <Box shadow className="p-3 h-60">
             <div className="flex items-start gap-3 h-full">
               <div className="flex-shrink-0">
                 <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
@@ -558,7 +525,7 @@ const PRReview = () => {
 
         {/* 리뷰어 목록 */}
         <div className="w-56 flex-shrink-0">
-          <Box shadow className="p-3 h-40">
+          <Box shadow className="p-3 h-60">
             <div className="flex flex-col h-full">
               <div className="flex items-center gap-3 mb-3 flex-shrink-0">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
@@ -802,8 +769,6 @@ const PRReview = () => {
             prAuthor={prDetail?.author || {}}
             showDiffHunk={false}
             prId={prId}
-            onDescriptionUpdate={handleDescriptionUpdate}
-            onDescriptionDelete={handleDescriptionDelete}
             onDataRefresh={handleDataRefresh}
           />
         )}
