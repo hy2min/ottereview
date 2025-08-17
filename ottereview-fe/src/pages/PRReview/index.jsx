@@ -249,7 +249,7 @@ const PRReview = () => {
 
       if (mergeState.mergeable) {
         await handleMerge()
-      } 
+      }
     } catch (err) {}
   }
 
@@ -505,19 +505,17 @@ const PRReview = () => {
         {/* AI 요약 */}
         <div className="flex-1 min-w-0">
           <Box shadow className="p-3 h-60">
-            <div className="flex items-start gap-3 h-full">
-              <div className="flex-shrink-0">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-              </div>
-              <div className="min-w-0 flex-1 flex flex-col">
-                <h4 className="font-medium theme-text mb-2 flex-shrink-0">AI 요약</h4>
-                <div className="flex-1 overflow-y-auto">
-                  <p
-                    className={`text-sm leading-relaxed ${!prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
-                  >
-                    {getSummaryContent()}
-                  </p>
-                </div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <h4 className="font-medium theme-text">AI 요약</h4>
+            </div>
+            <div className="min-w-0 flex-1 flex flex-col h-full">
+              <div className="flex-1 overflow-y-auto max-h-44">
+                <p
+                  className={`text-sm leading-relaxed break-words whitespace-pre-wrap ${prDetail.summary?.trim() ? 'theme-text-muted italic' : 'theme-text-secondary'}`}
+                >
+                  {getSummaryContent()}
+                </p>
               </div>
             </div>
           </Box>
