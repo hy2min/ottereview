@@ -270,7 +270,7 @@ const PRCreateStep1 = ({
 
       {/* 하단 네비게이션 버튼 영역 */}
       <div className="mx-auto">
-        <div className="flex justify-center items-center space-x-4">
+        <div className="flex justify-center items-center space-x-4 mb-8">
           <Button
             onClick={() => {
               navigate(`/${repoId}`)
