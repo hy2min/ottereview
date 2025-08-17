@@ -405,9 +405,9 @@ function hello() {
                       type="checkbox"
                       checked={true}
                       disabled={true}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 dark:focus:ring-blue-400"
                     />
-                    <span className="text-sm font-medium">{user.githubUsername} (나)</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-900">{user.githubUsername} (나)</span>
                     <Badge variant="success" size="xs">
                       항상 포함
                     </Badge>
@@ -421,10 +421,10 @@ function hello() {
                     .map((member) => (
                       <label
                         key={member.githubUsername}
-                        className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
+                        className={`group flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 hover:!text-gray-900 dark:hover:bg-white dark:hover:!text-gray-900 rounded-md transition-colors ${
                           selectedMembers.includes(member.githubUsername)
-                            ? 'bg-blue-50 border-blue-300'
-                            : 'border-gray-300'
+                            ? 'bg-blue-50 border-blue-300 text-blue-900 dark:bg-blue-900 dark:border-blue-600 dark:text-blue-100'
+                            : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white dark:bg-transparent'
                         }`}
                       >
                         <input
@@ -435,9 +435,11 @@ function hello() {
                             toggleReviewer(member)
                           }}
                           disabled={loading || yorkieInitializing}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
+                          className="w-4 h-4 text-blue-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-2 disabled:opacity-50"
                         />
-                        <span className="text-sm">{member.githubUsername}</span>
+                        <span className="text-sm text-gray-700 dark:text-white dark:group-hover:text-gray-900">
+                          {member.githubUsername}
+                        </span>
                       </label>
                     ))}
                 </div>
@@ -456,10 +458,10 @@ function hello() {
                 {conflictFiles.map((file) => (
                   <label
                     key={file}
-                    className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
+                    className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 hover:!text-gray-900 dark:hover:bg-gray-700 dark:hover:!text-gray-100 rounded-md transition-colors ${
                       selectedFiles.includes(file)
-                        ? 'bg-green-50 border-green-300'
-                        : 'border-gray-300'
+                        ? 'bg-green-50 border-green-300 text-green-900 dark:bg-green-900 dark:border-green-600 dark:text-green-100'
+                        : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-white'
                     }`}
                   >
                     <input
@@ -470,7 +472,7 @@ function hello() {
                         handleToggleFile(file)
                       }}
                       disabled={loading || yorkieInitializing}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 disabled:opacity-50"
+                      className="w-4 h-4 text-green-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-green-500 dark:focus:ring-green-400 focus:ring-2 disabled:opacity-50"
                     />
                     <span className="text-sm font-mono">{file}</span>
                   </label>
@@ -505,7 +507,7 @@ function hello() {
                     className={`px-3 py-2 rounded-md text-sm border transition-colors font-mono ${
                       activeFile === filename
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-primary text-primary border-primary hover:bg-gray-50'
+                        : 'theme-bg-primary text-gray-700 dark:text-white theme-border hover:bg-gray-50 hover:!text-gray-900 dark:hover:bg-white dark:hover:!text-gray-900'
                     }`}
                   >
                     {filename}
