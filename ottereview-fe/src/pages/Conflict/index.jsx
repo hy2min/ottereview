@@ -24,7 +24,7 @@ const Conflict = () => {
     '팀 협업을 위한 환경을 준비하고 있습니다…',
     '코드 리뷰 데이터를 분석하고 있습니다…',
     '실시간 코딩 공간을 준비하고 있습니다…',
-    '충돌 해결을 위한 도구를 설정하고 있습니다…'
+    '충돌 해결을 위한 도구를 설정하고 있습니다…',
   ]
 
   // Zustand store 사용
@@ -159,7 +159,7 @@ const Conflict = () => {
               root.content = new yorkie.Text()
 
               // conflictStore에서 해당 파일의 headContent 가져오기
-              const fileHeadContent = getFileHeadContent(fileName)
+              const fileHeadContent = getFileConflictContent(fileName)
 
               let initialCode = ''
               if (fileHeadContent) {
@@ -385,9 +385,7 @@ function hello() {
               disabled={loading || yorkieInitializing}
               maxLength={50}
             />
-            <div className="mt-1 text-right text-xs text-muted">
-              {roomName.length}/50
-            </div>
+            <div className="mt-1 text-right text-xs text-muted">{roomName.length}/50</div>
           </div>
 
           {/* 참여자 선택 */}
