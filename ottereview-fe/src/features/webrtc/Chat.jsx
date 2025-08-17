@@ -53,7 +53,6 @@ const Chat = ({ roomId }) => {
         stompClientRef.current = stompClient
       },
       (error) => {
-        console.log('STOMP error', error)
         setIsConnected(false)
       }
     )
@@ -122,11 +121,6 @@ const Chat = ({ roomId }) => {
         ) : (
           <div className="flex flex-col gap-2">
             {messages.map((msg, i) => {
-              // 디버그용 로그
-              if (i === 0) {
-                console.log('Message data:', msg)
-                console.log('User data:', user)
-              }
               const isMyMessage = user && (
                 msg.senderName === user.username || 
                 msg.senderName === user.login || 

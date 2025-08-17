@@ -47,14 +47,8 @@ const useConflictStore = create((set, get) => ({
         loading: false, // 로딩 종료
       })
 
-      console.log('📄 충돌 데이터 로딩 완료:', {
-        members: members.length,
-        conflictFiles: conflictFiles.length,
-        conflictData: !!conflictData,
-      })
     } catch (error) {
       // 실패 시 에러 상태 업데이트
-      console.error('데이터를 불러오는 중 오류가 발생했습니다:', error)
       set({
         loading: false,
         error,

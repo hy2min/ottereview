@@ -12,7 +12,6 @@ export const useAuthStore = create(
       triggerSseReconnect: () => {
         const callback = get().sseReconnectCallback
         if (callback) {
-          console.log('🔄 토큰 갱신으로 인한 SSE 재연결 트리거')
           callback()
         }
       },
