@@ -11,11 +11,8 @@ import org.eclipse.jgit.api.MergeResult;
 @Builder
 public class MergeResponse {
     Set<String> files;
-    List<String> conflictFilesContents;
-    Map<String, String> baseFileContents;
-    Map<String, String> headFileContents;
+//    Map<String, String> baseFileContents;
+//    Map<String, String> headFileContents;
+    Map<String, String> conflictFileContents;
 
-    public void writeConflictContents(List<String> conflictFilesContents){
-        this.conflictFilesContents = conflictFilesContents;
-    }
 }
