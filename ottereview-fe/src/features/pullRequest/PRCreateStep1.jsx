@@ -48,8 +48,6 @@ const PRCreateStep1 = ({
       })
 
       setValidationBranches(data)
-      console.log(data?.isPossible)
-      console.log('ValidateBranches', data)
     } catch (err) {
       console.error('브랜치 검증 실패:', err)
     } finally {
@@ -82,16 +80,13 @@ const PRCreateStep1 = ({
             setPrCheckResult('exists')
             setExistingPRData(data)
             setErrorMessage('')
-            console.log('ValidatePR - 기존 PR 존재:', data)
           } else {
             // isExist가 false면 PR 생성 가능하지만 브랜치 검증 필요
             setPrCheckResult('not_exists')
             setExistingPRData(null)
             setErrorMessage('')
-            console.log('ValidatePR - PR 없음, 생성 가능', data)
           }
         } catch (err) {
-          console.log('ValidatePR 에러:', err)
           // API 에러는 생성 불가 상태로 처리
           setPrCheckResult('error')
           setExistingPRData(null)
@@ -123,8 +118,6 @@ const PRCreateStep1 = ({
     })),
   ]
 
-  console.log('Branch options:', branchOptions)
-  console.log('Current source:', source, 'Current target:', target)
 
   const handleGoToPRReview = () => {
     if (existingPRData && existingPRData.prId) {
@@ -134,7 +127,6 @@ const PRCreateStep1 = ({
 
   const handleNextStep = () => {
     // useEffect에서 이미 formData 업데이트됨
-    console.log('Current formData:', { source, target })
     goToStep(2)
   }
 
@@ -166,7 +158,6 @@ const PRCreateStep1 = ({
               options={branchOptions}
               value={source || ''}
               onChange={(e) => {
-                console.log('Source branch selected:', e.target.value)
                 setSource(e.target.value)
               }}
               placeholder="소스 브랜치를 선택하세요"
@@ -182,7 +173,6 @@ const PRCreateStep1 = ({
               options={branchOptions}
               value={target || ''}
               onChange={(e) => {
-                console.log('Target branch selected:', e.target.value)
                 setTarget(e.target.value)
               }}
               placeholder="타겟 브랜치를 선택하세요"

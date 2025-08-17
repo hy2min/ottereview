@@ -19,11 +19,9 @@ export const useVoiceChat = () => {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (session) {
-        console.log('🔄 페이지 새로고침/닫기 - 세션 정리')
         try {
           session.disconnect()
         } catch (error) {
-          console.warn('세션 정리 중 오류:', error)
         }
       }
     }
@@ -34,11 +32,9 @@ export const useVoiceChat = () => {
     // 컴포넌트 언마운트 시 정리
     return () => {
       if (session) {
-        console.log('🧹 컴포넌트 언마운트 - 세션 정리')
         try {
           session.disconnect()
         } catch (error) {
-          console.warn('세션 정리 중 오류:', error)
         }
       }
       
@@ -82,9 +78,7 @@ export const useVoiceChat = () => {
       setPublisher(audioPublisher)
       setIsConnected(true)
 
-      console.log('🎤 음성 채팅 연결 완료')
     } catch (error) {
-      console.error('음성 채팅 연결 실패:', error)
       setError(getErrorMessage(error))
       await leaveVoiceChat()
     } finally {
@@ -93,7 +87,6 @@ export const useVoiceChat = () => {
   }, [isConnecting, isConnected])
 
   const leaveVoiceChat = useCallback(async () => {
-    console.log('🚪 음성 채팅 나가기')
     
     if (session) {
       session.disconnect()
@@ -120,7 +113,6 @@ export const useVoiceChat = () => {
   const setupSessionEvents = (mySession) => {
     // 새로운 스트림이 생성될 때
     mySession.on('streamCreated', (event) => {
-      console.log('새 참여자 스트림 생성:', event.stream)
       
       // 스트림 구독
       const subscriber = mySession.subscribe(event.stream, undefined)
@@ -140,7 +132,6 @@ export const useVoiceChat = () => {
 
     // 스트림이 삭제될 때
     mySession.on('streamDestroyed', (event) => {
-      console.log('참여자 스트림 삭제:', event.stream)
       
       // 구독자 목록에서 제거
       setSubscribers(prev => 
@@ -155,17 +146,14 @@ export const useVoiceChat = () => {
 
     // 연결이 생성될 때
     mySession.on('connectionCreated', (event) => {
-      console.log('새 연결 생성:', event.connection)
     })
 
     // 연결이 삭제될 때
     mySession.on('connectionDestroyed', (event) => {
-      console.log('연결 삭제:', event.connection)
     })
 
     // 세션 연결 해제
     mySession.on('sessionDisconnected', (event) => {
-      console.log('세션 연결 해제:', event.reason)
       if (event.reason === 'networkDisconnect') {
         setError('네트워크 연결이 끊어졌습니다.')
       }
@@ -173,7 +161,6 @@ export const useVoiceChat = () => {
 
     // 예외 처리
     mySession.on('exception', (exception) => {
-      console.warn('OpenVidu 예외:', exception)
       setError(getErrorMessage(exception))
     })
   }
@@ -185,7 +172,6 @@ export const useVoiceChat = () => {
       const response = await api.post(`/api/meetings/${roomId}/join`)
       return response.data.openviduToken
     } catch (error) {
-      console.error('토큰 요청 실패:', error)
       throw new Error('음성 채팅 토큰 요청에 실패했습니다.')
     }
   }

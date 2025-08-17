@@ -75,10 +75,8 @@ const Toast = ({ toast, onClose }) => {
 }
 
 const ToastContainer = ({ toasts, onCloseToast }) => {
-  console.log('🍞 ToastContainer 렌더링:', toasts)
   
   if (toasts.length === 0) {
-    console.log('🍞 토스트 없음')
     return null
   }
 
