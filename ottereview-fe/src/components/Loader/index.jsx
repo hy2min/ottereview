@@ -26,14 +26,20 @@ export default function LoadingOtter({
 }) {
   const [frame, setFrame] = useState(FRAMES.walk)
 
-  // LTR 고정: 0% → 100%
-  const [percentX, setPercentX] = useState(0)
+  // 수달 시작 위치를 첫 번째 조개 위치로 설정
+  const [percentX, setPercentX] = useState(20)
   const cancelled = useRef(false)
 
-  // 정지점: 균등분배 (0 → 100)
+  // 정지점: 조개 위치에 맞춰 균등분배 (더 좁게: 20% → 80%)
+  // 조개가 화면의 75% 영역에 있지만, 수달이 더 좁은 범위에서 이동하도록 조정
   const stops = useMemo(() => {
-    if (shells <= 1) return [0]
-    return Array.from({ length: shells }, (_, i) => (i / (shells - 1)) * 100)
+    if (shells <= 1) return [50] // 중앙에 하나만 있을 때
+    const shellStart = 20 // 조개 시작 위치 (화면의 20%)
+    const shellEnd = 80 // 조개 끝 위치 (화면의 80%)
+    return Array.from(
+      { length: shells },
+      (_, i) => shellStart + (i / (shells - 1)) * (shellEnd - shellStart)
+    )
   }, [shells])
 
   useEffect(() => {
@@ -70,9 +76,9 @@ export default function LoadingOtter({
 
         if (!cycle) break
 
-        // 시작점으로 점프
+        // 시작점으로 점프 (첫 번째 조개 위치로)
         setFrame(FRAMES.walk)
-        setPercentX(0)
+        setPercentX(stops[0])
         await wait(200)
       }
     }
