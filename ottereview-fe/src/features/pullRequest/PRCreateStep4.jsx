@@ -137,12 +137,12 @@ const PRCreateStep4 = ({
                     </div>
                     <Button
                       onClick={() => handleSelect(reviewer.githubUsername)}
-                      disabled={selectedReviewers.some(
+                      disabled={isGenerating || selectedReviewers.some(
                         (selected) => selected.githubUsername === reviewer.githubUsername
                       )}
                       variant="primary"
                       size="sm"
-                      className="btn-interactive transform transition-all duration-300 hover:scale-105"
+                      className="btn-interactive transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                     >
                       <span className="flex items-center space-x-1">
                         <span>+</span>
@@ -190,9 +190,10 @@ const PRCreateStep4 = ({
                   </div>
                   <Button
                     onClick={() => handleDeselect(reviewer.githubUsername)}
+                    disabled={isGenerating}
                     variant="danger"
                     size="sm"
-                    className="btn-interactive transform transition-all duration-300 hover:scale-105"
+                    className="btn-interactive transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     <span className="flex items-center space-x-1">
                       <span>✗</span>
@@ -211,7 +212,7 @@ const PRCreateStep4 = ({
         </Box>
       </div>
       <div className="mx-auto z-10 animate-fade-in-up">
-        <div className="flex justify-center items-center space-x-4">
+        <div className="flex justify-center items-center space-x-4 mb-8">
           <Button
             onClick={() => {
               goToStep(3)
