@@ -19,7 +19,7 @@ public class WhiteBoardDto {
     private String senderName;
     private String senderProfileUrl;
     private String color;  // DRAW일 때만 사용, 나머지는 null 가능
-    private String content; // CRDT update 데이터
+    private String content;
 
     @Builder.Default
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy.MM.dd HH:mm:ss")
