@@ -125,10 +125,8 @@ const PRReview = () => {
       setLoading(true)
       try {
         const pr = await fetchPRDetail({ repoId, prId })
-        console.log('pr', pr)
         setPrDetail(pr)
       } catch (err) {
-        console.error('❌ PR 상세 정보 로딩 실패:', err)
         setPrDetail(null)
       } finally {
         setLoading(false)
@@ -167,7 +165,6 @@ const PRReview = () => {
         files: files, // 녹음 파일들
       }
 
-      console.log('=== 리뷰 제출 데이터 ===', JSON.stringify(reviewData, null, 2))
 
       const response = await submitReview({
         accountId: prDetail?.repo.accountId,
@@ -176,7 +173,6 @@ const PRReview = () => {
         reviewData,
       })
 
-      console.log('=== 리뷰 제출 응답 ===', response)
 
       // 상태 초기화 (beforeunload 이벤트 방지)
       setReviewComments([])
@@ -196,18 +192,15 @@ const PRReview = () => {
           reviews: updatedReviews,
         }))
       } catch (err) {
-        console.error('리뷰 데이터 새로고침 실패:', err)
         // 실패하면 전체 PR 데이터 다시 불러오기
         try {
           const pr = await fetchPRDetail({ repoId, prId })
           setPrDetail(pr)
         } catch (error) {
-          console.error('전체 PR 데이터 새로고침도 실패:', error)
           window.location.reload()
         }
       }
     } catch (error) {
-      console.error('❌ 리뷰 제출 실패:', error)
     }
   }
 
@@ -228,7 +221,6 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      console.error('❌ PR 닫기 실패:', error)
       alert('PR 닫기에 실패했습니다.')
     } finally {
       setClosingPR(false)
@@ -246,7 +238,6 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      console.error('❌ PR 재오픈 실패:', error)
       alert('PR 재오픈에 실패했습니다.')
     } finally {
       setReopeningPR(false)
@@ -257,26 +248,21 @@ const PRReview = () => {
   const handleIsMergable = async () => {
     try {
       const mergeState = await IsMergable({ repoId, prId })
-      console.log('mergeState:', mergeState)
 
       // API 응답의 mergeable 값을 저장 (우선순위가 높음)
       setApiMergeable(mergeState.mergeable)
 
       if (mergeState.mergeable) {
-        console.log('머지 가능, doMerge 실행')
         await handleMerge()
       } else {
-        console.log('머지 불가능')
       }
     } catch (err) {
-      console.error('❌ 머지 가능성 확인 실패:', err)
     }
   }
 
   const handleMerge = async () => {
     try {
       const data = await doMerge({ repoId, prId })
-      console.log('머지 성공:', data)
 
       // PR 데이터 새로고침
       const pr = await fetchPRDetail({ repoId, prId })
@@ -284,7 +270,6 @@ const PRReview = () => {
 
       alert('PR이 성공적으로 머지되었습니다!')
     } catch (err) {
-      console.error('❌ 머지 실패:', err)
       alert('머지에 실패했습니다.')
     }
   }
@@ -298,7 +283,6 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      console.error('❌ Description 수정 실패:', error)
       throw error // CodeDiff에서 에러 처리하도록
     }
   }
@@ -312,7 +296,6 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      console.error('❌ Description 삭제 실패:', error)
       throw error // CodeDiff에서 에러 처리하도록
     }
   }

@@ -90,7 +90,6 @@ export const requestAIConvention = async ({ repoId, source, target, rules }) => 
     target,
     rules,
   }
-  console.log(payload)
   const res = await api.post('/api/ai/conventions/check', payload)
   return res.data
 }
@@ -102,7 +101,6 @@ export const requestAIOthers = async ({ repoId, source, target, rules }) => {
     target,
     rules,
   }
-  console.log(payload)
   const res = await api.post('/api/ai/all', payload)
   return res.data
 }
@@ -138,7 +136,6 @@ export const submitReview = async ({ accountId, repoId, prId, reviewData }) => {
 
 // PR 준비 정보 저장 (전체 formData)
 export const savePRAdditionalInfo = async (repoId, formData) => {
-  console.log('savePRAdditionalInfo payload:', formData)
   const res = await api.post(
     `/api/repositories/${repoId}/pull-requests/preparation/additional-info`,
     formData
@@ -229,7 +226,6 @@ export const deleteReviewComment = async (reviewId, reviewCommentId) => {
 
 // Review 수정 (더미 함수)
 export const updateReview = async (reviewId, requestBody) => {
-  console.log('Review 수정 더미 함수:', reviewId, requestBody)
   // TODO: 실제 API 엔드포인트 구현 필요
   // const res = await api.put(`/api/reviews/${reviewId}`, requestBody)
   // return res.data
@@ -238,7 +234,6 @@ export const updateReview = async (reviewId, requestBody) => {
 
 // Review 삭제 (더미 함수)
 export const deleteReview = async (reviewId) => {
-  console.log('Review 삭제 더미 함수:', reviewId)
   // TODO: 실제 API 엔드포인트 구현 필요
   // const res = await api.delete(`/api/reviews/${reviewId}`)
   // return res.data

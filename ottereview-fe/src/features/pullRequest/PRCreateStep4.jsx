@@ -64,11 +64,8 @@ const PRCreateStep4 = ({
           })
           const result = AISummary?.result
           setAISummary(result)
-          console.log('AI 요약 생성 완료')
-          console.log(AISummary)
           return result
         } catch (summaryError) {
-          console.error('AI 요약 생성 실패:', summaryError)
           // AI 요약 실패해도 다음 단계로 진행
           return null
         }
@@ -86,7 +83,6 @@ const PRCreateStep4 = ({
 
       goToStep(5)
     } catch (error) {
-      console.error('추가 정보 저장 실패:', error)
     } finally {
       setIsGenerating(false)
     }

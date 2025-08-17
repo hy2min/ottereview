@@ -127,10 +127,8 @@ const PRCreateStep2 = ({
         rules,
       })
 
-      console.log('AI 컨벤션 응답:', conventionData)
       setAIConvention(conventionData)
     } catch (e) {
-      console.error('AI 컨벤션 요청 에러:', e)
     } finally {
       setAiLoading(false)
     }
@@ -219,7 +217,6 @@ const PRCreateStep2 = ({
     goToStep(3)
     
     // AI Others 요청을 백그라운드에서 시작 (await 없이)
-    console.log('Step2에서 AI Others 요청 시작...')
     
     requestAIOthers({
       repoId,
@@ -228,11 +225,9 @@ const PRCreateStep2 = ({
       rules,
     })
       .then((othersData) => {
-        console.log('AI Others 응답:', othersData)
         setAIOthers(othersData)
       })
       .catch((e) => {
-        console.error('AI Others 요청 에러:', e)
       })
   }
 
