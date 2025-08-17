@@ -1,25 +1,50 @@
-import { LogOut, Moon, Plus, Sun } from 'lucide-react'
+import { Bell, LogOut, Moon, Plus, Sun } from 'lucide-react'
 import { matchRoutes, useLocation, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 
 import { protectedRoutes } from '@/app/routes'
 import Button from '@/components/Button'
+import NotificationPanel from '@/components/Notification'
 import { useAuthStore } from '@/features/auth/authStore'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
+import { useNotificationStore } from '@/store/notificationStore'
 
 const Header = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const notificationRef = useRef(null)
 
   const user = useUserStore((state) => state.user)
   const logout = useUserStore((state) => state.logout)
   const clearUser = useUserStore((state) => state.clearUser)
   const clearTokens = useAuthStore((state) => state.clearTokens)
+  const getUnreadCount = useNotificationStore((state) => state.getUnreadCount)
 
   const { theme, toggleTheme } = useThemeStore()
   
+  const unreadCount = getUnreadCount()
+  
   const isLoggedIn = !!user
   const isDashboard = location.pathname === '/dashboard'
+
+  // 알림 패널 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false)
+      }
+    }
+
+    if (isNotificationOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isNotificationOpen])
 
   const matches = matchRoutes(protectedRoutes, location)
   const matchedRoute = matches?.[0]?.route
@@ -153,6 +178,31 @@ const Header = () => {
                 <Sun size={18} className="theme-text" />
               )}
             </Button>
+
+            {/* Notification Button - 로그인된 상태에서만 표시 */}
+            {isLoggedIn && (
+              <div className="relative" ref={notificationRef}>
+                <Button
+                  variant="theme"
+                  size="xs"
+                  onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+                  className="relative p-2.5 theme-bg-secondary border theme-border hover:theme-bg-tertiary rounded-lg transition-all duration-200 theme-shadow"
+                  title="알림"
+                >
+                  <Bell size={18} className="theme-text" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-orange-500 text-white text-xs rounded-full flex items-center justify-center font-medium">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Button>
+                
+                <NotificationPanel 
+                  isOpen={isNotificationOpen}
+                  onClose={() => setIsNotificationOpen(false)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

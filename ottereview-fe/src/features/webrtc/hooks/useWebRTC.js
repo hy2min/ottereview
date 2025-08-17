@@ -81,7 +81,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   }
 
   const joinSession = async (currentRoomId) => {
-    console.log('🎯 joinSession 시작 - roomId:', currentRoomId)
 
     try {
       setConnectionStatus('connecting')
@@ -104,7 +103,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
       if (!response.ok) {
         const errorBody = await response.text()
-        console.error('서버 응답 에러:', { status: response.status, body: errorBody })
         throw new Error(getErrorMessage(response.status))
       }
 
@@ -221,36 +219,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           mirror: false,
         })
 
-        // 퍼블리셔가 준비되면 발행
-        myPublisher.on('accessAllowed', () => {
-          console.log('✅ 마이크 접근 허용됨')
-        })
-
-        myPublisher.on('accessDenied', () => {
-          console.error('❌ 마이크 접근 거부됨')
-          setErrorMessage('마이크 접근 권한을 확인해주세요.')
-          setConnectionStatus('error')
-        })
-
-        await mySession.publish(myPublisher)
-
-        setConnectedParticipants((prev) =>
-          prev.map((p) => (p.isMe ? { ...p, hasAudioStream: true } : p))
-        )
-
-        setPublisher(myPublisher)
-        setIsSessionJoined(true)
-        setConnectionStatus('connected')
-        setRetryCount(0)
-
-        console.log('🎉 OpenVidu 연결 완료!')
-      } catch (publishError) {
-        console.error('퍼블리셔 생성/발행 에러:', publishError)
-        setErrorMessage('마이크 접근 권한을 확인해주세요.')
-        setConnectionStatus('error')
-      }
     } catch (error) {
-      console.error('세션 참여 중 오류 발생:', error)
       setConnectionStatus('error')
       setErrorMessage(getErrorMessage(null, error))
       setRetryCount((prev) => prev + 1)
@@ -325,6 +294,7 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
         } catch (error) {
           console.error('연결 데이터 파싱 에러:', error)
         }
+      } catch (error) {
       }
     })
 
@@ -446,7 +416,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
         console.log('✅ 오디오 스트림 구독 성공')
       } catch (error) {
-        console.error('스트림 구독 에러:', error)
       }
     })
 
@@ -468,8 +437,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
 
     // 세션 연결 해제 이벤트
     mySession.on('sessionDisconnected', (event) => {
-      console.log('🔌 세션이 종료되었습니다:', event.reason)
-      
       if (event.reason === 'sessionClosedByServer') {
         alert('방장이 음성 채팅을 종료했습니다.')
       } else if (event.reason === 'networkDisconnect') {
@@ -503,14 +470,12 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
             audio.remove()
           }
         } catch (error) {
-          console.error('오디오 정리 에러:', error)
         }
       })
     }
   }
 
   const handleSessionEnd = () => {
-    console.log('🧹 세션 정리 시작')
     setConnectedParticipants([])
 
     if (audioContainer.current) {
@@ -528,7 +493,6 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
           }
           audio.remove()
         } catch (error) {
-          console.error('오디오 정리 에러:', error)
         }
       })
       audioContainer.current.innerHTML = ''
@@ -563,12 +527,10 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
   }
 
   const leaveSession = () => {
-    console.log('🚪 세션 나가기')
     if (session) {
       try {
         session.disconnect()
       } catch (error) {
-        console.error('세션 연결 해제 에러:', error)
       }
     }
     handleSessionEnd()
@@ -586,22 +548,18 @@ export const useWebRTC = (roomId, myUserInfo, isOwner) => {
       })
 
       if (response.ok) {
-        console.log('음성 세션이 성공적으로 종료되었습니다.')
         leaveSession()
         alert('음성 채팅이 종료되었습니다.')
       } else {
-        console.error('세션 종료 실패:', response.status)
         alert('세션 종료에 실패했습니다.')
       }
     } catch (error) {
-      console.error('세션 종료 중 오류:', error)
       alert('세션 종료 중 오류가 발생했습니다.')
     }
   }
 
   const retryConnection = () => {
     if (retryCount < 3) {
-      console.log(`🔄 연결 재시도 중... (${retryCount + 1}/3)`)
       setConnectionStatus('connecting')
       joinSession(roomId)
     } else {

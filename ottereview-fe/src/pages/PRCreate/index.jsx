@@ -135,6 +135,7 @@ const PRCreate = () => {
       case 2:
         return {
           ...baseProps,
+          selectedBranches,
           validationBranches,
           aiConvention,
           setAIConvention,
@@ -189,23 +190,19 @@ const PRCreate = () => {
   }
 
   return (
-    <div className="relative min-h-screen pb-[100px] theme-bg-primary">
-      <div className="max-w-5xl mx-auto space-y-6 py-6 px-4">
+    <div className="relative min-h-screen mb-[100px] theme-bg-primary">
+      <div className="max-w-5xl mx-auto space-y-6 my-2 py-4 px-4 overflow-visible">
         <div className="text-center mb-8 animate-fade-in-up">
           <h1 className="text-3xl font-bold theme-text mb-2 text-gradient-animated">
             Pull Request 생성
           </h1>
-          <p className="theme-text-secondary text-lg">
-            단계별로 진행하여 완벽한 PR을 만들어보세요
-          </p>
+          <p className="theme-text-secondary text-lg">단계별로 진행하여 완벽한 PR을 만들어보세요</p>
         </div>
-        
+
         <StepIndicator currentStep={step} steps={steps} />
-        
+
         <div className="relative z-20">
-          <div className="step-transition-container">
-            {renderStepComponent()}
-          </div>
+          <div className="step-transition-container">{renderStepComponent()}</div>
         </div>
       </div>
     </div>

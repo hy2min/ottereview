@@ -1,6 +1,6 @@
+import { AlertTriangle, CheckCircle, FileText, Search, Settings, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, CheckCircle, X, FileText, Search, Settings } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -48,8 +48,6 @@ const PRCreateStep1 = ({
       })
 
       setValidationBranches(data)
-      console.log(data?.isPossible)
-      console.log('ValidateBranches', data)
     } catch (err) {
       console.error('브랜치 검증 실패:', err)
     } finally {
@@ -82,16 +80,13 @@ const PRCreateStep1 = ({
             setPrCheckResult('exists')
             setExistingPRData(data)
             setErrorMessage('')
-            console.log('ValidatePR - 기존 PR 존재:', data)
           } else {
             // isExist가 false면 PR 생성 가능하지만 브랜치 검증 필요
             setPrCheckResult('not_exists')
             setExistingPRData(null)
             setErrorMessage('')
-            console.log('ValidatePR - PR 없음, 생성 가능', data)
           }
         } catch (err) {
-          console.log('ValidatePR 에러:', err)
           // API 에러는 생성 불가 상태로 처리
           setPrCheckResult('error')
           setExistingPRData(null)
@@ -123,8 +118,6 @@ const PRCreateStep1 = ({
     })),
   ]
 
-  console.log('Branch options:', branchOptions)
-  console.log('Current source:', source, 'Current target:', target)
 
   const handleGoToPRReview = () => {
     if (existingPRData && existingPRData.prId) {
@@ -134,7 +127,6 @@ const PRCreateStep1 = ({
 
   const handleNextStep = () => {
     // useEffect에서 이미 formData 업데이트됨
-    console.log('Current formData:', { source, target })
     goToStep(2)
   }
 
@@ -150,7 +142,7 @@ const PRCreateStep1 = ({
 
   return (
     <div className="mt-8 space-y-6 animate-slide-in-right">
-      <Box shadow className="space-y-6 w-full max-w-3xl mx-auto premium-card">
+      <Box className="space-y-6 w-full max-w-3xl mx-auto premium-card">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-semibold theme-text mb-2">브랜치 선택</h2>
           <p className="theme-text-secondary">비교할 브랜치를 선택해주세요</p>
@@ -166,10 +158,10 @@ const PRCreateStep1 = ({
               options={branchOptions}
               value={source || ''}
               onChange={(e) => {
-                console.log('Source branch selected:', e.target.value)
                 setSource(e.target.value)
               }}
               placeholder="소스 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
 
@@ -181,10 +173,10 @@ const PRCreateStep1 = ({
               options={branchOptions}
               value={target || ''}
               onChange={(e) => {
-                console.log('Target branch selected:', e.target.value)
                 setTarget(e.target.value)
               }}
               placeholder="타겟 브랜치를 선택하세요"
+              maxHeight={50}
             />
           </div>
         </div>
@@ -199,24 +191,6 @@ const PRCreateStep1 = ({
               </div>
             </div>
           )}
-
-          {source &&
-            target &&
-            !isSameBranch &&
-            !existingPR &&
-            !hasError &&
-            (!validationBranches || validationBranches.isPossible === true) && (
-              <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 p-4 rounded-lg text-blue-800 dark:text-blue-300 break-words w-full animate-scale-in shadow-md">
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">🔄</span>
-                  <span>
-                    <strong className="text-orange-600 dark:text-orange-400">{source}</strong> 에서{' '}
-                    <strong className="text-orange-600 dark:text-orange-400">{target}</strong> 로의
-                    변경을 생성합니다.
-                  </span>
-                </div>
-              </div>
-            )}
 
           {existingPR && (
             <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 p-4 rounded-lg w-full animate-scale-in shadow-md">
@@ -253,7 +227,7 @@ const PRCreateStep1 = ({
           <Button
             variant="primary"
             onClick={existingPR ? handleGoToPRReview : handleValidateBranches}
-            disabled={existingPR ? false : (!canValidateBranches || isValidatingBranches)}
+            disabled={existingPR ? false : !canValidateBranches || isValidatingBranches}
             className={`btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none ${
               existingPR
                 ? 'bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600'
@@ -286,7 +260,7 @@ const PRCreateStep1 = ({
 
       {/* 하단 네비게이션 버튼 영역 */}
       <div className="mx-auto">
-        <div className="flex justify-center items-center space-x-4">
+        <div className="flex justify-center items-center space-x-4 mb-8">
           <Button
             onClick={() => {
               navigate(`/${repoId}`)

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 
 import { protectedRoutes } from '@/app/routes'
+import FloatingGuideButton from '@/components/FloatingGuideButton'
 import Header from '@/components/Header'
 import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
@@ -16,6 +17,7 @@ import Landing from '@/pages/Landing'
 import NotFound from '@/pages/NotFound'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
+import { useNotificationStore } from '@/store/notificationStore'
 
 const App = () => {
   const user = useUserStore((state) => state.user)
@@ -24,6 +26,7 @@ const App = () => {
   const clearTokens = useAuthStore((state) => state.clearTokens)
   const accessToken = useAuthStore((state) => state.accessToken)
   const initTheme = useThemeStore((state) => state.initTheme)
+  const addNotification = useNotificationStore((state) => state.addNotification)
   const { pathname } = useLocation()
   const attemptedFetch = useRef(false)
 
@@ -32,13 +35,23 @@ const App = () => {
 
   // 푸시 이벤트 핸들러
   const handlePushEvent = useCallback((pushData) => {
-    console.log('🍞 토스트 추가:', pushData)
+    
+    // 토스트에 추가
     setToasts((prev) => {
       const newToasts = [...prev, pushData]
-      console.log('🍞 현재 토스트 목록:', newToasts)
       return newToasts
     })
-  }, [])
+    
+    // 알림으로도 저장
+    addNotification({
+      id: pushData.id,
+      type: 'push',
+      title: `${pushData.pusherName}님이 푸시했습니다`,
+      message: `${pushData.repoName}의 ${pushData.branchName} 브랜치에 ${pushData.commitCount}개 커밋`,
+      data: pushData,
+      timestamp: pushData.timestamp
+    })
+  }, [addNotification])
 
   // 테마 초기화
   useEffect(() => {
@@ -55,7 +68,6 @@ const App = () => {
           setUser(res.data)
         })
         .catch((err) => {
-          console.error('🧨 유저 복원 실패:', err)
           clearUser()
           clearTokens()
           window.location.href = '/'
@@ -71,7 +83,6 @@ const App = () => {
   }, [])
 
   // 로그인된 사용자에게 전역 SSE 연결 제공
-  console.log('🔍 useSSE 호출:', { isLoggedIn, hasHandler: !!handlePushEvent })
   useSSE(isLoggedIn, handlePushEvent)
 
   // 조건부 렌더링들은 모든 hooks 다음에
@@ -91,6 +102,7 @@ const App = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        <FloatingGuideButton />
       </div>
     )
   }
@@ -99,16 +111,16 @@ const App = () => {
     <div className="min-h-screen w-full">
       <Header />
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={
             <main>
               <Guide />
             </main>
-          } 
+          }
         />
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mb-4">
               <Routes>
@@ -117,12 +129,15 @@ const App = () => {
                 ))}
               </Routes>
             </main>
-          } 
+          }
         />
       </Routes>
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
+      
+      {/* 플로팅 가이드 버튼 */}
+      <FloatingGuideButton />
     </div>
   )
 }

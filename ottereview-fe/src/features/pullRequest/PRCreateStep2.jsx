@@ -1,17 +1,95 @@
-import { RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Sparkles, Settings, RotateCcw, AlertCircle, CheckCircle, FileText } from 'lucide-react'
+import { requestAIConvention, requestAIOthers } from './prApi'
 
-import Box from '@/components/Box'
-import Button from '@/components/Button'
-import InputBox from '@/components/InputBox'
-import { requestAIConvention, requestAIOthers } from '@/features/pullRequest/prApi'
+const Box = ({ children, shadow = false, className = '' }) => {
+  return (
+    <div
+      className={`theme-bg-primary theme-border border rounded-lg p-4 ${shadow ? 'shadow-lg' : ''} ${className}`}
+    >
+      {children}
+    </div>
+  )
+}
+
+const Button = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  className = '',
+  onClick,
+  disabled,
+  ...props
+}) => {
+  const baseClasses =
+    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
+
+  const variants = {
+        primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
+    secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
+  }
+
+  const sizes = {
+    sm: 'px-3 py-2 text-sm',
+    md: 'px-4 py-2',
+  }
+
+  return (
+    <button
+      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      {...props}
+    >
+      {children}
+    </button>
+  )
+}
+
+const InputBox = ({ label, as = 'input', options = [], value, onChange, ...props }) => {
+  if (as === 'select') {
+    return (
+      <div className="space-y-2">
+        <label className="block text-sm font-medium theme-text">
+          {label}
+        </label>
+        <select
+          value={value}
+          onChange={onChange}
+          className="w-full px-3 py-2 theme-border border-2 theme-bg-primary rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 theme-text"
+          {...props}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="block text-sm font-medium theme-text">{label}</label>
+      <input
+        value={value}
+        onChange={onChange}
+        className="w-full px-3 py-2 theme-border border-2 theme-bg-primary rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 theme-text"
+        {...props}
+      />
+    </div>
+  )
+}
 
 const PRCreateStep2 = ({
   goToStep,
   repoId,
   validationBranches,
+  selectedBranches,
   aiConvention,
   setAIConvention,
+  aiOthers,
   setAIOthers,
   conventionRules,
   setConventionRules,
@@ -41,19 +119,16 @@ const PRCreateStep2 = ({
     try {
       setAiLoading(true)
 
-      // 두 요청을 동시에 시작
-      // AI 컨벤션 요청만 수행
+      // 실제 API 호출
       const conventionData = await requestAIConvention({
         repoId,
-        source: validationBranches.source,
-        target: validationBranches.target,
+        source: selectedBranches.source,
+        target: selectedBranches.target,
         rules,
       })
 
-      console.log('AI 컨벤션 응답:', conventionData)
       setAIConvention(conventionData)
     } catch (e) {
-      console.error('AI 컨벤션 요청 에러:', e)
     } finally {
       setAiLoading(false)
     }
@@ -62,50 +137,111 @@ const PRCreateStep2 = ({
   const renderAIConvention = (text) => {
     if (!text) return null
 
-    return text.split('\n\n').map((paragraph, pIndex) => (
-      <p key={pIndex} className="whitespace-pre-wrap">
-        {paragraph.split('\n').map((line, lIndex) => (
-          <span key={lIndex}>
-            {line} {lIndex < paragraph.split('\n').length - 1 && <br />}
-          </span>
-        ))}
-      </p>
-    ))
+    // 백틱으로 감싸진 텍스트에서 백틱 제거
+    const textWithoutBackticks = text.replace(/`([^`]+)`/g, '$1')
+
+    // 텍스트를 '-' 기준으로 분할하여 각 항목을 리스트로 만듦
+    const items = textWithoutBackticks
+      .split(/^- /gm) // 줄 시작의 '- '로 분할
+      .filter((item) => item.trim()) // 빈 항목 제거
+      .map((item) => item.trim())
+
+    if (items.length === 0) return null
+
+    return (
+      <div className="space-y-3">
+        {items.map((item, index) => {
+          // 각 항목에서 파일 경로와 내용 분리
+          const lines = item.split('\n').filter((line) => line.trim())
+
+          return (
+            <div
+              key={index}
+              className="theme-bg-secondary rounded-lg p-4 border-l-4 border-orange-400"
+            >
+              {lines.map((line, lineIndex) => {
+                // 파일 경로인지 확인 (경로가 포함된 긴 텍스트)
+                const isFilePath = line.includes('/') && line.length > 30
+                // 규칙 위반 내용인지 확인 ([함수명], [변수명] 등이 포함된 텍스트)
+                const isViolation = line.includes('[') && line.includes(']')
+
+                if (isFilePath) {
+                  return (
+                    <div key={lineIndex} className="flex items-start gap-2 mb-2">
+                      <FileText className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
+                      <div className="text-sm font-mono text-blue-600 dark:text-blue-400 break-all">
+                        {line}
+                      </div>
+                    </div>
+                  )
+                } else if (isViolation) {
+                  // [함수명], [변수명] 등을 강조 표시
+                  const parts = line.split(/(\[[^\]]+\])/)
+                  return (
+                    <div key={lineIndex} className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-orange-500 mt-0.5 shrink-0" />
+                      <div className="text-sm">
+                        {parts.map((part, partIndex) => {
+                          if (part.startsWith('[') && part.endsWith(']')) {
+                            return (
+                              <span
+                                key={partIndex}
+                                className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-1.5 py-0.5 rounded text-xs font-medium"
+                              >
+                                {part}
+                              </span>
+                            )
+                          }
+                          return <span key={partIndex}>{part}</span>
+                        })}
+                      </div>
+                    </div>
+                  )
+                } else {
+                  return (
+                    <div key={lineIndex} className="text-sm theme-text-secondary ml-6">
+                      {line}
+                    </div>
+                  )
+                }
+              })}
+            </div>
+          )
+        })}
+      </div>
+    )
   }
 
-  const handleNextStep = async () => {
-    // AI Others 요청을 백그라운드에서 시작
-    console.log('Step2에서 AI Others 요청 시작...')
+  const handleNextStep = () => {
+    // 즉시 다음 단계로 이동
+    goToStep(3)
+    
+    // AI Others 요청을 백그라운드에서 시작 (await 없이)
+    
     requestAIOthers({
       repoId,
-      source: validationBranches.source,
-      target: validationBranches.target,
+      source: selectedBranches.source,
+      target: selectedBranches.target,
       rules,
     })
       .then((othersData) => {
-        console.log('AI Others 응답:', othersData)
         setAIOthers(othersData)
       })
       .catch((e) => {
-        console.error('AI Others 요청 에러:', e)
       })
-
-    // 즉시 다음 단계로 이동
-    goToStep(3)
   }
 
   return (
-    <div className="space-y-6 animate-slide-in-left">
-      <div className="text-center mb-6 animate-fade-in-up">
-        <h2 className="text-2xl font-semibold theme-text mb-2">컴벤션 검사</h2>
-        <p className="theme-text-secondary">점드하방줄 규칙을 설정하고 AI 피드백을 받아보세요</p>
+    <div className="space-y-6">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-semibold theme-text mb-2">컨벤션 검사</h2>
+        <p className="theme-text-secondary">
+          코딩 규칙을 설정하고 AI 피드백을 받아보세요
+        </p>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-stretch space-y-4 md:space-y-0 md:gap-6">
-        <Box
-          shadow
-          className="w-full md:w-1/3 md:order-2 space-y-4 premium-card animate-slide-in-right"
-        >
+        <Box shadow className="w-full md:w-1/3 md:order-2 space-y-4">
           <InputBox
             label="파일명 규칙"
             as="select"
@@ -152,10 +288,8 @@ const PRCreateStep2 = ({
             }
           />
         </Box>
-        <Box
-          shadow
-          className="w-full md:w-2/3 md:order-1 space-y-4 premium-card animate-slide-in-left"
-        >
+
+        <Box shadow className="w-full md:w-2/3 md:order-1 space-y-4">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="font-semibold text-lg theme-text flex items-center space-x-2">
@@ -165,7 +299,7 @@ const PRCreateStep2 = ({
               <Button
                 size="sm"
                 onClick={handleRequestAI}
-                className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105"
+                className="transform transition-all duration-300 hover:scale-105"
                 disabled={aiLoading}
               >
                 <span className="flex items-center space-x-2">
@@ -178,49 +312,59 @@ const PRCreateStep2 = ({
                 </span>
               </Button>
             </div>
-            <Box className="h-96 overflow-y-auto glass-effect">
+
+            <Box className="h-96 overflow-y-auto theme-bg-secondary">
               <div className="space-y-3 p-2">
                 {aiLoading ? (
                   <div className="flex items-center justify-center h-full">
-                    <div className="animate-pulse flex flex-col items-center space-y-2">
+                    <div className="flex flex-col items-center space-y-2">
                       <Settings className="w-8 h-8 animate-spin text-orange-500" />
                       <div className="theme-text-secondary">분석 중...</div>
                     </div>
                   </div>
+                ) : aiConvention?.result ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-4">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <span className="font-medium theme-text">
+                        컨벤션 분석 완료
+                      </span>
+                    </div>
+                    {renderAIConvention(aiConvention.result)}
+                  </div>
                 ) : (
-                  <div>{renderAIConvention(aiConvention?.result)}</div>
+                  <div className="flex items-center justify-center h-full theme-text-muted">
+                    피드백 받기 버튼을 클릭하여 AI 분석을 시작하세요
+                  </div>
                 )}
               </div>
             </Box>
           </div>
         </Box>
       </div>
-      <div className="mx-auto z-10 animate-fade-in-up">
-        <div className="flex justify-center items-center space-x-4">
-          <Button
-            onClick={() => {
-              goToStep(1)
-            }}
-            variant="secondary"
-            className="btn-interactive transform transition-all duration-300 hover:scale-105"
-          >
-            <span className="flex items-center space-x-2">
-              <span>←</span>
-              <span>이전</span>
-            </span>
-          </Button>
 
-          <Button
-            onClick={handleNextStep}
-            variant="primary"
-            className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105"
-          >
-            <span className="flex items-center space-x-2">
-              <span>다음</span>
-              <span>→</span>
-            </span>
-          </Button>
-        </div>
+      <div className="flex justify-center items-center space-x-4 mb-8">
+        <Button
+          onClick={() => goToStep(1)}
+          variant="secondary"
+          className="transform transition-all duration-300 hover:scale-105"
+        >
+          <span className="flex items-center space-x-2">
+            <span>←</span>
+            <span>이전</span>
+          </span>
+        </Button>
+
+        <Button
+          onClick={handleNextStep}
+          variant="primary"
+          className="transform transition-all duration-300 hover:scale-105"
+        >
+          <span className="flex items-center space-x-2">
+            <span>다음</span>
+            <span>→</span>
+          </span>
+        </Button>
       </div>
     </div>
   )
