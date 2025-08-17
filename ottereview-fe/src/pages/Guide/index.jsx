@@ -12,17 +12,25 @@ import {
   Users,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 import Button from '@/components/Button'
+import { useUserStore } from '@/store/userStore'
 
 const Guide = () => {
   const [visibleSections, setVisibleSections] = useState(new Set())
   const [scrollY, setScrollY] = useState(0)
   const observerRef = useRef(null)
+  const { user } = useUserStore()
+  const navigate = useNavigate()
 
-  const handleLogin = () => {
-    const githubLoginUrl = `${import.meta.env.VITE_API_URL}/api/auth/login`
-    window.location.href = githubLoginUrl
+  const handleGetStarted = () => {
+    if (user) {
+      navigate('/dashboard')
+    } else {
+      const githubLoginUrl = `${import.meta.env.VITE_API_URL}/api/auth/login`
+      window.location.href = githubLoginUrl
+    }
   }
 
   const handleLearnMore = () => {
@@ -153,10 +161,10 @@ const Guide = () => {
                 variant="primary"
                 size="lg"
                 className="shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all flex items-center gap-2"
-                onClick={handleLogin}
+                onClick={handleGetStarted}
               >
                 <Target className="w-5 h-5" />
-                지금 시작하기
+                {user ? '대시보드로 이동' : '지금 시작하기'}
               </Button>
               <Button
                 variant="outline"
@@ -885,10 +893,10 @@ const Guide = () => {
                 variant="secondary"
                 size="lg"
                 className="bg-white text-slate-900 hover:bg-slate-100 shadow-lg shadow-black/20 flex items-center gap-2"
-                onClick={handleLogin}
+                onClick={handleGetStarted}
               >
                 <Github className="w-5 h-5" />
-                GitHub으로 시작하기
+                {user ? '대시보드로 이동' : 'GitHub으로 시작하기'}
               </Button>
             </div>
 

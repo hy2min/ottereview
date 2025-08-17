@@ -28,24 +28,19 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       const fetchedRepos = await fetchRepoList()
-      console.log('📦 레포 응답:', fetchedRepos)
 
       if (Array.isArray(fetchedRepos)) {
         setRepos(fetchedRepos)
       } else {
-        console.warn('⚠️ 레포 응답이 배열이 아님:', fetchedRepos)
         setRepos([])
       }
 
       const authored = await fetchAuthoredPRs()
-      console.log('📦 내가 작성한 PRs:', authored)
       setAuthoredPRs(authored)
 
       const reviewed = await fetchReviewerPRs()
-      console.log('📦 내가 리뷰할 PRs:', reviewed)
       setReviewerPRs(reviewed)
     } catch (err) {
-      console.error('📛 대시보드 fetch 실패:', err)
 
       setRepos([])
       setAuthoredPRs([])
@@ -60,7 +55,6 @@ const Dashboard = () => {
       if (event.origin !== window.location.origin) return
 
       if (event.data.type === 'GITHUB_INSTALL_COMPLETE') {
-        console.log('🔄 GitHub 설치 완료 - 대시보드 데이터 새로고침')
         fetchData()
       }
     }
@@ -75,7 +69,6 @@ const Dashboard = () => {
     null, // onPushEvent (전역에서 처리)
     () => {
       // onUpdateEvent - 레포지토리 업데이트 시 데이터 새로고침
-      console.log('🔄 레포지토리 업데이트 이벤트 (Dashboard)')
       fetchData()
     }
   )
@@ -87,9 +80,6 @@ const Dashboard = () => {
   }, [user?.id])
 
 
-  // user 객체 구조 확인을 위한 console.log
-  console.log('User 객체:', user)
-  console.log('User profile_image_url:', user?.profile_image_url)
 
   return (
     <div className="pt-2 space-y-8">

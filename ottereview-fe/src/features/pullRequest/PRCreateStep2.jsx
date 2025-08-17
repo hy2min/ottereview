@@ -127,10 +127,8 @@ const PRCreateStep2 = ({
         rules,
       })
 
-      console.log('AI 컨벤션 응답:', conventionData)
       setAIConvention(conventionData)
     } catch (e) {
-      console.error('AI 컨벤션 요청 에러:', e)
     } finally {
       setAiLoading(false)
     }
@@ -214,26 +212,23 @@ const PRCreateStep2 = ({
     )
   }
 
-  const handleNextStep = async () => {
-    // AI Others 요청을 백그라운드에서 시작
-    console.log('Step2에서 AI Others 요청 시작...')
-
-    try {
-      // 실제 API 호출
-      const othersData = await requestAIOthers({
-        repoId,
-        source: selectedBranches.source,
-        target: selectedBranches.target,
-        rules,
-      })
-      console.log('AI Others 응답:', othersData)
-      setAIOthers(othersData)
-    } catch (e) {
-      console.error('AI Others 요청 에러:', e)
-    }
-
-    // 다음 단계로 이동
+  const handleNextStep = () => {
+    // 즉시 다음 단계로 이동
     goToStep(3)
+    
+    // AI Others 요청을 백그라운드에서 시작 (await 없이)
+    
+    requestAIOthers({
+      repoId,
+      source: selectedBranches.source,
+      target: selectedBranches.target,
+      rules,
+    })
+      .then((othersData) => {
+        setAIOthers(othersData)
+      })
+      .catch((e) => {
+      })
   }
 
   return (
@@ -348,7 +343,7 @@ const PRCreateStep2 = ({
         </Box>
       </div>
 
-      <div className="flex justify-center items-center space-x-4">
+      <div className="flex justify-center items-center space-x-4 mb-8">
         <Button
           onClick={() => goToStep(1)}
           variant="secondary"

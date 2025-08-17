@@ -64,11 +64,8 @@ const PRCreateStep4 = ({
           })
           const result = AISummary?.result
           setAISummary(result)
-          console.log('AI 요약 생성 완료')
-          console.log(AISummary)
           return result
         } catch (summaryError) {
-          console.error('AI 요약 생성 실패:', summaryError)
           // AI 요약 실패해도 다음 단계로 진행
           return null
         }
@@ -86,7 +83,6 @@ const PRCreateStep4 = ({
 
       goToStep(5)
     } catch (error) {
-      console.error('추가 정보 저장 실패:', error)
     } finally {
       setIsGenerating(false)
     }
@@ -137,12 +133,12 @@ const PRCreateStep4 = ({
                     </div>
                     <Button
                       onClick={() => handleSelect(reviewer.githubUsername)}
-                      disabled={selectedReviewers.some(
+                      disabled={isGenerating || selectedReviewers.some(
                         (selected) => selected.githubUsername === reviewer.githubUsername
                       )}
                       variant="primary"
                       size="sm"
-                      className="btn-interactive transform transition-all duration-300 hover:scale-105"
+                      className="btn-interactive transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                     >
                       <span className="flex items-center space-x-1">
                         <span>+</span>
@@ -190,9 +186,10 @@ const PRCreateStep4 = ({
                   </div>
                   <Button
                     onClick={() => handleDeselect(reviewer.githubUsername)}
+                    disabled={isGenerating}
                     variant="danger"
                     size="sm"
-                    className="btn-interactive transform transition-all duration-300 hover:scale-105"
+                    className="btn-interactive transform transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     <span className="flex items-center space-x-1">
                       <span>✗</span>
@@ -211,7 +208,7 @@ const PRCreateStep4 = ({
         </Box>
       </div>
       <div className="mx-auto z-10 animate-fade-in-up">
-        <div className="flex justify-center items-center space-x-4">
+        <div className="flex justify-center items-center space-x-4 mb-8">
           <Button
             onClick={() => {
               goToStep(3)
