@@ -82,7 +82,7 @@ const Dashboard = () => {
 
 
   return (
-    <div className="pt-2 space-y-8">
+    <div className="pt-2 space-y-6">
       {/* 환영 메시지와 채팅방 목록 */}
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         <Box shadow className="lg:w-1/2 min-h-32 flex-col space-y-3 relative">
