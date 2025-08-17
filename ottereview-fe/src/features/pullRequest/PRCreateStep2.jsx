@@ -214,26 +214,26 @@ const PRCreateStep2 = ({
     )
   }
 
-  const handleNextStep = async () => {
-    // AI Others 요청을 백그라운드에서 시작
-    console.log('Step2에서 AI Others 요청 시작...')
-
-    try {
-      // 실제 API 호출
-      const othersData = await requestAIOthers({
-        repoId,
-        source: selectedBranches.source,
-        target: selectedBranches.target,
-        rules,
-      })
-      console.log('AI Others 응답:', othersData)
-      setAIOthers(othersData)
-    } catch (e) {
-      console.error('AI Others 요청 에러:', e)
-    }
-
-    // 다음 단계로 이동
+  const handleNextStep = () => {
+    // 즉시 다음 단계로 이동
     goToStep(3)
+    
+    // AI Others 요청을 백그라운드에서 시작 (await 없이)
+    console.log('Step2에서 AI Others 요청 시작...')
+    
+    requestAIOthers({
+      repoId,
+      source: selectedBranches.source,
+      target: selectedBranches.target,
+      rules,
+    })
+      .then((othersData) => {
+        console.log('AI Others 응답:', othersData)
+        setAIOthers(othersData)
+      })
+      .catch((e) => {
+        console.error('AI Others 요청 에러:', e)
+      })
   }
 
   return (
