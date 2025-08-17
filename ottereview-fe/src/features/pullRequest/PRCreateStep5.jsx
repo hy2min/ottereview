@@ -1,6 +1,6 @@
+import { ArrowRight, FileText, Rocket, Settings, Users } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FileText, Rocket, Settings, Users, ArrowRight } from 'lucide-react'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
@@ -20,8 +20,6 @@ const PRCreateStep5 = ({
 }) => {
   const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-
 
   const handleSubmit = async () => {
     if (isSubmitting) return // 중복 실행 방지
@@ -53,15 +51,13 @@ const PRCreateStep5 = ({
     }
   }
 
-
-
   return (
     <div className="space-y-6 animate-slide-in-right">
       <div className="text-center mb-6 animate-fade-in-up">
         <h2 className="text-2xl font-semibold theme-text mb-2">최종 확인</h2>
         <p className="theme-text-secondary">생성할 PR 정보를 확인하고 제출해주세요</p>
       </div>
-      
+
       <Box shadow className="premium-card animate-scale-in">
         <div className="space-y-6">
           <div className="flex items-center space-x-3 mb-6">
@@ -74,7 +70,9 @@ const PRCreateStep5 = ({
               <FileText className="w-5 h-5 text-orange-500" />
               <span className="font-semibold theme-text">PR 제목</span>
             </div>
-            <p className="theme-text-secondary pl-6 text-xl font-medium">{prTitle || '설정되지 않음'}</p>
+            <p className="theme-text-secondary pl-6 text-xl font-medium">
+              {prTitle || '설정되지 않음'}
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -98,7 +96,7 @@ const PRCreateStep5 = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* AI 요약 */}
               <div className="p-4 rounded-lg glass-effect flex-1">
                 <div className="flex flex-col h-full">
@@ -107,12 +105,14 @@ const PRCreateStep5 = ({
                     <span className="font-semibold theme-text">AI 요약</span>
                   </div>
                   <div className="pl-6 overflow-y-auto flex-1 max-h-80">
-                    <p className="text-sm theme-text-secondary leading-relaxed">{aiSummary || '생성되지 않음'}</p>
+                    <p className="text-sm theme-text-secondary leading-relaxed">
+                      {aiSummary || '생성되지 않음'}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
-            
+
             {/* 우측 컬럼: 리뷰어 */}
             <div className="space-y-4">
               {/* 리뷰어 목록 - PRReview 스타일 참고 */}
@@ -143,7 +143,7 @@ const PRCreateStep5 = ({
               </div>
             </div>
           </div>
-          
+
           {/* PR 설명을 맨 아래로 이동 */}
           <div className="mt-6">
             <div className="p-4 rounded-lg glass-effect">
@@ -152,7 +152,9 @@ const PRCreateStep5 = ({
                 <span className="font-semibold theme-text">PR 설명</span>
               </div>
               <div className="pl-6">
-                <pre className="whitespace-pre-wrap text-sm theme-text-secondary leading-relaxed">{prBody || '설정되지 않음'}</pre>
+                <pre className="whitespace-pre-wrap text-sm theme-text-secondary leading-relaxed break-words overflow-wrap-anywhere">
+                  {prBody || '설정되지 않음'}
+                </pre>
               </div>
             </div>
           </div>
@@ -173,8 +175,8 @@ const PRCreateStep5 = ({
             </span>
           </Button>
 
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             variant="primary"
             disabled={isSubmitting}
             className="btn-interactive glow-on-hover transform transition-all duration-300 hover:scale-105 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-700 hover:to-orange-600 text-white font-semibold px-8 py-3 shadow-lg disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none"
