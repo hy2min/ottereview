@@ -191,7 +191,7 @@ const PRCreate = () => {
 
   return (
     <div className="relative min-h-screen mb-[100px] theme-bg-primary">
-      <div className="max-w-5xl mx-auto space-y-6 py-6 px-4 overflow-visible">
+      <div className="max-w-5xl mx-auto space-y-6 my-2 py-4 px-4 overflow-visible">
         <div className="text-center mb-8 animate-fade-in-up">
           <h1 className="text-3xl font-bold theme-text mb-2 text-gradient-animated">
             Pull Request 생성

@@ -14,7 +14,7 @@ const Toast = ({ toast, onClose }) => {
     const timer = setTimeout(() => {
       setIsVisible(false)
       setTimeout(() => onClose(toast.id), 300) // 애니메이션 완료 후 제거
-    }, 10000)
+    }, 5000)
 
     return () => clearTimeout(timer)
   }, [toast.id, onClose])

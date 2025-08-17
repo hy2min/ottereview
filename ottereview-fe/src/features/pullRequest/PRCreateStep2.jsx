@@ -348,7 +348,7 @@ const PRCreateStep2 = ({
         </Box>
       </div>
 
-      <div className="flex justify-center items-center space-x-4">
+      <div className="flex justify-center items-center space-x-4 mb-8">
         <Button
           onClick={() => goToStep(1)}
           variant="secondary"

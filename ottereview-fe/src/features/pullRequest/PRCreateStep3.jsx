@@ -83,7 +83,7 @@ close #이슈번호
   // 따옴표 제거 함수
   const removeQuotes = (str) => {
     if (!str) return str
-    return str.replace(/^["']|["']$/g, '')
+    return str.replace(/^["'`]|["'`]$/g, '')
   }
 
   const handleApplyAiTitle = () => {
@@ -346,7 +346,7 @@ close #이슈번호
         />
       </Box>
       <div className="mx-auto z-10 animate-fade-in-up">
-        <div className="flex justify-center items-center space-x-4">
+        <div className="flex justify-center items-center space-x-4 mb-8">
           <Button
             onClick={() => {
               goToStep(2)
