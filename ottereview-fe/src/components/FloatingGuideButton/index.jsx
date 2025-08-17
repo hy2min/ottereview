@@ -1,4 +1,4 @@
-import { BookOpen, X } from 'lucide-react'
+import { HelpCircle, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 
@@ -53,21 +53,22 @@ const FloatingGuideButton = () => {
         {/* 확장된 텍스트 */}
         <div
           className={`
-            absolute right-16 top-1/2 -translate-y-1/2 
+            absolute left-20 top-1/2 -translate-y-1/2 
             bg-white dark:bg-gray-800 text-slate-700 dark:text-slate-200 
             px-4 py-2 rounded-lg shadow-lg border border-slate-200 dark:border-gray-600
             whitespace-nowrap font-medium text-sm
             transition-all duration-300 ease-out
+            min-w-max
             ${isExpanded 
               ? 'opacity-100 translate-x-0 scale-100' 
-              : 'opacity-0 translate-x-4 scale-95 pointer-events-none'
+              : 'opacity-0 -translate-x-4 scale-95 pointer-events-none'
             }
           `}
         >
           가이드 페이지로 이동
           {/* 화살표 */}
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full">
-            <div className="w-0 h-0 border-l-[6px] border-l-white dark:border-l-gray-800 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent"></div>
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full">
+            <div className="w-0 h-0 border-r-[6px] border-r-white dark:border-r-gray-800 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent"></div>
           </div>
         </div>
 
@@ -89,7 +90,7 @@ const FloatingGuideButton = () => {
             animationDelay: '0.5s'
           }}
         >
-          <BookOpen className="w-6 h-6" />
+          <HelpCircle className="w-6 h-6" />
           
           {/* 리플 효과 */}
           <div className="absolute inset-0 rounded-full bg-primary-400/30 animate-ping"></div>

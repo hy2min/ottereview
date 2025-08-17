@@ -28,9 +28,9 @@ const Guide = () => {
   const handleLearnMore = () => {
     const prerequisitesSection = document.getElementById('prerequisites-section')
     if (prerequisitesSection) {
-      prerequisitesSection.scrollIntoView({ 
+      prerequisitesSection.scrollIntoView({
         behavior: 'smooth',
-        block: 'start'
+        block: 'start',
       })
     }
   }
@@ -88,7 +88,7 @@ const Guide = () => {
   return (
     <div className="min-h-screen">
       {/* 히어로 섹션 */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-white dark:from-gray-900 dark:via-gray-800 dark:to-black">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-primary dark:bg-primary">
         {/* 배경 장식 요소 with parallax */}
         <div
           className="absolute inset-0 opacity-5 transition-transform duration-1000 ease-out"
@@ -124,7 +124,7 @@ const Guide = () => {
             }}
           >
             <div className="inline-block">
-              <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/95 backdrop-blur-sm border border-primary-200/50 dark:border-gray-600/50 rounded-full px-4 py-2 shadow-lg shadow-primary-500/10">
+              <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/95 backdrop-blur-sm border border-primary-200 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   AI 기반 코드 리뷰 플랫폼
@@ -132,10 +132,10 @@ const Guide = () => {
               </div>
             </div>
 
-            <h1 className="text-5xl lg:text-6xl font-bold leading-tight bg-gradient-to-r from-slate-900 via-primary-700 to-slate-800 dark:from-white dark:via-primary-300 dark:to-slate-200 bg-clip-text text-transparent">
+            <h1 className="text-5xl lg:text-6xl font-bold leading-tight bg-gradient-to-r from-slate-900 via-slate-700 to-slate-800 dark:from-orange-400 dark:via-orange-300 dark:to-orange-500 bg-clip-text text-transparent">
               코드 리뷰의
               <br />
-              <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text">
+              <span className="bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
                 새로운 패러다임
               </span>
             </h1>
@@ -143,7 +143,9 @@ const Guide = () => {
             <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed max-w-lg">
               GitHub 기반의 지능형 코드 리뷰 플랫폼으로
               <br />
-              <span className="font-semibold text-slate-700 dark:text-slate-200">개발 워크플로우를 혁신하세요</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-200">
+                개발 워크플로우를 혁신하세요
+              </span>
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
@@ -187,7 +189,9 @@ const Guide = () => {
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl flex items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
                 <div className="relative text-center space-y-3">
-                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">실시간 협업</div>
+                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
+                    실시간 협업
+                  </div>
                   <div className="text-slate-500 dark:text-slate-400 text-sm">코드 리뷰 & 토론</div>
                   <div className="flex justify-center gap-1">
                     <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
@@ -209,7 +213,7 @@ const Guide = () => {
 
       {/* 시작하기 전 확인사항 섹션 */}
       <section
-        className="relative py-24 bg-gradient-to-br from-red-50/50 via-orange-50/30 to-amber-50/50 dark:from-red-950/30 dark:via-orange-950/20 dark:to-amber-950/30 overflow-hidden"
+        className="relative py-12 bg-primary dark:bg-primary overflow-hidden"
         id="prerequisites-section"
         data-animate
       >
@@ -247,13 +251,11 @@ const Guide = () => {
             </div>
 
             <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-red-700 via-orange-600 to-amber-600 dark:from-red-400 dark:via-orange-400 dark:to-amber-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-red-700 via-orange-600 to-amber-600 dark:from-orange-300 dark:via-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
                 시작하기 전에
               </span>
               <br />
-              <span className="text-slate-900 dark:text-white">
-                꼭 확인하세요!
-              </span>
+              <span className="text-slate-900 dark:text-white">꼭 확인하세요!</span>
             </h2>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 mb-12 max-w-3xl mx-auto">
@@ -277,9 +279,9 @@ const Guide = () => {
                 <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">
                   GitHub 프로필에서 이메일 주소를 공개로 설정해야 합니다.
                 </p>
-                <a 
-                  href="https://github.com/settings/profile" 
-                  target="_blank" 
+                <a
+                  href="https://github.com/settings/profile"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium text-sm transition-colors"
                 >
@@ -302,9 +304,9 @@ const Guide = () => {
                     ⚠️ 개인 계정 리포지토리는 협업 기능을 사용할 수 없습니다
                   </p>
                 </div>
-                <a 
-                  href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations" 
-                  target="_blank" 
+                <a
+                  href="https://docs.github.com/en/organizations/collaborating-with-groups-in-organizations/about-organizations"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium text-sm transition-colors"
                 >
@@ -324,9 +326,9 @@ const Guide = () => {
                 <p className="text-slate-600 dark:text-slate-300 text-sm mb-4 leading-relaxed">
                   Organization 관리자가 GitHub App 설치 및 권한을 허용해야 합니다.
                 </p>
-                <a 
-                  href="https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps" 
-                  target="_blank" 
+                <a
+                  href="https://docs.github.com/en/apps/using-github-apps/authorizing-github-apps"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 font-medium text-sm transition-colors"
                 >
@@ -337,22 +339,24 @@ const Guide = () => {
             </div>
 
             {/* 도움말 박스 */}
-            <div className="bg-blue-50/50 dark:bg-blue-900/20 border-2 border-blue-200/50 dark:border-blue-800/50 rounded-2xl p-6 mt-8 max-w-4xl mx-auto backdrop-blur-sm">
+            <div className="bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-200 dark:border-blue-700 rounded-2xl p-6 mt-8 max-w-4xl mx-auto backdrop-blur-sm">
               <div className="flex items-start gap-4">
                 <span className="text-3xl">💡</span>
                 <div className="text-left">
-                  <h4 className="font-bold text-blue-900 dark:text-blue-200 text-lg mb-2">
+                  <h4 className="font-bold text-blue-900 dark:text-blue-300 text-lg mb-2">
                     Organization이 없다면?
                   </h4>
-                  <p className="text-blue-800 dark:text-blue-300 leading-relaxed">
-                    GitHub에서 새로운 Organization을 생성하거나, 기존 Organization에 참여 요청을 보내세요.
+                  <p className="text-blue-800 dark:text-blue-200 leading-relaxed">
+                    GitHub에서 새로운 Organization을 생성하거나, 기존 Organization에 참여 요청을
+                    보내세요.
                     <br />
-                    <span className="font-semibold">Organization 생성은 무료</span>이며, 팀 협업을 위한 필수 요소입니다.
+                    <span className="font-semibold">Organization 생성은 무료</span>이며, 팀 협업을
+                    위한 필수 요소입니다.
                   </p>
                   <div className="mt-4">
-                    <a 
-                      href="https://github.com/organizations/new" 
-                      target="_blank" 
+                    <a
+                      href="https://github.com/organizations/new"
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors"
                     >
@@ -369,7 +373,7 @@ const Guide = () => {
 
       {/* GitHub 연동 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
+        className="relative py-12 bg-primary dark:bg-primary overflow-hidden"
         id="github-section"
         data-animate
       >
@@ -392,14 +396,16 @@ const Guide = () => {
             }`}
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-3xl blur-2xl"></div>
-            <div className="relative bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm border border-slate-200/60 dark:border-gray-600/60 rounded-2xl p-8 shadow-2xl shadow-slate-900/5 dark:shadow-black/50">
-              <div className="aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="relative bg-primary dark:bg-primary backdrop-blur-sm border border-primary dark:border-primary rounded-2xl p-8 shadow-2xl">
+              <div className="aspect-[4/3] bg-secondary dark:bg-secondary rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5"></div>
                 <div className="relative text-center space-y-4">
                   <div className="flex justify-center mb-2">
                     <Github className="w-20 h-20 text-slate-700 dark:text-slate-300" />
                   </div>
-                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">GitHub 연동 데모</div>
+                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
+                    GitHub 연동 데모
+                  </div>
                   <div className="flex justify-center gap-2 mt-4">
                     <div className="w-3 h-3 bg-primary-400 rounded-full animate-ping"></div>
                     <div
@@ -436,52 +442,60 @@ const Guide = () => {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent leading-tight">
+              <h2 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent leading-tight">
                 GitHub와
                 <br />
-                <span className="bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text">
+                <span className="bg-gradient-to-r from-orange-600 to-red-600 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
                   간편하게 연결
                 </span>
               </h2>
 
               <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
                 복잡한 설정 없이{' '}
-                <span className="font-semibold text-slate-700 dark:text-slate-200">GitHub 계정으로 간편 로그인</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-200">
+                  GitHub 계정으로 간편 로그인
+                </span>
                 <br />
                 모든 리포지토리와 PR 정보를 자동으로 동기화합니다.
               </p>
             </div>
             <div className="space-y-4">
-              <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
+              <div className="flex items-start gap-4 p-4 bg-primary dark:bg-primary rounded-2xl border border-primary dark:border-primary backdrop-blur-sm">
                 <div className="p-2 bg-primary-100 dark:bg-primary-800/30 rounded-xl shrink-0">
                   <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">원클릭 GitHub OAuth 로그인</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    원클릭 GitHub OAuth 로그인
+                  </div>
                   <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     복잡한 인증 과정 없이 간단하게 시작
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
+              <div className="flex items-start gap-4 p-4 bg-primary dark:bg-primary rounded-2xl border border-primary dark:border-primary backdrop-blur-sm">
                 <div className="p-2 bg-secondary-100 dark:bg-secondary-800/30 rounded-xl shrink-0">
                   <CheckCircle className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">자동 리포지토리 동기화</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    자동 리포지토리 동기화
+                  </div>
                   <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     모든 리포지토리 정보를 실시간으로 동기화
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 bg-white/60 dark:bg-gray-900/95 rounded-2xl border border-slate-200/50 dark:border-gray-600/50 backdrop-blur-sm">
+              <div className="flex items-start gap-4 p-4 bg-primary dark:bg-primary rounded-2xl border border-primary dark:border-primary backdrop-blur-sm">
                 <div className="p-2 bg-accent-100 dark:bg-accent-800/30 rounded-xl shrink-0">
                   <CheckCircle className="w-4 h-4 text-accent-600 dark:text-accent-400" />
                 </div>
                 <div>
-                  <div className="font-semibold text-slate-800 dark:text-slate-200">실시간 브랜치 정보 업데이트</div>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200">
+                    실시간 브랜치 정보 업데이트
+                  </div>
                   <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                     브랜치 변경사항을 즉시 반영하여 표시
                   </div>
@@ -494,7 +508,7 @@ const Guide = () => {
 
       {/* AI 스마트 기능 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-primary-50/30 via-white to-secondary-50/20 dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
+        className="relative py-12 bg-primary dark:bg-primary overflow-hidden"
         id="ai-section"
         data-animate
       >
@@ -546,11 +560,11 @@ const Guide = () => {
 
             <div className="space-y-4">
               <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
-                <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
                   AI가 도와주는
                 </span>
                 <br />
-                <span className="bg-gradient-to-r from-primary-600 via-secondary-600 to-accent-600 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 dark:from-orange-300 dark:via-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
                   스마트한 PR 관리
                 </span>
               </h2>
@@ -579,7 +593,7 @@ const Guide = () => {
             <div className="space-y-4">
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-primary-300/50 dark:hover:border-primary-500/50 transition-all">
+                <div className="relative flex items-start gap-4 p-4 bg-primary dark:bg-primary backdrop-blur-sm rounded-2xl border border-primary dark:border-primary hover:border-orange-300 dark:hover:border-orange-500 transition-all">
                   <div className="p-2 bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-800/30 dark:to-primary-700/30 rounded-xl shrink-0">
                     <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                   </div>
@@ -596,12 +610,14 @@ const Guide = () => {
 
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-secondary-500/10 to-accent-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-secondary-300/50 dark:hover:border-secondary-500/50 transition-all">
+                <div className="relative flex items-start gap-4 p-4 bg-primary dark:bg-primary backdrop-blur-sm rounded-2xl border border-primary dark:border-primary hover:border-orange-300 dark:hover:border-orange-500 transition-all">
                   <div className="p-2 bg-gradient-to-r from-secondary-100 to-secondary-200 dark:from-secondary-800/30 dark:to-secondary-700/30 rounded-xl shrink-0">
                     <CheckCircle className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                   </div>
                   <div>
-                    <div className="font-semibold text-slate-800 dark:text-slate-200">우선순위 자동 추천</div>
+                    <div className="font-semibold text-slate-800 dark:text-slate-200">
+                      우선순위 자동 추천
+                    </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                       프로젝트 상황과 변경 내용을 고려한 스마트한 우선순위 분류
                     </div>
@@ -611,12 +627,14 @@ const Guide = () => {
 
               <div className="group relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-accent-500/10 to-primary-500/10 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative flex items-start gap-4 p-4 bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm rounded-2xl border border-slate-200/60 dark:border-gray-600/60 hover:border-accent-300/50 dark:hover:border-accent-500/50 transition-all">
+                <div className="relative flex items-start gap-4 p-4 bg-primary dark:bg-primary backdrop-blur-sm rounded-2xl border border-primary dark:border-primary hover:border-orange-300 dark:hover:border-orange-500 transition-all">
                   <div className="p-2 bg-gradient-to-r from-accent-100 to-accent-200 dark:from-accent-800/30 dark:to-accent-700/30 rounded-xl shrink-0">
                     <CheckCircle className="w-4 h-4 text-accent-600 dark:text-accent-400" />
                   </div>
                   <div>
-                    <div className="font-semibold text-slate-800 dark:text-slate-200">최적 리뷰어 추천 시스템</div>
+                    <div className="font-semibold text-slate-800 dark:text-slate-200">
+                      최적 리뷰어 추천 시스템
+                    </div>
                     <div className="text-sm text-slate-600 dark:text-slate-400 mt-1">
                       과거 리뷰 데이터와 전문 영역을 분석하여 베스트 리뷰어 매칭
                     </div>
@@ -633,8 +651,8 @@ const Guide = () => {
             }`}
           >
             <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-3xl blur-2xl animate-pulse"></div>
-            <div className="relative bg-gradient-to-br from-white/90 to-slate-50/90 dark:from-gray-900/95 dark:to-black/95 backdrop-blur-sm border border-slate-200/60 dark:border-gray-600/60 rounded-2xl p-8 shadow-2xl shadow-slate-900/5 dark:shadow-black/50">
-              <div className="aspect-[4/3] bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-800 dark:to-gray-900 rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
+            <div className="relative bg-primary dark:bg-primary backdrop-blur-sm border border-primary dark:border-primary rounded-2xl p-8 shadow-2xl">
+              <div className="aspect-[4/3] bg-secondary dark:bg-secondary rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10"></div>
                 <div className="relative text-center space-y-6">
                   <div className="flex justify-center items-center gap-2">
@@ -642,8 +660,12 @@ const Guide = () => {
                     <Sparkles className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="space-y-2">
-                    <div className="text-slate-700 dark:text-slate-200 font-semibold text-lg">AI 기능 데모</div>
-                    <div className="text-slate-500 dark:text-slate-400 text-sm">스마트한 코드 리뷰 어시스턴트</div>
+                    <div className="text-slate-700 dark:text-slate-200 font-semibold text-lg">
+                      AI 기능 데모
+                    </div>
+                    <div className="text-slate-500 dark:text-slate-400 text-sm">
+                      스마트한 코드 리뷰 어시스턴트
+                    </div>
                   </div>
 
                   {/* AI 사고 중 애니메이션 */}
@@ -659,7 +681,9 @@ const Guide = () => {
                         style={{ animationDelay: '0.2s' }}
                       ></div>
                     </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">분석 중...</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
+                      분석 중...
+                    </span>
                   </div>
 
                   {/* 에너지 표시 */}
@@ -683,19 +707,19 @@ const Guide = () => {
 
       {/* 실시간 협업 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-50 to-secondary-50/10 dark:from-gray-950 dark:via-gray-900 dark:to-black overflow-hidden"
+        className="relative py-12 bg-primary dark:bg-primary overflow-hidden"
         id="collab-section"
         data-animate
       >
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div
-            className={`bg-stone-200 dark:bg-gray-800 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 ${
+            className={`bg-gray-100 dark:bg-gray-700 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 ${
               visibleSections.has('collab-section')
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 -translate-x-20'
             }`}
           >
-            <span className="text-stone-500 dark:text-slate-400 text-lg">실시간 협업 이미지</span>
+            <span className="text-gray-500 dark:text-slate-300 text-lg">실시간 협업 이미지</span>
           </div>
           <div
             className={`space-y-6 transition-all duration-1000 delay-200 ${
@@ -708,12 +732,14 @@ const Guide = () => {
               <MessageSquare className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               <span className="text-primary-600 dark:text-primary-400 font-semibold">STEP 03</span>
             </div>
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white">
-              팀원들과
+            <h2 className="text-4xl font-bold">
+              <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
+                팀원들과
+              </span>
               <br />
               <span className="text-primary-600 dark:text-primary-400">실시간으로 소통</span>
             </h2>
-            <p className="text-xl text-stone-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-xl text-muted leading-relaxed">
               실시간 채팅, 음성 댓글, 공유 화이트보드로
               <br />
               효율적인 협업과 빠른 피드백을 경험하세요.
@@ -737,7 +763,7 @@ const Guide = () => {
       </section>
 
       {/* 충돌 해결 섹션 */}
-      <section className="py-24 bg-stone-50 dark:bg-gray-950" id="conflict-section" data-animate>
+      <section className="py-12 bg-secondary dark:bg-secondary" id="conflict-section" data-animate>
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div
             className={`space-y-6 transition-all duration-1000 ${
@@ -750,12 +776,14 @@ const Guide = () => {
               <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               <span className="text-primary-600 dark:text-primary-400 font-semibold">STEP 04</span>
             </div>
-            <h2 className="text-4xl font-bold text-slate-900 dark:text-white">
-              머지 충돌도
+            <h2 className="text-4xl font-bold">
+              <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
+                머지 충돌도
+              </span>
               <br />
               <span className="text-primary-600 dark:text-primary-400">함께 해결</span>
             </h2>
-            <p className="text-xl text-stone-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-xl text-muted leading-relaxed">
               머지 충돌 발생 시 팀원들과 실시간으로 협력하여
               <br />
               안전하고 효율적으로 문제를 해결할 수 있습니다.
@@ -763,7 +791,9 @@ const Guide = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-slate-700 dark:text-slate-300">시각적 충돌 해결 인터페이스</span>
+                <span className="text-slate-700 dark:text-slate-300">
+                  시각적 충돌 해결 인터페이스
+                </span>
               </div>
               <div className="flex items-center gap-3">
                 <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -776,20 +806,20 @@ const Guide = () => {
             </div>
           </div>
           <div
-            className={`bg-stone-200 dark:bg-gray-800 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 delay-200 ${
+            className={`bg-gray-100 dark:bg-gray-700 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 delay-200 ${
               visibleSections.has('conflict-section')
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 translate-x-20'
             }`}
           >
-            <span className="text-stone-500 dark:text-slate-400 text-lg">충돌 해결 이미지</span>
+            <span className="text-gray-500 dark:text-slate-300 text-lg">충돌 해결 이미지</span>
           </div>
         </div>
       </section>
 
       {/* CTA 섹션 */}
       <section
-        className="relative py-32 bg-gradient-to-br from-slate-900 via-primary-900 to-secondary-900 overflow-hidden"
+        className="relative py-20 bg-gradient-to-br from-slate-900 via-primary-900 to-secondary-900 overflow-hidden"
         id="cta-section"
         data-animate
       >
@@ -838,7 +868,7 @@ const Guide = () => {
               <h2 className="text-4xl lg:text-5xl font-bold leading-tight">
                 지금 바로 시작해보세요!
                 <br />
-                <span className="bg-gradient-to-r from-cyan-300 via-blue-300 to-purple-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 dark:from-orange-300 dark:via-orange-400 dark:to-orange-500 bg-clip-text text-transparent">
                   더 스마트한 코드 리뷰 경험
                 </span>
               </h2>
@@ -859,14 +889,6 @@ const Guide = () => {
               >
                 <Github className="w-5 h-5" />
                 GitHub으로 시작하기
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                className="text-white border-2 border-white/30 hover:bg-white/10 hover:border-white/50 backdrop-blur-sm flex items-center gap-2"
-              >
-                <BookOpen className="w-5 h-5" />
-                문서 보기
               </Button>
             </div>
 
