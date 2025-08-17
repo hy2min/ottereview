@@ -21,7 +21,6 @@ const Whiteboard = ({ roomId }) => {
   // Yjs Doc, WebsocketProvider, Tldraw store 생성 및 동기화
   const store = useMemo(() => {
     const doc = new Y.Doc()
-    console.log('roomId:', roomId)
     // JWT 토큰 없이 WebSocket URL, roomId만 경로에 포함
     const wsUrl = `wss://i13c108.p.ssafy.io/api/yjs`
     const provider = new WebsocketProvider(wsUrl, roomId, doc)
@@ -31,9 +30,7 @@ const Whiteboard = ({ roomId }) => {
 
     provider.on('status', (event) => {
       if (event.status === 'connected') {
-        console.log('화이트보드 WebSocket 연결 성공')
       } else if (event.status === 'disconnected') {
-        console.log('화이트보드 WebSocket 연결 끊김')
       }
     })
 

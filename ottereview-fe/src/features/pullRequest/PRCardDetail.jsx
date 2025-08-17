@@ -51,29 +51,21 @@ const PRCardDetail = ({ pr }) => {
   const handleIsMergable = async () => {
     try {
       const mergeState = await IsMergable({ repoId, prId })
-      console.log('mergeState:', mergeState)
 
       // API 응답의 mergeable 값을 저장 (우선순위가 높음)
       setApiMergeable(mergeState.mergeable)
 
       if (mergeState.mergeable) {
-        console.log('머지 가능, doMerge 실행')
         await handleMerge()
       } else {
-        console.log('머지 불가능')
       }
-    } catch (err) {
-      console.log(err)
-    }
+    } catch (err) {}
   }
 
   const handleMerge = async () => {
     try {
       const data = await doMerge({ repoId, prId })
-      console.log(data)
-    } catch (err) {
-      console.log(err)
-    }
+    } catch (err) {}
   }
 
   return (
@@ -89,7 +81,6 @@ const PRCardDetail = ({ pr }) => {
               <h3 className="font-semibold theme-text mb-1">
                 {title} <span className="theme-text-muted text-sm">{prNumber}</span>
               </h3>
-              <p className="text-sm theme-text-secondary line-clamp-2">{description}</p>
             </div>
           </div>
 
@@ -111,7 +102,7 @@ const PRCardDetail = ({ pr }) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex flex-wrap gap-4 text-sm">
             <Badge variant="primary">
               <div className="flex items-center space-x-1">
@@ -125,24 +116,22 @@ const PRCardDetail = ({ pr }) => {
             <div className="flex items-center space-x-3">
               {/* 병합 상태 */}
               <div className="flex items-center space-x-1">
-                <div className={`w-2 h-2 rounded-full ${
-                  !pr.isApproved 
-                    ? 'bg-yellow-500' 
-                    : mergeable 
-                      ? 'bg-green-500' 
-                      : 'bg-red-500'
-                }`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    !pr.isApproved ? 'bg-yellow-500' : mergeable ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                />
                 <span className="text-xs theme-text-secondary">
                   {!pr.isApproved ? '승인 필요' : mergeable ? '병합 가능' : '병합 검토'}
                 </span>
               </div>
-              
+
               {/* 리뷰 - Yellow */}
               <div className="flex items-center space-x-1">
                 <Clock className="w-3 h-3 text-yellow-500" />
                 <span className="text-xs theme-text-secondary">리뷰 {reviewCommentCnt}</span>
               </div>
-              
+
               {/* 파일 - Orange */}
               <div className="flex items-center space-x-1">
                 <FileDiff className="w-3 h-3 text-orange-500" />
@@ -151,11 +140,12 @@ const PRCardDetail = ({ pr }) => {
             </div>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 flex-shrink-0">
             <Button
               onClick={() => navigate(`/${repoId}/pr/${prId}/review`)}
               variant="outline"
               size="sm"
+              className="whitespace-nowrap"
             >
               <Eye className="w-4 h-4 mr-1 mb-[2px]" />
               리뷰하기
@@ -173,6 +163,7 @@ const PRCardDetail = ({ pr }) => {
                       variant="danger"
                       size="sm"
                       onClick={() => navigate(`/${repoId}/pr/${prId}/conflict`)}
+                      className="whitespace-nowrap"
                     >
                       충돌 해결
                     </Button>
@@ -181,11 +172,12 @@ const PRCardDetail = ({ pr }) => {
                   // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                   return (
                     <div className="relative group">
-                      <Button 
-                        variant="primary" 
-                        size="sm" 
+                      <Button
+                        variant="primary"
+                        size="sm"
                         onClick={handleIsMergable}
                         disabled={!isApproved}
+                        className="whitespace-nowrap"
                       >
                         <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
                         머지

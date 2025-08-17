@@ -36,16 +36,13 @@ const RepositoryDetail = () => {
     const load = async () => {
       try {
         const repoPRsData = await fetchRepoPRList(repoId)
-        console.log('repoPRsdata : ', repoPRsData)
         setRepoPRs(repoPRsData)
 
         if (repo?.accountId && repoId) {
           const branchData = await fetchBrancheListByRepoId(repoId)
-          console.log('branchdata : ', branchData)
           setBranches(branchData)
         }
       } catch (err) {
-        console.error('❌ PR 또는 브랜치 목록 불러오기 실패:', err)
         setRepoPRs([])
         setBranches([])
       }

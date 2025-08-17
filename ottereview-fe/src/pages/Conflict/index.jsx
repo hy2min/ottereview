@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
-import Box from '@/components/Box'
-import Button from '@/components/Button'
 import LoadingOtter from '@/components/Loader'
 import { createChat } from '@/features/chat/chatApi'
 import useConflictStore from '@/features/conflict/conflictStore'
@@ -18,6 +16,16 @@ const Conflict = () => {
   const [roomName, setRoomName] = useState('')
   const [activeFile, setActiveFile] = useState(null)
   const [yorkieInitializing, setYorkieInitializing] = useState(false)
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0)
+
+  // 로딩 메시지 배열
+  const loadingMessages = [
+    '멤버 목록과 충돌 파일을 불러오는 중입니다…',
+    '팀 협업을 위한 환경을 준비하고 있습니다…',
+    '코드 리뷰 데이터를 분석하고 있습니다…',
+    '실시간 코딩 공간을 준비하고 있습니다…',
+    '충돌 해결을 위한 도구를 설정하고 있습니다…',
+  ]
 
   // Zustand store 사용
   const {
@@ -48,7 +56,6 @@ const Conflict = () => {
         try {
           await memoizedFetchConflictData(repoId, prId)
         } catch (err) {
-          console.error('Failed to fetch conflict data:', err)
         }
       }
     }
@@ -72,6 +79,17 @@ const Conflict = () => {
     }
   }, [selectedFiles, activeFile])
 
+  // 로딩 메시지 로테이션
+  useEffect(() => {
+    if (loading && !conflictData) {
+      const interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length)
+      }, 2000) // 2초마다 메시지 변경
+
+      return () => clearInterval(interval)
+    }
+  }, [loading, conflictData, loadingMessages.length])
+
   // 현재 사용자 자동 선택 로직
   useEffect(() => {
     if (user && members.length > 0 && !selectedMembers.includes(user.githubUsername)) {
@@ -86,7 +104,6 @@ const Conflict = () => {
 
   const toggleReviewer = useCallback(
     (member) => {
-      console.log('🔄 토글 멤버:', member.githubUsername, '현재 선택:', selectedMembers)
       toggleMember(member.githubUsername)
     },
     [toggleMember, selectedMembers]
@@ -94,7 +111,6 @@ const Conflict = () => {
 
   const handleToggleFile = useCallback(
     (filename) => {
-      console.log('📁 토글 파일:', filename, '현재 선택:', selectedFiles)
       toggleFile(filename)
     },
     [toggleFile, selectedFiles]
@@ -103,7 +119,6 @@ const Conflict = () => {
   // Yorkie 문서 생성 및 초기 코드 설정 함수
   const createYorkieDocuments = async (roomId) => {
     try {
-      console.log('🚀 Yorkie 문서 생성 시작...')
       setYorkieInitializing(true)
 
       // 환경변수 확인
@@ -129,7 +144,6 @@ const Conflict = () => {
 
       for (const fileName of selectedFiles) {
         const documentKey = `${roomId}_${fileName.replace(/[^a-zA-Z0-9_-]/g, '_')}`
-        console.log(`📄 문서 생성 중: ${documentKey}`)
 
         try {
           // Yorkie 문서 생성
@@ -145,12 +159,11 @@ const Conflict = () => {
               root.content = new yorkie.Text()
 
               // conflictStore에서 해당 파일의 headContent 가져오기
-              const fileHeadContent = getFileHeadContent(fileName)
+              const fileHeadContent = getFileConflictContent(fileName)
 
               let initialCode = ''
               if (fileHeadContent) {
                 initialCode = fileHeadContent
-                console.log(`✅ ${fileName}: 원본 코드 설정 (${fileHeadContent.length}자)`)
               } else {
                 initialCode = `// 파일: ${fileName}
 // 충돌 해결용 코드 편집기
@@ -162,7 +175,6 @@ function hello() {
 
 // TODO: 충돌을 해결하고 올바른 코드를 작성하세요
 `
-                console.log(`✅ ${fileName}: 기본 템플릿 설정`)
               }
 
               root.content.edit(0, 0, initialCode)
@@ -175,17 +187,14 @@ function hello() {
           // 문서 연결 해제 (ChatRoom에서 다시 연결할 예정)
           await client.detach(doc)
         } catch (docError) {
-          console.error(`❌ 문서 ${fileName} 생성 실패:`, docError)
           // 개별 파일 실패는 전체 프로세스를 중단하지 않음
         }
       }
 
       await client.deactivate()
 
-      console.log('🎉 Yorkie 문서 생성 완료:', createdDocs)
       return createdDocs
     } catch (error) {
-      console.error('❌ Yorkie 문서 생성 실패:', error)
       throw error
     } finally {
       setYorkieInitializing(false)
@@ -194,7 +203,6 @@ function hello() {
 
   const handleCreateChat = async () => {
     try {
-      console.log('🚀 채팅방 생성 시작')
 
       // 유효성 검사
       const trimmedRoomName = roomName.trim()
@@ -203,17 +211,10 @@ function hello() {
         return
       }
 
-      // 현재 사용자는 항상 포함되므로 추가 참여자 체크는 선택사항
-      // if (selectedMembers.length === 0) {
-      //   alert('참여자를 최소 1명 이상 선택해주세요.')
-      //   return
-      // }
-
       if (selectedFiles.length === 0) {
         alert('충돌 파일을 최소 1개 이상 선택해주세요.')
         return
       }
-      console.log(selectedFiles)
 
       // 현재 사용자를 포함한 선택된 멤버들의 ID 추출
       const allSelectedMembers = user ? [user.githubUsername, ...selectedMembers] : selectedMembers
@@ -225,12 +226,6 @@ function hello() {
         console.warn('일부 멤버의 ID를 찾을 수 없습니다.')
       }
 
-      console.log('📤 API 요청 데이터:', {
-        prId: Number(prId),
-        roomName: trimmedRoomName,
-        inviteeIds: selectedMemberIds,
-        selectedMemberUsernames: allSelectedMembers,
-      })
 
       // 채팅방 생성 API 호출
       const result = await createChat({
@@ -240,7 +235,6 @@ function hello() {
         files: selectedFiles,
       })
 
-      console.log('✅ API 응답:', result)
 
       // API 응답에서 채팅방 ID 추출
       const roomId = result.roomId || result.id || result.chatRoomId
@@ -249,7 +243,6 @@ function hello() {
       }
 
       // Yorkie 문서들 생성 및 초기 코드 설정
-      console.log('📄 Yorkie 문서 생성 중...')
       const yorkieDocs = await createYorkieDocuments(roomId)
 
       // 채팅방 정보를 sessionStorage에 저장
@@ -266,17 +259,13 @@ function hello() {
 
       try {
         sessionStorage.setItem(`room_${roomId}`, JSON.stringify(roomInfo))
-        console.log('💾 채팅방 정보 저장:', roomInfo)
       } catch (storageError) {
-        console.warn('sessionStorage 저장 실패:', storageError)
       }
 
       // 채팅방 페이지로 이동
       navigate(`/chatroom/${roomId}`)
 
-      console.log('✅ 채팅방 생성 완료, 페이지 이동 중...')
     } catch (err) {
-      console.error('❌ 채팅방 생성 실패:', err)
       const errorMessage = err.message || '알 수 없는 오류가 발생했습니다.'
       alert(`채팅방 생성에 실패했습니다: ${errorMessage}`)
     }
@@ -290,39 +279,73 @@ function hello() {
     return (
       <div className="w-full flex flex-col items-center justify-center py-10">
         {/* 로딩 수달 */}
-        <div className="w-full max-w-5xl">
+        <div className="w-full max-w-4xl">
           <LoadingOtter
-            shells={7} // 조개 개수
-            frameWidth={160} // 너비 줄임
-            frameHeight={160} // 높이 줄임
+            shells={5} // 조개 개수 줄임
+            frameWidth={120} // 너비 더 줄임
+            frameHeight={120} // 높이 더 줄임
             cycle={true} // 반복
-            stepMs={600} // 한 칸 이동 시간
-            pickMs={450} // 줍는 모션 시간
-            pauseMs={250} // 칸 사이 멈춤
+            stepMs={500} // 빠른 이동
+            pickMs={350} // 빠른 줍기
+            pauseMs={200} // 짧은 멈춤
             background="transparent" // 페이지 배경과 자연스럽게
           />
         </div>
 
-        {/* 안내 문구 */}
-        <div className="mt-4 text-sm text-gray-500">멤버 목록과 충돌 파일을 불러오는 중입니다…</div>
+        {/* 로테이션 메시지 */}
+        <div className="mt-6 text-center">
+          <div className="text-sm text-gray-600 font-medium transition-opacity duration-500">
+            {loadingMessages[loadingMessageIndex]}
+          </div>
+          <div className="mt-2 flex justify-center items-center space-x-1">
+            {loadingMessages.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                  index === loadingMessageIndex ? 'bg-orange-400 w-3' : 'bg-gray-300'
+                }`}
+              />
+            ))}
+          </div>
+        </div>
       </div>
-      //     <div className="text-lg">🔄 데이터를 불러오는 중...</div>
-      //     <div className="text-sm text-gray-500 mt-2">
-      //       멤버 목록과 충돌 파일을 가져오고 있습니다.
-      //     </div>
-      //   </div>
-      // </div>
     )
   }
 
   return (
     <div className="space-y-4 py-4">
+      {/* 페이지 헤더 */}
+      <div className="text-center mb-6">
+        <div className="inline-flex items-center justify-center w-12 h-12 bg-orange-500 rounded-full mb-3">
+          <span className="text-xl text-white">🦦</span>
+        </div>
+        <h1 className="text-2xl font-bold text-primary mb-1">실시간 협업 채팅방 생성</h1>
+        <p className="text-muted text-sm">팀원들과 함께 충돌을 해결하고 코드를 개선해보세요</p>
+      </div>
+
       {/* Yorkie 초기화 상태 표시 */}
       {yorkieInitializing && (
-        <div className="text-center py-8">
-          <div className="text-lg">🔄 Yorkie 문서 생성 중...</div>
-          <div className="text-sm text-gray-500 mt-2">
-            파일별 협업 문서를 생성하고 초기 코드를 설정하고 있습니다.
+        <div className="bg-primary rounded-lg border border-primary p-6">
+          <div className="w-full flex flex-col items-center justify-center">
+            {/* Yorkie 초기화 로딩 수달 */}
+            <div className="w-full max-w-3xl">
+              <LoadingOtter
+                shells={4}
+                frameWidth={100}
+                frameHeight={100}
+                cycle={true}
+                stepMs={400}
+                pickMs={300}
+                pauseMs={150}
+                background="transparent"
+              />
+            </div>
+            <div className="mt-4 text-center">
+              <div className="text-lg font-medium text-primary mb-1">🔄 협업 공간 준비 중...</div>
+              <div className="text-muted text-sm">
+                파일별 협업 문서를 생성하고 초기 코드를 설정하고 있습니다.
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -330,41 +353,47 @@ function hello() {
       {/* 에러 상태 표시 */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="text-red-800 font-medium">❌ 데이터 로딩 실패</div>
-          <div className="text-red-600 text-sm mt-1">
-            {error.message || '알 수 없는 오류가 발생했습니다.'}
+          <div className="flex items-center gap-3">
+            <span className="text-red-600 text-lg">⚠️</span>
+            <div className="flex-1">
+              <div className="text-red-800 font-medium">데이터 로딩 실패</div>
+              <div className="text-red-600 text-sm">
+                {error.message || '알 수 없는 오류가 발생했습니다.'}
+              </div>
+            </div>
+            <button
+              onClick={() => memoizedFetchConflictData(repoId, prId)}
+              className="px-3 py-1 bg-red-500 text-white rounded text-sm hover:bg-red-600 transition-colors"
+            >
+              다시 시도
+            </button>
           </div>
-          <button
-            onClick={() => memoizedFetchConflictData(repoId, prId)}
-            className="mt-2 px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200 transition-colors"
-          >
-            다시 시도
-          </button>
         </div>
       )}
 
       {!yorkieInitializing && (
         <>
           {/* 채팅방 이름 입력 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-2 font-medium text-gray-700">채팅방 이름</div>
+          <div className="bg-primary rounded-lg border border-primary p-6">
+            <div className="mb-2 font-medium text-primary">채팅방 이름</div>
             <input
               type="text"
               value={roomName}
               onChange={(e) => setRoomName(e.target.value)}
-              placeholder="채팅방 이름을 입력하세요"
-              className="border border-gray-300 px-3 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="예: PR #123 충돌 해결 회의"
+              className="border border-primary px-3 py-2 w-full rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
               disabled={loading || yorkieInitializing}
               maxLength={50}
             />
+            <div className="mt-1 text-right text-xs text-muted">{roomName.length}/50</div>
           </div>
 
           {/* 참여자 선택 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-2 font-medium text-gray-700">참여자 선택</div>
+          <div className="bg-primary rounded-lg border border-primary p-6">
+            <div className="mb-2 font-medium text-primary">참여자 선택</div>
 
             {loading && !members.length && (
-              <div className="text-sm text-gray-500 mb-2">멤버 목록을 불러오는 중...</div>
+              <div className="text-sm text-muted mb-2">멤버 목록을 불러오는 중...</div>
             )}
 
             {members.length > 0 ? (
@@ -403,12 +432,6 @@ function hello() {
                           checked={selectedMembers.includes(member.githubUsername)}
                           onChange={(e) => {
                             e.stopPropagation()
-                            console.log(
-                              '🔄 체크박스 클릭:',
-                              member.githubUsername,
-                              'checked:',
-                              e.target.checked
-                            )
                             toggleReviewer(member)
                           }}
                           disabled={loading || yorkieInitializing}
@@ -420,15 +443,13 @@ function hello() {
                 </div>
               </div>
             ) : (
-              <div className="text-sm text-gray-500">사용 가능한 멤버가 없습니다.</div>
+              <div className="text-sm text-muted">사용 가능한 멤버가 없습니다.</div>
             )}
-
-            {(user || selectedMembers.length > 0) && <div></div>}
           </div>
 
           {/* 충돌 파일 선택 */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-2 font-medium text-gray-700">충돌 파일 목록 (필수)</div>
+          <div className="bg-primary rounded-lg border border-primary p-6">
+            <div className="mb-2 font-medium text-primary">충돌 파일 목록 (필수)</div>
 
             {conflictFiles.length > 0 ? (
               <div className="flex gap-4 flex-wrap">
@@ -446,7 +467,6 @@ function hello() {
                       checked={selectedFiles.includes(file)}
                       onChange={(e) => {
                         e.stopPropagation()
-                        console.log('📁 파일 체크박스 클릭:', file, 'checked:', e.target.checked)
                         handleToggleFile(file)
                       }}
                       disabled={loading || yorkieInitializing}
@@ -457,7 +477,7 @@ function hello() {
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-gray-500">충돌 파일이 없습니다.</div>
+              <div className="text-sm text-muted">충돌 파일이 없습니다.</div>
             )}
 
             <div className="mt-3">
@@ -473,8 +493,8 @@ function hello() {
 
           {/* 선택된 파일들의 내용 표시 */}
           {selectedFiles.length > 0 && conflictData && (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <div className="mb-4 font-medium text-gray-700">선택된 파일 충돌 내용 미리보기</div>
+            <div className="bg-primary rounded-lg border border-primary p-6">
+              <div className="mb-4 font-medium text-primary">선택된 파일 충돌 내용 미리보기</div>
 
               {/* 파일 탭 버튼들 */}
               <div className="flex gap-2 mb-4 flex-wrap">
@@ -485,7 +505,7 @@ function hello() {
                     className={`px-3 py-2 rounded-md text-sm border transition-colors font-mono ${
                       activeFile === filename
                         ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                        : 'bg-primary text-primary border-primary hover:bg-gray-50'
                     }`}
                   >
                     {filename}
@@ -495,23 +515,23 @@ function hello() {
 
               {/* 선택된 파일의 충돌 내용 표시 */}
               {activeFile && (
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="font-semibold text-sm mb-3 text-gray-700 flex items-center gap-2">
+                <div className="border border-primary rounded-lg p-4">
+                  <div className="font-semibold text-sm mb-3 text-primary flex items-center gap-2">
                     <span>📄 {activeFile}</span>
-                    <span className="text-xs text-gray-500 font-normal">충돌 내용</span>
+                    <span className="text-xs text-muted font-normal">충돌 내용</span>
                   </div>
 
                   {(() => {
                     const fileContent = getFileConflictContent(activeFile)
 
                     return fileContent ? (
-                      <div className="bg-gray-50 p-4 rounded-md text-sm border border-gray-200 max-h-60 overflow-y-auto">
+                      <div className="bg-secondary p-4 rounded-md text-sm border border-primary max-h-60 overflow-y-auto">
                         <pre className="whitespace-pre-wrap overflow-x-auto text-xs font-mono leading-relaxed">
                           {fileContent}
                         </pre>
                       </div>
                     ) : (
-                      <div className="text-gray-500 text-sm bg-gray-50 p-4 rounded-md border border-gray-200">
+                      <div className="text-muted text-sm bg-secondary p-4 rounded-md border border-primary">
                         해당 파일의 충돌 내용을 찾을 수 없습니다.
                       </div>
                     )
@@ -529,7 +549,7 @@ function hello() {
               className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 isCreateButtonDisabled
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white shadow-sm hover:shadow-md'
+                  : 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm hover:shadow-md'
               }`}
             >
               {yorkieInitializing ? '문서 생성 중...' : '채팅방 개설'}
