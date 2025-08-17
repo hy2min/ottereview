@@ -17,6 +17,11 @@ import { useNavigate } from 'react-router-dom'
 import Button from '@/components/Button'
 import { useUserStore } from '@/store/userStore'
 
+// Guide GIF imports
+import repoListGif from '@/assets/guide/repo_list.gif'
+import prCreateGif from '@/assets/guide/pr_create.gif'
+import collaboGif from '@/assets/guide/collabo.gif'
+
 const Guide = () => {
   const [visibleSections, setVisibleSections] = useState(new Set())
   const [scrollY, setScrollY] = useState(0)
@@ -195,24 +200,14 @@ const Guide = () => {
             ></div>
             <div className="relative bg-white/80 dark:bg-gray-900/95 backdrop-blur-sm border border-white/50 dark:border-gray-600/50 rounded-3xl p-8 shadow-2xl shadow-slate-900/10 dark:shadow-black/50">
               <div className="aspect-square bg-gradient-to-br from-slate-100 to-slate-200 dark:from-gray-800 dark:to-gray-900 rounded-2xl flex items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10"></div>
-                <div className="relative text-center space-y-3">
-                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
-                    실시간 협업
-                  </div>
-                  <div className="text-slate-500 dark:text-slate-400 text-sm">코드 리뷰 & 토론</div>
-                  <div className="flex justify-center gap-1">
-                    <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
-                    <div
-                      className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.1s' }}
-                    ></div>
-                    <div
-                      className="w-2 h-2 bg-accent-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.2s' }}
-                    ></div>
-                  </div>
-                </div>
+                <img
+                  src={collaboGif}
+                  alt="실시간 협업 및 코드 리뷰 데모"
+                  className="w-full h-full object-cover rounded-2xl"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-secondary-500/10 rounded-2xl"></div>
+                <div className="absolute bottom-4 left-4 right-4 text-center"></div>
               </div>
             </div>
           </div>
@@ -406,26 +401,14 @@ const Guide = () => {
             <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-3xl blur-2xl"></div>
             <div className="relative bg-primary dark:bg-primary backdrop-blur-sm border border-primary dark:border-primary rounded-2xl p-8 shadow-2xl">
               <div className="aspect-[4/3] bg-secondary dark:bg-secondary rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5"></div>
-                <div className="relative text-center space-y-4">
-                  <div className="flex justify-center mb-2">
-                    <Github className="w-20 h-20 text-slate-700 dark:text-slate-300" />
-                  </div>
-                  <div className="text-slate-600 dark:text-slate-300 font-medium text-lg">
-                    GitHub 연동 데모
-                  </div>
-                  <div className="flex justify-center gap-2 mt-4">
-                    <div className="w-3 h-3 bg-primary-400 rounded-full animate-ping"></div>
-                    <div
-                      className="w-3 h-3 bg-secondary-400 rounded-full animate-ping"
-                      style={{ animationDelay: '0.2s' }}
-                    ></div>
-                    <div
-                      className="w-3 h-3 bg-accent-400 rounded-full animate-ping"
-                      style={{ animationDelay: '0.4s' }}
-                    ></div>
-                  </div>
-                </div>
+                <img
+                  src={repoListGif}
+                  alt="GitHub 리포지토리 연동 및 동기화 데모"
+                  className="w-full h-full object-cover rounded-xl"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5 rounded-xl"></div>
+                <div className="absolute bottom-4 left-4 right-4 text-center"></div>
               </div>
             </div>
           </div>
@@ -661,51 +644,25 @@ const Guide = () => {
             <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/20 to-accent-500/20 rounded-3xl blur-2xl animate-pulse"></div>
             <div className="relative bg-primary dark:bg-primary backdrop-blur-sm border border-primary dark:border-primary rounded-2xl p-8 shadow-2xl">
               <div className="aspect-[4/3] bg-secondary dark:bg-secondary rounded-xl flex flex-col items-center justify-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10"></div>
-                <div className="relative text-center space-y-6">
-                  <div className="flex justify-center items-center gap-2">
-                    <Bot className="w-12 h-12 text-blue-600 dark:text-blue-400" />
-                    <Sparkles className="w-8 h-8 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="text-slate-700 dark:text-slate-200 font-semibold text-lg">
-                      AI 기능 데모
-                    </div>
-                    <div className="text-slate-500 dark:text-slate-400 text-sm">
-                      스마트한 코드 리뷰 어시스턴트
-                    </div>
-                  </div>
-
-                  {/* AI 사고 중 애니메이션 */}
-                  <div className="flex justify-center items-center gap-1">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-primary-400 rounded-full animate-bounce"></div>
-                      <div
-                        className="w-2 h-2 bg-secondary-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.1s' }}
-                      ></div>
-                      <div
-                        className="w-2 h-2 bg-accent-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0.2s' }}
-                      ></div>
-                    </div>
-                    <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
-                      분석 중...
-                    </span>
-                  </div>
-
-                  {/* 에너지 표시 */}
-                  <div className="absolute top-4 right-4 flex gap-1">
-                    <div className="w-1 h-1 bg-primary-400 rounded-full animate-ping"></div>
-                    <div
-                      className="w-1 h-1 bg-secondary-400 rounded-full animate-ping"
-                      style={{ animationDelay: '0.3s' }}
-                    ></div>
-                    <div
-                      className="w-1 h-1 bg-accent-400 rounded-full animate-ping"
-                      style={{ animationDelay: '0.6s' }}
-                    ></div>
-                  </div>
+                <img
+                  src={prCreateGif}
+                  alt="AI 기반 PR 생성 및 리뷰어 추천 데모"
+                  className="w-full h-full object-cover rounded-xl"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-secondary-500/5 to-accent-500/10 rounded-xl"></div>
+                <div className="absolute bottom-4 left-4 right-4 text-center"></div>
+                {/* AI 활동 표시 */}
+                <div className="absolute top-4 right-4 flex gap-1">
+                  <div className="w-2 h-2 bg-primary-400 rounded-full animate-ping"></div>
+                  <div
+                    className="w-2 h-2 bg-secondary-400 rounded-full animate-ping"
+                    style={{ animationDelay: '0.3s' }}
+                  ></div>
+                  <div
+                    className="w-2 h-2 bg-accent-400 rounded-full animate-ping"
+                    style={{ animationDelay: '0.6s' }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -721,13 +678,19 @@ const Guide = () => {
       >
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div
-            className={`bg-gray-100 dark:bg-gray-700 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 ${
+            className={`bg-gray-100 dark:bg-gray-700 rounded-2xl aspect-[4/3] flex items-center justify-center relative overflow-hidden transition-all duration-1000 ${
               visibleSections.has('collab-section')
                 ? 'opacity-100 translate-x-0'
                 : 'opacity-0 -translate-x-20'
             }`}
           >
-            <span className="text-gray-500 dark:text-slate-300 text-lg">실시간 협업 이미지</span>
+            <img
+              src={collaboGif}
+              alt="실시간 협업 및 충돌 해결 데모"
+              className="w-full h-full object-cover rounded-2xl"
+              loading="lazy"
+            />
+            <div className="absolute bottom-4 left-4 right-4 text-center"></div>
           </div>
           <div
             className={`space-y-6 transition-all duration-1000 delay-200 ${
@@ -742,10 +705,10 @@ const Guide = () => {
             </div>
             <h2 className="text-4xl font-bold">
               <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
-                팀원들과
+                팀원들과 머지 충돌을
               </span>
               <br />
-              <span className="text-primary-600 dark:text-primary-400">실시간으로 소통</span>
+              <span className="text-primary-600 dark:text-primary-400">실시간으로 해결</span>
             </h2>
             <p className="text-xl text-muted leading-relaxed">
               실시간 채팅, 음성 댓글, 공유 화이트보드로
@@ -766,61 +729,6 @@ const Guide = () => {
                 <span className="text-slate-700 dark:text-slate-300">공유 화이트보드</span>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 충돌 해결 섹션 */}
-      <section className="py-12 bg-secondary dark:bg-secondary" id="conflict-section" data-animate>
-        <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
-          <div
-            className={`space-y-6 transition-all duration-1000 ${
-              visibleSections.has('conflict-section')
-                ? 'opacity-100 translate-y-0'
-                : 'opacity-0 translate-y-10'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-              <span className="text-primary-600 dark:text-primary-400 font-semibold">STEP 04</span>
-            </div>
-            <h2 className="text-4xl font-bold">
-              <span className="bg-gradient-to-r from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text text-transparent">
-                머지 충돌도
-              </span>
-              <br />
-              <span className="text-primary-600 dark:text-primary-400">함께 해결</span>
-            </h2>
-            <p className="text-xl text-muted leading-relaxed">
-              머지 충돌 발생 시 팀원들과 실시간으로 협력하여
-              <br />
-              안전하고 효율적으로 문제를 해결할 수 있습니다.
-            </p>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-slate-700 dark:text-slate-300">
-                  시각적 충돌 해결 인터페이스
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-slate-700 dark:text-slate-300">실시간 협업 편집</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-slate-700 dark:text-slate-300">안전한 머지 프로세스</span>
-              </div>
-            </div>
-          </div>
-          <div
-            className={`bg-gray-100 dark:bg-gray-700 rounded-2xl aspect-[4/3] flex items-center justify-center transition-all duration-1000 delay-200 ${
-              visibleSections.has('conflict-section')
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 translate-x-20'
-            }`}
-          >
-            <span className="text-gray-500 dark:text-slate-300 text-lg">충돌 해결 이미지</span>
           </div>
         </div>
       </section>
