@@ -14,6 +14,7 @@ const InputBox = ({
   className,
   placeholder,
   markdown = false, // 마크다운 에디터 사용 여부
+  maxHeight = 60, // maxHeight props 기본값 60
   ...props
 }) => {
   const { theme } = useThemeStore()
@@ -61,6 +62,7 @@ const InputBox = ({
           onChange={onChange}
           className={className}
           placeholder={placeholder} // placeholder prop 전달
+          maxHeight={maxHeight} // maxHeight prop 전달
           {...props} // InputBox로 넘어온 추가 props를 CustomSelect에 전달
         />
       )

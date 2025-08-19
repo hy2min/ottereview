@@ -113,7 +113,8 @@ public class MeetingRoomServiceImpl implements MeetingRoomService {
 
         // 이메일 보내는 로직
         room.getParticipants().stream()
-                .filter(MeetingParticipant::isSendMail) // sendMail == true인 유저만
+                .filter(MeetingParticipant::isSendMail) // sendMail == true인 email이 존재하는 유저만 이메일 전송
+                .filter(p -> p.getUser().getGithubEmail() != null && !p.getUser().getGithubEmail().isBlank())
                 .forEach(participant -> {
                     EmailRequestDto.ChatInvite inviteDto = new EmailRequestDto.ChatInvite(
                             participant.getUser().getGithubEmail(),

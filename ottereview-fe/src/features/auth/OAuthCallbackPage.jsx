@@ -48,18 +48,41 @@ const OAuthCallbackPage = () => {
 
         setAccessToken(accessToken)
         await Promise.resolve()
-        const userRes = await api.get('/api/users/me')
-        setUser(userRes.data)
-
-        setLoading(false)
+        
+        try {
+          const userRes = await api.get('/api/users/me')
+          setUser(userRes.data)
+          setLoading(false)
+        } catch (userErr) {
+          // 사용자 정보 조회 실패 시 (404 에러 등)
+          if (userErr?.response?.status === 404) {
+            alert('GitHub Public Email 설정 후 로그인이 가능합니다.')
+            window.open('https://github.com/settings/profile', '_blank')
+            setLoading(false)
+            navigate('/')
+          } else {
+            throw userErr
+          }
+        }
       })
       .catch((err) => {
         console.error('[OAuth] 로그인 실패:', err)
         clearTokens()
         clearUser()
-        alert('로그인 실패')
-        setLoading(false)
-        navigate('/')
+        
+        // 404 에러인 경우 이메일 설정 안내
+        if (err?.response?.status === 404) {
+          alert('GitHub Public Email 설정 후 로그인이 가능합니다.')
+          // 새 창에서 GitHub 이메일 설정 페이지 열기
+          window.open('https://github.com/settings/profile', '_blank')
+          // 가이드 페이지로 이동
+          setLoading(false)
+          navigate('/')
+        } else {
+          alert('로그인 실패')
+          setLoading(false)
+          navigate('/')
+        }
       })
   }, [])
 
