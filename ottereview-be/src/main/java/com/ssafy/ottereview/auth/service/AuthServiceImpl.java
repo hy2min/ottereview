@@ -55,8 +55,19 @@ public class AuthServiceImpl implements AuthService {
         String githubAccessToken = requestGithubAccessToken(code);
         // GitHub 사용자 정보 요청
         GithubUserDto githubUser = requestGithubUser(githubAccessToken);
+        // 깃허브 이메일이 null이면 오류
+        if (githubUser.getEmail() == null || githubUser.getEmail().isBlank()) {
+            throw new BusinessException(AuthErrorCode.GITHUB_EMAIL_NOT_FOUND);
+        }
         // DB 사용자 조회 or 회원가입
         User user = userRepository.findByGithubId(githubUser.getId())
+                .map(existing -> {
+                    // DB에 이메일이 없는데, GitHub 이메일이 있다면 업데이트
+                    if (existing.getGithubEmail() == null || existing.getGithubEmail().isBlank()) {
+                        existing.updateEmail(githubUser.getEmail());
+                    }
+                    return existing;
+                })
                 .orElseGet(() -> registerUser(githubUser));
         // JWT 발급 및 Refresh Token 저장
         String accessToken = jwtUtil.createAccessToken(user);

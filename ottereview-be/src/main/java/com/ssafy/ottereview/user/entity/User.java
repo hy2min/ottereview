@@ -59,4 +59,8 @@ public class User extends BaseEntity {
                 .type(userResponseDto.getType())
                 .id(userResponseDto.getId()).build();
     }
+
+    public void updateEmail(String email) {
+        this.githubEmail = email;
+    }
 }
