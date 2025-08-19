@@ -114,6 +114,8 @@ public class AuthServiceImpl implements AuthService {
 
             return new GithubUserDto(login, githubId, email, type, avatarUrl);
 
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException(AuthErrorCode.GITHUB_USER_API_ERROR);
         }
