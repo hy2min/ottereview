@@ -14,10 +14,9 @@ import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Guide from '@/pages/Guide'
 import Landing from '@/pages/Landing'
-import NotFound from '@/pages/NotFound'
+import { useNotificationStore } from '@/store/notificationStore'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
-import { useNotificationStore } from '@/store/notificationStore'
 
 const App = () => {
   const user = useUserStore((state) => state.user)
@@ -34,24 +33,26 @@ const App = () => {
   const [toasts, setToasts] = useState([])
 
   // 푸시 이벤트 핸들러
-  const handlePushEvent = useCallback((pushData) => {
-    
-    // 토스트에 추가
-    setToasts((prev) => {
-      const newToasts = [...prev, pushData]
-      return newToasts
-    })
-    
-    // 알림으로도 저장
-    addNotification({
-      id: pushData.id,
-      type: 'push',
-      title: `${pushData.pusherName}님이 푸시했습니다`,
-      message: `${pushData.repoName}의 ${pushData.branchName} 브랜치에 ${pushData.commitCount}개 커밋`,
-      data: pushData,
-      timestamp: pushData.timestamp
-    })
-  }, [addNotification])
+  const handlePushEvent = useCallback(
+    (pushData) => {
+      // 토스트에 추가
+      setToasts((prev) => {
+        const newToasts = [...prev, pushData]
+        return newToasts
+      })
+
+      // 알림으로도 저장
+      addNotification({
+        id: pushData.id,
+        type: 'push',
+        title: `${pushData.pusherName}님이 푸시했습니다`,
+        message: `${pushData.repoName}의 ${pushData.branchName} 브랜치에 ${pushData.commitCount}개 커밋`,
+        data: pushData,
+        timestamp: pushData.timestamp,
+      })
+    },
+    [addNotification]
+  )
 
   // 테마 초기화
   useEffect(() => {
@@ -135,7 +136,7 @@ const App = () => {
 
       {/* 전역 토스트 */}
       <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
-      
+
       {/* 플로팅 가이드 버튼 */}
       <FloatingGuideButton />
     </div>
