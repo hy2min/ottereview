@@ -16,8 +16,9 @@ public enum AuthErrorCode implements ErrorCode {
     ACCESS_TOKEN_INVALID("AUTH006", "액세스 토큰이 유효하지 않습니다", 401),
     AUTH_EXPIRED("AUTH007", "토큰이 만료되었습니다", 401),
     GITHUB_USER_NOT_FOUND("AUTH008", "GitHub 사용자 정보를 찾을 수 없습니다", 404),
-    GITHUB_USER_API_ERROR("AUTH009", "GitHub 사용자 API 호출 중 오류가 발생했습니다", 500);
-    
+    GITHUB_USER_API_ERROR("AUTH009", "GitHub 사용자 API 호출 중 오류가 발생했습니다", 500),
+    GITHUB_EMAIL_NOT_FOUND("AUTH010", "GitHub 사용자의 email이 존재하지 않습니다", 404);
+
     private final String code;
     private final String message;
     private final int httpStatus;
