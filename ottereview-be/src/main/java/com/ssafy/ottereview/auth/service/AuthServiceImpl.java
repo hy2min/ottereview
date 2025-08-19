@@ -107,11 +107,7 @@ public class AuthServiceImpl implements AuthService {
 
             // 이메일이 없거나 private일 경우, 추가로 primary 이메일을 찾아야 함
             if (email == null || email.isEmpty()) {
-                email = github.getMyself().listEmails().toList().stream()
-                        .filter(e -> e.isPrimary() && e.isVerified())
-                        .map(e -> e.getEmail())
-                        .findFirst()
-                        .orElseThrow(() -> new BusinessException(AuthErrorCode.GITHUB_USER_NOT_FOUND));
+                throw new BusinessException(AuthErrorCode.GITHUB_EMAIL_NOT_FOUND);
             }
 
             String avatarUrl = myself.getAvatarUrl();
