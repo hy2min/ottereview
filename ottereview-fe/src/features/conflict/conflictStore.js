@@ -90,12 +90,11 @@ const useConflictStore = create((set, get) => ({
   // 헬퍼: 특정 파일의 충돌 내용 가져오기
   getFileConflictContent: (filename) => {
     const { conflictData } = get()
-    if (!conflictData || !conflictData.files || !conflictData.conflictFilesContents) {
+    if (!conflictData || !conflictData.conflictFileContents) {
       return null
     }
 
-    const fileIndex = conflictData.files.indexOf(filename)
-    return fileIndex !== -1 ? conflictData.conflictFilesContents[fileIndex] : null
+    return conflictData.conflictFileContents[filename] || null
   },
 
   // 액션: 상태 초기화 (컴포넌트 언마운트 시 호출)
