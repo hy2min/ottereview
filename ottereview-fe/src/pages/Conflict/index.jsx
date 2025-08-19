@@ -185,7 +185,7 @@ function hello() {
 
           // 문서 연결 해제 (ChatRoom에서 다시 연결할 예정)
           await client.detach(doc)
-        } catch (docError) {
+        } catch {
           // 개별 파일 실패는 전체 프로세스를 중단하지 않음
         }
       }
@@ -466,7 +466,7 @@ function hello() {
                         handleToggleFile(file)
                       }}
                       disabled={loading || yorkieInitializing}
-                      className="w-4 h-4 text-green-600 bg-gray-100 dark:bg-gray-600 border-gray-300 dark:border-gray-500 rounded focus:ring-green-500 dark:focus:ring-green-400 focus:ring-2 disabled:opacity-50"
+                      className="w-4 h-4 disabled:opacity-50"
                     />
                     <span className="text-sm font-mono">{file}</span>
                   </label>
