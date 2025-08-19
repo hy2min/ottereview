@@ -1,4 +1,4 @@
-import { Mic, MicOff } from 'lucide-react'
+import { Mic, MicOff, Settings } from 'lucide-react'
 import { useState } from 'react'
 
 import Box from '@/components/Box'
@@ -306,7 +306,14 @@ const CommentForm = ({
             disabled={disabled || isSubmitting || (!value?.trim() && (!enableAudio || !audioFile))}
             className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
           >
-            {isSubmitting ? '제출 중...' : '제출'}
+{isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 animate-spin" />
+                제출 중...
+              </div>
+            ) : (
+              '제출'
+            )}
           </Button>
         </div>
       </div>
