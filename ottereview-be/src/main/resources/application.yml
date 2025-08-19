@@ -13,8 +13,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${EMAIL_USERNAME}        # Gmail 주소
-    password: ${EMAIL_PASSWORD}        # 앱 비밀번호
+    username: ${EMAIL_USERNAME} # Gmail 주소
+    password: ${EMAIL_PASSWORD} # 앱 비밀번호
     properties:
       mail:
         smtp:
@@ -39,7 +39,7 @@ spring:
 
   sql:
     init:
-      mode: never  # 필요 시 always로
+      mode: never # 필요 시 always로
 
 github:
   app:
@@ -112,7 +112,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update  # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
+      ddl-auto: update # 개발 중 스키마 자동 반영 (운영에서는 사용 X)
     show-sql: true
 
   sql:
@@ -143,7 +143,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
 
   sql:

@@ -55,8 +55,19 @@ public class AuthServiceImpl implements AuthService {
         String githubAccessToken = requestGithubAccessToken(code);
         // GitHub 사용자 정보 요청
         GithubUserDto githubUser = requestGithubUser(githubAccessToken);
+        // 깃허브 이메일이 null이면 오류
+        if (githubUser.getEmail() == null || githubUser.getEmail().isBlank()) {
+            throw new BusinessException(AuthErrorCode.GITHUB_EMAIL_NOT_FOUND);
+        }
         // DB 사용자 조회 or 회원가입
         User user = userRepository.findByGithubId(githubUser.getId())
+                .map(existing -> {
+                    // DB에 이메일이 없는데, GitHub 이메일이 있다면 업데이트
+                    if (existing.getGithubEmail() == null || existing.getGithubEmail().isBlank()) {
+                        existing.updateEmail(githubUser.getEmail());
+                    }
+                    return existing;
+                })
                 .orElseGet(() -> registerUser(githubUser));
         // JWT 발급 및 Refresh Token 저장
         String accessToken = jwtUtil.createAccessToken(user);
@@ -96,17 +107,15 @@ public class AuthServiceImpl implements AuthService {
 
             // 이메일이 없거나 private일 경우, 추가로 primary 이메일을 찾아야 함
             if (email == null || email.isEmpty()) {
-                email = github.getMyself().listEmails().toList().stream()
-                        .filter(e -> e.isPrimary() && e.isVerified())
-                        .map(e -> e.getEmail())
-                        .findFirst()
-                        .orElseThrow(() -> new BusinessException(AuthErrorCode.GITHUB_USER_NOT_FOUND));
+                throw new BusinessException(AuthErrorCode.GITHUB_EMAIL_NOT_FOUND);
             }
 
             String avatarUrl = myself.getAvatarUrl();
 
             return new GithubUserDto(login, githubId, email, type, avatarUrl);
 
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             throw new BusinessException(AuthErrorCode.GITHUB_USER_API_ERROR);
         }

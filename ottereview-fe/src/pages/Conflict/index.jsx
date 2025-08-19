@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import Badge from '@/components/Badge'
+import Button from '@/components/Button'
 import LoadingOtter from '@/components/Loader'
 import { createChat } from '@/features/chat/chatApi'
 import useConflictStore from '@/features/conflict/conflictStore'
@@ -39,7 +40,6 @@ const Conflict = () => {
     fetchConflictData,
     toggleMember,
     toggleFile,
-    getFileHeadContent,
     getFileConflictContent,
     reset,
   } = useConflictStore()
@@ -55,8 +55,7 @@ const Conflict = () => {
       if (repoId && prId) {
         try {
           await memoizedFetchConflictData(repoId, prId)
-        } catch (err) {
-        }
+        } catch (err) {}
       }
     }
 
@@ -186,7 +185,7 @@ function hello() {
 
           // 문서 연결 해제 (ChatRoom에서 다시 연결할 예정)
           await client.detach(doc)
-        } catch (docError) {
+        } catch {
           // 개별 파일 실패는 전체 프로세스를 중단하지 않음
         }
       }
@@ -203,7 +202,6 @@ function hello() {
 
   const handleCreateChat = async () => {
     try {
-
       // 유효성 검사
       const trimmedRoomName = roomName.trim()
       if (!trimmedRoomName) {
@@ -226,7 +224,6 @@ function hello() {
         console.warn('일부 멤버의 ID를 찾을 수 없습니다.')
       }
 
-
       // 채팅방 생성 API 호출
       const result = await createChat({
         prId: Number(prId),
@@ -234,7 +231,6 @@ function hello() {
         inviteeIds: selectedMemberIds,
         files: selectedFiles,
       })
-
 
       // API 응답에서 채팅방 ID 추출
       const roomId = result.roomId || result.id || result.chatRoomId
@@ -259,12 +255,10 @@ function hello() {
 
       try {
         sessionStorage.setItem(`room_${roomId}`, JSON.stringify(roomInfo))
-      } catch (storageError) {
-      }
+      } catch (storageError) {}
 
       // 채팅방 페이지로 이동
       navigate(`/chatroom/${roomId}`)
-
     } catch (err) {
       const errorMessage = err.message || '알 수 없는 오류가 발생했습니다.'
       alert(`채팅방 생성에 실패했습니다: ${errorMessage}`)
@@ -407,7 +401,9 @@ function hello() {
                       disabled={true}
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium">{user.githubUsername} (나)</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-900">
+                      {user.githubUsername} (나)
+                    </span>
                     <Badge variant="success" size="xs">
                       항상 포함
                     </Badge>
@@ -421,10 +417,10 @@ function hello() {
                     .map((member) => (
                       <label
                         key={member.githubUsername}
-                        className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
+                        className={`group flex items-center gap-2 border px-3 py-2 cursor-pointer rounded-md transition-colors ${
                           selectedMembers.includes(member.githubUsername)
-                            ? 'bg-blue-50 border-blue-300'
-                            : 'border-gray-300'
+                            ? 'border-blue-300'
+                            : 'border-gray-300 dark:border-gray-600'
                         }`}
                       >
                         <input
@@ -435,7 +431,7 @@ function hello() {
                             toggleReviewer(member)
                           }}
                           disabled={loading || yorkieInitializing}
-                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 disabled:opacity-50"
+                          className="w-4 h-4 disabled:opacity-50"
                         />
                         <span className="text-sm">{member.githubUsername}</span>
                       </label>
@@ -456,10 +452,10 @@ function hello() {
                 {conflictFiles.map((file) => (
                   <label
                     key={file}
-                    className={`flex items-center gap-2 border px-3 py-2 cursor-pointer hover:bg-gray-50 rounded-md transition-colors ${
+                    className={`flex items-center gap-2 border px-3 py-2 cursor-pointer rounded-md transition-colors ${
                       selectedFiles.includes(file)
-                        ? 'bg-green-50 border-green-300'
-                        : 'border-gray-300'
+                        ? 'border-green-300'
+                        : 'border-gray-300 dark:border-gray-600'
                     }`}
                   >
                     <input
@@ -470,7 +466,7 @@ function hello() {
                         handleToggleFile(file)
                       }}
                       disabled={loading || yorkieInitializing}
-                      className="w-4 h-4 text-green-600 bg-gray-100 border-gray-300 rounded focus:ring-green-500 focus:ring-2 disabled:opacity-50"
+                      className="w-4 h-4 disabled:opacity-50"
                     />
                     <span className="text-sm font-mono">{file}</span>
                   </label>
@@ -499,17 +495,15 @@ function hello() {
               {/* 파일 탭 버튼들 */}
               <div className="flex gap-2 mb-4 flex-wrap">
                 {selectedFiles.map((filename) => (
-                  <button
+                  <Button
                     key={filename}
                     onClick={() => setActiveFile(filename)}
-                    className={`px-3 py-2 rounded-md text-sm border transition-colors font-mono ${
-                      activeFile === filename
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-primary text-primary border-primary hover:bg-gray-50'
-                    }`}
+                    variant={activeFile === filename ? 'primary' : 'secondary'}
+                    size="sm"
+                    className="font-mono"
                   >
                     {filename}
-                  </button>
+                  </Button>
                 ))}
               </div>
 
