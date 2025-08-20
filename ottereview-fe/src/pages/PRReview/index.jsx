@@ -410,7 +410,7 @@ const PRReview = () => {
   // 모든 리뷰어가 승인했는지 확인하는 함수
   const isAllReviewersApproved = () => {
     if (!prDetail?.reviewers || prDetail.reviewers.length === 0) {
-      return false // 리뷰어가 없으면 승인된 것으로 간주하지 않음
+      return true // 리뷰어가 없으면 승인된 것으로 간주
     }
     return prDetail.reviewers.every((reviewer) => reviewer.state === 'APPROVED')
   }
