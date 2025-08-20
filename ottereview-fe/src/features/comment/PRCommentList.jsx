@@ -5,6 +5,7 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import { createReviewCommentReply } from '@/features/pullRequest/prApi'
+import { useModalContext } from '@/components/ModalProvider'
 
 // 상수 정의
 const LINE_HIGHLIGHT_CLASSES = {
@@ -142,6 +143,8 @@ const getCodeContext = (patch, comment) => {
 }
 
 const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh }) => {
+  const { error } = useModalContext()
+  
   // 답글 작성 상태 관리
   const [replyingToCommentId, setReplyingToCommentId] = useState(null)
   const [replyContent, setReplyContent] = useState('')
@@ -170,9 +173,9 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
       })
       
       onDataRefresh?.()
-    } catch (error) {
-      console.error('답글 작성 실패:', error)
-      alert('답글 작성에 실패했습니다.')
+    } catch (err) {
+      console.error('답글 작성 실패:', err)
+      error('답글 작성에 실패했습니다.')
     }
   }
 

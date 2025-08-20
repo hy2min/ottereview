@@ -38,11 +38,13 @@ import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 import { useUserStore } from '@/store/userStore'
+import { useModalContext } from '@/components/ModalProvider'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
+  const { success, error, warning, confirmAction, confirmDelete } = useModalContext()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -96,6 +98,7 @@ const PRReview = () => {
   useEffect(() => {
     const handlePopState = (event) => {
       if (reviewComments.length > 0) {
+        // 동기적으로 처리하여 이벤트 루프 문제 방지
         const confirmed = window.confirm('작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?')
         if (!confirmed) {
           // 현재 페이지로 다시 이동
@@ -116,7 +119,7 @@ const PRReview = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [reviewComments.length])
+  }, [reviewComments.length]) // confirmAction을 의존성에서 제외하여 무한 렌더링 방지
 
   useEffect(() => {
     const load = async () => {
@@ -139,7 +142,7 @@ const PRReview = () => {
 
   const handleSubmit = async () => {
     if (!comment.trim() && reviewComments.length === 0) {
-      alert('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
+      warning('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
       return
     }
 
@@ -181,7 +184,7 @@ const PRReview = () => {
       setShowCommentForm(false) // 제출폼 닫기
       setReviewState('COMMENT') // 리뷰 상태도 초기화
 
-      alert('리뷰가 성공적으로 제출되었습니다!')
+      success('리뷰가 성공적으로 제출되었습니다!')
 
       // 리뷰 데이터만 새로 받아오기
       try {
@@ -209,7 +212,8 @@ const PRReview = () => {
   }
 
   const handleClosePR = async () => {
-    if (!confirm('PR을 닫으시겠습니까?')) return
+    const confirmed = await confirmAction('PR을 닫으시겠습니까?', 'PR 닫기')
+    if (!confirmed) return
 
     setClosingPR(true)
     try {
@@ -219,14 +223,15 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      alert('PR 닫기에 실패했습니다.')
+      error('PR 닫기에 실패했습니다.')
     } finally {
       setClosingPR(false)
     }
   }
 
   const handleReopenPR = async () => {
-    if (!confirm('PR을 다시 여시겠습니까?')) return
+    const confirmed = await confirmAction('PR을 다시 여시겠습니까?', 'PR 재오픈')
+    if (!confirmed) return
 
     setReopeningPR(true)
     try {
@@ -236,7 +241,7 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      alert('PR 재오픈에 실패했습니다.')
+      error('PR 재오픈에 실패했습니다.')
     } finally {
       setReopeningPR(false)
     }
@@ -257,13 +262,13 @@ const PRReview = () => {
         await handleMerge()
       } else {
         // 충돌 상황 안내
-        alert('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.')
+        warning('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.')
         // 충돌 해결 페이지로 이동
         navigate(`/${repoId}/pr/${prId}/conflict`)
       }
     } catch (err) {
       console.error('병합 가능성 확인 실패:', err)
-      alert('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -277,10 +282,10 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
 
-      alert('PR이 성공적으로 병합되었습니다!')
+      success('PR이 성공적으로 병합되었습니다!')
     } catch (err) {
       console.error('병합 실패:', err)
-      alert('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 

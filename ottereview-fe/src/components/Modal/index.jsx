@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { twMerge } from 'tailwind-merge'
 
@@ -11,6 +12,7 @@ const Modal = ({
   footer,
   className,
   size = 'md',
+  variant = 'default', // 'default', 'alert', 'confirm' 
   ...props 
 }) => {
   // ESC 키로 모달 닫기
@@ -41,46 +43,64 @@ const Modal = ({
     xl: 'max-w-4xl',
   }
 
+  // variant에 따른 스타일링
+  const variantClasses = {
+    default: 'theme-bg-primary border theme-border',
+    alert: 'bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-700 shadow-xl',
+    confirm: 'bg-white dark:bg-gray-800 border border-orange-200 dark:border-orange-700 shadow-xl'
+  }
+
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200"
       {...props}
     >
       {/* 배경 오버레이 */}
       <div 
-        className="absolute inset-0 bg-black bg-opacity-50"
-        onClick={onClose}
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={variant === 'default' ? onClose : undefined} // alert/confirm은 배경 클릭으로 닫기 비활성화
       />
       
       {/* 모달 컨텐츠 */}
       <div className={twMerge(
-        'relative w-full theme-bg-primary border theme-border rounded-lg theme-shadow-lg',
+        'relative w-full rounded-xl shadow-2xl animate-in zoom-in-95 duration-200',
         sizeClasses[size],
+        variantClasses[variant],
         className
       )}>
-        {/* 헤더 */}
-        {title && (
-          <div className="flex items-center justify-between p-4 border-b theme-border">
-            <h3 className="text-lg font-semibold theme-text">{title}</h3>
+        {/* 헤더 - default variant일 때만 제목과 닫기 버튼 표시 */}
+        {variant === 'default' && title && (
+          <div className="flex items-center justify-between p-6">
+            <h3 className="font-semibold theme-text text-lg">
+              {title}
+            </h3>
             <Button
               variant="ghost"
               size="sm"
               onClick={onClose}
-              className="p-1"
+              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              ✕
+              <X className="w-4 h-4" />
             </Button>
           </div>
         )}
         
         {/* 바디 */}
-        <div className="p-4">
+        <div className={twMerge(
+          variant === 'default' && title && "p-4",
+          variant === 'default' && !title && "p-6",
+          variant !== 'default' && "p-6"
+        )}>
           {children}
         </div>
         
         {/* 푸터 */}
         {footer && (
-          <div className="flex justify-end gap-2 p-4 border-t theme-border">
+          <div className={twMerge(
+            "flex gap-3 px-6 pb-6",
+            variant === 'default' && "justify-end",
+            variant !== 'default' && "justify-center"
+          )}>
             {footer}
           </div>
         )}
