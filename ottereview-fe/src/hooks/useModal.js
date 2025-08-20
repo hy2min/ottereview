@@ -53,34 +53,33 @@ export const useModal = () => {
   }, [])
 
   // 편의 메서드들
-  const success = useCallback((message, title = '성공', config = {}) => {
-    return showAlert({ message, title, type: 'success', ...config })
+  const success = useCallback((message, config = {}) => {
+    return showAlert({ message, type: 'success', ...config })
   }, [showAlert])
 
-  const error = useCallback((message, title = '오류', config = {}) => {
-    return showAlert({ message, title, type: 'error', ...config })
+  const error = useCallback((message, config = {}) => {
+    return showAlert({ message, type: 'error', ...config })
   }, [showAlert])
 
-  const warning = useCallback((message, title = '경고', config = {}) => {
-    return showAlert({ message, title, type: 'warning', ...config })
+  const warning = useCallback((message, config = {}) => {
+    return showAlert({ message, type: 'warning', ...config })
   }, [showAlert])
 
-  const info = useCallback((message, title = '알림', config = {}) => {
-    return showAlert({ message, title, type: 'info', ...config })
+  const info = useCallback((message, config = {}) => {
+    return showAlert({ message, type: 'info', ...config })
   }, [showAlert])
 
-  const confirmDelete = useCallback((message = '정말로 삭제하시겠습니까?', title = '삭제 확인') => {
+  const confirmDelete = useCallback((message = '정말로 삭제하시겠습니까?') => {
     return showConfirm({ 
       message, 
-      title, 
       type: 'danger',
       confirmText: '삭제',
       cancelText: '취소'
     })
   }, [showConfirm])
 
-  const confirmAction = useCallback((message, title = '확인') => {
-    return showConfirm({ message, title })
+  const confirmAction = useCallback((message) => {
+    return showConfirm({ message})
   }, [showConfirm])
 
   return {

@@ -6,7 +6,6 @@ import Modal from '@/components/Modal'
 const AlertModal = ({ 
   isOpen, 
   onClose, 
-  title, 
   message, 
   type = 'info', // 'success', 'error', 'warning', 'info'
   buttonText = '확인',

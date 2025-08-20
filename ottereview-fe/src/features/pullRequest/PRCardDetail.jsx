@@ -85,7 +85,7 @@ const PRCardDetail = ({ pr }) => {
       const data = await doMerge({ repoId, prId })
 
       // 병합 성공 - 모달의 onClose 콜백에서 reload 처리
-      success('PR이 성공적으로 병합되었습니다!', '병합 완료', {
+      success('PR이 성공적으로 병합되었습니다!', {
         onClose: () => {
           window.location.reload()
         }

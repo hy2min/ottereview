@@ -22,6 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { useModalContext } from '@/components/ModalProvider'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
@@ -38,7 +39,6 @@ import PRFileList from '@/features/pullRequest/PRFileList'
 import { useCommentManager } from '@/hooks/useCommentManager'
 import useLoadingDots from '@/lib/utils/useLoadingDots'
 import { useUserStore } from '@/store/userStore'
-import { useModalContext } from '@/components/ModalProvider'
 
 const PRReview = () => {
   const { repoId, prId } = useParams()
@@ -250,7 +250,7 @@ const PRReview = () => {
   // 병합 관련 함수들
   const handleIsMergable = async () => {
     if (isMerging) return // 이미 진행 중이면 중복 실행 방지
-    
+
     setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
@@ -303,8 +303,8 @@ const PRReview = () => {
       try {
         const pr = await fetchPRDetail({ repoId, prId })
         setPrDetail(pr)
-      } catch (error) {
-        console.error('전체 PR 데이터 새로고침도 실패:', error)
+      } catch (err) {
+        console.error('전체 PR 데이터 새로고침도 실패:', err)
       }
     }
   }
@@ -314,16 +314,16 @@ const PRReview = () => {
     setActiveTab('files')
     // 다른 모든 파일 닫고 선택된 파일만 열기
     setExpandedFiles([filePath])
-    
+
     // 특정 라인으로 스크롤하기 위해 약간의 지연 후 실행
     if (lineNumber) {
       setTimeout(() => {
         // 라인 번호에 해당하는 요소 찾기 (CodeDiff 컴포넌트 내부의 라인)
         const lineElement = document.querySelector(`[data-line-number="${lineNumber}"]`)
         if (lineElement) {
-          lineElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+          lineElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
           })
           // 해당 라인을 하이라이트하기 위해 잠시 클릭 효과 주기
           lineElement.click()
@@ -810,7 +810,14 @@ const PRReview = () => {
             setExpandedFiles={setExpandedFiles}
           />
         )}
-        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} files={prDetail?.files || []} onFileClick={handleFileClick} onDataRefresh={handleDataRefresh} />}
+        {activeTab === 'comments' && (
+          <PRCommentList
+            reviews={prDetail?.reviews || []}
+            files={prDetail?.files || []}
+            onFileClick={handleFileClick}
+            onDataRefresh={handleDataRefresh}
+          />
+        )}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
     </div>
