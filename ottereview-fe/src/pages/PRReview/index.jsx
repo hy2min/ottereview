@@ -262,13 +262,13 @@ const PRReview = () => {
         await handleMerge()
       } else {
         // 충돌 상황 안내
-        warning('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.')
+        warning('충돌이 발생했습니다.\n충돌을 해결한 후 다시 시도해주세요.')
         // 충돌 해결 페이지로 이동
         navigate(`/${repoId}/pr/${prId}/conflict`)
       }
     } catch (err) {
       console.error('병합 가능성 확인 실패:', err)
-      error('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 가능성을 확인하는 중 오류가 발생했습니다.\n다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -691,7 +691,7 @@ const PRReview = () => {
               const isSelected = selectedPriorityIndex === index
 
               return (
-                <div key={index} className="flex-shrink-0 w-83.5">
+                <div key={index} className="flex-shrink-0 w-82.5">
                   <div
                     className={`flex flex-col gap-2 p-3 rounded-lg border transition-all h-48 shadow-sm ${getPriorityBadgeStyle(priority.level, isSelected)}`}
                     onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}

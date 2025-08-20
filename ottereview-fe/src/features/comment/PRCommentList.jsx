@@ -4,28 +4,28 @@ import { useState } from 'react'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
-import { createReviewCommentReply } from '@/features/pullRequest/prApi'
 import { useModalContext } from '@/components/ModalProvider'
+import { createReviewCommentReply } from '@/features/pullRequest/prApi'
 
 // 상수 정의
 const LINE_HIGHLIGHT_CLASSES = {
   removed: 'px-1.5 rounded-md bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-200',
-  added: 'px-1.5 rounded-md bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200'
+  added: 'px-1.5 rounded-md bg-green-200 text-green-800 dark:bg-green-900 dark:text-green-200',
 }
 
 const CODE_COLORS = {
   added: {
     num: 'bg-normal-added-num text-gray-900',
-    code: 'bg-normal-added-code text-gray-900'
+    code: 'bg-normal-added-code text-gray-900',
   },
   removed: {
-    num: 'bg-normal-removed-num text-gray-900', 
-    code: 'bg-normal-removed-code text-gray-900'
+    num: 'bg-normal-removed-num text-gray-900',
+    code: 'bg-normal-removed-code text-gray-900',
   },
   context: {
     num: 'bg-white text-gray-500',
-    code: 'bg-white text-gray-900'
-  }
+    code: 'bg-white text-gray-900',
+  },
 }
 
 // 리뷰 댓글 텍스트 정리 함수
@@ -112,10 +112,10 @@ const getCodeContext = (patch, comment) => {
 
     // Fallback: side를 무시하고 line number로만 찾기
     const fallbackStartIndex = codeLines.findIndex(
-      (l) => l.oldLineNumber === numStartLine || l.newLineNumber === numStartLine,
+      (l) => l.oldLineNumber === numStartLine || l.newLineNumber === numStartLine
     )
     const fallbackEndIndex = codeLines.findIndex(
-      (l) => l.oldLineNumber === numEndLine || l.newLineNumber === numEndLine,
+      (l) => l.oldLineNumber === numEndLine || l.newLineNumber === numEndLine
     )
 
     if (fallbackStartIndex !== -1 && fallbackEndIndex !== -1) {
@@ -144,7 +144,7 @@ const getCodeContext = (patch, comment) => {
 
 const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh }) => {
   const { error } = useModalContext()
-  
+
   // 답글 작성 상태 관리
   const [replyingToCommentId, setReplyingToCommentId] = useState(null)
   const [replyContent, setReplyContent] = useState('')
@@ -171,7 +171,7 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
         parentCommentId: parentComment.id,
         body: replyContent.trim(),
       })
-      
+
       onDataRefresh?.()
     } catch (err) {
       console.error('답글 작성 실패:', err)
@@ -180,23 +180,25 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
   }
 
   // 유틸리티 함수들
-  const getFilePatch = (filePath) => files.find(f => f.filename === filePath)?.patch
-  
+  const getFilePatch = (filePath) => files.find((f) => f.filename === filePath)?.patch
+
   const handleFileClickInternal = (filePath, lineNumber) => {
     onFileClick?.(filePath, lineNumber)
   }
 
   // 라인 하이라이트 클래스 결정
   const getLineHighlight = (codeContext, lineNum, side) => {
-    const targetLine = codeContext.find(line => {
+    const targetLine = codeContext.find((line) => {
       const targetLineNumber = side === 'LEFT' ? line.oldLineNumber : line.newLineNumber
       return targetLineNumber === parseInt(lineNum, 10) && line.side === side
     })
-    
+
     if (!targetLine) return null
-    return targetLine.type === 'removed' ? LINE_HIGHLIGHT_CLASSES.removed
-         : targetLine.type === 'added' ? LINE_HIGHLIGHT_CLASSES.added
-         : null
+    return targetLine.type === 'removed'
+      ? LINE_HIGHLIGHT_CLASSES.removed
+      : targetLine.type === 'added'
+        ? LINE_HIGHLIGHT_CLASSES.added
+        : null
   }
 
   // 라인 번호 렌더링
@@ -205,7 +207,7 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
       // 멀티라인인 경우
       const startHighlight = getLineHighlight(codeContext, comment.startLine, comment.startSide)
       const endHighlight = getLineHighlight(codeContext, comment.line, comment.side)
-      
+
       return (
         <>
           {startHighlight ? (
@@ -235,14 +237,19 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
   // 코드 라인 렌더링
   const renderCodeLine = (codeLine, idx) => {
     const colors = CODE_COLORS[codeLine.type]
-    const displayOld = (codeLine.type === 'removed' || codeLine.type === 'context') 
-      ? codeLine.oldLineNumber || '' : ''
-    const displayNew = (codeLine.type === 'added' || codeLine.type === 'context')
-      ? codeLine.newLineNumber || codeLine.lineNumber : ''
+    const displayOld =
+      codeLine.type === 'removed' || codeLine.type === 'context' ? codeLine.oldLineNumber || '' : ''
+    const displayNew =
+      codeLine.type === 'added' || codeLine.type === 'context'
+        ? codeLine.newLineNumber || codeLine.lineNumber
+        : ''
 
     return [
       // 라인 번호
-      <div key={`line-${idx}`} className={`w-16 text-right pr-2 py-1 border-r border-gray-300 select-none ${colors.num}`}>
+      <div
+        key={`line-${idx}`}
+        className={`w-16 text-right pr-2 py-1 border-r border-gray-300 select-none ${colors.num}`}
+      >
         <span className="inline-block w-6 text-right pr-1">{displayOld}</span>
         <span className="inline-block w-6 text-right">{displayNew}</span>
       </div>,
@@ -254,7 +261,7 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
           {codeLine.type === 'context' && <span className="w-4"></span>}
           <span className="flex-1">{codeLine.content}</span>
         </div>
-      </div>
+      </div>,
     ]
   }
 
@@ -406,7 +413,10 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
                   const codeContext = getCodeContext(patch, comment) || []
 
                   return (
-                    <div key={`comment-${comment.id}`} className="space-y-3 pt-3 px-3 pb-5 border theme-border rounded-xl">
+                    <div
+                      key={`comment-${comment.id}`}
+                      className="space-y-3 pt-3 px-3 pb-5 border theme-border rounded-xl"
+                    >
                       {/* 코멘트 헤더 */}
                       <div className="flex items-center gap-2 ">
                         <MessageSquare className="w-4 h-4 text-orange-500" />
@@ -424,7 +434,9 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
                             <div className="col-span-2 sticky top-0 bg-gray-200 dark:bg-gray-700 py-1 px-4 text-sm font-semibold">
                               <span className="text-gray-600">
                                 <button
-                                  onClick={() => handleFileClickInternal(comment.path, comment.line)}
+                                  onClick={() =>
+                                    handleFileClickInternal(comment.path, comment.line)
+                                  }
                                   className="text-gray-600 hover:text-blue-600 hover:underline transition-colors cursor-pointer"
                                 >
                                   {comment.path}
@@ -434,15 +446,27 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
                             </div>
 
                             {/* 코드 라인들 */}
-                            {codeContext.map((codeLine, idx) => renderCodeLine(codeLine, idx)).flat()}
+                            {codeContext
+                              .map((codeLine, idx) => renderCodeLine(codeLine, idx))
+                              .flat()}
                           </div>
                         </div>
                       )}
 
                       {/* 코멘트 내용 */}
-                      <p className="theme-text whitespace-pre-wrap break-words">
-                        {cleanReviewCommentBody(comment.body)}
-                      </p>
+                      {comment.voiceFileUrl ? (
+                        <audio
+                          controls
+                          src={comment.voiceFileUrl}
+                          className="h-8 rounded-full border border-gray-300"
+                        >
+                          브라우저가 오디오를 지원하지 않습니다.
+                        </audio>
+                      ) : (
+                        <p className="theme-text whitespace-pre-wrap break-words">
+                          {cleanReviewCommentBody(comment.body)}
+                        </p>
+                      )}
 
                       {/* 답글 버튼 (답글 작성 폼이 열려있지 않을 때만) */}
                       {replyingToCommentId !== comment.id && (

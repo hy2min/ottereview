@@ -32,7 +32,7 @@ const AlertModal = ({
           icon: <AlertCircle className="w-5 h-5" />,
           iconBg: 'bg-yellow-100 dark:bg-yellow-900',
           iconColor: 'text-yellow-600 dark:text-yellow-400',
-          buttonVariant: 'warning'
+          buttonVariant: 'primary'
         }
       default:
         return {
@@ -62,14 +62,14 @@ const AlertModal = ({
         </Button>
       }
     >
-      <div className="flex items-center justify-center gap-4">
+      <div className="flex items-center justify-start gap-4">
         <div className={`${iconBg} rounded-full p-2 flex-shrink-0`}>
           <div className={iconColor}>
             {icon}
           </div>
         </div>
-        <div className="text-center">
-          <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+        <div className="text-start">
+          <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
             {message}
           </p>
         </div>
