@@ -22,6 +22,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { useModalContext } from '@/components/ModalProvider'
 import CommentForm from '@/features/comment/CommentForm'
 import PRCommentList from '@/features/comment/PRCommentList'
 import CommitList from '@/features/pullRequest/CommitList'
@@ -43,6 +44,7 @@ const PRReview = () => {
   const { repoId, prId } = useParams()
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
+  const { success, error, warning, confirmAction, confirmDelete } = useModalContext()
 
   const tabs = [
     { id: 'files', label: '파일', icon: FileText },
@@ -96,6 +98,7 @@ const PRReview = () => {
   useEffect(() => {
     const handlePopState = (event) => {
       if (reviewComments.length > 0) {
+        // 동기적으로 처리하여 이벤트 루프 문제 방지
         const confirmed = window.confirm('작성 중인 임시 댓글이 있습니다. 페이지를 나가시겠습니까?')
         if (!confirmed) {
           // 현재 페이지로 다시 이동
@@ -116,7 +119,7 @@ const PRReview = () => {
     return () => {
       window.removeEventListener('popstate', handlePopState)
     }
-  }, [reviewComments.length])
+  }, [reviewComments.length]) // confirmAction을 의존성에서 제외하여 무한 렌더링 방지
 
   useEffect(() => {
     const load = async () => {
@@ -139,7 +142,7 @@ const PRReview = () => {
 
   const handleSubmit = async () => {
     if (!comment.trim() && reviewComments.length === 0) {
-      alert('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
+      warning('리뷰 내용 또는 라인별 댓글을 작성해주세요.')
       return
     }
 
@@ -181,7 +184,7 @@ const PRReview = () => {
       setShowCommentForm(false) // 제출폼 닫기
       setReviewState('COMMENT') // 리뷰 상태도 초기화
 
-      alert('리뷰가 성공적으로 제출되었습니다!')
+      success('리뷰가 성공적으로 제출되었습니다!')
 
       // 리뷰 데이터만 새로 받아오기
       try {
@@ -209,7 +212,8 @@ const PRReview = () => {
   }
 
   const handleClosePR = async () => {
-    if (!confirm('PR을 닫으시겠습니까?')) return
+    const confirmed = await confirmAction('PR을 닫으시겠습니까?', 'PR 닫기')
+    if (!confirmed) return
 
     setClosingPR(true)
     try {
@@ -219,14 +223,15 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      alert('PR 닫기에 실패했습니다.')
+      error('PR 닫기에 실패했습니다.')
     } finally {
       setClosingPR(false)
     }
   }
 
   const handleReopenPR = async () => {
-    if (!confirm('PR을 다시 여시겠습니까?')) return
+    const confirmed = await confirmAction('PR을 다시 여시겠습니까?', 'PR 재오픈')
+    if (!confirmed) return
 
     setReopeningPR(true)
     try {
@@ -236,7 +241,7 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
     } catch (error) {
-      alert('PR 재오픈에 실패했습니다.')
+      error('PR 재오픈에 실패했습니다.')
     } finally {
       setReopeningPR(false)
     }
@@ -245,7 +250,7 @@ const PRReview = () => {
   // 병합 관련 함수들
   const handleIsMergable = async () => {
     if (isMerging) return // 이미 진행 중이면 중복 실행 방지
-    
+
     setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
@@ -257,13 +262,13 @@ const PRReview = () => {
         await handleMerge()
       } else {
         // 충돌 상황 안내
-        alert('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.')
+        warning('충돌이 발생했습니다.\n충돌을 해결한 후 다시 시도해주세요.')
         // 충돌 해결 페이지로 이동
         navigate(`/${repoId}/pr/${prId}/conflict`)
       }
     } catch (err) {
       console.error('병합 가능성 확인 실패:', err)
-      alert('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 가능성을 확인하는 중 오류가 발생했습니다.\n다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -277,10 +282,10 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
 
-      alert('PR이 성공적으로 병합되었습니다!')
+      success('PR이 성공적으로 병합되었습니다!')
     } catch (err) {
       console.error('병합 실패:', err)
-      alert('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -298,8 +303,8 @@ const PRReview = () => {
       try {
         const pr = await fetchPRDetail({ repoId, prId })
         setPrDetail(pr)
-      } catch (error) {
-        console.error('전체 PR 데이터 새로고침도 실패:', error)
+      } catch (err) {
+        console.error('전체 PR 데이터 새로고침도 실패:', err)
       }
     }
   }
@@ -309,16 +314,16 @@ const PRReview = () => {
     setActiveTab('files')
     // 다른 모든 파일 닫고 선택된 파일만 열기
     setExpandedFiles([filePath])
-    
+
     // 특정 라인으로 스크롤하기 위해 약간의 지연 후 실행
     if (lineNumber) {
       setTimeout(() => {
         // 라인 번호에 해당하는 요소 찾기 (CodeDiff 컴포넌트 내부의 라인)
         const lineElement = document.querySelector(`[data-line-number="${lineNumber}"]`)
         if (lineElement) {
-          lineElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'center' 
+          lineElement.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
           })
           // 해당 라인을 하이라이트하기 위해 잠시 클릭 효과 주기
           lineElement.click()
@@ -410,7 +415,7 @@ const PRReview = () => {
   // 모든 리뷰어가 승인했는지 확인하는 함수
   const isAllReviewersApproved = () => {
     if (!prDetail?.reviewers || prDetail.reviewers.length === 0) {
-      return false // 리뷰어가 없으면 승인된 것으로 간주하지 않음
+      return true // 리뷰어가 없으면 승인된 것으로 간주
     }
     return prDetail.reviewers.every((reviewer) => reviewer.state === 'APPROVED')
   }
@@ -686,7 +691,7 @@ const PRReview = () => {
               const isSelected = selectedPriorityIndex === index
 
               return (
-                <div key={index} className="flex-shrink-0 w-83.5">
+                <div key={index} className="flex-shrink-0 w-82.5">
                   <div
                     className={`flex flex-col gap-2 p-3 rounded-lg border transition-all h-48 shadow-sm ${getPriorityBadgeStyle(priority.level, isSelected)}`}
                     onClick={() => setSelectedPriorityIndex(isSelected ? null : index)}
@@ -805,7 +810,14 @@ const PRReview = () => {
             setExpandedFiles={setExpandedFiles}
           />
         )}
-        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} files={prDetail?.files || []} onFileClick={handleFileClick} onDataRefresh={handleDataRefresh} />}
+        {activeTab === 'comments' && (
+          <PRCommentList
+            reviews={prDetail?.reviews || []}
+            files={prDetail?.files || []}
+            onFileClick={handleFileClick}
+            onDataRefresh={handleDataRefresh}
+          />
+        )}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
     </div>

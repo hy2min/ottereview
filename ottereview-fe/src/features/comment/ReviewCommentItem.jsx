@@ -5,6 +5,7 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
+import { useModalContext } from '@/components/ModalProvider'
 import {
   applyCushionLanguage,
   createReviewCommentReply,
@@ -15,6 +16,7 @@ import { useUserStore } from '@/store/userStore'
 
 const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
   const user = useUserStore((state) => state.user)
+  const { error, confirmDelete } = useModalContext()
 
   // 편집 상태
   const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
@@ -68,15 +70,16 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('리뷰 댓글 수정 실패:', error)
-      alert('댓글 수정에 실패했습니다.')
+    } catch (err) {
+      console.error('리뷰 댓글 수정 실패:', err)
+      error('댓글 수정에 실패했습니다.')
     }
   }
 
   // 기존 리뷰 댓글 삭제
   const handleDeleteReviewComment = async (commentToDelete) => {
-    if (!confirm('이 댓글을 삭제하시겠습니까?')) return
+    const confirmed = await confirmDelete('이 댓글을 삭제하시겠습니까?')
+    if (!confirmed) return
 
     try {
       await deleteReviewComment(commentToDelete.reviewId, commentToDelete.id)
@@ -85,9 +88,9 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('리뷰 댓글 삭제 실패:', error)
-      alert('댓글 삭제에 실패했습니다.')
+    } catch (err) {
+      console.error('리뷰 댓글 삭제 실패:', err)
+      error('댓글 삭제에 실패했습니다.')
     }
   }
 
@@ -121,9 +124,9 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('답글 작성 실패:', error)
-      alert('답글 작성에 실패했습니다.')
+    } catch (err) {
+      console.error('답글 작성 실패:', err)
+      error('답글 작성에 실패했습니다.')
     }
   }
 
@@ -143,8 +146,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (response?.result) {
         setCushionedContent(response.result)
       }
-    } catch (error) {
-      console.error('쿠션어 적용 실패:', error)
+    } catch (err) {
+      console.error('쿠션어 적용 실패:', err)
       setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
     } finally {
       setIsCushionLoading(false)
@@ -356,7 +359,6 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               </div>
             </div>
           )}
-
         </Box>
       </div>
 
@@ -365,7 +367,10 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
         <div className="ml-10">
           <Box shadow className="space-y-3 max-w-lg bg-gray-50 dark:bg-gray-800">
             {replies.map((reply) => (
-              <div key={reply.id} className="ml-2 mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+              <div
+                key={reply.id}
+                className="ml-2 mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <img
                     src={`https://github.com/${reply.authorName}.png`}
@@ -375,7 +380,9 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       e.target.src = 'https://github.com/identicons/jasonlong.png'
                     }}
                   />
-                  <span className="font-medium theme-text text-sm">{reply.authorName || 'Unknown'}</span>
+                  <span className="font-medium theme-text text-sm">
+                    {reply.authorName || 'Unknown'}
+                  </span>
                   <span className="text-xs theme-text-muted flex items-center gap-1">
                     {new Date(reply.submittedAt).toLocaleString()}
                   </span>
@@ -401,7 +408,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       </div>
                     )}
                 </div>
-                
+
                 {/* 답글 내용 */}
                 {editingReviewCommentId === reply.id ? (
                   <div className="space-y-2">
