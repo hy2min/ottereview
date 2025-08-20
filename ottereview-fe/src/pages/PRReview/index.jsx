@@ -125,7 +125,6 @@ const PRReview = () => {
       try {
         const pr = await fetchPRDetail({ repoId, prId })
         setPrDetail(pr)
-        console.log(pr)
       } catch (err) {
         setPrDetail(null)
       } finally {
@@ -244,7 +243,7 @@ const PRReview = () => {
   // 머지 관련 함수들
   const handleIsMergable = async () => {
     if (isMerging) return // 이미 진행 중이면 중복 실행 방지
-    
+
     setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
@@ -414,13 +413,15 @@ const PRReview = () => {
                   <span>{prDetail.baseBranch?.name || 'unknown'}</span>
                 </div>
               </Badge>
-              <Badge variant={
-                {
-                  OPEN: 'primary',
-                  CLOSED: 'danger', 
-                  MERGED: 'success',
-                }[prDetail.state] || 'default'
-              }>
+              <Badge
+                variant={
+                  {
+                    OPEN: 'primary',
+                    CLOSED: 'danger',
+                    MERGED: 'success',
+                  }[prDetail.state] || 'default'
+                }
+              >
                 {prDetail.state}
               </Badge>
             </div>
