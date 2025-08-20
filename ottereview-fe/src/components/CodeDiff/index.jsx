@@ -221,7 +221,7 @@ const CodeDiff = ({
         // 댓글 가능한 라인의 정보 저장
         if (lineIsAdded || lineIsRemoved || lineIsContext) {
           const currentLineNumber = lineIsAdded ? tempNewLine : tempOldLine
-          const side = lineIsAdded ? 'RIGHT' : 'LEFT'
+          const side = lineIsAdded ? 'RIGHT' : lineIsRemoved ? 'LEFT' : 'RIGHT'
 
           lineData.set(idx, {
             lineNumber: currentLineNumber,
@@ -416,7 +416,7 @@ const CodeDiff = ({
               return (
                 <div
                   key={idx}
-                  className="col-span-2 sticky top-0 bg-gray-200 dark:bg-gray-700 theme-text-secondary py-1 px-4 text-sm font-semibold"
+                  className="col-span-2 sticky top-0 bg-gray-200 dark:bg-gray-700 text-gray-600 py-1 px-4 text-sm font-semibold"
                 >
                   {line}
                 </div>
@@ -484,6 +484,7 @@ const CodeDiff = ({
                   className={`w-16 text-right pr-2 py-0.5 select-none border-r border-gray-200 cursor-pointer hover:bg-opacity-80 transition-colors ${finalNumBg}`}
                   onMouseDown={(e) => handleMouseDown(idx, e)}
                   onMouseEnter={() => handleMouseEnter(idx)}
+                  data-line-number={currentLineNumber}
                 >
                   <span className="inline-block w-6 text-right pr-1">{displayOld || ''}</span>
                   <span className="inline-block w-6 text-right">{displayNew || ''}</span>
@@ -615,7 +616,7 @@ const CodeDiff = ({
                                   브라우저가 오디오를 지원하지 않습니다.
                                 </audio>
                               ) : (
-                                <p className="theme-text whitespace-pre-wrap text-base font-medium">
+                                <p className="theme-text whitespace-pre-wrap break-words text-base font-medium">
                                   {desc.body}
                                 </p>
                               )}
@@ -741,7 +742,7 @@ const CodeDiff = ({
                                     브라우저가 오디오를 지원하지 않습니다.
                                   </audio>
                                 ) : (
-                                  <p className="theme-text whitespace-pre-wrap text-base">
+                                  <p className="theme-text whitespace-pre-wrap break-words text-base">
                                     {comment.content}
                                   </p>
                                 )}

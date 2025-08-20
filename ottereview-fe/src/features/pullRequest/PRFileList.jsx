@@ -16,8 +16,14 @@ const PRFileList = ({
   showDiffHunk = false,
   commentMode = 'review',
   onDataRefresh,
+  expandedFiles: externalExpandedFiles,
+  setExpandedFiles: externalSetExpandedFiles,
 }) => {
-  const [expandedFiles, setExpandedFiles] = useState([]) // 배열로 변경
+  const [internalExpandedFiles, setInternalExpandedFiles] = useState([])
+  
+  // 외부에서 제어되는 경우 외부 state 사용, 아니면 내부 state 사용
+  const expandedFiles = externalExpandedFiles !== undefined ? externalExpandedFiles : internalExpandedFiles
+  const setExpandedFiles = externalSetExpandedFiles || setInternalExpandedFiles
 
   const toggle = (filename) => {
     setExpandedFiles((prev) => {
