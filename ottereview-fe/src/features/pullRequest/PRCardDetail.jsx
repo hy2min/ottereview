@@ -8,6 +8,7 @@ import {
   GitMerge,
   GitPullRequest,
   MessageCircle,
+  Settings,
   ThumbsUp,
   User,
 } from 'lucide-react'
@@ -17,17 +18,20 @@ import { useNavigate } from 'react-router-dom'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { useModalContext } from '@/components/ModalProvider'
 import { doMerge, IsMergable } from '@/features/pullRequest/prApi'
 import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const PRCardDetail = ({ pr }) => {
   const navigate = useNavigate()
+  const { success, error, warning } = useModalContext()
 
   // API 응답에서 받은 mergeable 상태를 관리
   const [apiMergeable, setApiMergeable] = useState(null)
+  // 병합 버튼 로딩 상태 관리
+  const [isMerging, setIsMerging] = useState(false)
 
   const title = pr.title
-  const description = pr.body || '(내용 없음)'
   const updatedAt = pr.githubCreatedAt ? formatRelativeTime(pr.githubCreatedAt) : '(작성일 없음)'
   const authorName = pr.author?.githubUsername || '(알 수 없음)'
   const prNumber = pr.githubPrNumber ? `#${pr.githubPrNumber}` : ''
@@ -49,6 +53,9 @@ const PRCardDetail = ({ pr }) => {
     }[state] || 'default'
 
   const handleIsMergable = async () => {
+    if (isMerging) return // 이미 진행 중이면 중복 실행 방지
+
+    setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
 
@@ -58,14 +65,35 @@ const PRCardDetail = ({ pr }) => {
       if (mergeState.mergeable) {
         await handleMerge()
       } else {
+        // 충돌 상황 안내 - 모달의 onClose 콜백에서 페이지 이동 처리
+        warning('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.', '충돌 발생', {
+          onClose: () => {
+            navigate(`/${repoId}/pr/${prId}/conflict`)
+          }
+        })
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('병합 가능성 확인 실패:', err)
+      error('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setIsMerging(false)
+    }
   }
 
   const handleMerge = async () => {
     try {
       const data = await doMerge({ repoId, prId })
-    } catch (err) {}
+
+      // 병합 성공 - 모달의 onClose 콜백에서 reload 처리
+      success('PR이 성공적으로 병합되었습니다!', {
+        onClose: () => {
+          window.location.reload()
+        }
+      })
+    } catch (err) {
+      console.error('병합 실패:', err)
+      error('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
+    }
   }
 
   return (
@@ -157,7 +185,7 @@ const PRCardDetail = ({ pr }) => {
                 const isApproved = pr.isApproved !== false // isApproved가 false가 아닌 경우 승인된 것으로 간주
 
                 if (!effectiveMergeable) {
-                  // 머지 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
+                  // 병합 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
                   return (
                     <Button
                       variant="danger"
@@ -169,20 +197,29 @@ const PRCardDetail = ({ pr }) => {
                     </Button>
                   )
                 } else {
-                  // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                  // 병합 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                   return (
                     <div className="relative group">
                       <Button
                         variant="primary"
                         size="sm"
                         onClick={handleIsMergable}
-                        disabled={!isApproved}
+                        disabled={!isApproved || isMerging}
                         className="whitespace-nowrap"
                       >
-                        <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-                        머지
+                        {isMerging ? (
+                          <>
+                            <Settings className="w-4 h-4 mr-1 mb-[2px] animate-spin" />
+                            병합 중...
+                          </>
+                        ) : (
+                          <>
+                            <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
+                            병합
+                          </>
+                        )}
                       </Button>
-                      {!isApproved && (
+                      {!isApproved && !isMerging && (
                         <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 shadow-lg border border-gray-200 dark:border-gray-700">
                           승인 필요
                           <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-white dark:border-t-gray-800"></div>

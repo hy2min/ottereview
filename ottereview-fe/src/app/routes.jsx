@@ -13,7 +13,6 @@ export const protectedRoutes = [
   { path: '/', element: <Guide />, title: '사용 가이드' },
   { path: '/dashboard', element: <Dashboard />, title: '대시보드' },
   { path: '/whiteboard', element: <Whiteboard />, title: '화이트보드 테스트' },
-  { path: '/install-complete', element: <InstallComplete />, title: 'Ottereview 설치' },
   { path: '/chatroom/:roomId', element: <ChatRoom />, title: '채팅방' },
   { path: '/notfound', element: <NotFound />, title: '페이지를 찾을 수 없음' },
   { path: '/:repoId/pr/:prId/review', element: <PRreview />, title: 'PR 리뷰' },

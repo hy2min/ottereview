@@ -23,9 +23,6 @@ body {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.014em;
   color: var(--text-primary);
-  transition:
-    background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-    color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   font-optical-sizing: auto;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;

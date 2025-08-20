@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { useModalContext } from '@/components/ModalProvider'
 import { submitPR } from '@/features/pullRequest/prApi'
 
 const PRCreateStep5 = ({
@@ -19,6 +20,7 @@ const PRCreateStep5 = ({
   aiSummary,
 }) => {
   const navigate = useNavigate()
+  const { success, error } = useModalContext()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -39,13 +41,15 @@ const PRCreateStep5 = ({
       resetCommentStates?.()
 
       // 성공 알림 표시
-      alert('PR이 성공적으로 생성되었습니다!')
-
-      // 레포 상세 페이지로 이동
-      navigate(`/${repoId}`)
+      success('PR이 성공적으로 생성되었습니다!', {
+        onClose: () => {
+          // 레포 상세 페이지로 이동
+          navigate(`/${repoId}`)
+        },
+      })
     } catch (err) {
       console.error(err)
-      alert('제출 실패')
+      error('제출 실패')
     } finally {
       setIsSubmitting(false)
     }

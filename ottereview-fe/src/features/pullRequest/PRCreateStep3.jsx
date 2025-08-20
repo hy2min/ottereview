@@ -1,19 +1,10 @@
+import { Bot, Eye, EyeOff, FileText, Settings, Sparkles, TrendingUp } from 'lucide-react'
 import React, { useState } from 'react'
-import {
-  Bot,
-  Sparkles,
-  Eye,
-  EyeOff,
-  TrendingUp,
-  FileText,
-  Settings,
-} from 'lucide-react'
 
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import InputBox from '@/components/InputBox'
-import Modal from '@/components/Modal'
 import { savePRAdditionalInfo } from '@/features/pullRequest/prApi'
 import PRFileList from '@/features/pullRequest/PRFileList'
 import useCookieState from '@/lib/utils/useCookieState'
@@ -39,7 +30,6 @@ const PRCreateStep3 = ({
 
   // 툴팁 표시 상태
   const [showTooltip, setShowTooltip] = useState(false)
-
 
   // 템플릿 정의
   const templates = [
@@ -109,15 +99,18 @@ close #이슈번호
     }
   }
 
-
   // 다음 버튼 활성화 조건 확인
-  const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== ''
+  const isNextButtonEnabled = prTitle.trim() !== '' && prBody.trim() !== '' && aiOthers
 
   // 툴팁 메시지 생성
   const getDisabledTooltip = () => {
     const missingFields = []
     if (prTitle.trim() === '') missingFields.push('제목')
     if (prBody.trim() === '') missingFields.push('설명')
+
+    if (!aiOthers) {
+      return 'AI 분석이 진행중입니다'
+    }
 
     if (missingFields.length === 0) return ''
     return `${missingFields.join(', ')}을(를) 입력해주세요`
@@ -388,7 +381,6 @@ close #이슈번호
           </div>
         </div>
       </div>
-
     </div>
   )
 }

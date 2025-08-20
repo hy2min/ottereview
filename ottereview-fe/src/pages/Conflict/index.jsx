@@ -8,6 +8,7 @@ import LoadingOtter from '@/components/Loader'
 import { createChat } from '@/features/chat/chatApi'
 import useConflictStore from '@/features/conflict/conflictStore'
 import { useUserStore } from '@/store/userStore'
+import { useModalContext } from '@/components/ModalProvider'
 
 const Conflict = () => {
   const { repoId, prId } = useParams()
@@ -46,6 +47,7 @@ const Conflict = () => {
 
   // 현재 로그인한 사용자 정보
   const user = useUserStore((state) => state.user)
+  const { warning, error: showError } = useModalContext()
 
   // fetchConflictData를 useCallback으로 메모이제이션
   const memoizedFetchConflictData = useCallback(fetchConflictData, [])
@@ -205,12 +207,12 @@ function hello() {
       // 유효성 검사
       const trimmedRoomName = roomName.trim()
       if (!trimmedRoomName) {
-        alert('채팅방 이름을 입력해주세요.')
+        warning('채팅방 이름을 입력해주세요.')
         return
       }
 
       if (selectedFiles.length === 0) {
-        alert('충돌 파일을 최소 1개 이상 선택해주세요.')
+        warning('충돌 파일을 최소 1개 이상 선택해주세요.')
         return
       }
 
@@ -260,8 +262,7 @@ function hello() {
       // 채팅방 페이지로 이동
       navigate(`/chatroom/${roomId}`)
     } catch (err) {
-      const errorMessage = err.message || '알 수 없는 오류가 발생했습니다.'
-      alert(`채팅방 생성에 실패했습니다: ${errorMessage}`)
+      showError('채팅방 생성에 실패했습니다.')
     }
   }
 

@@ -4,6 +4,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { protectedRoutes } from '@/app/routes'
 import FloatingGuideButton from '@/components/FloatingGuideButton'
 import Header from '@/components/Header'
+import ModalProvider from '@/components/ModalProvider'
 import ToastContainer from '@/components/Toast'
 import { useAuthStore } from '@/features/auth/authStore'
 import InstallComplete from '@/features/auth/InstallComplete'
@@ -14,10 +15,9 @@ import { api } from '@/lib/api'
 import ChatRoom from '@/pages/ChatRoom'
 import Guide from '@/pages/Guide'
 import Landing from '@/pages/Landing'
-import NotFound from '@/pages/NotFound'
+import { useNotificationStore } from '@/store/notificationStore'
 import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
-import { useNotificationStore } from '@/store/notificationStore'
 
 const App = () => {
   const user = useUserStore((state) => state.user)
@@ -34,24 +34,26 @@ const App = () => {
   const [toasts, setToasts] = useState([])
 
   // 푸시 이벤트 핸들러
-  const handlePushEvent = useCallback((pushData) => {
-    
-    // 토스트에 추가
-    setToasts((prev) => {
-      const newToasts = [...prev, pushData]
-      return newToasts
-    })
-    
-    // 알림으로도 저장
-    addNotification({
-      id: pushData.id,
-      type: 'push',
-      title: `${pushData.pusherName}님이 푸시했습니다`,
-      message: `${pushData.repoName}의 ${pushData.branchName} 브랜치에 ${pushData.commitCount}개 커밋`,
-      data: pushData,
-      timestamp: pushData.timestamp
-    })
-  }, [addNotification])
+  const handlePushEvent = useCallback(
+    (pushData) => {
+      // 토스트에 추가
+      setToasts((prev) => {
+        const newToasts = [...prev, pushData]
+        return newToasts
+      })
+
+      // 알림으로도 저장
+      addNotification({
+        id: pushData.id,
+        type: 'push',
+        title: `${pushData.pusherName}님이 푸시했습니다`,
+        message: `${pushData.repoName}의 ${pushData.branchName} 브랜치에 ${pushData.commitCount}개 커밋`,
+        data: pushData,
+        timestamp: pushData.timestamp,
+      })
+    },
+    [addNotification]
+  )
 
   // 테마 초기화
   useEffect(() => {
@@ -86,59 +88,62 @@ const App = () => {
   useSSE(isLoggedIn, handlePushEvent)
 
   // 조건부 렌더링들은 모든 hooks 다음에
-  if (pathname === '/chatroom/test') return <ChatRoom />
-  if (pathname === '/audiotest') return <AudioChatRoom />
-  if (pathname === '/install-complete') return <InstallComplete />
-  if (pathname.startsWith('/oauth/github/callback')) return <OAuthCallbackPage />
+  if (pathname === '/audiotest') return <ModalProvider><AudioChatRoom /></ModalProvider>
+  if (pathname === '/install-complete') return <ModalProvider><InstallComplete /></ModalProvider>
+  if (pathname.startsWith('/oauth/github/callback')) return <ModalProvider><OAuthCallbackPage /></ModalProvider>
 
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen w-full">
-        <Header />
-        <main>
-          <Routes>
-            <Route path="/" element={<Guide />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </main>
-        <FloatingGuideButton />
-      </div>
+      <ModalProvider>
+        <div className="min-h-screen w-full">
+          <Header />
+          <main>
+            <Routes>
+              <Route path="/" element={<Guide />} />
+              <Route path="/landing" element={<Landing />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
+          <FloatingGuideButton />
+        </div>
+      </ModalProvider>
     )
   }
 
   return (
-    <div className="min-h-screen w-full">
-      <Header />
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <main>
-              <Guide />
-            </main>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mt-4 mb-4">
-              <Routes>
-                {protectedRoutes.map(({ path, element }) => (
-                  <Route key={path} path={path} element={element} />
-                ))}
-              </Routes>
-            </main>
-          }
-        />
-      </Routes>
+    <ModalProvider>
+      <div className="min-h-screen w-full">
+        <Header />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <main>
+                <Guide />
+              </main>
+            }
+          />
+          <Route
+            path="*"
+            element={
+              <main className="max-w-6xl mx-auto px-8 sm:px-10 lg:px-12 mt-4 mb-4">
+                <Routes>
+                  {protectedRoutes.map(({ path, element }) => (
+                    <Route key={path} path={path} element={element} />
+                  ))}
+                </Routes>
+              </main>
+            }
+          />
+        </Routes>
 
-      {/* 전역 토스트 */}
-      <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
-      
-      {/* 플로팅 가이드 버튼 */}
-      <FloatingGuideButton />
-    </div>
+        {/* 전역 토스트 */}
+        <ToastContainer toasts={toasts} onCloseToast={handleCloseToast} />
+
+        {/* 플로팅 가이드 버튼 */}
+        <FloatingGuideButton />
+      </div>
+    </ModalProvider>
   )
 }
 
