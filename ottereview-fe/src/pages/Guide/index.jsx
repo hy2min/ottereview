@@ -138,7 +138,7 @@ const Guide = () => {
             }}
           >
             <div className="inline-block">
-              <div className="flex items-center gap-3 bg-white/80 dark:bg-gray-800/95 backdrop-blur-sm border border-primary-200 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
+              <div className="flex items-center mt-8 lg:mt-0 gap-3 bg-white/80 dark:bg-gray-800/95 backdrop-blur-sm border border-primary-200 dark:border-gray-600 rounded-full px-4 py-2 shadow-lg">
                 <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium text-black">AI 기반 코드 리뷰 플랫폼</span>
               </div>
@@ -710,7 +710,7 @@ const Guide = () => {
             </div>
             <h2 className="text-4xl font-bold">
               <span className="from-slate-900 to-slate-700 dark:from-orange-300 dark:to-orange-400 bg-clip-text">
-                팀원들과 머지 충돌을
+                팀원들과 병합 충돌을
               </span>
               <br />
               <span className="text-primary-600 dark:text-primary-400">실시간으로 해결</span>
