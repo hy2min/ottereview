@@ -26,7 +26,7 @@ const PRCardDetail = ({ pr }) => {
 
   // API 응답에서 받은 mergeable 상태를 관리
   const [apiMergeable, setApiMergeable] = useState(null)
-  // 머지 버튼 로딩 상태 관리
+  // 병합 버튼 로딩 상태 관리
   const [isMerging, setIsMerging] = useState(false)
 
   const title = pr.title
@@ -53,7 +53,7 @@ const PRCardDetail = ({ pr }) => {
 
   const handleIsMergable = async () => {
     if (isMerging) return // 이미 진행 중이면 중복 실행 방지
-    
+
     setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
@@ -70,8 +70,8 @@ const PRCardDetail = ({ pr }) => {
         navigate(`/${repoId}/pr/${prId}/conflict`)
       }
     } catch (err) {
-      console.error('머지 가능성 확인 실패:', err)
-      alert('머지 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('병합 가능성 확인 실패:', err)
+      alert('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -80,15 +80,15 @@ const PRCardDetail = ({ pr }) => {
   const handleMerge = async () => {
     try {
       const data = await doMerge({ repoId, prId })
-      
-      // 머지 성공
-      alert('PR이 성공적으로 머지되었습니다!')
-      
+
+      // 병합 성공
+      alert('PR이 성공적으로 병합되었습니다!')
+
       // 페이지 새로고침 또는 상위 컴포넌트 상태 업데이트
       window.location.reload()
     } catch (err) {
-      console.error('머지 실패:', err)
-      alert('머지 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('병합 실패:', err)
+      alert('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -181,7 +181,7 @@ const PRCardDetail = ({ pr }) => {
                 const isApproved = pr.isApproved !== false // isApproved가 false가 아닌 경우 승인된 것으로 간주
 
                 if (!effectiveMergeable) {
-                  // 머지 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
+                  // 병합 불가능한 경우 (충돌) - 무조건 충돌 해결 버튼
                   return (
                     <Button
                       variant="danger"
@@ -193,7 +193,7 @@ const PRCardDetail = ({ pr }) => {
                     </Button>
                   )
                 } else {
-                  // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                  // 병합 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                   return (
                     <div className="relative group">
                       <Button
@@ -206,12 +206,12 @@ const PRCardDetail = ({ pr }) => {
                         {isMerging ? (
                           <>
                             <Settings className="w-4 h-4 mr-1 mb-[2px] animate-spin" />
-                            머지 중...
+                            병합 중...
                           </>
                         ) : (
                           <>
                             <GitMerge className="w-4 h-4 mr-1 mb-[2px]" />
-                            머지
+                            병합
                           </>
                         )}
                       </Button>

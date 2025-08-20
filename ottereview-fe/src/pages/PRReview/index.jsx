@@ -73,7 +73,8 @@ const PRReview = () => {
   const [reopeningPR, setReopeningPR] = useState(false) // PR 재오픈 로딩
   const [selectedPriorityIndex, setSelectedPriorityIndex] = useState(null) // 선택된 우선순위 인덱스
   const [apiMergeable, setApiMergeable] = useState(null) // API 응답에서 받은 mergeable 상태
-  const [isMerging, setIsMerging] = useState(false) // 머지 로딩 상태
+  const [isMerging, setIsMerging] = useState(false) // 병합 로딩 상태
+  const [expandedFiles, setExpandedFiles] = useState([]) // 파일 탭에서 열린 파일들 관리
 
   const loadingDots = useLoadingDots(loading, loading ? 300 : 0) // 로딩 중일 때만 애니메이션
 
@@ -125,6 +126,7 @@ const PRReview = () => {
       try {
         const pr = await fetchPRDetail({ repoId, prId })
         setPrDetail(pr)
+        console.log(pr)
       } catch (err) {
         setPrDetail(null)
       } finally {
@@ -240,10 +242,10 @@ const PRReview = () => {
     }
   }
 
-  // 머지 관련 함수들
+  // 병합 관련 함수들
   const handleIsMergable = async () => {
     if (isMerging) return // 이미 진행 중이면 중복 실행 방지
-
+    
     setIsMerging(true)
     try {
       const mergeState = await IsMergable({ repoId, prId })
@@ -260,8 +262,8 @@ const PRReview = () => {
         navigate(`/${repoId}/pr/${prId}/conflict`)
       }
     } catch (err) {
-      console.error('머지 가능성 확인 실패:', err)
-      alert('머지 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('병합 가능성 확인 실패:', err)
+      alert('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -275,10 +277,10 @@ const PRReview = () => {
       const pr = await fetchPRDetail({ repoId, prId })
       setPrDetail(pr)
 
-      alert('PR이 성공적으로 머지되었습니다!')
+      alert('PR이 성공적으로 병합되었습니다!')
     } catch (err) {
-      console.error('머지 실패:', err)
-      alert('머지 중 오류가 발생했습니다. 다시 시도해주세요.')
+      console.error('병합 실패:', err)
+      alert('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 
@@ -299,6 +301,29 @@ const PRReview = () => {
       } catch (error) {
         console.error('전체 PR 데이터 새로고침도 실패:', error)
       }
+    }
+  }
+
+  // 파일 클릭 시 파일 탭으로 이동하고 해당 파일만 열기
+  const handleFileClick = (filePath, lineNumber) => {
+    setActiveTab('files')
+    // 다른 모든 파일 닫고 선택된 파일만 열기
+    setExpandedFiles([filePath])
+    
+    // 특정 라인으로 스크롤하기 위해 약간의 지연 후 실행
+    if (lineNumber) {
+      setTimeout(() => {
+        // 라인 번호에 해당하는 요소 찾기 (CodeDiff 컴포넌트 내부의 라인)
+        const lineElement = document.querySelector(`[data-line-number="${lineNumber}"]`)
+        if (lineElement) {
+          lineElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'center' 
+          })
+          // 해당 라인을 하이라이트하기 위해 잠시 클릭 효과 주기
+          lineElement.click()
+        }
+      }, 200) // 파일이 열릴 시간을 기다림
     }
   }
 
@@ -385,7 +410,7 @@ const PRReview = () => {
   // 모든 리뷰어가 승인했는지 확인하는 함수
   const isAllReviewersApproved = () => {
     if (!prDetail?.reviewers || prDetail.reviewers.length === 0) {
-      return true // 리뷰어가 없으면 승인된 것으로 간주
+      return false // 리뷰어가 없으면 승인된 것으로 간주하지 않음
     }
     return prDetail.reviewers.every((reviewer) => reviewer.state === 'APPROVED')
   }
@@ -404,32 +429,19 @@ const PRReview = () => {
                 #{prDetail.githubPrNumber}
               </Badge>
             </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant="primary">
-                <div className="flex items-center space-x-1">
-                  <GitBranch className="w-4 h-4 mb-[2px]" />
-                  <span>{prDetail.headBranch?.name || 'unknown'}</span>
-                  <ArrowRight className="w-4 h-4 text-gray-800" />
-                  <span>{prDetail.baseBranch?.name || 'unknown'}</span>
-                </div>
-              </Badge>
-              <Badge
-                variant={
-                  {
-                    OPEN: 'primary',
-                    CLOSED: 'danger',
-                    MERGED: 'success',
-                  }[prDetail.state] || 'default'
-                }
-              >
-                {prDetail.state}
-              </Badge>
-            </div>
+            <Badge variant="primary">
+              <div className="flex items-center space-x-1">
+                <GitBranch className="w-4 h-4 mb-[2px]" />
+                <span>{prDetail.headBranch?.name || 'unknown'}</span>
+                <ArrowRight className="w-4 h-4 text-gray-800" />
+                <span>{prDetail.baseBranch?.name || 'unknown'}</span>
+              </div>
+            </Badge>
           </div>
           <div className="flex gap-2 sm:ml-auto">
             {prDetail.state === 'OPEN' && (
               <>
-                {/* 머지 버튼 */}
+                {/* 병합 버튼 */}
                 {(() => {
                   // API 응답이 있으면 그걸 우선, 없으면 기존 mergeable 사용
                   const effectiveMergeable =
@@ -437,7 +449,7 @@ const PRReview = () => {
                   const isApproved = isAllReviewersApproved()
 
                   if (!effectiveMergeable) {
-                    // 머지 불가능한 경우 (충돌) - 충돌 해결 버튼
+                    // 병합 불가능한 경우 (충돌) - 충돌 해결 버튼
                     return (
                       <Button
                         variant="danger"
@@ -448,7 +460,7 @@ const PRReview = () => {
                       </Button>
                     )
                   } else {
-                    // 머지 가능한 경우 - 승인 여부에 따라 활성화/비활성화
+                    // 병합 가능한 경우 - 승인 여부에 따라 활성화/비활성화
                     return (
                       <div className="relative group">
                         <Button
@@ -460,12 +472,12 @@ const PRReview = () => {
                           {isMerging ? (
                             <>
                               <Settings className="w-4 h-4 mr-1 animate-spin" />
-                              머지 중...
+                              병합 중...
                             </>
                           ) : (
                             <>
                               <GitMerge className="w-4 h-4 mr-1" />
-                              머지
+                              병합
                             </>
                           )}
                         </Button>
@@ -789,9 +801,11 @@ const PRReview = () => {
             showDiffHunk={false}
             prId={prId}
             onDataRefresh={handleDataRefresh}
+            expandedFiles={expandedFiles}
+            setExpandedFiles={setExpandedFiles}
           />
         )}
-        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} />}
+        {activeTab === 'comments' && <PRCommentList reviews={prDetail?.reviews || []} files={prDetail?.files || []} onFileClick={handleFileClick} onDataRefresh={handleDataRefresh} />}
         {activeTab === 'commits' && <CommitList commits={commits} />}
       </Box>
     </div>
