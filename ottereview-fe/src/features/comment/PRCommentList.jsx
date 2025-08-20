@@ -398,7 +398,7 @@ const PRCommentList = ({ reviews = [], files = [], onFileClick, onDataRefresh })
             {/* 리뷰 본문 */}
             {review.body && review.body.trim() && (
               <div className="ml-11">
-                <p className="theme-text whitespace-pre-wrap">
+                <p className="theme-text whitespace-pre-wrap break-words">
                   {cleanReviewCommentBody(review.body)}
                 </p>
               </div>
