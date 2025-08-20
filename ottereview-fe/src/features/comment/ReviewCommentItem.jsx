@@ -12,9 +12,11 @@ import {
   updateReviewComment,
 } from '@/features/pullRequest/prApi'
 import { useUserStore } from '@/store/userStore'
+import { useModalContext } from '@/components/ModalProvider'
 
 const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
   const user = useUserStore((state) => state.user)
+  const { success, error, confirmDelete } = useModalContext()
 
   // 편집 상태
   const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
@@ -70,13 +72,14 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       }
     } catch (error) {
       console.error('리뷰 댓글 수정 실패:', error)
-      alert('댓글 수정에 실패했습니다.')
+      error('댓글 수정에 실패했습니다.')
     }
   }
 
   // 기존 리뷰 댓글 삭제
   const handleDeleteReviewComment = async (commentToDelete) => {
-    if (!confirm('이 댓글을 삭제하시겠습니까?')) return
+    const confirmed = await confirmDelete('이 댓글을 삭제하시겠습니까?')
+    if (!confirmed) return
 
     try {
       await deleteReviewComment(commentToDelete.reviewId, commentToDelete.id)
@@ -87,7 +90,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       }
     } catch (error) {
       console.error('리뷰 댓글 삭제 실패:', error)
-      alert('댓글 삭제에 실패했습니다.')
+      error('댓글 삭제에 실패했습니다.')
     }
   }
 
@@ -123,7 +126,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       }
     } catch (error) {
       console.error('답글 작성 실패:', error)
-      alert('답글 작성에 실패했습니다.')
+      error('답글 작성에 실패했습니다.')
     }
   }
 

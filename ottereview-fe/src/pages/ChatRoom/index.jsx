@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { useModalContext } from '@/components/ModalProvider'
 import { deleteChatRoom } from '@/features/chat/chatApi'
 import { useChatStore } from '@/features/chat/chatStore'
 import Chat from '@/features/webrtc/Chat'
@@ -24,6 +25,7 @@ const ChatRoom = () => {
   const removeRoom = useChatStore((state) => state.removeRoom)
   const rooms = useChatStore((state) => state.rooms)
   const user = useUserStore((state) => state.user)
+  const { success, error: showError, confirmDelete } = useModalContext()
 
   // 미팅룸 정보 및 파일 목록 가져오기
   useEffect(() => {
@@ -33,7 +35,6 @@ const ChatRoom = () => {
         setError(null)
 
         const response = await api.get(`/api/meetings/${roomId}`)
-
 
         // 미팅룸 기본 정보 설정
         if (response.data) {
@@ -46,7 +47,6 @@ const ChatRoom = () => {
             // 다른 필요한 정보들도 여기서 설정
           }
           setRoomInfo(roomData)
-
 
           // chatStore에 방 정보 추가/업데이트
           const existingRoom = rooms.find((r) => r.id === Number(roomId))
@@ -108,7 +108,6 @@ const ChatRoom = () => {
 
     return items
       .map((item, index) => {
-
         // 문자열인 경우 그대로 반환
         if (typeof item === 'string') {
           return item.trim()
@@ -128,9 +127,11 @@ const ChatRoom = () => {
 
   // 채팅방 삭제 함수
   const handleDeleteRoom = async () => {
-    if (
-      !window.confirm('정말로 이 채팅방을 삭제하시겠습니까? 삭제된 채팅방은 복구할 수 없습니다.')
-    ) {
+    const confirmed = await confirmDelete(
+      '정말로 이 채팅방을 삭제하시겠습니까?\n삭제된 채팅방은 복구할 수 없습니다.',
+      '채팅방 삭제'
+    )
+    if (!confirmed) {
       return
     }
 
@@ -144,9 +145,9 @@ const ChatRoom = () => {
       // 대시보드로 이동
       navigate('/dashboard')
 
-      alert('채팅방이 성공적으로 삭제되었습니다.')
+      success('채팅방이 성공적으로 삭제되었습니다.')
     } catch (error) {
-      alert('채팅방 삭제에 실패했습니다. 다시 시도해주세요.')
+      showError('채팅방 삭제에 실패했습니다. 다시 시도해주세요.')
     } finally {
       setIsDeleting(false)
     }
@@ -174,9 +175,7 @@ const ChatRoom = () => {
                 <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-md text-xs font-medium">
                   Room {roomId}
                 </span>
-                {roomInfo && (
-                  <span className="text-orange-600 font-medium">• {roomInfo.name}</span>
-                )}
+                {roomInfo && <span className="text-orange-600 font-medium">• {roomInfo.name}</span>}
               </span>
             </p>
           </div>
@@ -202,7 +201,7 @@ const ChatRoom = () => {
               className={`px-5 py-2.5 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 ${
                 activeTab === 'code'
                   ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700'
-                  : 'theme-text hover:bg-orange-100 dark:hover:bg-orange-800/50'
+                  : 'text-slate-900 hover:bg-orange-100 dark:hover:bg-orange-800/50'
               }`}
             >
               📝 코드편집기
@@ -212,7 +211,7 @@ const ChatRoom = () => {
               className={`px-5 py-2.5 rounded-lg cursor-pointer text-sm font-medium transition-all duration-200 ${
                 activeTab === 'whiteboard'
                   ? 'bg-orange-600 text-white shadow-lg hover:bg-orange-700'
-                  : 'theme-text hover:bg-orange-100 dark:hover:bg-orange-800/50'
+                  : 'text-slate-900 hover:bg-orange-100 dark:hover:bg-orange-800/50'
               }`}
             >
               🎨 화이트보드

@@ -5,6 +5,7 @@ import Box from '@/components/Box'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
 import { applyCushionLanguage } from '@/features/pullRequest/prApi'
+import { useModalContext } from '@/components/ModalProvider'
 
 const CommentForm = ({
   value,
@@ -23,6 +24,8 @@ const CommentForm = ({
   audioFile: initialAudioFile = null, // 초기 음성 파일 (편집 모드용)
   enableCushion = false, // 쿠션어 기능 활성화 여부
 }) => {
+  const { warning } = useModalContext()
+  
   const [audioFile, setAudioFile] = useState(initialAudioFile)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
@@ -104,7 +107,7 @@ const CommentForm = ({
         onChange?.({ target: { value: '' } })
       } catch (error) {
         console.error('마이크 접근 실패:', error)
-        alert('마이크 접근 권한이 필요합니다.')
+        warning('마이크 접근 권한이 필요합니다.')
       }
     }
   }
