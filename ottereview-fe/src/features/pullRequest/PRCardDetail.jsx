@@ -18,11 +18,13 @@ import { useNavigate } from 'react-router-dom'
 import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
+import { useModalContext } from '@/components/ModalProvider'
 import { doMerge, IsMergable } from '@/features/pullRequest/prApi'
 import { formatRelativeTime } from '@/lib/utils/useFormatTime'
 
 const PRCardDetail = ({ pr }) => {
   const navigate = useNavigate()
+  const { success, error, warning } = useModalContext()
 
   // API 응답에서 받은 mergeable 상태를 관리
   const [apiMergeable, setApiMergeable] = useState(null)
@@ -30,7 +32,6 @@ const PRCardDetail = ({ pr }) => {
   const [isMerging, setIsMerging] = useState(false)
 
   const title = pr.title
-  const description = pr.body || '(내용 없음)'
   const updatedAt = pr.githubCreatedAt ? formatRelativeTime(pr.githubCreatedAt) : '(작성일 없음)'
   const authorName = pr.author?.githubUsername || '(알 수 없음)'
   const prNumber = pr.githubPrNumber ? `#${pr.githubPrNumber}` : ''
@@ -64,14 +65,16 @@ const PRCardDetail = ({ pr }) => {
       if (mergeState.mergeable) {
         await handleMerge()
       } else {
-        // 충돌 상황 안내
-        alert('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.')
-        // 충돌 해결 페이지로 이동
-        navigate(`/${repoId}/pr/${prId}/conflict`)
+        // 충돌 상황 안내 - 모달의 onClose 콜백에서 페이지 이동 처리
+        warning('충돌이 발생했습니다. 충돌을 해결한 후 다시 시도해주세요.', '충돌 발생', {
+          onClose: () => {
+            navigate(`/${repoId}/pr/${prId}/conflict`)
+          }
+        })
       }
     } catch (err) {
       console.error('병합 가능성 확인 실패:', err)
-      alert('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 가능성을 확인하는 중 오류가 발생했습니다. 다시 시도해주세요.')
     } finally {
       setIsMerging(false)
     }
@@ -81,14 +84,15 @@ const PRCardDetail = ({ pr }) => {
     try {
       const data = await doMerge({ repoId, prId })
 
-      // 병합 성공
-      alert('PR이 성공적으로 병합되었습니다!')
-
-      // 페이지 새로고침 또는 상위 컴포넌트 상태 업데이트
-      window.location.reload()
+      // 병합 성공 - 모달의 onClose 콜백에서 reload 처리
+      success('PR이 성공적으로 병합되었습니다!', {
+        onClose: () => {
+          window.location.reload()
+        }
+      })
     } catch (err) {
       console.error('병합 실패:', err)
-      alert('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
+      error('병합 중 오류가 발생했습니다. 다시 시도해주세요.')
     }
   }
 
