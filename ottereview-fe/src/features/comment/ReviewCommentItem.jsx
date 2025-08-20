@@ -291,7 +291,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                   브라우저가 오디오를 지원하지 않습니다.
                 </audio>
               ) : (
-                <p className="theme-text whitespace-pre-wrap text-base">
+                <p className="theme-text whitespace-pre-wrap break-words text-base">
                   {cleanReviewCommentBody(comment.body)}
                 </p>
               )}
@@ -465,7 +465,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     브라우저가 오디오를 지원하지 않습니다.
                   </audio>
                 ) : (
-                  <p className="theme-text whitespace-pre-wrap text-sm">
+                  <p className="theme-text whitespace-pre-wrap break-words text-sm">
                     {cleanReviewCommentBody(reply.body)}
                   </p>
                 )}

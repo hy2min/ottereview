@@ -616,7 +616,7 @@ const CodeDiff = ({
                                   브라우저가 오디오를 지원하지 않습니다.
                                 </audio>
                               ) : (
-                                <p className="theme-text whitespace-pre-wrap text-base font-medium">
+                                <p className="theme-text whitespace-pre-wrap break-words text-base font-medium">
                                   {desc.body}
                                 </p>
                               )}
@@ -742,7 +742,7 @@ const CodeDiff = ({
                                     브라우저가 오디오를 지원하지 않습니다.
                                   </audio>
                                 ) : (
-                                  <p className="theme-text whitespace-pre-wrap text-base">
+                                  <p className="theme-text whitespace-pre-wrap break-words text-base">
                                     {comment.content}
                                   </p>
                                 )}
