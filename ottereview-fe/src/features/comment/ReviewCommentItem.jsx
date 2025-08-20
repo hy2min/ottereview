@@ -297,13 +297,13 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
 
           {/* 답글 버튼 (편집 모드가 아니고 답글 작성 폼이 열려있지 않을 때만) */}
           {editingReviewCommentId !== comment.id && replyingToCommentId !== comment.id && (
-            <div className="mt-2 flex items-center justify-end">
+            <div className="mt-3 pt-2 flex items-center justify-end">
               <button
                 onClick={() => handleStartReply(comment.id)}
-                className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900 transition-colors"
+                className="flex items-center gap-1.5 text-sm font-medium text-orange-700 dark:text-orange-300 hover:text-orange-800 dark:hover:text-orange-200 px-3 py-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-all duration-200 border border-orange-200 dark:border-orange-800 hover:border-orange-300 dark:hover:border-orange-700"
               >
-                <Reply className="w-3 h-3" />
-                답글
+                <Reply className="w-3.5 h-3.5" />
+                답글 달기
               </button>
             </div>
           )}
@@ -356,39 +356,34 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               </div>
             </div>
           )}
+
         </Box>
       </div>
 
-      {/* 답글들 */}
+      {/* 답글들 - 별도의 박스에서 시작 */}
       {replies.length > 0 && (
-        <div className="ml-4 space-y-2">
-          {replies.map((reply) => (
-            <div key={reply.id} className="ml-6 relative">
-              <Box shadow className="space-y-3 max-w-lg bg-gray-50 dark:bg-gray-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={`https://github.com/${reply.authorName}.png`}
-                      alt={reply.authorName || 'Reviewer'}
-                      className="w-6 h-6 rounded-full border-2 border-green-500 dark:border-green-400"
-                      onError={(e) => {
-                        e.target.src = 'https://github.com/identicons/jasonlong.png'
-                      }}
-                    />
-                    <div>
-                      <span className="font-medium theme-text text-sm">
-                        {reply.authorName || 'Unknown'}
-                      </span>
-                      <span className="text-xs theme-text-muted ml-2">
-                        {new Date(reply.submittedAt).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
+        <div className="ml-10">
+          <Box shadow className="space-y-3 max-w-lg bg-gray-50 dark:bg-gray-800">
+            {replies.map((reply) => (
+              <div key={reply.id} className="ml-2 mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <img
+                    src={`https://github.com/${reply.authorName}.png`}
+                    alt={reply.authorName || 'Reviewer'}
+                    className="w-6 h-6 rounded-full border border-gray-300"
+                    onError={(e) => {
+                      e.target.src = 'https://github.com/identicons/jasonlong.png'
+                    }}
+                  />
+                  <span className="font-medium theme-text text-sm">{reply.authorName || 'Unknown'}</span>
+                  <span className="text-xs theme-text-muted flex items-center gap-1">
+                    {new Date(reply.submittedAt).toLocaleString()}
+                  </span>
                   {/* 수정/삭제 버튼 - 답글 작성자만 볼 수 있음 */}
                   {reply.authorName &&
                     reply.authorName === user?.githubUsername &&
                     !reply.voiceFileUrl && (
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 ml-auto">
                         <button
                           onClick={() => handleEditReviewComment(reply)}
                           className="p-1 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-800 rounded transition-colors"
@@ -406,7 +401,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       </div>
                     )}
                 </div>
-
+                
                 {/* 답글 내용 */}
                 {editingReviewCommentId === reply.id ? (
                   <div className="space-y-2">
@@ -467,9 +462,9 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                     {cleanReviewCommentBody(reply.body)}
                   </p>
                 )}
-              </Box>
-            </div>
-          ))}
+              </div>
+            ))}
+          </Box>
         </div>
       )}
 
