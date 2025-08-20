@@ -10,7 +10,9 @@ export const useModalContext = () => {
   const context = useContext(ModalContext)
   if (!context) {
     // ModalProvider가 없는 경우 fallback으로 기본 alert/confirm 사용
-    console.warn('useModalContext must be used within a ModalProvider. Falling back to browser alerts.')
+    console.warn(
+      'useModalContext must be used within a ModalProvider. Falling back to browser alerts.'
+    )
     return {
       alerts: [],
       confirms: [],
@@ -25,24 +27,24 @@ export const useModalContext = () => {
         const message = typeof config === 'string' ? config : config.message
         return Promise.resolve(confirm(message))
       },
-      success: (message, title, config) => {
+      success: (message, config) => {
         alert(message)
         config?.onClose?.()
       },
-      error: (message, title, config) => {
+      error: (message, config) => {
         alert(message)
         config?.onClose?.()
       },
-      warning: (message, title, config) => {
+      warning: (message, config) => {
         alert(message)
         config?.onClose?.()
       },
-      info: (message, title, config) => {
+      info: (message, config) => {
         alert(message)
         config?.onClose?.()
       },
       confirmDelete: (message) => Promise.resolve(confirm(message)),
-      confirmAction: (message) => Promise.resolve(confirm(message))
+      confirmAction: (message) => Promise.resolve(confirm(message)),
     }
   }
   return context
@@ -55,21 +57,15 @@ const ModalProvider = ({ children }) => {
   return (
     <ModalContext.Provider value={modalMethods}>
       {children}
-      
+
       {/* Alert 모달들 */}
       {alerts.map((alert) => (
-        <AlertModal
-          key={alert.id}
-          {...alert}
-        />
+        <AlertModal key={alert.id} {...alert} />
       ))}
 
       {/* Confirm 모달들 */}
       {confirms.map((confirm) => (
-        <ConfirmModal
-          key={confirm.id}
-          {...confirm}
-        />
+        <ConfirmModal key={confirm.id} {...confirm} />
       ))}
     </ModalContext.Provider>
   )

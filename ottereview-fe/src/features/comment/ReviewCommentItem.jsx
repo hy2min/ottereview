@@ -70,8 +70,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('리뷰 댓글 수정 실패:', error)
+    } catch (err) {
+      console.error('리뷰 댓글 수정 실패:', err)
       error('댓글 수정에 실패했습니다.')
     }
   }
@@ -88,8 +88,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('리뷰 댓글 삭제 실패:', error)
+    } catch (err) {
+      console.error('리뷰 댓글 삭제 실패:', err)
       error('댓글 삭제에 실패했습니다.')
     }
   }
@@ -124,8 +124,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (onDataRefresh) {
         await onDataRefresh()
       }
-    } catch (error) {
-      console.error('답글 작성 실패:', error)
+    } catch (err) {
+      console.error('답글 작성 실패:', err)
       error('답글 작성에 실패했습니다.')
     }
   }
@@ -146,8 +146,8 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
       if (response?.result) {
         setCushionedContent(response.result)
       }
-    } catch (error) {
-      console.error('쿠션어 적용 실패:', error)
+    } catch (err) {
+      console.error('쿠션어 적용 실패:', err)
       setCushionedContent('쿠션어 적용 중 오류가 발생했습니다.')
     } finally {
       setIsCushionLoading(false)
