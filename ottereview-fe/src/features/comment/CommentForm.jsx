@@ -4,8 +4,8 @@ import { useState } from 'react'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
-import { applyCushionLanguage } from '@/features/pullRequest/prApi'
 import { useModalContext } from '@/components/ModalProvider'
+import { applyCushionLanguage } from '@/features/pullRequest/prApi'
 
 const CommentForm = ({
   value,
@@ -25,12 +25,12 @@ const CommentForm = ({
   enableCushion = false, // 쿠션어 기능 활성화 여부
 }) => {
   const { warning } = useModalContext()
-  
+
   const [audioFile, setAudioFile] = useState(initialAudioFile)
   const [isRecording, setIsRecording] = useState(false)
   const [mediaRecorder, setMediaRecorder] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
+
   // 쿠션어 모달 상태 관리
   const [isCushionModalOpen, setIsCushionModalOpen] = useState(false)
   const [originalContent, setOriginalContent] = useState('')
@@ -136,7 +136,7 @@ const CommentForm = ({
       setIsSubmitting(false)
     }
   }
-  
+
   // 쿠션어 적용 처리
   const handleApplyCushion = async () => {
     if (!value?.trim()) return
@@ -190,9 +190,9 @@ const CommentForm = ({
               controls
               className="flex-1 h-10 border rounded-full border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700"
             >
-              <source 
-                src={audioFile instanceof File ? URL.createObjectURL(audioFile) : audioFile} 
-                type={audioFile instanceof File ? audioFile.type : 'audio/webm'} 
+              <source
+                src={audioFile instanceof File ? URL.createObjectURL(audioFile) : audioFile}
+                type={audioFile instanceof File ? audioFile.type : 'audio/webm'}
               />
               브라우저가 오디오를 지원하지 않습니다.
             </audio>
@@ -309,7 +309,7 @@ const CommentForm = ({
             disabled={disabled || isSubmitting || (!value?.trim() && (!enableAudio || !audioFile))}
             className="hover:!bg-blue-50 dark:hover:!bg-blue-900 hover:!text-blue-700 dark:hover:!text-blue-300 hover:!shadow-md"
           >
-{isSubmitting ? (
+            {isSubmitting ? (
               <div className="flex items-center gap-2">
                 <Settings className="w-4 h-4 animate-spin" />
                 제출 중...
@@ -320,7 +320,7 @@ const CommentForm = ({
           </Button>
         </div>
       </div>
-      
+
       {/* 쿠션어 적용 모달 */}
       <Modal
         isOpen={isCushionModalOpen}

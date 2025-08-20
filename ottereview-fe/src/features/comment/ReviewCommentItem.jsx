@@ -5,6 +5,7 @@ import Badge from '@/components/Badge'
 import Box from '@/components/Box'
 import Button from '@/components/Button'
 import Modal from '@/components/Modal'
+import { useModalContext } from '@/components/ModalProvider'
 import {
   applyCushionLanguage,
   createReviewCommentReply,
@@ -12,11 +13,10 @@ import {
   updateReviewComment,
 } from '@/features/pullRequest/prApi'
 import { useUserStore } from '@/store/userStore'
-import { useModalContext } from '@/components/ModalProvider'
 
 const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
   const user = useUserStore((state) => state.user)
-  const { success, error, confirmDelete } = useModalContext()
+  const { error, confirmDelete } = useModalContext()
 
   // 편집 상태
   const [editingReviewCommentId, setEditingReviewCommentId] = useState(null)
@@ -359,7 +359,6 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
               </div>
             </div>
           )}
-
         </Box>
       </div>
 
@@ -368,7 +367,10 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
         <div className="ml-10">
           <Box shadow className="space-y-3 max-w-lg bg-gray-50 dark:bg-gray-800">
             {replies.map((reply) => (
-              <div key={reply.id} className="ml-2 mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
+              <div
+                key={reply.id}
+                className="ml-2 mt-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700"
+              >
                 <div className="flex items-center gap-2 mb-2">
                   <img
                     src={`https://github.com/${reply.authorName}.png`}
@@ -378,7 +380,9 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       e.target.src = 'https://github.com/identicons/jasonlong.png'
                     }}
                   />
-                  <span className="font-medium theme-text text-sm">{reply.authorName || 'Unknown'}</span>
+                  <span className="font-medium theme-text text-sm">
+                    {reply.authorName || 'Unknown'}
+                  </span>
                   <span className="text-xs theme-text-muted flex items-center gap-1">
                     {new Date(reply.submittedAt).toLocaleString()}
                   </span>
@@ -404,7 +408,7 @@ const ReviewCommentItem = ({ comment, replies = [], onDataRefresh }) => {
                       </div>
                     )}
                 </div>
-                
+
                 {/* 답글 내용 */}
                 {editingReviewCommentId === reply.id ? (
                   <div className="space-y-2">

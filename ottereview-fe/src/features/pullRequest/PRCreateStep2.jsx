@@ -1,6 +1,8 @@
 import { AlertCircle, CheckCircle, FileText, RotateCcw, Settings, Sparkles } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
+import Button from '@/components/Button'
+
 import { requestAIConvention, requestAIOthers } from './prApi'
 
 const Box = ({ children, shadow = false, className = '' }) => {
@@ -10,40 +12,6 @@ const Box = ({ children, shadow = false, className = '' }) => {
     >
       {children}
     </div>
-  )
-}
-
-const Button = ({
-  children,
-  variant = 'primary',
-  size = 'md',
-  className = '',
-  onClick,
-  disabled,
-  ...props
-}) => {
-  const baseClasses =
-    'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
-
-  const variants = {
-    primary: 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500',
-    secondary: 'bg-gray-600 hover:bg-gray-700 text-white focus:ring-gray-500',
-  }
-
-  const sizes = {
-    sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2',
-  }
-
-  return (
-    <button
-      className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${className} ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      onClick={onClick}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
   )
 }
 
