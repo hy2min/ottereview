@@ -1,94 +1,144 @@
-## 🧾 Git Commit Convention
+# 🦦 OtterReview
 
-### ✅ Commit Message 구조 
+> **실시간 협업 기반 코드 리뷰 & 화이트보드 플랫폼**  
+> SSAFY 11기 공통 프로젝트 (2024-2025)
 
-```
-<타입>: <간단한 설명>   
-
-본문 (선택)
-```
-
-### 📌 사용 가능한 타입(Type)
-
-| 타입       | 설명                                   |
-|------------|----------------------------------------|
-| `feat`     | 새로운 기능 추가                        |
-| `fix`      | 버그 수정                              |
-| `docs`     | 문서 수정 (README 등)                   |
-| `style`    | 코드 포맷팅, 세미콜론 누락 등 기능 변화 없는 수정 |
-| `refactor` | 코드 리팩토링 (기능 변화 없음)           |
-| `test`     | 테스트 코드 추가/수정                   |
-| `chore`    | 빌드 업무, 패키지 매니저 설정 등 기타 변경 |
-| `perf`     | 성능 개선                              |
-| `ci`       | CI 설정 수정                           |
-| `build`    | 빌드 관련 파일 수정                     |
-
-### ✏️ 예시
-
-```
-feat: 사용자 로그인 기능 구현  
-
-로그인 성공 시 JWT 발급 및 로컬스토리지 저장 로직 추가 
-```
-
-```
-fix: 회원가입 시 중복 이메일 체크 오류 수정
-```
-
-```
-docs: 프로젝트 소개 및 기술 스택 문서 추가
-```
-
-```
-style: 세미콜론 누락 및 공백 정리
-```
-
-### 📖 커밋 메시지 작성 규칙
-
-1. 제목은 **50자 이내**로 작성, 첫 글자는 소문자.
-2. 제목 끝에 `마침표(.)` 쓰지 않기.
-3. **한글 또는 영어** 자유롭게 사용 가능 (팀 합의 기준).
-4. 본문이 있다면, 제목과 본문 사이에 한 줄 공백 삽입.
-5. 본문은 **무엇을, 왜** 변경했는지 설명.
+<img src="otter_logo.png" width="180" alt="OtterReview Logo" />
 
 ---
 
-## 🌿 Git 브랜치 전략
+## 📌 프로젝트 개요
 
-### 📌 브랜치 종류
+OtterReview는 개발자들이 **코드 리뷰 과정에서 발생하는 병목과 비효율성**을 해소하기 위해 제작된 **실시간 협업 플랫폼**입니다.  
+코드 공유, 화이트보드 기반 아이디어 스케치, 음성 채팅, 실시간 채팅을 하나의 환경에서 제공합니다.
 
-| 브랜치 이름   | 용도 |
-|---------------|------|
-| `main`        | 실제 배포되는 운영 브랜치 (최종 제품) |
-| `develop`     | 통합 개발 브랜치 (모든 기능이 merge됨) |
-| `feature/*`   | 새로운 기능 개발용 브랜치 |
-| `fix/*`       | 버그 수정용 브랜치 |
-| `hotfix/*`    | 운영 중 긴급 수정 브랜치 |
-| `release/*`   | 배포 준비 브랜치 (버전 태깅 등 포함) |
-
-### 🛠 브랜치 네이밍 규칙
-
-- `feature/login-api`  
-- `fix/signup-validation`  
-- `hotfix/server-crash`  
-- `release/v1.0.0`  
-
-### 🔁 브랜치 사용 흐름
-
-1. 기능 개발 시:  
-   → `develop` 브랜치에서 `feature/기능명` 브랜치 생성 후 작업  
-   → 완료되면 `develop`에 Pull Request로 merge
-
-2. 버그 수정 시:  
-   → `develop` 또는 `main` 기준으로 `fix/버그명` 브랜치 생성 후 수정  
-   → 완료되면 `develop`에 merge (운영 이슈면 `main`에 바로 hotfix 가능)
-
-3. 배포 준비 시:  
-   → `develop` → `release/vX.X.X` 브랜치 생성  
-   → 테스트 완료 후 `main`에 merge + 버전 태깅
-
-4. 긴급 수정 시:  
-   → `main`에서 `hotfix/이슈명` 브랜치 생성  
-   → 수정 후 `main` + `develop`에 각각 merge
+- 💬 **코드 리뷰 최적화** : 실시간 코드 공유 및 동시 편집
+- 🎨 **화이트보드 협업** : tldraw 기반 자유로운 다자간 드로잉
+- 🎧 **오디오 채팅** : 회의실 내 음성 기반 토론 지원
+- 💡 **AI 보조** : 자동 요약 및 리뷰 서포트 기능 확장 예정
 
 ---
+
+## 🚀 주요 기능
+
+### 1. 코드 리뷰
+
+- CodeMirror + Yorkie CRDT 기반 실시간 코드 공유
+- 충돌 해결 히스토리 추적
+- Pull Request 기반 코드 리뷰 관리
+
+### 2. 화이트보드
+
+- tldraw 기반 실시간 드로잉
+- 사용자별 색상/펜 도구 제공
+- 멀티 커서 동시 작업 지원
+
+### 3. 실시간 커뮤니케이션
+
+- SockJS + STOMP 기반 채팅
+- OpenVidu/LiveKit 기반 오디오 회의
+- 회의록/대화 로그 자동 저장
+
+---
+
+## 🛠 기술 스택
+
+### Frontend
+
+- **React (Vite)**
+- **Zustand** (전역 상태 관리)
+- **Yorkie** (실시간 CRDT 동기화)
+- **tldraw** (화이트보드)
+- **SockJS + STOMP** (실시간 채팅)
+- **LiveKit / OpenVidu** (오디오/화상 회의)
+
+### Backend
+
+- **Spring Boot 3.x**
+- **WebSocket (STOMP)** 기반 채팅/알림
+- **JPA + MySQL** (데이터 관리)
+- **OAuth 2.0 (GitHub)** 로그인
+
+### DevOps
+
+- **Docker Compose** (FE/BE 통합 배포)
+- **Nginx + SSL (Let’s Encrypt)**
+- **GitHub Actions** CI/CD
+
+---
+
+## 📂 폴더 구조
+
+```plaintext
+ottereview/
+ ┣ ottereview-fe/       # React (Vite) Frontend
+ ┣ ottereview-be/       # Spring Boot Backend
+ ┣ docs/                # 문서 및 다이어그램
+ ┣ docker-compose.yml   # 통합 실행 환경
+ ┗ README.md
+```
+
+## ⚡ 설치 및 실행
+
+### 1. 환경 변수 설정
+
+`ottereview-fe/.env`, `ottereview-be/.env` 파일을 생성 후 환경 변수 입력:
+
+```env
+# Frontend
+VITE_API_URL=http://localhost:8080
+
+# Backend
+SPRING_PROFILES_ACTIVE=local
+DB_URL=jdbc:mysql://localhost:3306/ottereview
+DB_USERNAME=root
+DB_PASSWORD=yourpassword
+```
+
+### 2. 실행
+
+```
+# Frontend 실행
+cd ottereview-fe
+npm install
+npm run dev
+
+# Backend 실행
+cd ottereview-be
+./gradlew bootRun
+
+# 전체 실행 (Docker)
+docker-compose up --build
+```
+
+## 📸 화면 예시
+
+| 코드 리뷰 화면                     | 화이트보드 협업                   |
+| ---------------------------------- | --------------------------------- |
+| ![](./docs/assets/code_review.png) | ![](./docs/assets/whiteboard.png) |
+
+---
+
+## 👥 팀원
+
+| 이름   | 역할 | GitHub      |
+| ------ | ---- | ----------- |
+| 신진우 | 팀장 | BE / AI     |
+| 임강범 | 팀원 | BE          |
+| 윤경일 | 팀원 | BE / INFRA  |
+| 박서진 | 팀원 | BE          |
+| 이혜민 | 팀원 | FE / WebRTC |
+| 김희주 | 팀원 | FE / WebRTC |
+
+---
+
+## 📅 개발 일정
+
+- **2025.07 ~ 2025.08** : SSAFY 2학기 공통 프로젝트
+- **2025.08 ~ 2025.09** : 기능 고도화 및 배포
+
+---
+
+## 📜 라이선스
+
+Copyright ⓒ 2024 OtterReview
