@@ -1,7 +1,7 @@
 # 🦦 OtterReview
 
 > **실시간 협업 기반 코드 리뷰 & 화이트보드 플랫폼**  
-> SSAFY 11기 공통 프로젝트 (2024-2025)
+> SSAFY 13기 공통 프로젝트 (2025)
 
 <img src="otter_logo.png" width="180" alt="OtterReview Logo" />
 
