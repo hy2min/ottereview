@@ -39,6 +39,16 @@ OtterReview는 개발자들이 **코드 리뷰 과정에서 발생하는 병목�
 - OpenVidu/LiveKit 기반 오디오 회의
 - 회의록/대화 로그 자동 저장
 
+### 4. AI 기반 기능
+
+- **PR 제목 자동 생성** : 코드 변경사항 분석 기반 제목 추천
+- **PR 요약 생성** : 변경된 파일 및 커밋 내용 자동 요약
+- **리뷰어 추천** : RAG 기반 과거 리뷰 패턴 분석으로 최적 리뷰어 추천
+- **우선순위 추천** : PR 중요도에 따른 리뷰 우선순위 3가지 후보 제시
+- **코딩 컨벤션 체크** : 설정 가능한 네이밍 컨벤션 자동 검증
+- **리뷰 어조 변환** : 리뷰 코멘트를 부드러운 톤으로 자동 변환
+- **음성 변환** : Whisper 기반 음성 파일 텍스트 변환 (STT)
+
 ---
 
 ## 🛠 기술 스택
@@ -51,6 +61,8 @@ OtterReview는 개발자들이 **코드 리뷰 과정에서 발생하는 병목�
 - **tldraw** (화이트보드)
 - **SockJS + STOMP** (실시간 채팅)
 - **LiveKit / OpenVidu** (오디오/화상 회의)
+- **CodeMirror** (코드 에디터)
+- **Tailwind CSS** (스타일링)
 
 ### Backend
 
@@ -58,6 +70,21 @@ OtterReview는 개발자들이 **코드 리뷰 과정에서 발생하는 병목�
 - **WebSocket (STOMP)** 기반 채팅/알림
 - **JPA + MySQL** (데이터 관리)
 - **OAuth 2.0 (GitHub)** 로그인
+- **JGit** (Git 작업 처리)
+- **Redis** (캐싱 및 세션 관리)
+- **AWS S3** (파일 저장)
+- **SSE (Server-Sent Events)** (실시간 알림)
+- **Spring Mail** (이메일 알림)
+- **GitHub Webhook** (이벤트 연동)
+
+### AI Server
+
+- **FastAPI** (Python 웹 프레임워크)
+- **OpenAI API** (GPT-4o-mini)
+- **LangChain** (AI 프레임워크)
+- **Pinecone** (벡터 DB - RAG)
+- **Whisper** (음성 변환)
+- **Redis** (PR 데이터 임시 저장)
 
 ### DevOps
 
@@ -87,12 +114,33 @@ ottereview/
 ```env
 # Frontend
 VITE_API_URL=http://localhost:8080
+VITE_YORKIE_API_ADDR=http://localhost:8080
+VITE_YORKIE_API_KEY=your-yorkie-key
 
 # Backend
 SPRING_PROFILES_ACTIVE=local
 DB_URL=jdbc:mysql://localhost:3306/ottereview
 DB_USERNAME=root
 DB_PASSWORD=yourpassword
+REDIS_HOST=localhost
+REDIS_PORT=6379
+AWS_S3_BUCKET_NAME=your-bucket
+AWS_ACCESS_KEY=your-access-key
+AWS_SECRET_KEY=your-secret-key
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+OPENVIDU_URL=http://localhost:4443
+OPENVIDU_SECRET=your-openvidu-secret
+
+# AI
+OPENAI_API_KEY=your-openai-key
+OPENAI_API_BASE=https://api.openai.com/v1
+PINECONE_API_KEY=your-pinecone-key
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+ENV=development
+LOG_LEVEL=INFO
 ```
 
 ### 2. 실행
@@ -107,6 +155,11 @@ npm run dev
 cd ottereview-be
 ./gradlew bootRun
 
+# AI Server 실행
+cd ottereview-ai
+pip install -r requirements.txt
+python main.py
+
 # 전체 실행 (Docker)
 docker-compose up --build
 ```
@@ -116,6 +169,25 @@ docker-compose up --build
 | 코드 리뷰 화면                     | 화이트보드 협업                   |
 | ---------------------------------- | --------------------------------- |
 | ![](./docs/assets/code_review.png) | ![](./docs/assets/whiteboard.png) |
+
+---
+
+## 🔔 주요 기능 상세
+
+### 실시간 알림 시스템
+- GitHub Webhook을 통한 push 이벤트 실시간 감지
+- SSE 기반 브라우저 알림
+- PR 생성 제안 및 빠른 접근
+
+### 충돌 해결 협업
+- JGit 기반 자동 충돌 감지
+- Yorkie CRDT를 활용한 실시간 협업 충돌 해결
+- 충돌 히스토리 추적 및 롤백 지원
+
+### AI 기반 리뷰 지원
+- 벡터 DB에 저장된 과거 PR 패턴 분석
+- 컨텍스트 기반 리뷰어 및 우선순위 추천
+- 코딩 컨벤션 자동 검증으로 코드 품질 향상
 
 ---
 
